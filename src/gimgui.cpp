@@ -184,6 +184,27 @@ static void gimgui_draw_pattern(void)
             ImGui::SetScrollY(target);
         }
 
+        // Click a cell to place the edit cursor (keyboard editing then flows
+        // through the legacy pattern editor). Mirrors the legacy click mapping:
+        // note = char offset 0..2, else epcolumn = offset-2.
+        if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+        {
+            const ImVec2 m = ImGui::GetIO().MousePos;
+            int row = (int)((m.y - origin.y) / lineH);
+            float rx = m.x - origin.x - rowNumW;
+            if (rx >= 0 && row >= 0 && row < rows)
+            {
+                int c = (int)(rx / chanW);
+                if (c >= 0 && c < chans)
+                {
+                    int off = (int)((rx - c * chanW) / charW);
+                    if (off > 7) off = 7;
+                    int col = (off < 3) ? 0 : (off - 2);
+                    gtui::pattern_set_cursor(c, row, col);
+                }
+            }
+        }
+
         const float scrollY = ImGui::GetScrollY();
         const float winH = ImGui::GetWindowHeight();
         int firstRow = (int)(scrollY / lineH);

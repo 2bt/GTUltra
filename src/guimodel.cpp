@@ -141,4 +141,26 @@ int pattern_mark_channel() { return editorInfo.epmarkchn; }
 int pattern_mark_start() { return editorInfo.epmarkstart; }
 int pattern_mark_end() { return editorInfo.epmarkend; }
 
+void pattern_set_cursor(int ch, int row, int col)
+{
+    int chans = pattern_channels();
+    if (ch < 0) ch = 0;
+    if (ch >= chans) ch = chans - 1;
+
+    int len = pattern_length(ch);
+    if (row < 0) row = 0;
+    if (row > len) row = len; // legacy allows the cursor on the PATT.END row
+
+    if (col < 0) col = 0;
+    if (col > 5) col = 5;
+
+    editorInfo.editmode = EDIT_PATTERN;
+    editorInfo.epchn = ch;
+    editorInfo.eppos = row;
+    editorInfo.epcolumn = col;
+    // Keep the master-loop / mark channel in sync, as the legacy click does, so
+    // play-from-here and Shift-select act on the clicked channel.
+    setMasterLoopChannel(&gtObject, (char *)"imgui");
+}
+
 } // namespace gtui

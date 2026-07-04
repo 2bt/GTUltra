@@ -60,6 +60,12 @@ int  pattern_mark_channel();
 int  pattern_mark_start();
 int  pattern_mark_end();
 
+// Move the edit cursor (e.g. from a mouse click in the ImGui grid): switches to
+// pattern-edit mode and positions the cursor. col follows the legacy epcolumn
+// convention (0 = note, 1..5 = instr hi/lo, cmd, data hi/lo). Keyboard editing
+// then flows through the existing legacy pattern editor.
+void pattern_set_cursor(int ch, int row, int col);
+
 } // namespace gtui
 
 #endif

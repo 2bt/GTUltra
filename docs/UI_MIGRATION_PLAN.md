@@ -233,9 +233,22 @@ foundation the config keymap needs later).
 > Reads live model via new `guimodel` pattern accessors (`pattern_cell`,
 > channel/cursor/step queries; note-name decode via the legacy `notename`
 > table). Verified against the legacy view (headers `CH0 0A/CH1 0C/CH2 0B`,
-> row 0 `C-2 01 F07` / `C-3 0F 105`). Still to do: keyboard cursor movement +
-> editing (note/hex entry) writing back through `guimodel` with undo, then
-> re-skin the SID Tables with this same grid widget.
+> row 0 `C-2 01 F07` / `C-3 0F 105`).
+>
+> **Interactive (transition approach): reuse the legacy edit engine.** Keyboard
+> editing already works — the legacy `patterncommands` handles note/hex entry,
+> cursor moves, and undo, and the grid mirrors it live (verified: Shift+Down
+> drove the selection). So the ImGui grid adds only **mouse**: clicking a cell
+> calls `gtui::pattern_set_cursor` (sets `EDIT_PATTERN` + `epchn/eppos/epcolumn`
+> + `masterLoopChannel`), using the legacy click→column mapping; keyboard then
+> flows to the legacy editor untouched. Cursor is a per-sub-field cell box;
+> Shift+Up/Down selection drawn as a blue background. (Model-write verified in
+> process; the click itself needs a real display — ImGui gets no mouse focus
+> under headless Xvfb.)
+>
+> Still to do toward full M4: keyboard-driven editing owned by the ImGui layer
+> (for the eventual legacy removal, M6), then re-skin the SID Tables with this
+> same grid widget.
 
 Goal: a real ImGui pattern editor replacing the legacy pattern panel.
 Follow Furnace's `drawPattern()` recipe (`src/gui/pattern.cpp`):
