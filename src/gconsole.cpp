@@ -887,6 +887,28 @@ void getkey(void)
 	if (rawkey == SDL_SCANCODE_KP_7) key = '7';
 	if (rawkey == SDL_SCANCODE_KP_8) key = '8';
 	if (rawkey == SDL_SCANCODE_KP_9) key = '9';
+
+	// Input handoff: when an overlay (e.g. the ImGui layer) wants the mouse or
+	// keyboard, swallow it here so the legacy editor doesn't also react to a
+	// click/keypress that was aimed at an ImGui panel. No-op unless the hook is
+	// installed (bit0 = mouse captured, bit1 = keyboard captured).
+	if (bme_input_capture_hook)
+	{
+		int cap = bme_input_capture_hook();
+		if (cap & 1)
+		{
+			mouseb = 0;
+			prevmouseb = 0;
+			mousebDoubleClick = 0;
+			mouseheld = 0;
+		}
+		if (cap & 2)
+		{
+			key = 0;
+			rawkey = 0;
+			win_asciikey = 0;
+		}
+	}
 }
 
 

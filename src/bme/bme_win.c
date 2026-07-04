@@ -187,6 +187,11 @@ void resize(int width, int height)
 // bme free of any C++/ImGui dependency.
 void (*bme_event_hook)(void *sdl_event) = 0;
 
+// Optional input-capture hook: returns bit0=mouse captured, bit1=keyboard
+// captured by an overlay, so the legacy editor can ignore those events. NULL =
+// nothing captured.
+int (*bme_input_capture_hook)(void) = 0;
+
 void win_checkmessages(void)
 {
 	SDL_Event event;

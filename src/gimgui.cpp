@@ -24,6 +24,7 @@ extern "C" {
     extern SDL_Renderer *gfx_renderer;
     extern void (*bme_overlay_render_hook)(void);
     extern void (*bme_event_hook)(void *sdl_event);
+    extern int (*bme_input_capture_hook)(void);
 }
 
 static bool g_imgui_ready = false;
@@ -58,6 +59,19 @@ extern "C" void gimgui_event_process(void *sdl_event)
     ImGui_ImplSDL2_ProcessEvent(static_cast<const SDL_Event *>(sdl_event));
 }
 
+// Called by bme (via bme_input_capture_hook): tells the legacy editor to ignore
+// input that ImGui is consuming. bit0 = mouse, bit1 = keyboard.
+extern "C" int gimgui_input_capture(void)
+{
+    if (!g_imgui_ready)
+        return 0;
+    ImGuiIO &io = ImGui::GetIO();
+    int flags = 0;
+    if (io.WantCaptureMouse)    flags |= 1;
+    if (io.WantCaptureKeyboard) flags |= 2;
+    return flags;
+}
+
 void gimgui_init()
 {
     if (g_imgui_ready)
@@ -77,6 +91,7 @@ void gimgui_init()
 
     bme_overlay_render_hook = gimgui_overlay_render;
     bme_event_hook = gimgui_event_process;
+    bme_input_capture_hook = gimgui_input_capture;
 }
 
 void gimgui_shutdown()
@@ -86,6 +101,7 @@ void gimgui_shutdown()
 
     bme_overlay_render_hook = nullptr;
     bme_event_hook = nullptr;
+    bme_input_capture_hook = nullptr;
 
     ImGui_ImplSDLRenderer2_Shutdown();
     ImGui_ImplSDL2_Shutdown();

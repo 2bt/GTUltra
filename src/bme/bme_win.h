@@ -35,3 +35,6 @@ extern SDL_Window *win_window;
 
 // Optional per-event hook (SDL_Event*) so an overlay can observe input.
 extern void (*bme_event_hook)(void *sdl_event);
+
+// Optional input-capture hook: bit0=mouse, bit1=keyboard captured by an overlay.
+extern int (*bme_input_capture_hook)(void);
