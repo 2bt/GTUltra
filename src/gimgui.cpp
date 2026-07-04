@@ -174,15 +174,26 @@ static void gimgui_draw_pattern(void)
         const float totalH = rows * lineH;
         ImGui::Dummy(ImVec2(totalW, totalH)); // reserve scroll region
 
-        // Keep the edit cursor in view (mirrors the legacy always-centered view).
+        const float winH = ImGui::GetWindowHeight();
+        const float curScroll = ImGui::GetScrollY();
+        const float contentTop = origin.y + curScroll; // scroll-independent anchor
+
+        // Follow the edit cursor. SetScrollY only takes effect next frame, so we
+        // also draw with the target scroll *this* frame - otherwise the cursor
+        // appears to jump for one frame before the view catches up.
         static int lastCur = -1;
+        float drawScroll = curScroll;
         if (curRow != lastCur)
         {
             lastCur = curRow;
-            float target = curRow * lineH - ImGui::GetWindowHeight() * 0.5f;
-            if (target < 0) target = 0;
-            ImGui::SetScrollY(target);
+            float maxScroll = totalH - winH;
+            if (maxScroll < 0) maxScroll = 0;
+            drawScroll = curRow * lineH - winH * 0.5f;
+            if (drawScroll < 0) drawScroll = 0;
+            if (drawScroll > maxScroll) drawScroll = maxScroll;
+            ImGui::SetScrollY(drawScroll);
         }
+        const float drawTop = contentTop - drawScroll;
 
         // Click a cell to place the edit cursor (keyboard editing then flows
         // through the legacy pattern editor). Mirrors the legacy click mapping:
@@ -190,7 +201,7 @@ static void gimgui_draw_pattern(void)
         if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
         {
             const ImVec2 m = ImGui::GetIO().MousePos;
-            int row = (int)((m.y - origin.y) / lineH);
+            int row = (int)((m.y - drawTop) / lineH);
             float rx = m.x - origin.x - rowNumW;
             if (rx >= 0 && row >= 0 && row < rows)
             {
@@ -205,17 +216,15 @@ static void gimgui_draw_pattern(void)
             }
         }
 
-        const float scrollY = ImGui::GetScrollY();
-        const float winH = ImGui::GetWindowHeight();
-        int firstRow = (int)(scrollY / lineH);
-        int lastRow = (int)((scrollY + winH) / lineH) + 1;
+        int firstRow = (int)(drawScroll / lineH);
+        int lastRow = (int)((drawScroll + winH) / lineH) + 1;
         if (firstRow < 0) firstRow = 0;
         if (lastRow > rows) lastRow = rows;
 
         char buf[16];
         for (int r = firstRow; r < lastRow; r++)
         {
-            const float y = origin.y + r * lineH;
+            const float y = drawTop + r * lineH;
 
             // Row background: beat highlight + cursor row.
             const bool firstOfBeat = (r % step) == 0;
