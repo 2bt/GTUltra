@@ -33,9 +33,9 @@ static bool g_imgui_ready = false;
 static bool g_show_demo = false; // toggleable ImGui reference/demo window
 
 // The four SID tables (wave/pulse/filter/speed), drawn as a custom ImDrawList
-// grid to match the pattern editor. Mirrors the legacy fixed window (14 rows
-// from each table's scroll offset etview[t]); cursor + Shift-selection shown the
-// same way as the pattern grid. Keyboard editing flows through the legacy table
+// grid to match the pattern editor: a fixed header over a scrolling body that
+// shows as many rows as fit the window (one shared vertical scroll, following
+// the active table's cursor). Keyboard editing flows through the legacy table
 // editor; clicking a cell places the cursor (see gtui::table_set_cursor).
 static void gimgui_draw_tables(void)
 {
@@ -56,7 +56,6 @@ static void gimgui_draw_tables(void)
     const ImU32 cHeader    = IM_COL32(180, 200, 220, 255);
 
     const int   tables  = gtui::table_count();
-    const int   visRows = gtui::table_visible_rows();
     const int   tlen    = gtui::table_len();
     const int   curTab  = gtui::table_cursor_table();
     const int   curPos  = gtui::table_cursor_pos();
@@ -71,57 +70,91 @@ static void gimgui_draw_tables(void)
     // Char offset of each cursor column within "II:LL RR": L hi/lo=3/4, R hi/lo=6/7.
     static const int colOff[4] = { 3, 4, 6, 7 };
 
-    ImDrawList *dl = ImGui::GetWindowDrawList();
-    const ImVec2 origin = ImGui::GetCursorScreenPos();
-
-    // Click a cell -> place the table cursor (keyboard editing via the legacy
-    // table editor). Row/column mapped from the click position.
-    if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+    // Fixed header (table names), above the scrolling body.
     {
-        const ImVec2 m = ImGui::GetIO().MousePos;
-        int d = (int)((m.y - origin.y) / lineH) - 1; // row 0 is the header line
-        float rx = m.x - origin.x;
-        int t = (int)(rx / tableW);
-        if (d >= 0 && d < visRows && t >= 0 && t < tables)
-        {
-            int off = (int)((rx - t * tableW) / charW);
-            int col = (off <= 3) ? 0 : (off == 4) ? 1 : (off <= 6) ? 2 : 3;
-            gtui::table_set_cursor(t, gtui::table_view(t) + d, col);
-        }
+        ImDrawList *hdl = ImGui::GetWindowDrawList();
+        ImVec2 hp = ImGui::GetCursorScreenPos();
+        for (int t = 0; t < tables; t++)
+            hdl->AddText(ImVec2(hp.x + t * tableW, hp.y), cHeader, gtui::table_name(t));
+        ImGui::Dummy(ImVec2(tables * tableW, lineH));
+        ImGui::Separator();
     }
 
-    char buf[16];
-    for (int t = 0; t < tables; t++)
+    ImGui::BeginChild("tabgrid", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
     {
-        const float tx = origin.x + t * tableW;
-        dl->AddText(ImVec2(tx, origin.y), cHeader, gtui::table_name(t));
+        ImDrawList *dl = ImGui::GetWindowDrawList();
+        const ImVec2 origin = ImGui::GetCursorScreenPos();
+        const float totalW = tables * tableW;
+        const float totalH = tlen * lineH;
+        ImGui::Dummy(ImVec2(totalW, totalH));
 
-        const int view = gtui::table_view(t);
-        for (int d = 0; d < visRows; d++)
+        const float winH = ImGui::GetWindowHeight();
+        const float curScroll = ImGui::GetScrollY();
+        const float contentTop = origin.y + curScroll;
+
+        // Follow the active table's cursor row (no one-frame lag; see the
+        // pattern grid for the same technique).
+        static int lastPos = -1, lastTab = -1;
+        float drawScroll = curScroll;
+        if (curPos != lastPos || curTab != lastTab)
         {
-            const int p = view + d;
-            if (p < 0 || p >= tlen)
-                continue;
-            const float y = origin.y + (d + 1) * lineH;
+            lastPos = curPos;
+            lastTab = curTab;
+            float maxScroll = totalH - winH;
+            if (maxScroll < 0) maxScroll = 0;
+            drawScroll = curPos * lineH - winH * 0.5f;
+            if (drawScroll < 0) drawScroll = 0;
+            if (drawScroll > maxScroll) drawScroll = maxScroll;
+            ImGui::SetScrollY(drawScroll);
+        }
+        const float drawTop = contentTop - drawScroll;
 
-            if (markTab == t && p >= markLo && p <= markHi)
-                dl->AddRectFilled(ImVec2(tx + charW * 3, y), ImVec2(tx + charW * 8, y + lineH), cSelect);
-            if (curTab == t && curPos == p)
+        // Click a cell -> place the table cursor.
+        if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+        {
+            const ImVec2 m = ImGui::GetIO().MousePos;
+            int p = (int)((m.y - drawTop) / lineH);
+            float rx = m.x - origin.x;
+            int t = (int)(rx / tableW);
+            if (p >= 0 && p < tlen && t >= 0 && t < tables)
             {
-                dl->AddRectFilled(ImVec2(tx, y), ImVec2(tx + charW * 8, y + lineH), cCursorRow);
-                float cs = tx + colOff[curCol < 0 ? 0 : (curCol > 3 ? 3 : curCol)] * charW;
-                dl->AddRectFilled(ImVec2(cs, y), ImVec2(cs + charW, y + lineH), cCursorFill);
-                dl->AddRect(ImVec2(cs, y), ImVec2(cs + charW, y + lineH), cCursorEdge);
+                int off = (int)((rx - t * tableW) / charW);
+                int col = (off <= 3) ? 0 : (off == 4) ? 1 : (off <= 6) ? 2 : 3;
+                gtui::table_set_cursor(t, p, col);
             }
+        }
 
-            snprintf(buf, sizeof buf, "%02X:", p + 1);
-            dl->AddText(ImVec2(tx, y), cIdx, buf);
-            snprintf(buf, sizeof buf, "%02X %02X", gtui::table_left(t, p), gtui::table_right(t, p));
-            dl->AddText(ImVec2(tx + charW * 3, y), cVal, buf);
+        int firstRow = (int)(drawScroll / lineH);
+        int lastRow = (int)((drawScroll + winH) / lineH) + 1;
+        if (firstRow < 0) firstRow = 0;
+        if (lastRow > tlen) lastRow = tlen;
+
+        char buf[16];
+        for (int r = firstRow; r < lastRow; r++)
+        {
+            const float y = drawTop + r * lineH;
+            for (int t = 0; t < tables; t++)
+            {
+                const float tx = origin.x + t * tableW;
+
+                if (markTab == t && r >= markLo && r <= markHi)
+                    dl->AddRectFilled(ImVec2(tx + charW * 3, y), ImVec2(tx + charW * 8, y + lineH), cSelect);
+                if (curTab == t && curPos == r)
+                {
+                    dl->AddRectFilled(ImVec2(tx, y), ImVec2(tx + charW * 8, y + lineH), cCursorRow);
+                    float cs = tx + colOff[curCol < 0 ? 0 : (curCol > 3 ? 3 : curCol)] * charW;
+                    dl->AddRectFilled(ImVec2(cs, y), ImVec2(cs + charW, y + lineH), cCursorFill);
+                    dl->AddRect(ImVec2(cs, y), ImVec2(cs + charW, y + lineH), cCursorEdge);
+                }
+
+                snprintf(buf, sizeof buf, "%02X:", r + 1);
+                dl->AddText(ImVec2(tx, y), cIdx, buf);
+                snprintf(buf, sizeof buf, "%02X %02X", gtui::table_left(t, r), gtui::table_right(t, r));
+                dl->AddText(ImVec2(tx + charW * 3, y), cVal, buf);
+            }
         }
     }
-
-    ImGui::Dummy(ImVec2(tables * tableW, (visRows + 1) * lineH));
+    ImGui::EndChild();
     ImGui::End();
 }
 
