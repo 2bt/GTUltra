@@ -38,36 +38,26 @@ void mou_getpos(unsigned *x, unsigned *y)
         return;
     }
 
-    // Map the OS pointer into the surface's (logical) coordinate space, matching
-    // the aspect-preserving letterboxed scale used to present the frame.
-    //
-    // We do this from the window size *in points* (SDL_GetWindowSize), which is
-    // the same coordinate space as the mouse events (SDL_MouseMotionEvent). This
-    // is deliberately NOT SDL_RenderWindowToLogical: that works in renderer
-    // output *pixels*, which differ from event points on HiDPI / scaled
-    // displays and would squash the pointer into a fraction of the window.
-    int ww = 0, wh = 0;
-    SDL_GetWindowSize(win_window, &ww, &wh);
     int lw = gfx_screen->w;
     int lh = gfx_screen->h;
-    if (ww <= 0 || wh <= 0 || lw <= 0 || lh <= 0)
-    {
-        *x = win_mousexpos;
-        *y = win_mouseypos;
-        return;
-    }
 
-    // Uniform scale that fits the logical frame in the window, plus the
-    // letterbox offset that centres it.
-    float scale = (float)ww / (float)lw;
-    float sy = (float)wh / (float)lh;
-    if (sy < scale) scale = sy;
+    // The frame is letterboxed onto the renderer OUTPUT (pixels) with this exact
+    // scale/offset (gfx_flip uses the same for the destination rect).
+    float scale = 1.0f, offx = 0.0f, offy = 0.0f;
+    gfx_get_view(&scale, &offx, &offy);
 
-    float offx = ((float)ww - (float)lw * scale) * 0.5f;
-    float offy = ((float)wh - (float)lh * scale) * 0.5f;
+    // SDL mouse events are in window coordinates (points); the letterbox above
+    // is in output pixels. Convert the pointer points -> output pixels using the
+    // output/window ratio, then invert the letterbox. Doing both sides in output
+    // pixels is what keeps the drawn cursor aligned on HiDPI / scaled displays.
+    int outW = 0, outH = 0, winW = 0, winH = 0;
+    SDL_GetRendererOutputSize(gfx_renderer, &outW, &outH);
+    SDL_GetWindowSize(win_window, &winW, &winH);
+    float px = (winW > 0) ? (float)win_mousexpos * (float)outW / (float)winW : (float)win_mousexpos;
+    float py = (winH > 0) ? (float)win_mouseypos * (float)outH / (float)winH : (float)win_mouseypos;
 
-    float lx = ((float)win_mousexpos - offx) / scale;
-    float ly = ((float)win_mouseypos - offy) / scale;
+    float lx = (px - offx) / scale;
+    float ly = (py - offy) / scale;
 
     // Clamp into the virtual area (the pointer may sit over letterbox bars).
     if (lx < 0.0f) lx = 0.0f;

@@ -12,6 +12,11 @@ void gfx_flip(void);
 // bot <= top means "nothing changed". If never called before a flip, the whole
 // surface is uploaded.
 void gfx_setdirtyrows(int top, int bot);
+
+// Aspect-preserving letterbox mapping of the virtual surface onto the renderer
+// output (pixels): drawn scaled by *scale, offset by (*offx, *offy). Used by
+// gfx_flip to place the frame and by mou_getpos to invert it for the pointer.
+void gfx_get_view(float *scale, float *offx, float *offy);
 void gfx_setclipregion(unsigned left, unsigned top, unsigned right, unsigned bottom);
 void gfx_setmaxspritefiles(int num);
 void gfx_setmaxcolors(int num);

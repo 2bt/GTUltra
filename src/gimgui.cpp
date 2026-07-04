@@ -44,14 +44,10 @@ extern "C" void gimgui_overlay_render(void)
 
     ImGui::Render();
 
-    // The legacy frame is drawn with a logical size (aspect-preserving scale).
-    // ImGui works in real window pixels, so disable logical scaling around its
-    // draw and restore it afterwards for the next legacy flip.
-    int logW = 0, logH = 0;
-    SDL_RenderGetLogicalSize(gfx_renderer, &logW, &logH);
-    SDL_RenderSetLogicalSize(gfx_renderer, 0, 0);
+    // The legacy frame is letterboxed via an explicit destination rect (no
+    // renderer logical size), so ImGui already draws across the full window in
+    // output pixels here.
     ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), gfx_renderer);
-    SDL_RenderSetLogicalSize(gfx_renderer, logW, logH);
 }
 
 // Called by bme (via bme_event_hook) for every polled SDL event.

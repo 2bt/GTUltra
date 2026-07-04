@@ -158,12 +158,11 @@ int gfx_init(unsigned xsize, unsigned ysize, unsigned framerate, unsigned flags)
 
 
 	gfx_renderer = SDL_CreateRenderer(win_window, -1, sdlflags);
-	// Let SDL scale the virtual (xsize*ysize) frame to the window/fullscreen
-	// while preserving aspect ratio (letterboxed). This keeps the picture from
-	// stretching wide in fullscreen and, together with SDL_RenderWindowToLogical
-	// (see mou_getpos), keeps the drawn mouse cursor aligned with the OS pointer.
-	if (gfx_renderer)
-		SDL_RenderSetLogicalSize(gfx_renderer, xsize, ysize);
+	// Note: we deliberately do NOT use SDL_RenderSetLogicalSize. The frame is
+	// letterboxed by an explicit destination rect computed in renderer OUTPUT
+	// pixels (see gfx_get_view / gfx_flip), and mou_getpos maps the pointer with
+	// that same rect. Using one shared mapping guarantees the drawn cursor and
+	// the OS pointer agree at any window size / fullscreen / display scale.
 	gfx_screen = SDL_CreateRGBSurfaceWithFormat(0, xsize, ysize, 8, SDL_PIXELFORMAT_INDEX8);
 	sdlTexture = SDL_CreateTexture(gfx_renderer,
 		SDL_PIXELFORMAT_RGBA32,
@@ -239,6 +238,30 @@ void gfx_setdirtyrows(int top, int bot)
 	gfx_dirty_bot = bot;
 }
 
+// The aspect-preserving letterbox mapping of the virtual surface onto the
+// renderer's OUTPUT (in pixels): the surface is drawn scaled by *scale and
+// offset by (*offx, *offy). gfx_flip renders with this exact rect and
+// mou_getpos inverts it, so the picture and the pointer always agree.
+void gfx_get_view(float *scale, float *offx, float *offy)
+{
+	int outW = 0, outH = 0;
+	if (gfx_renderer)
+		SDL_GetRendererOutputSize(gfx_renderer, &outW, &outH);
+	int sw = gfx_screen ? gfx_screen->w : 1;
+	int sh = gfx_screen ? gfx_screen->h : 1;
+	if (sw <= 0) sw = 1;
+	if (sh <= 0) sh = 1;
+
+	float sx = (float)outW / (float)sw;
+	float sy = (float)outH / (float)sh;
+	float s = sx < sy ? sx : sy;
+	if (s <= 0.0f) s = 1.0f;
+
+	*scale = s;
+	*offx = ((float)outW - (float)sw * s) * 0.5f;
+	*offy = ((float)outH - (float)sh * s) * 0.5f;
+}
+
 void gfx_flip()
 {
 	int w = gfx_screen->w;
@@ -293,8 +316,18 @@ void gfx_flip()
 			SDL_UpdateTexture(sdlTexture, &rect, gfx_convbuf, w * 4);
 		}
 	}
+	// Letterbox the surface into the output with an explicit destination rect
+	// (see gfx_get_view). RenderClear paints the black bars.
+	float vs, vox, voy;
+	gfx_get_view(&vs, &vox, &voy);
+	SDL_Rect dst;
+	dst.x = (int)vox;
+	dst.y = (int)voy;
+	dst.w = (int)((float)w * vs);
+	dst.h = (int)((float)h * vs);
+
 	SDL_RenderClear(gfx_renderer);
-	SDL_RenderCopy(gfx_renderer, sdlTexture, NULL, NULL);
+	SDL_RenderCopy(gfx_renderer, sdlTexture, NULL, &dst);
 	if (bme_overlay_render_hook)
 		bme_overlay_render_hook();
 	SDL_RenderPresent(gfx_renderer);
