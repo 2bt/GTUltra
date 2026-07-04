@@ -80,7 +80,7 @@ char copiedPalette[3][MAX_PALETTE_ENTRIES];
 int copyFlag = 0;
 struct dirent *paletteFolderEntry;
 
-char *paletteNames[16];
+std::array<std::string, MAX_PALETTE_PRESETS> paletteNames;
 
 int allowPaletteQuickSave = 0;
 
@@ -430,9 +430,9 @@ void displayPaletteEditorWindow(GTOBJECT *gt)
 		sprintf(textbuffer, "Palette:%d/%d", currentPalettePreset, (MAX_PALETTE_PRESETS - 1));
 		printtext(boxX + 2, boxY + 2, getColor(boxColor, 0), textbuffer);
 
-		if (paletteNames[currentPalettePreset] != NULL)
+		if (!paletteNames[currentPalettePreset].empty())
 		{
-			sprintf(textbuffer, "%s", paletteNames[currentPalettePreset]);
+			sprintf(textbuffer, "%s", paletteNames[currentPalettePreset].c_str());
 		}
 		else
 			sprintf(textbuffer, "<Undefined>");
@@ -615,12 +615,8 @@ int loadPalette(char *palettePath,char *paletteFileName)
 
 void setPaletteName(char* paletteName, int index)
 {
-	if (paletteNames[index] != NULL)
-	{
-		free(paletteNames[index]);
-	}
-	paletteNames[index] = malloc(strlen(paletteName) + 1);
-	strcpy(paletteNames[index], paletteName);	// copy filename. This is saved in the cfg file as the one to start up with
+	// Saved in the cfg file as the palette to start up with.
+	paletteNames[index] = paletteName;
 }
 
 int readPaletteData(char *paletteMem, char *paletteName)

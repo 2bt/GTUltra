@@ -247,13 +247,9 @@ int main(int argc, char** argv)
 
 
 	// First, load the default palette and fill all 16 slots with it
+	// (paletteNames slots default to empty strings = undefined.)
 	currentLoadedPresetIndex = 0;
 	int maxPresetPalettes = 9;
-
-	for (int i = 0;i < maxPresetPalettes;i++)
-	{
-		paletteNames[i] = NULL;
-	}
 
 	for (int i = 0;i < maxPresetPalettes;i++)
 	{
@@ -612,7 +608,7 @@ int main(int argc, char** argv)
 	currentPalettePreset = 0;
 	for (int i = 0;i < MAX_PALETTE_PRESETS;i++)
 	{
-		if (!strcmp(startPaletteName, paletteNames[i]))
+		if (paletteNames[i] == startPaletteName)
 		{
 			currentPalettePreset = i;
 			break;
@@ -950,7 +946,7 @@ int main(int argc, char** argv)
 			specialnotenames,
 			scalatuningfilepath,
 			editorInfo.maxSIDChannels,
-			paletteNames[currentPalettePreset],
+			paletteNames[currentPalettePreset].c_str(),
 			masterVolume,
 			detuneCent,
 			enablekeyrepeat,
