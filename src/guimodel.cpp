@@ -40,4 +40,25 @@ unsigned table_right(int t, int row)
     return rtable[t][row];
 }
 
+void table_set(int t, int row, int col, unsigned value)
+{
+    if (t < 0 || t >= MAX_TABLES || row < 0 || row >= MAX_TABLELEN) return;
+
+    unsigned char v = (unsigned char)(value & 0xff);
+    unsigned char *cell = (col == 0) ? &ltable[t][row] : &rtable[t][row];
+    if (*cell == v) return; // nothing changed -> no undo entry
+
+    // Same bracket the legacy editor uses for table edits (see docommand):
+    // snapshot editor + the left/right table areas, mutate, then let the undo
+    // system record the diff (or discard the object if nothing changed).
+    GTUNDO_OBJECT *ed = undoCreateEditorInfo();
+    undoAreaSetCheckForChange(UNDO_AREA_TABLES + t, 0, UNDO_AREA_DIRTY_CHECK);
+    undoAreaSetCheckForChange(UNDO_AREA_TABLES + t, 1, UNDO_AREA_DIRTY_CHECK);
+
+    *cell = v;
+
+    if (undoValidateUndoAreas(ed) == 0)
+        undoFreeUndoObject(ed);
+}
+
 } // namespace gtui

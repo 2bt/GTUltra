@@ -54,24 +54,46 @@ static void gimgui_draw_tables(void)
         if (t)
             ImGui::SameLine();
 
-        ImGui::BeginChild(gtui::table_name(t), ImVec2(92, 320), true);
+        ImGui::BeginChild(gtui::table_name(t), ImVec2(132, 320), true);
         ImGui::TextUnformatted(gtui::table_name(t));
         ImGui::Separator();
 
-        // 255 rows * 4 tables per frame - clip to the visible ones.
+        const float cellW = ImGui::CalcTextSize("0000").x;
+        const ImGuiInputTextFlags hexFlags =
+            ImGuiInputTextFlags_CharsHexadecimal | ImGuiInputTextFlags_CharsUppercase |
+            ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll;
+
+        // 255 rows * 4 tables per frame - clip to the visible ones. Each value
+        // is a hex field; committing (Enter) writes back through gtui::table_set
+        // so the edit goes through the legacy undo system.
         ImGuiListClipper clipper;
         clipper.Begin(rows);
         while (clipper.Step())
         {
             for (int r = clipper.DisplayStart; r < clipper.DisplayEnd; r++)
             {
+                ImGui::PushID(r);
                 const bool atCursor = (t == cursorTable && r == cursorPos);
                 if (atCursor)
                     ImGui::PushStyleColor(ImGuiCol_Text, cursorCol);
-                ImGui::Text("%02X:%02X %02X", r + 1,
-                            gtui::table_left(t, r), gtui::table_right(t, r));
+                ImGui::Text("%02X:", r + 1);
                 if (atCursor)
                     ImGui::PopStyleColor();
+
+                unsigned char l = (unsigned char)gtui::table_left(t, r);
+                unsigned char rt = (unsigned char)gtui::table_right(t, r);
+
+                ImGui::SameLine();
+                ImGui::SetNextItemWidth(cellW);
+                if (ImGui::InputScalar("##l", ImGuiDataType_U8, &l, NULL, NULL, "%02X", hexFlags))
+                    gtui::table_set(t, r, 0, l);
+
+                ImGui::SameLine();
+                ImGui::SetNextItemWidth(cellW);
+                if (ImGui::InputScalar("##r", ImGuiDataType_U8, &rt, NULL, NULL, "%02X", hexFlags))
+                    gtui::table_set(t, r, 1, rt);
+
+                ImGui::PopID();
             }
         }
         ImGui::EndChild();

@@ -25,6 +25,11 @@ int         table_cursor_pos();     // cursor row within its table
 unsigned    table_left(int t, int row);   // left/value byte
 unsigned    table_right(int t, int row);  // right/arg byte
 
+// Write one table byte (col 0 = left, 1 = right), routed through the legacy
+// undo system so it participates in Ctrl-Z like a native edit. No-op if the
+// value is unchanged or the indices are out of range.
+void        table_set(int t, int row, int col, unsigned value);
+
 } // namespace gtui
 
 #endif
