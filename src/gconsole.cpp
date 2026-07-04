@@ -475,6 +475,10 @@ void fliptoscreen(void)
 
 	int x, y;
 	int regionschanged = 0;
+	// Track the range of text rows that actually changed this frame, so the
+	// flip only re-converts/uploads those rows to the GPU texture (see
+	// gfx_setdirtyrows / gfx_flip). dbot < dtop means "nothing changed".
+	int dtop = MAX_ROWS, dbot = -1;
 
 	if (!gfxinitted) return;
 
@@ -525,6 +529,8 @@ void fliptoscreen(void)
 
 				region[y] = 1;
 				regionschanged = 1;
+				if (y < dtop) dtop = y;
+				if (y > dbot) dbot = y;
 
 				{
 
@@ -747,11 +753,19 @@ void fliptoscreen(void)
 		gfx_drawsprite(mousepixelx, mousepixely, 0x1);
 		for (y = sy; y <= ey; y++)
 			region[y] = 1;
+		if (sy < dtop) dtop = sy;
+		if (ey > dbot) dbot = ey;
 	}
 
 	// Store current mouse position as old
 	oldmousepixelx = mousepixelx;
 	oldmousepixely = mousepixely;
+
+	// Tell the flip which pixel rows changed so it only uploads those.
+	if (dbot >= dtop)
+		gfx_setdirtyrows(dtop * fontheight, (dbot + 1) * fontheight);
+	else
+		gfx_setdirtyrows(0, 0); // nothing changed
 
 	// Redraw changed screen regions
 	gfx_unlock();
@@ -793,10 +807,9 @@ void getkey(void)
 
 	prevmouseb = mouseb;
 
+	// mou_getpos already returns coordinates in the renderer's logical (virtual)
+	// space via SDL_RenderWindowToLogical, so no manual window-scale is needed.
 	mou_getpos(&mousepixelx, &mousepixely);
-
-	mousepixelx = (float)mousepixelx*xmouseScale;	// xmouseScale changes if user modifies size of window
-	mousepixely = (float)mousepixely*ymouseScale;
 
 	mouseb = mou_getbuttons();
 	mousex = mousepixelx / fontwidth;

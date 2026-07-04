@@ -75,6 +75,11 @@ static SDL_Color gfx_sdlpalette[MAX_COLORS];
 static int gfx_locked = 0;
 static SDL_Texture *sdlTexture = NULL;
 
+// Reusable INDEX8 -> RGBA32 conversion buffer (sized to the full surface once),
+// so the per-frame full-surface SDL_ConvertSurfaceFormat allocation is gone.
+static Uint8 *gfx_convbuf = NULL;
+static int gfx_convbuf_size = 0;
+
 void gfx_resize(unsigned int xsize, unsigned int ysize)
 {
 	return;
@@ -153,6 +158,12 @@ int gfx_init(unsigned xsize, unsigned ysize, unsigned framerate, unsigned flags)
 
 
 	gfx_renderer = SDL_CreateRenderer(win_window, -1, sdlflags);
+	// Let SDL scale the virtual (xsize*ysize) frame to the window/fullscreen
+	// while preserving aspect ratio (letterboxed). This keeps the picture from
+	// stretching wide in fullscreen and, together with SDL_RenderWindowToLogical
+	// (see mou_getpos), keeps the drawn mouse cursor aligned with the OS pointer.
+	if (gfx_renderer)
+		SDL_RenderSetLogicalSize(gfx_renderer, xsize, ysize);
 	gfx_screen = SDL_CreateRGBSurfaceWithFormat(0, xsize, ysize, 8, SDL_PIXELFORMAT_INDEX8);
 	sdlTexture = SDL_CreateTexture(gfx_renderer,
 		SDL_PIXELFORMAT_RGBA32,
@@ -181,6 +192,9 @@ void gfx_uninit(void)
 	SDL_DestroyTexture(sdlTexture);
 	SDL_FreeSurface(gfx_screen);
 	SDL_DestroyRenderer(gfx_renderer);
+	free(gfx_convbuf);
+	gfx_convbuf = NULL;
+	gfx_convbuf_size = 0;
 	gfx_initted = 0;
 	return;
 }
@@ -211,11 +225,74 @@ void gfx_unlock(void)
 // C function pointer so bme stays free of any C++/ImGui dependency.
 void (*bme_overlay_render_hook)(void) = 0;
 
+// Dirty pixel-row band for the next flip, set by the caller (see
+// gfx_setdirtyrows / fliptoscreen). gfx_dirty_set == 0 means "caller didn't say"
+// -> convert the whole surface (safe default for any other gfx_flip caller).
+static int gfx_dirty_set = 0;
+static int gfx_dirty_top = 0;
+static int gfx_dirty_bot = 0;
+
+void gfx_setdirtyrows(int top, int bot)
+{
+	gfx_dirty_set = 1;
+	gfx_dirty_top = top;
+	gfx_dirty_bot = bot;
+}
+
 void gfx_flip()
 {
-	SDL_Surface* surf = SDL_ConvertSurfaceFormat(gfx_screen, SDL_PIXELFORMAT_RGBA32, 0);
-	SDL_UpdateTexture(sdlTexture, NULL, surf->pixels, surf->pitch);
-	SDL_FreeSurface(surf);
+	int w = gfx_screen->w;
+	int h = gfx_screen->h;
+	int pitch = gfx_screen->pitch;
+
+	// Resolve which rows to (re)upload this frame.
+	int y0 = 0, y1 = h, skip = 0;
+	if (gfx_dirty_set)
+	{
+		if (gfx_dirty_bot <= gfx_dirty_top)
+			skip = 1;                       // nothing changed
+		else
+		{
+			y0 = gfx_dirty_top < 0 ? 0 : gfx_dirty_top;
+			y1 = gfx_dirty_bot > h ? h : gfx_dirty_bot;
+		}
+	}
+	gfx_dirty_set = 0;
+
+	if (!skip)
+	{
+		int rows = y1 - y0;
+		int need = w * rows * 4;
+		if (need > gfx_convbuf_size)
+		{
+			free(gfx_convbuf);
+			gfx_convbuf = malloc(need);
+			gfx_convbuf_size = gfx_convbuf ? need : 0;
+		}
+		if (gfx_convbuf)
+		{
+			// Convert only the dirty rows INDEX8 -> RGBA32 (byte order R,G,B,A)
+			// using the surface palette, then upload just that sub-rectangle.
+			const SDL_Color *pal = gfx_screen->format->palette->colors;
+			const Uint8 *src = (const Uint8 *)gfx_screen->pixels;
+			Uint8 *dst = gfx_convbuf;
+			int x, y;
+			for (y = y0; y < y1; y++)
+			{
+				const Uint8 *s = src + y * pitch;
+				for (x = 0; x < w; x++)
+				{
+					const SDL_Color c = pal[s[x]];
+					*dst++ = c.r;
+					*dst++ = c.g;
+					*dst++ = c.b;
+					*dst++ = 255;
+				}
+			}
+			SDL_Rect rect = { 0, y0, w, rows };
+			SDL_UpdateTexture(sdlTexture, &rect, gfx_convbuf, w * 4);
+		}
+	}
 	SDL_RenderClear(gfx_renderer);
 	SDL_RenderCopy(gfx_renderer, sdlTexture, NULL, NULL);
 	if (bme_overlay_render_hook)
@@ -629,5 +706,8 @@ void gfx_setPaletteRGB(int index, int r, int g, int b)
 	gfx_sdlpalette[index].b = b;
 
 	gfx_setpalette();
+	// A palette change affects every row, so force a full re-convert on the
+	// next flip (the dirty-row upload only re-converts changed rows otherwise).
+	gfx_redraw = 1;
 }
 

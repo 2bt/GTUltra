@@ -8,6 +8,10 @@ void gfx_uninit(void);
 int gfx_lock(void);
 void gfx_unlock(void);
 void gfx_flip(void);
+// Restrict the next gfx_flip's texture upload to pixel rows [top, bot).
+// bot <= top means "nothing changed". If never called before a flip, the whole
+// surface is uploaded.
+void gfx_setdirtyrows(int top, int bot);
 void gfx_setclipregion(unsigned left, unsigned top, unsigned right, unsigned bottom);
 void gfx_setmaxspritefiles(int num);
 void gfx_setmaxcolors(int num);

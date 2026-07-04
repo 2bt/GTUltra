@@ -65,7 +65,8 @@ float originalHeight;
 
 int win_openwindow(unsigned xsize, unsigned ysize, char *appname, char *icon, int enableAntiAlias)
 {
-	Uint32 flags = win_fullscreen ? SDL_WINDOW_FULLSCREEN : SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN;	// Enable resizable window
+	Uint32 flags = win_fullscreen ? (SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_SHOWN)
+	                              : (SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN);
 
 	xscale = (float)xsize / (float)ysize;
 
@@ -212,15 +213,10 @@ void win_checkmessages(void)
 			break;
 
 		case SDL_WINDOWEVENT:
-
-			if (event.window.event == SDL_WINDOWEVENT_RESIZED) {
-				float xsize = (float)event.window.data2*xscale;
-				SDL_SetWindowSize(win_window, xsize, event.window.data2);
-				gfx_resize(xsize, event.window.data2);
-
-				xmouseScale = originalWidth / xsize;
-				ymouseScale = originalHeight / (float)event.window.data2;
-			}
+			// The renderer's logical size handles aspect-preserving scaling and
+			// letterboxing on resize, so no manual window resizing / mouse
+			// rescaling is needed here.
+			break;
 
 		case SDL_JOYBUTTONDOWN:
 			joybuttons[event.jbutton.which] |= 1 << event.jbutton.button;
@@ -309,7 +305,10 @@ void win_checkmessages(void)
 					if ((keynum == SDL_SCANCODE_RETURN) && ((win_keystate[SDL_SCANCODE_LALT]) || (win_keystate[SDL_SCANCODE_RALT])))
 					{
 						win_fullscreen ^= 1;
-						gfx_reinit();
+						// Desktop fullscreen (no video-mode change); the
+						// renderer's logical size letterboxes the frame to fit.
+						SDL_SetWindowFullscreen(win_window,
+							win_fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
 					}
 				}
 			}
