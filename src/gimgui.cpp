@@ -38,6 +38,8 @@ static bool g_show_demo = false; // toggleable ImGui reference/demo window
 // per-cell rendering that the editable panels will build on.
 static void gimgui_draw_tables(void)
 {
+    ImGui::SetNextWindowPos(ImVec2(8, 330), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(560, 236), ImGuiCond_FirstUseEver);
     if (!ImGui::Begin("SID Tables"))
     {
         ImGui::End();
@@ -102,6 +104,137 @@ static void gimgui_draw_tables(void)
     ImGui::End();
 }
 
+// Read-only pattern grid (M4 first cut): a custom ImDrawList grid, following
+// Furnace's approach - fixed monospace metrics, virtualized to the visible rows,
+// per-field coloring. Reads live model state via guimodel; editing comes later.
+static void gimgui_draw_pattern(void)
+{
+    ImGui::SetNextWindowPos(ImVec2(8, 24), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(430, 300), ImGuiCond_FirstUseEver);
+    if (!ImGui::Begin("Pattern"))
+    {
+        ImGui::End();
+        return;
+    }
+
+    // Colors (hardcoded for now; the theme system is M7).
+    const ImU32 cBeat1    = IM_COL32(255, 255, 255, 16);
+    const ImU32 cBeat2    = IM_COL32(255, 255, 255, 32);
+    const ImU32 cCursorRow= IM_COL32(64, 110, 190, 90);
+    const ImU32 cCursorChn= IM_COL32(255, 232, 0, 40);
+    const ImU32 cRowNum   = IM_COL32(120, 140, 160, 255);
+    const ImU32 cRowNumHi = IM_COL32(210, 210, 130, 255);
+    const ImU32 cNote     = IM_COL32(224, 230, 238, 255);
+    const ImU32 cInstr    = IM_COL32(120, 205, 120, 255);
+    const ImU32 cCmd      = IM_COL32(235, 180, 90, 255);
+    const ImU32 cDots     = IM_COL32(85, 95, 108, 255);
+    const ImU32 cHeader   = IM_COL32(180, 200, 220, 255);
+    const ImU32 cEnd      = IM_COL32(150, 160, 175, 255);
+
+    const int   chans = gtui::pattern_channels();
+    const int   rows  = gtui::pattern_rows();
+    const int   step  = gtui::pattern_step() > 0 ? gtui::pattern_step() : 4;
+    const int   curRow = gtui::pattern_cursor_row();
+    const int   curChn = gtui::pattern_cursor_chn();
+
+    const float charW = ImGui::CalcTextSize("0").x;
+    const float lineH = ImGui::GetTextLineHeight();
+    const float rowNumW = charW * 4.0f;   // "999 "
+    const float chanW   = charW * 9.0f;   // "NOTEIIcDD" + gutter
+
+    // Column headers (fixed, above the scrolling body).
+    {
+        ImDrawList *hdl = ImGui::GetWindowDrawList();
+        ImVec2 hp = ImGui::GetCursorScreenPos();
+        char hbuf[32];
+        for (int c = 0; c < chans; c++)
+        {
+            snprintf(hbuf, sizeof hbuf, "CH%X %02X", gtui::pattern_actual_channel(c),
+                     gtui::pattern_number(c));
+            hdl->AddText(ImVec2(hp.x + rowNumW + c * chanW, hp.y), cHeader, hbuf);
+        }
+        ImGui::Dummy(ImVec2(rowNumW + chans * chanW, lineH));
+        ImGui::Separator();
+    }
+
+    ImGui::BeginChild("patgrid", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
+    {
+        ImDrawList *dl = ImGui::GetWindowDrawList();
+        const ImVec2 origin = ImGui::GetCursorScreenPos(); // accounts for scroll
+        const float totalW = rowNumW + chans * chanW;
+        const float totalH = rows * lineH;
+        ImGui::Dummy(ImVec2(totalW, totalH)); // reserve scroll region
+
+        // Keep the edit cursor in view (mirrors the legacy always-centered view).
+        static int lastCur = -1;
+        if (curRow != lastCur)
+        {
+            lastCur = curRow;
+            float target = curRow * lineH - ImGui::GetWindowHeight() * 0.5f;
+            if (target < 0) target = 0;
+            ImGui::SetScrollY(target);
+        }
+
+        const float scrollY = ImGui::GetScrollY();
+        const float winH = ImGui::GetWindowHeight();
+        int firstRow = (int)(scrollY / lineH);
+        int lastRow = (int)((scrollY + winH) / lineH) + 1;
+        if (firstRow < 0) firstRow = 0;
+        if (lastRow > rows) lastRow = rows;
+
+        char buf[16];
+        for (int r = firstRow; r < lastRow; r++)
+        {
+            const float y = origin.y + r * lineH;
+
+            // Row background: beat highlight + cursor row.
+            const bool firstOfBeat = (r % step) == 0;
+            const bool secondBeat = (r % (step * 2)) < step;
+            ImU32 bg = 0;
+            if (secondBeat) bg = firstOfBeat ? cBeat2 : cBeat1;
+            else if (firstOfBeat) bg = cBeat1;
+            if (bg)
+                dl->AddRectFilled(ImVec2(origin.x, y), ImVec2(origin.x + totalW, y + lineH), bg);
+            if (r == curRow)
+                dl->AddRectFilled(ImVec2(origin.x, y), ImVec2(origin.x + totalW, y + lineH), cCursorRow);
+
+            // Row number.
+            snprintf(buf, sizeof buf, "%3d", r);
+            dl->AddText(ImVec2(origin.x, y), firstOfBeat ? cRowNumHi : cRowNum, buf);
+
+            // Channels.
+            for (int c = 0; c < chans; c++)
+            {
+                const float cx = origin.x + rowNumW + c * chanW;
+                if (c == curChn)
+                    dl->AddRectFilled(ImVec2(cx - charW * 0.25f, y),
+                                      ImVec2(cx + charW * 8.5f, y + lineH), cCursorChn);
+
+                gtui::PatCell cell = gtui::pattern_cell(c, r);
+                if (!cell.valid)
+                    continue;
+                if (cell.end)
+                {
+                    dl->AddText(ImVec2(cx, y), cEnd, "===");
+                    continue;
+                }
+
+                // Note (3 chars); dim an empty (REST) note like the legacy view.
+                const bool emptyNote = (cell.note[0] == '.');
+                dl->AddText(ImVec2(cx, y), emptyNote ? cDots : cNote, cell.note);
+                // Instrument (2 chars) or dots.
+                if (cell.instr) { snprintf(buf, sizeof buf, "%02X", cell.instr); dl->AddText(ImVec2(cx + charW * 3, y), cInstr, buf); }
+                else            { dl->AddText(ImVec2(cx + charW * 3, y), cDots, ".."); }
+                // Command nibble + data byte (3 chars) or dots.
+                if (cell.cmd)   { snprintf(buf, sizeof buf, "%01X%02X", cell.cmd, cell.data); dl->AddText(ImVec2(cx + charW * 5, y), cCmd, buf); }
+                else            { dl->AddText(ImVec2(cx + charW * 5, y), cDots, "..."); }
+            }
+        }
+    }
+    ImGui::EndChild();
+    ImGui::End();
+}
+
 // Called by bme (via bme_overlay_render_hook) between its RenderCopy and its
 // RenderPresent, i.e. on top of the freshly-drawn legacy frame.
 extern "C" void gimgui_overlay_render(void)
@@ -123,6 +256,7 @@ extern "C" void gimgui_overlay_render(void)
         ImGui::EndMainMenuBar();
     }
 
+    gimgui_draw_pattern();
     gimgui_draw_tables();
     if (g_show_demo)
         ImGui::ShowDemoWindow(&g_show_demo);

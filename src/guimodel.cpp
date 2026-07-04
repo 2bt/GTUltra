@@ -61,4 +61,80 @@ void table_set(int t, int row, int col, unsigned value)
         undoFreeUndoObject(ed);
 }
 
+// ---- pattern editor ----
+
+static int pattern_num_for(int ch)
+{
+    int c2 = getActualChannel(editorInfo.esnum, ch);
+    return gtObject.editorUndoInfo.editorInfo[c2].epnum;
+}
+
+int pattern_channels()
+{
+    // Mirror displayPattern6Chn: 3 channels for a 3-SID subtune, else 6.
+    if ((editorInfo.esnum & 1 && editorInfo.maxSIDChannels == 9) ||
+        editorInfo.maxSIDChannels == 3)
+        return 3;
+    return MAX_CHN;
+}
+
+int pattern_actual_channel(int ch) { return getActualChannel(editorInfo.esnum, ch); }
+
+int pattern_length(int ch)
+{
+    int pnum = pattern_num_for(ch);
+    if (pnum < 0 || pnum >= MAX_PATT) return 0;
+    return pattlen[pnum];
+}
+
+int pattern_rows()
+{
+    int maxlen = 0;
+    int chans = pattern_channels();
+    for (int c = 0; c < chans; c++)
+    {
+        int len = pattern_length(c);
+        if (len > maxlen) maxlen = len;
+    }
+    if (maxlen > MAX_PATTROWS) maxlen = MAX_PATTROWS;
+    return maxlen + 1; // include the PATT.END row
+}
+
+int pattern_step() { return stepsize; }
+int pattern_cursor_row() { return editorInfo.eppos; }
+int pattern_cursor_chn() { return editorInfo.epchn; }
+int pattern_cursor_col() { return editorInfo.epcolumn; }
+int pattern_number(int ch) { return pattern_num_for(ch); }
+
+PatCell pattern_cell(int ch, int row)
+{
+    PatCell c;
+    c.note = "";
+    c.instr = 0;
+    c.cmd = 0;
+    c.data = 0;
+    c.end = false;
+    c.valid = false;
+
+    int pnum = pattern_num_for(ch);
+    if (pnum < 0 || pnum >= MAX_PATT) return c;
+    if (row < 0 || row > pattlen[pnum]) return c;
+
+    const unsigned char *cell = &pattern[pnum][row * 4];
+    c.valid = true;
+    if (cell[0] == ENDPATT)
+    {
+        c.end = true;
+        return c;
+    }
+
+    int n = (int)cell[0] - FIRSTNOTE;
+    if (n < 0 || n >= 12 * 8) n = 12 * 8 - 3; // clamp to "..." on odd data
+    c.note = notename[n];
+    c.instr = cell[1];
+    c.cmd = cell[2];
+    c.data = cell[3];
+    return c;
+}
+
 } // namespace gtui

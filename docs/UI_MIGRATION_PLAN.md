@@ -225,6 +225,18 @@ foundation the config keymap needs later).
   QWERTY jamming) into their own per-frame update calls.
 
 ### M4 — Pattern grid (the crux)
+
+> **Status: read-only grid landed.** Custom `ImDrawList` "Pattern" window:
+> monospace metrics (`CalcTextSize`), row virtualization, per-field coloring
+> (note/instr/cmd, dimmed REST + dots for empty fields), beat-row + cursor-row +
+> cursor-channel highlighting, `===` for ENDPATT, auto-follows the edit cursor.
+> Reads live model via new `guimodel` pattern accessors (`pattern_cell`,
+> channel/cursor/step queries; note-name decode via the legacy `notename`
+> table). Verified against the legacy view (headers `CH0 0A/CH1 0C/CH2 0B`,
+> row 0 `C-2 01 F07` / `C-3 0F 105`). Still to do: keyboard cursor movement +
+> editing (note/hex entry) writing back through `guimodel` with undo, then
+> re-skin the SID Tables with this same grid widget.
+
 Goal: a real ImGui pattern editor replacing the legacy pattern panel.
 Follow Furnace's `drawPattern()` recipe (`src/gui/pattern.cpp`):
 - One window with `ImGuiWindowFlags_HorizontalScrollbar`; draw everything on

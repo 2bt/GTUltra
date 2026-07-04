@@ -30,6 +30,30 @@ unsigned    table_right(int t, int row);  // right/arg byte
 // value is unchanged or the indices are out of range.
 void        table_set(int t, int row, int col, unsigned value);
 
+// ---- pattern editor (read-only for now) ----
+
+// One decoded pattern cell. note points into a static name table (valid until
+// process exit); "" when the row is outside the pattern.
+struct PatCell {
+    const char *note;   // 3-char note name ("C-4", "...", "---", "+++"), "" if invalid
+    int  instr;         // instrument byte, 0 = empty
+    int  cmd;           // command nibble, 0 = empty
+    int  data;          // data byte
+    bool end;           // true = ENDPATT marker row
+    bool valid;         // row within this channel's pattern
+};
+
+int  pattern_channels();       // visible channel count (3 or 6)
+int  pattern_rows();           // rows to render (max pattern length across channels)
+int  pattern_step();           // beat-highlight step
+int  pattern_cursor_row();     // edit cursor row (eppos)
+int  pattern_cursor_chn();     // edit cursor channel (display index, epchn)
+int  pattern_cursor_col();     // edit cursor column within the cell (epcolumn)
+int  pattern_number(int ch);   // pattern index shown in display channel ch
+int  pattern_length(int ch);   // pattern length of that pattern
+int  pattern_actual_channel(int ch); // legacy channel number for the header
+PatCell pattern_cell(int ch, int row);
+
 } // namespace gtui
 
 #endif
