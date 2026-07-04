@@ -11,6 +11,8 @@
 
 #include <SDL.h>
 
+#include <cstdio>
+
 #include "imgui.h"
 #include "backends/imgui_impl_sdl2.h"
 #include "backends/imgui_impl_sdlrenderer2.h"
@@ -31,7 +33,6 @@ extern "C" {
 
 static bool g_imgui_ready = false;
 static bool g_show_demo = false;    // toggleable ImGui reference/demo window
-static bool g_reset_layout = false; // one-shot: snap panels back to defaults
 
 // Reusable scaffold for a scrolling, virtualized monospace grid body (used by
 // the pattern editor and each SID table). Handles the child window, content
@@ -156,18 +157,59 @@ static void gimgui_draw_one_table(int t, float colW, float charW, float lineH)
     ImGui::EndChild();
 }
 
+// Accent/section colours for the fixed tracker layout (theme system is M7).
+static const ImU32 kAppBg      = IM_COL32(18, 20, 24, 255);   // gutter/background
+static const ImU32 kHeaderBg   = IM_COL32(38, 66, 104, 255);
+static const ImU32 kHeaderTx   = IM_COL32(224, 234, 246, 255);
+
+// Fixed, non-floating panel. Positioned/sized every frame to tile the app
+// window (no title bar, no move/resize) so the UI reads as one cohesive tracker
+// rather than a set of ImGui windows. Draws an edge-to-edge section header.
+// Returns true when the body should be drawn (caller must still call End()).
+static bool gimgui_begin_panel(const char *title, ImVec2 pos, ImVec2 size)
+{
+    ImGui::SetNextWindowPos(pos);
+    ImGui::SetNextWindowSize(size);
+    const ImGuiWindowFlags flags =
+        ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove |
+        ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse |
+        ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
+    bool open = ImGui::Begin(title, nullptr, flags);
+    ImGui::PopStyleVar();
+    if (!open)
+        return false;
+
+    // Edge-to-edge header bar with the section name (window padding is 0, so
+    // window coords == content coords).
+    ImDrawList *dl = ImGui::GetWindowDrawList();
+    const ImVec2 wp = ImGui::GetWindowPos();
+    const float ww = ImGui::GetWindowSize().x;
+    const float hpad = 6.0f;
+    const float hh = ImGui::GetTextLineHeight() + hpad * 2.0f;
+    dl->AddRectFilled(wp, ImVec2(wp.x + ww, wp.y + hh), kHeaderBg);
+    dl->AddText(ImVec2(wp.x + hpad, wp.y + hpad), kHeaderTx, title);
+
+    // Inset the body below the header, with a small left/top gutter.
+    ImGui::SetCursorPos(ImVec2(hpad, hh + 4.0f));
+    return true;
+}
+
+static void gimgui_end_panel(void)
+{
+    ImGui::End();
+}
+
 // The four SID tables (wave/pulse/filter/speed): four independently-scrolling
 // columns (matching the legacy per-table scroll), each a custom grid like the
 // pattern editor. Keyboard editing flows through the legacy table editor;
 // clicking a cell places the cursor.
-static void gimgui_draw_tables(void)
+static void gimgui_draw_tables(ImVec2 pos, ImVec2 size)
 {
-    const ImGuiCond posCond = g_reset_layout ? ImGuiCond_Always : ImGuiCond_FirstUseEver;
-    ImGui::SetNextWindowPos(ImVec2(8, 330), posCond);
-    ImGui::SetNextWindowSize(ImVec2(380, 236), posCond);
-    if (!ImGui::Begin("SID Tables"))
+    if (!gimgui_begin_panel("SID Tables", pos, size))
     {
-        ImGui::End();
+        gimgui_end_panel();
         return;
     }
 
@@ -187,20 +229,17 @@ static void gimgui_draw_tables(void)
     }
     ImGui::PopStyleVar();
 
-    ImGui::End();
+    gimgui_end_panel();
 }
 
 // Read-only pattern grid (M4 first cut): a custom ImDrawList grid, following
 // Furnace's approach - fixed monospace metrics, virtualized to the visible rows,
 // per-field coloring. Reads live model state via guimodel; editing comes later.
-static void gimgui_draw_pattern(void)
+static void gimgui_draw_pattern(ImVec2 pos, ImVec2 size)
 {
-    const ImGuiCond posCond = g_reset_layout ? ImGuiCond_Always : ImGuiCond_FirstUseEver;
-    ImGui::SetNextWindowPos(ImVec2(8, 24), posCond);
-    ImGui::SetNextWindowSize(ImVec2(430, 300), posCond);
-    if (!ImGui::Begin("Pattern"))
+    if (!gimgui_begin_panel("Pattern", pos, size))
     {
-        ImGui::End();
+        gimgui_end_panel();
         return;
     }
 
@@ -334,21 +373,18 @@ static void gimgui_draw_pattern(void)
             gtui::pattern_set_cursor(c, r, col);
         });
 
-    ImGui::End();
+    gimgui_end_panel();
 }
 
 // Order list, vertical layout (positions = rows, channels = columns) via the
 // shared grid scaffold. Cells are pattern numbers or commands (+/-/R/RST).
 // Keyboard editing flows through the legacy order editor; clicking places the
 // cursor (gtui::order_set_cursor).
-static void gimgui_draw_orderlist(void)
+static void gimgui_draw_orderlist(ImVec2 pos, ImVec2 size)
 {
-    const ImGuiCond posCond = g_reset_layout ? ImGuiCond_Always : ImGuiCond_FirstUseEver;
-    ImGui::SetNextWindowPos(ImVec2(446, 24), posCond);
-    ImGui::SetNextWindowSize(ImVec2(350, 200), posCond);
-    if (!ImGui::Begin("Order List"))
+    if (!gimgui_begin_panel("Order List", pos, size))
     {
-        ImGui::End();
+        gimgui_end_panel();
         return;
     }
 
@@ -429,7 +465,7 @@ static void gimgui_draw_orderlist(void)
             gtui::order_set_cursor(c, r, off > 2 ? 2 : off);
         });
 
-    ImGui::End();
+    gimgui_end_panel();
 }
 
 // Instrument table (deviates from the legacy single-instrument view): one
@@ -437,14 +473,11 @@ static void gimgui_draw_orderlist(void)
 // for the name and hex inputs for the fields. Edits commit on defocus/Enter and
 // go through the legacy undo system (gtui::instr_set_*). Selecting/editing a row
 // sets the current instrument (einum).
-static void gimgui_draw_instruments(void)
+static void gimgui_draw_instruments(ImVec2 pos, ImVec2 size)
 {
-    const ImGuiCond posCond = g_reset_layout ? ImGuiCond_Always : ImGuiCond_FirstUseEver;
-    ImGui::SetNextWindowPos(ImVec2(446, 230), posCond);
-    ImGui::SetNextWindowSize(ImVec2(350, 190), posCond);
-    if (!ImGui::Begin("Instruments"))
+    if (!gimgui_begin_panel("Instruments", pos, size))
     {
-        ImGui::End();
+        gimgui_end_panel();
         return;
     }
 
@@ -460,7 +493,7 @@ static void gimgui_draw_instruments(void)
         ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_SizingFixedFit;
     if (!ImGui::BeginTable("instab", 2 + gtui::INSTR_FIELDS, tflags))
     {
-        ImGui::End();
+        gimgui_end_panel();
         return;
     }
 
@@ -514,21 +547,18 @@ static void gimgui_draw_instruments(void)
         }
     }
     ImGui::EndTable();
-    ImGui::End();
+    gimgui_end_panel();
 }
 
 // Song info + transport: name/author/copyright text fields and play/stop
 // controls. A plain form panel (regular ImGui widgets). Metadata edits write
 // directly (not undo-tracked, as in the legacy); transport calls the legacy
 // play/stop.
-static void gimgui_draw_song(void)
+static void gimgui_draw_song(ImVec2 pos, ImVec2 size)
 {
-    const ImGuiCond posCond = g_reset_layout ? ImGuiCond_Always : ImGuiCond_FirstUseEver;
-    ImGui::SetNextWindowPos(ImVec2(446, 426), posCond);
-    ImGui::SetNextWindowSize(ImVec2(350, 140), posCond);
-    if (!ImGui::Begin("Song"))
+    if (!gimgui_begin_panel("Song", pos, size))
     {
-        ImGui::End();
+        gimgui_end_panel();
         return;
     }
 
@@ -568,7 +598,7 @@ static void gimgui_draw_song(void)
     ImGui::Text("%s  %02d:%02d", gtui::transport_playing() ? "|>" : "[]",
                 gtui::transport_time_min(), gtui::transport_time_sec());
 
-    ImGui::End();
+    gimgui_end_panel();
 }
 
 // Called by bme (via bme_overlay_render_hook) between its RenderCopy and its
@@ -586,23 +616,43 @@ extern "C" void gimgui_overlay_render(void)
     {
         if (ImGui::BeginMenu("View"))
         {
-            if (ImGui::MenuItem("Reset window layout"))
-                g_reset_layout = true;
             ImGui::MenuItem("ImGui Demo", nullptr, &g_show_demo);
             ImGui::EndMenu();
         }
         ImGui::EndMainMenuBar();
     }
 
-    gimgui_draw_pattern();
-    gimgui_draw_orderlist();
-    gimgui_draw_tables();
-    gimgui_draw_instruments();
-    gimgui_draw_song();
+    // Fixed tiled layout filling the whole window (below the menu bar). Panels
+    // are opaque and cover the legacy screen; a full-window background fill hides
+    // the legacy in the gutters between panels. Two columns:
+    //   left  : Pattern (top) + SID Tables (bottom)
+    //   right : Order List (top) + Instruments (mid) + Song (bottom)
+    const ImGuiViewport *vp = ImGui::GetMainViewport();
+    ImGui::GetBackgroundDrawList()->AddRectFilled(
+        vp->Pos, ImVec2(vp->Pos.x + vp->Size.x, vp->Pos.y + vp->Size.y), kAppBg);
+
+    const ImVec2 o = vp->WorkPos;   // origin below the menu bar
+    const ImVec2 s = vp->WorkSize;  // area excluding the menu bar
+    const float g = 3.0f;           // gutter between panels
+
+    const float leftW  = floorf(s.x * 0.60f);
+    const float rightW = s.x - leftW - g;
+    const float rightX = o.x + leftW + g;
+
+    const float patH = floorf(s.y * 0.68f);
+    const float tblH = s.y - patH - g;
+    gimgui_draw_pattern(ImVec2(o.x, o.y),            ImVec2(leftW, patH));
+    gimgui_draw_tables (ImVec2(o.x, o.y + patH + g), ImVec2(leftW, tblH));
+
+    const float ordH  = floorf(s.y * 0.30f);
+    const float songH = floorf(s.y * 0.26f);
+    const float insH  = s.y - ordH - songH - 2 * g;
+    gimgui_draw_orderlist  (ImVec2(rightX, o.y),                    ImVec2(rightW, ordH));
+    gimgui_draw_instruments(ImVec2(rightX, o.y + ordH + g),        ImVec2(rightW, insH));
+    gimgui_draw_song       (ImVec2(rightX, o.y + ordH + insH + 2 * g), ImVec2(rightW, songH));
+
     if (g_show_demo)
         ImGui::ShowDemoWindow(&g_show_demo);
-
-    g_reset_layout = false; // one-shot, consumed by this frame's windows
 
     ImGui::Render();
 
@@ -633,6 +683,97 @@ extern "C" int gimgui_input_capture(void)
     return flags;
 }
 
+// Load the bundled monospace font at a legible size so the UI doesn't use the
+// tiny default ImGui bitmap font. Searches a few locations (next to the binary,
+// the build-time source assets dir, then the cwd); falls back to the default
+// font if none are found.
+static void gimgui_load_font()
+{
+    ImGuiIO &io = ImGui::GetIO();
+    const float sizePx = 18.0f;
+    const char *fname = "IBMPlexMono-Regular.otf";
+
+    const char *dirs[3];
+    int nd = 0;
+    char baseDir[1024];
+    baseDir[0] = 0;
+    if (char *base = SDL_GetBasePath())
+    {
+        snprintf(baseDir, sizeof baseDir, "%sassets/fonts", base);
+        SDL_free(base);
+        dirs[nd++] = baseDir;
+    }
+#ifdef GTULTRA_ASSETS_DIR
+    dirs[nd++] = GTULTRA_ASSETS_DIR "/fonts";
+#endif
+    dirs[nd++] = "assets/fonts";
+
+    char path[1152];
+    for (int i = 0; i < nd; i++)
+    {
+        snprintf(path, sizeof path, "%s/%s", dirs[i], fname);
+        FILE *f = fopen(path, "rb");
+        if (!f)
+            continue;
+        fclose(f);
+        if (io.Fonts->AddFontFromFileTTF(path, sizePx))
+            return; // loaded
+    }
+    io.Fonts->AddFontDefault(); // last resort
+}
+
+// Flat, professional dark theme: square windows, minimal borders, a blue accent.
+// Deliberately unlike StyleColorsDark so the UI doesn't read as a default ImGui
+// app. A full theme/config system arrives with M7.
+static void gimgui_apply_style()
+{
+    ImGuiStyle &s = ImGui::GetStyle();
+    s.WindowRounding = 0.0f;
+    s.ChildRounding = 0.0f;
+    s.FrameRounding = 2.0f;
+    s.PopupRounding = 2.0f;
+    s.ScrollbarRounding = 2.0f;
+    s.GrabRounding = 2.0f;
+    s.TabRounding = 0.0f;
+    s.WindowBorderSize = 0.0f;
+    s.ChildBorderSize = 0.0f;
+    s.FrameBorderSize = 0.0f;
+    s.WindowPadding = ImVec2(8, 6);
+    s.FramePadding = ImVec2(6, 3);
+    s.ItemSpacing = ImVec2(6, 4);
+    s.ItemInnerSpacing = ImVec2(4, 4);
+    s.ScrollbarSize = 12.0f;
+
+    ImVec4 *c = s.Colors;
+    c[ImGuiCol_Text]              = ImVec4(0.86f, 0.89f, 0.93f, 1.00f);
+    c[ImGuiCol_TextDisabled]      = ImVec4(0.45f, 0.48f, 0.52f, 1.00f);
+    c[ImGuiCol_WindowBg]          = ImVec4(0.13f, 0.14f, 0.16f, 1.00f);
+    c[ImGuiCol_ChildBg]           = ImVec4(0.13f, 0.14f, 0.16f, 1.00f);
+    c[ImGuiCol_PopupBg]           = ImVec4(0.11f, 0.12f, 0.14f, 1.00f);
+    c[ImGuiCol_Border]            = ImVec4(0.24f, 0.26f, 0.30f, 1.00f);
+    c[ImGuiCol_FrameBg]           = ImVec4(0.20f, 0.22f, 0.26f, 1.00f);
+    c[ImGuiCol_FrameBgHovered]    = ImVec4(0.26f, 0.30f, 0.36f, 1.00f);
+    c[ImGuiCol_FrameBgActive]     = ImVec4(0.30f, 0.36f, 0.44f, 1.00f);
+    c[ImGuiCol_TitleBg]           = ImVec4(0.11f, 0.12f, 0.14f, 1.00f);
+    c[ImGuiCol_TitleBgActive]     = ImVec4(0.15f, 0.26f, 0.41f, 1.00f);
+    c[ImGuiCol_MenuBarBg]         = ImVec4(0.11f, 0.12f, 0.14f, 1.00f);
+    c[ImGuiCol_ScrollbarBg]       = ImVec4(0.11f, 0.12f, 0.14f, 1.00f);
+    c[ImGuiCol_ScrollbarGrab]     = ImVec4(0.28f, 0.31f, 0.36f, 1.00f);
+    c[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.36f, 0.40f, 0.46f, 1.00f);
+    c[ImGuiCol_Button]            = ImVec4(0.22f, 0.30f, 0.42f, 1.00f);
+    c[ImGuiCol_ButtonHovered]     = ImVec4(0.30f, 0.42f, 0.58f, 1.00f);
+    c[ImGuiCol_ButtonActive]      = ImVec4(0.36f, 0.52f, 0.72f, 1.00f);
+    c[ImGuiCol_Header]            = ImVec4(0.20f, 0.34f, 0.52f, 1.00f);
+    c[ImGuiCol_HeaderHovered]     = ImVec4(0.26f, 0.42f, 0.62f, 1.00f);
+    c[ImGuiCol_HeaderActive]      = ImVec4(0.30f, 0.48f, 0.70f, 1.00f);
+    c[ImGuiCol_Separator]         = ImVec4(0.24f, 0.26f, 0.30f, 1.00f);
+    c[ImGuiCol_TableHeaderBg]     = ImVec4(0.17f, 0.19f, 0.23f, 1.00f);
+    c[ImGuiCol_TableRowBg]        = ImVec4(0.14f, 0.15f, 0.18f, 1.00f);
+    c[ImGuiCol_TableRowBgAlt]     = ImVec4(0.16f, 0.17f, 0.21f, 1.00f);
+    c[ImGuiCol_TableBorderLight]  = ImVec4(0.22f, 0.24f, 0.28f, 1.00f);
+    c[ImGuiCol_TableBorderStrong] = ImVec4(0.28f, 0.30f, 0.35f, 1.00f);
+}
+
 void gimgui_init()
 {
     if (g_imgui_ready)
@@ -644,6 +785,9 @@ void gimgui_init()
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGui::StyleColorsDark();
+
+    gimgui_load_font();
+    gimgui_apply_style();
 
     ImGui_ImplSDL2_InitForSDLRenderer(win_window, gfx_renderer);
     ImGui_ImplSDLRenderer2_Init(gfx_renderer);

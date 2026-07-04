@@ -214,6 +214,19 @@ editor yet — this is the platform to iterate from.
   nothing legacy remains (then delete the legacy renderer, M6). A
   "legacy-as-a-dockable-window" variant was considered and declined — the plain
   overlay is fine.
+- **Look must be "native tracker", not "ImGui app"** (user directive). The UI
+  now uses a **fixed tiled layout** (no floating windows, no title bars, no
+  user-dockable panels): every frame `gimgui_overlay_render` computes panel rects
+  from the viewport and each panel is a `NoTitleBar|NoMove|NoResize` window with a
+  custom edge-to-edge section header (`gimgui_begin_panel`). Opaque panels + a
+  full-window background fill cover the legacy screen entirely. Layout: left col
+  = Pattern (top) + SID Tables (bottom); right col = Order / Instruments / Song.
+- **Font**: bundled **IBM Plex Mono** (`assets/fonts/`, OFL) loaded at 18px in
+  `gimgui_init` (searched next-to-binary → `GTULTRA_ASSETS_DIR` → cwd). Replaces
+  the tiny default ImGui bitmap font. Per-role font config is deferred to M7.
+- **Style**: flat dark theme with a blue accent, square windows, minimal borders
+  (`gimgui_apply_style`) — deliberately unlike `StyleColorsDark`. Full theme
+  config is M7.
 
 Next: the pattern grid (M4), starting read-only.
 

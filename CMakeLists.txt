@@ -212,6 +212,14 @@ if(GTULTRA_IMGUI)
     target_link_libraries(gtultra PRIVATE imgui)
     # guimodel.cpp needs the legacy headers (model globals) + bme/asm include dirs
     target_include_directories(gtultra PRIVATE "${SRC}/bme" "${SRC}/asm" ${SDL2_INCLUDE_DIRS})
+    # Absolute path to bundled assets (fonts, ...) for runtime loading. A proper
+    # install layout / config-driven paths come with M7; this is the dev default.
+    target_compile_definitions(gtultra PRIVATE
+        GTULTRA_ASSETS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/assets")
+    # Also stage assets next to the binary so an installed/copied build finds them.
+    add_custom_command(TARGET gtultra POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_directory
+            "${CMAKE_CURRENT_SOURCE_DIR}/assets" "$<TARGET_FILE_DIR:gtultra>/assets")
 endif()
 
 # Standalone relocator/exporter (includes greloc.cpp with GT2RELOC)
