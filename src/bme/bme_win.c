@@ -181,6 +181,11 @@ void resize(int width, int height)
 // It is recommended to be called in any long loop where those two functions
 // are not called.
 
+// Optional per-event hook (SDL_Event*), set by the app (e.g. the ImGui layer)
+// so an overlay can see input. NULL = ignored. Plain C function pointer to keep
+// bme free of any C++/ImGui dependency.
+void (*bme_event_hook)(void *sdl_event) = 0;
+
 void win_checkmessages(void)
 {
 	SDL_Event event;
@@ -192,6 +197,9 @@ void win_checkmessages(void)
 
 	while (SDL_PollEvent(&event))
 	{
+		if (bme_event_hook)
+			bme_event_hook(&event);
+
 		switch (event.type)
 		{
 

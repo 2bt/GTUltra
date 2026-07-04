@@ -1,0 +1,13 @@
+Dear ImGui (vendored)
+
+Branch:  docking
+Version: 1.92.9 WIP
+Commit:  4be08b1ecf7709f15e4274fb2ddac37e121d7d9a
+Source:  https://github.com/ocornut/imgui
+
+Vendored files: ImGui core + the SDL2 platform backend
+(imgui_impl_sdl2) and the SDL_Renderer backend (imgui_impl_sdlrenderer2).
+imgui_demo.cpp is kept for the demo window used as a smoke test.
+
+To update: re-copy these files from the upstream docking branch and update
+the commit hash above.

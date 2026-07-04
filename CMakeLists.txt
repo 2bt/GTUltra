@@ -13,8 +13,12 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 set(CMAKE_C_STANDARD 11)
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Experimental Dear ImGui UI (milestone M2, see docs/UI_MIGRATION_PLAN.md).
+# When ON, an ImGui layer is composited on top of the legacy editor.
+option(GTULTRA_IMGUI "Build with the experimental Dear ImGui UI layer" OFF)
 
 # The original codebase relies on lax conversion rules; keep -fpermissive for
 # the C++ translation units so the incremental C -> C++ migration can proceed.
@@ -178,12 +182,35 @@ target_compile_definitions(gtcore PRIVATE __LINUX_ALSA__)
 target_link_libraries(gtcore PUBLIC resid residfp gtasm bme ${SDL2_LIBRARIES} ${ALSA_LIBRARIES} Threads::Threads)
 
 # ---------------------------------------------------------------------------
+# Dear ImGui (vendored, docking branch) + SDL2 / SDL_Renderer backends.
+# Only built when GTULTRA_IMGUI is ON.
+# ---------------------------------------------------------------------------
+if(GTULTRA_IMGUI)
+    set(IMGUI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/extern/imgui")
+    add_library(imgui STATIC
+        "${IMGUI_DIR}/imgui.cpp"
+        "${IMGUI_DIR}/imgui_draw.cpp"
+        "${IMGUI_DIR}/imgui_tables.cpp"
+        "${IMGUI_DIR}/imgui_widgets.cpp"
+        "${IMGUI_DIR}/imgui_demo.cpp"
+        "${IMGUI_DIR}/backends/imgui_impl_sdl2.cpp"
+        "${IMGUI_DIR}/backends/imgui_impl_sdlrenderer2.cpp")
+    target_include_directories(imgui PUBLIC "${IMGUI_DIR}" "${IMGUI_DIR}/backends" ${SDL2_INCLUDE_DIRS})
+    target_link_libraries(imgui PUBLIC ${SDL2_LIBRARIES})
+endif()
+
+# ---------------------------------------------------------------------------
 # Executables
 # ---------------------------------------------------------------------------
 
 # The main editor
 add_executable(gtultra "${SRC}/gt2stereo.cpp" "${SRC}/greloc.cpp")
 target_link_libraries(gtultra PRIVATE gtcore)
+if(GTULTRA_IMGUI)
+    target_sources(gtultra PRIVATE "${SRC}/gimgui.cpp")
+    target_compile_definitions(gtultra PRIVATE GTULTRA_IMGUI)
+    target_link_libraries(gtultra PRIVATE imgui)
+endif()
 
 # Standalone relocator/exporter (includes greloc.cpp with GT2RELOC)
 add_executable(gt2reloc "${SRC}/gt2reloc.cpp")

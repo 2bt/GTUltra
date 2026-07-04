@@ -206,6 +206,11 @@ void gfx_unlock(void)
 	}
 }
 
+// Optional overlay hook, drawn on top of the legacy frame just before present.
+// Set by the app (e.g. the ImGui layer); NULL = no overlay. Kept as a plain
+// C function pointer so bme stays free of any C++/ImGui dependency.
+void (*bme_overlay_render_hook)(void) = 0;
+
 void gfx_flip()
 {
 	SDL_Surface* surf = SDL_ConvertSurfaceFormat(gfx_screen, SDL_PIXELFORMAT_RGBA32, 0);
@@ -213,6 +218,8 @@ void gfx_flip()
 	SDL_FreeSurface(surf);
 	SDL_RenderClear(gfx_renderer);
 	SDL_RenderCopy(gfx_renderer, sdlTexture, NULL, NULL);
+	if (bme_overlay_render_hook)
+		bme_overlay_render_hook();
 	SDL_RenderPresent(gfx_renderer);
 	gfx_redraw = 0;
 }

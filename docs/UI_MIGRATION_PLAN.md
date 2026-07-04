@@ -136,6 +136,14 @@ Goal: the full legacy editor keeps working, now composited inside an
 ImGui-owned window, with ImGui able to draw panels on top. No functional ImGui
 editor yet — this is the platform to iterate from.
 
+> **Status:** step 1 landed — Dear ImGui (docking 1.92.9) vendored under
+> `extern/imgui`, wired into CMake behind `-DGTULTRA_IMGUI=ON` (C++17), and
+> composited over the running editor via bme's existing renderer + the overlay
+> render/event hooks. Currently draws the ImGui demo window as a smoke test.
+> Verified: the demo window generates real draw geometry each frame on bme's
+> renderer (checked headless via the SDL `offscreen` driver). Next: base-layer
+> the legacy `sdlTexture` explicitly + input handoff, then the first real panel.
+
 Reuse bme's **existing** window/renderer/frame rather than standing up a second
 one. bme already exposes `SDL_Window *win_window` (bme_win.h:34) and
 `SDL_Renderer *gfx_renderer` (bme_gfx.h:46), and already builds the whole frame

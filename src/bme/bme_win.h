@@ -32,3 +32,6 @@ extern Sint16 joyx[MAX_JOYSTICKS];
 extern Sint16 joyy[MAX_JOYSTICKS];
 extern Uint32 joybuttons[MAX_JOYSTICKS];
 extern SDL_Window *win_window;
+
+// Optional per-event hook (SDL_Event*) so an overlay can observe input.
+extern void (*bme_event_hook)(void *sdl_event);

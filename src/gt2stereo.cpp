@@ -30,6 +30,10 @@
 #include "goattrk2.h"
 #include "bme.h"
 
+#ifdef GTULTRA_IMGUI
+#include "gimgui.h"
+#endif
+
 int songExportSuccessFlag = 0;
 int sidAddr1 = 0xd400;
 int sidAddr2 = 0xd420;
@@ -670,6 +674,10 @@ int main(int argc, char** argv)
 	if (!initscreen())
 		return 1;
 
+#ifdef GTULTRA_IMGUI
+	// Composite the experimental ImGui layer on top of the legacy editor.
+	gimgui_init();
+#endif
 
 	waveformDisplayInfo.displayOnOff = 0;
 

@@ -44,3 +44,6 @@ extern Uint8 *gfx_blocks;
 extern Uint8 gfx_palette[];
 extern SDL_Surface *gfx_screen;
 extern SDL_Renderer *gfx_renderer;
+
+// Optional overlay drawn on top of the legacy frame each flip (see gfx_flip).
+extern void (*bme_overlay_render_hook)(void);
