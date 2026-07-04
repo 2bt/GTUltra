@@ -33,6 +33,71 @@ static bool g_imgui_ready = false;
 static bool g_show_demo = false;    // toggleable ImGui reference/demo window
 static bool g_reset_layout = false; // one-shot: snap panels back to defaults
 
+// Reusable scaffold for a scrolling, virtualized monospace grid body (used by
+// the pattern editor and each SID table). Handles the child window, content
+// reservation, row virtualization, no-lag cursor-follow, and click hit-testing.
+// The caller supplies the cell/row content and click handling; all colours and
+// per-cell layout live there.
+//   rows      : total row count
+//   rowW      : content width (horizontal scroll reservation)
+//   lineH     : row height
+//   followRow : row to keep centred when it changes (<0 = don't auto-follow)
+//   drawRow(ImDrawList* dl, int row, float x, float y)   x,y = row's top-left
+//   onClick(int row, float localX)                       localX = px from row start
+template <class DrawRow, class OnClick>
+static void gimgui_grid_body(const char *id, int rows, float rowW, float lineH,
+                             int followRow, DrawRow drawRow, OnClick onClick)
+{
+    ImGui::BeginChild(id, ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
+    ImDrawList *dl = ImGui::GetWindowDrawList();
+    const ImVec2 origin = ImGui::GetCursorScreenPos();
+    const float totalH = rows * lineH;
+    ImGui::Dummy(ImVec2(rowW, totalH)); // reserve scroll region
+
+    const float winH = ImGui::GetWindowHeight();
+    const float curScroll = ImGui::GetScrollY();
+    const float contentTop = origin.y + curScroll; // scroll-independent anchor
+
+    // Follow the cursor row when it moves. SetScrollY only takes effect next
+    // frame, so we also draw at the target scroll *this* frame (no one-frame
+    // jump). Follow state is per-grid (child storage), so grids don't yank each
+    // other and manual scrolling sticks until the cursor moves again.
+    float drawScroll = curScroll;
+    if (followRow >= 0)
+    {
+        ImGuiStorage *st = ImGui::GetStateStorage();
+        const ImGuiID key = ImGui::GetID("##gridfollow");
+        if (st->GetInt(key, -1) != followRow)
+        {
+            st->SetInt(key, followRow);
+            float maxScroll = totalH - winH;
+            if (maxScroll < 0) maxScroll = 0;
+            drawScroll = followRow * lineH - winH * 0.5f;
+            if (drawScroll < 0) drawScroll = 0;
+            if (drawScroll > maxScroll) drawScroll = maxScroll;
+            ImGui::SetScrollY(drawScroll);
+        }
+    }
+    const float drawTop = contentTop - drawScroll;
+
+    if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+    {
+        const ImVec2 m = ImGui::GetIO().MousePos;
+        int r = (int)((m.y - drawTop) / lineH);
+        if (r >= 0 && r < rows)
+            onClick(r, m.x - origin.x);
+    }
+
+    int firstRow = (int)(drawScroll / lineH);
+    int lastRow = (int)((drawScroll + winH) / lineH) + 1;
+    if (firstRow < 0) firstRow = 0;
+    if (lastRow > rows) lastRow = rows;
+    for (int r = firstRow; r < lastRow; r++)
+        drawRow(dl, r, origin.x, drawTop + r * lineH);
+
+    ImGui::EndChild();
+}
+
 // Draw one SID table as an independently-scrolling column: a fixed header over
 // a virtualized scrolling body (fills the available height). Only the active
 // table auto-follows its cursor; the others keep their own scroll, matching the
@@ -64,56 +129,10 @@ static void gimgui_draw_one_table(int t, float colW, float charW, float lineH)
     ImGui::TextUnformatted(gtui::table_name(t));
     ImGui::Separator();
 
-    ImGui::BeginChild("body", ImVec2(0, 0), false);
-    {
-        ImDrawList *dl = ImGui::GetWindowDrawList();
-        const ImVec2 origin = ImGui::GetCursorScreenPos();
-        const float totalH = tlen * lineH;
-        ImGui::Dummy(ImVec2(charW * 8, totalH));
-
-        const float winH = ImGui::GetWindowHeight();
-        const float curScroll = ImGui::GetScrollY();
-        const float contentTop = origin.y + curScroll;
-
-        // The active table follows its cursor (no one-frame lag). Per-table
-        // last-cursor state so switching tables doesn't yank the others.
-        static int lastPos[8] = { -1, -1, -1, -1, -1, -1, -1, -1 };
-        float drawScroll = curScroll;
-        if (active && curPos != lastPos[t & 7])
-        {
-            lastPos[t & 7] = curPos;
-            float maxScroll = totalH - winH;
-            if (maxScroll < 0) maxScroll = 0;
-            drawScroll = curPos * lineH - winH * 0.5f;
-            if (drawScroll < 0) drawScroll = 0;
-            if (drawScroll > maxScroll) drawScroll = maxScroll;
-            ImGui::SetScrollY(drawScroll);
-        }
-        const float drawTop = contentTop - drawScroll;
-
-        if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-        {
-            const ImVec2 m = ImGui::GetIO().MousePos;
-            int p = (int)((m.y - drawTop) / lineH);
-            if (p >= 0 && p < tlen)
-            {
-                int off = (int)((m.x - origin.x) / charW);
-                int col = (off <= 3) ? 0 : (off == 4) ? 1 : (off <= 6) ? 2 : 3;
-                gtui::table_set_cursor(t, p, col);
-            }
-        }
-
-        int firstRow = (int)(drawScroll / lineH);
-        int lastRow = (int)((drawScroll + winH) / lineH) + 1;
-        if (firstRow < 0) firstRow = 0;
-        if (lastRow > tlen) lastRow = tlen;
-
-        char buf[16];
-        for (int r = firstRow; r < lastRow; r++)
-        {
-            const float y = drawTop + r * lineH;
-            const float x = origin.x;
-
+    gimgui_grid_body(
+        "body", tlen, charW * 8, lineH, active ? curPos : -1,
+        [&](ImDrawList *dl, int r, float x, float y) {
+            char buf[16];
             if (markTab == t && r >= markLo && r <= markHi)
                 dl->AddRectFilled(ImVec2(x + charW * 3, y), ImVec2(x + charW * 8, y + lineH), cSelect);
             if (active && curPos == r)
@@ -123,14 +142,17 @@ static void gimgui_draw_one_table(int t, float colW, float charW, float lineH)
                 dl->AddRectFilled(ImVec2(cs, y), ImVec2(cs + charW, y + lineH), cCursorFill);
                 dl->AddRect(ImVec2(cs, y), ImVec2(cs + charW, y + lineH), cCursorEdge);
             }
-
             snprintf(buf, sizeof buf, "%02X:", r + 1);
             dl->AddText(ImVec2(x, y), cIdx, buf);
             snprintf(buf, sizeof buf, "%02X %02X", gtui::table_left(t, r), gtui::table_right(t, r));
             dl->AddText(ImVec2(x + charW * 3, y), cVal, buf);
-        }
-    }
-    ImGui::EndChild();
+        },
+        [&](int r, float localX) {
+            int off = (int)(localX / charW);
+            int col = (off <= 3) ? 0 : (off == 4) ? 1 : (off <= 6) ? 2 : 3;
+            gtui::table_set_cursor(t, r, col);
+        });
+
     ImGui::EndChild();
 }
 
@@ -231,65 +253,12 @@ static void gimgui_draw_pattern(void)
         ImGui::Separator();
     }
 
-    ImGui::BeginChild("patgrid", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
-    {
-        ImDrawList *dl = ImGui::GetWindowDrawList();
-        const ImVec2 origin = ImGui::GetCursorScreenPos(); // accounts for scroll
-        const float totalW = rowNumW + chans * chanW;
-        const float totalH = rows * lineH;
-        ImGui::Dummy(ImVec2(totalW, totalH)); // reserve scroll region
+    const float totalW = rowNumW + chans * chanW;
 
-        const float winH = ImGui::GetWindowHeight();
-        const float curScroll = ImGui::GetScrollY();
-        const float contentTop = origin.y + curScroll; // scroll-independent anchor
-
-        // Follow the edit cursor. SetScrollY only takes effect next frame, so we
-        // also draw with the target scroll *this* frame - otherwise the cursor
-        // appears to jump for one frame before the view catches up.
-        static int lastCur = -1;
-        float drawScroll = curScroll;
-        if (curRow != lastCur)
-        {
-            lastCur = curRow;
-            float maxScroll = totalH - winH;
-            if (maxScroll < 0) maxScroll = 0;
-            drawScroll = curRow * lineH - winH * 0.5f;
-            if (drawScroll < 0) drawScroll = 0;
-            if (drawScroll > maxScroll) drawScroll = maxScroll;
-            ImGui::SetScrollY(drawScroll);
-        }
-        const float drawTop = contentTop - drawScroll;
-
-        // Click a cell to place the edit cursor (keyboard editing then flows
-        // through the legacy pattern editor). Mirrors the legacy click mapping:
-        // note = char offset 0..2, else epcolumn = offset-2.
-        if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-        {
-            const ImVec2 m = ImGui::GetIO().MousePos;
-            int row = (int)((m.y - drawTop) / lineH);
-            float rx = m.x - origin.x - rowNumW;
-            if (rx >= 0 && row >= 0 && row < rows)
-            {
-                int c = (int)(rx / chanW);
-                if (c >= 0 && c < chans)
-                {
-                    int off = (int)((rx - c * chanW) / charW);
-                    if (off > 7) off = 7;
-                    int col = (off < 3) ? 0 : (off - 2);
-                    gtui::pattern_set_cursor(c, row, col);
-                }
-            }
-        }
-
-        int firstRow = (int)(drawScroll / lineH);
-        int lastRow = (int)((drawScroll + winH) / lineH) + 1;
-        if (firstRow < 0) firstRow = 0;
-        if (lastRow > rows) lastRow = rows;
-
-        char buf[16];
-        for (int r = firstRow; r < lastRow; r++)
-        {
-            const float y = drawTop + r * lineH;
+    gimgui_grid_body(
+        "patgrid", rows, totalW, lineH, curRow,
+        [&](ImDrawList *dl, int r, float x, float y) {
+            char buf[16];
 
             // Row background: beat highlight + cursor row.
             const bool firstOfBeat = (r % step) == 0;
@@ -298,27 +267,25 @@ static void gimgui_draw_pattern(void)
             if (secondBeat) bg = firstOfBeat ? cBeat2 : cBeat1;
             else if (firstOfBeat) bg = cBeat1;
             if (bg)
-                dl->AddRectFilled(ImVec2(origin.x, y), ImVec2(origin.x + totalW, y + lineH), bg);
+                dl->AddRectFilled(ImVec2(x, y), ImVec2(x + totalW, y + lineH), bg);
             if (r == curRow)
-                dl->AddRectFilled(ImVec2(origin.x, y), ImVec2(origin.x + totalW, y + lineH), cCursorRow);
+                dl->AddRectFilled(ImVec2(x, y), ImVec2(x + totalW, y + lineH), cCursorRow);
 
             // Row number.
             snprintf(buf, sizeof buf, "%3d", r);
-            dl->AddText(ImVec2(origin.x, y), firstOfBeat ? cRowNumHi : cRowNum, buf);
+            dl->AddText(ImVec2(x, y), firstOfBeat ? cRowNumHi : cRowNum, buf);
 
-            // Channels.
             for (int c = 0; c < chans; c++)
             {
-                const float cx = origin.x + rowNumW + c * chanW;
+                const float cx = x + rowNumW + c * chanW;
 
-                // Selection background (blue) for the marked channel + row range.
+                // Selection background for the marked channel + row range.
                 if (markChn >= 0 && gtui::pattern_actual_channel(c) == markChn &&
                     r >= markLo && r <= markHi)
                     dl->AddRectFilled(ImVec2(cx, y), ImVec2(cx + charW * 8.0f, y + lineH), cSelect);
 
-                // Cursor cell: highlight the exact sub-field the cursor is on.
-                // epcolumn 0 = note (3 chars); 1..5 = a single nibble at
-                // cell offset (2 + epcolumn).
+                // Cursor cell: the exact sub-field the cursor is on. epcolumn
+                // 0 = note (3 chars); 1..5 = one nibble at cell offset 2+col.
                 if (r == curRow && c == curChn)
                 {
                     float cs = (curCol == 0) ? cx : cx + (2 + curCol) * charW;
@@ -336,19 +303,26 @@ static void gimgui_draw_pattern(void)
                     continue;
                 }
 
-                // Note (3 chars); dim an empty (REST) note like the legacy view.
+                // Note (dim an empty/REST note), instrument, command+data.
                 const bool emptyNote = (cell.note[0] == '.');
                 dl->AddText(ImVec2(cx, y), emptyNote ? cDots : cNote, cell.note);
-                // Instrument (2 chars) or dots.
                 if (cell.instr) { snprintf(buf, sizeof buf, "%02X", cell.instr); dl->AddText(ImVec2(cx + charW * 3, y), cInstr, buf); }
                 else            { dl->AddText(ImVec2(cx + charW * 3, y), cDots, ".."); }
-                // Command nibble + data byte (3 chars) or dots.
                 if (cell.cmd)   { snprintf(buf, sizeof buf, "%01X%02X", cell.cmd, cell.data); dl->AddText(ImVec2(cx + charW * 5, y), cCmd, buf); }
                 else            { dl->AddText(ImVec2(cx + charW * 5, y), cDots, "..."); }
             }
-        }
-    }
-    ImGui::EndChild();
+        },
+        [&](int r, float localX) {
+            float rx = localX - rowNumW;
+            if (rx < 0) return;
+            int c = (int)(rx / chanW);
+            if (c < 0 || c >= chans) return;
+            int off = (int)((rx - c * chanW) / charW);
+            if (off > 7) off = 7;
+            int col = (off < 3) ? 0 : (off - 2);
+            gtui::pattern_set_cursor(c, r, col);
+        });
+
     ImGui::End();
 }
 

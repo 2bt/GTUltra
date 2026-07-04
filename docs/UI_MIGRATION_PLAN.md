@@ -162,6 +162,12 @@ editor yet — this is the platform to iterate from.
 >   in-process (51→62→undo→51).
 
 ### Decisions & notes
+- **Shared grid scaffold extracted.** `gimgui_grid_body` (a template in
+  `gimgui.cpp`) owns the reusable parts of a scrolling monospace grid: child
+  window, content reservation, row virtualization, no-lag cursor-follow (per-grid
+  state via ImGui child storage), and click hit-testing. Each grid passes a
+  `drawRow` and `onClick` lambda for its own cells/colours. Both the pattern
+  editor and the SID tables use it; the order list (next grid panel) should too.
 - **Deferred: table "detailed" view.** A GTUltra addition (not in original
   GoatTracker): clicking a table header (all except the speed table) toggles an
   alternative view that interprets the raw bytes in a more user-friendly way.
