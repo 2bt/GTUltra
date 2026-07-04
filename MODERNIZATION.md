@@ -89,11 +89,19 @@ from git history):
 
 ## Planned milestones
 
-- **SDL2/SDL3.** The Linux build already links system **SDL2** (via
+- **New UI — Dear ImGui.** Replace the legacy text-mode UI with Dear ImGui,
+  keeping the reusable model / editing logic. Full roadmap (M2–M6), informed by
+  a study of the Furnace tracker, is in
+  [docs/UI_MIGRATION_PLAN.md](docs/UI_MIGRATION_PLAN.md).
+- **Configuration system (TOML).** User-configurable themes, fonts, and all
+  keybindings in a real `config.toml`. Depends on the ImGui action/theme
+  scaffolding; detailed as milestone **M7** in the UI migration plan.
+- **SDL2 (not SDL3 yet).** The Linux build already links system **SDL2** (via
   `pkg-config sdl2`); the bundled `src/SDL` headers are legacy SDL1 used only
-  by the old win32 build. A dedicated milestone will make SDL2 the sole,
-  explicit target (dropping the bundled SDL1 headers and the `<SDL/…>` include
-  style), and evaluate moving to **SDL3**. This is coupled to the `bme`
-  rewrite, since almost all SDL usage lives inside `bme`.
+  by the old win32 build. Decision (2026-07): **stay on SDL2** — SDL3 has no
+  Ubuntu 24.04 package yet, and almost all SDL usage lives inside `bme`, so the
+  version choice is best made during the `bme` rewrite. A dedicated milestone
+  will make SDL2 the sole explicit target (dropping the bundled SDL1 headers
+  and the `<SDL/…>` include style).
 - **Replace `bme`** (media engine) with a modern implementation.
 - **Replace `asm`** (6502 assembler) — possibly with a 64-bit assembler.
