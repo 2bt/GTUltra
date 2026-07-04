@@ -66,7 +66,7 @@ GTUltra is better-layered than a typical tracker, which makes this tractable:
    |  SDL_Renderer backend  (add GL/etc later)  |                                    |
    +--------------------------------------------+                                    |
             |                                                                        |
-   ImGui frame loop (drawHalt / WAKE_UP)                                             |
+   ImGui frame loop (draw every frame + vsync)                                      |
             |                                                                        |
    Panels (draw*)  ── read/write ──>  editorInfo + model (gsong) + GTOBJECT  <── audio/player
             |                                    ^
@@ -83,10 +83,12 @@ Key decisions, all validated against Furnace:
    without touching UI code. *(furnace: `src/gui/gui.h:1668` `FurnaceGUIRender`,
    `src/gui/render/renderSDL.cpp`.)* This also keeps us aligned with the earlier
    decision to stay on SDL2 (SDL3 has no Ubuntu 24.04 package yet).
-2. **Redraw-on-demand loop.** Adopt Furnace's `drawHalt`/`WAKE_UP` idiom
-   *(furnace: `src/gui/gui.cpp:4342`, macro `gui.h:54`)*: idle → block on
-   `SDL_WaitEventTimeout`; any input or active playback forces ~5 full-speed
-   frames. Battery-friendly but instantly responsive.
+2. **Just draw every frame with vsync** (corner cut, agreed). No
+   redraw-on-demand for now — the loop renders unconditionally and
+   `SDL_RenderPresent` (renderer created with `PRESENTVSYNC`) paces it. Furnace's
+   `drawHalt`/`WAKE_UP` power-saving idiom *(furnace: `src/gui/gui.cpp:4342`,
+   macro `gui.h:54`)* is a pure add-on we can bolt on later if idle CPU ever
+   matters.
 3. **Pattern grid = custom `ImDrawList`, not ImGui widgets.** This is the crux.
    *(furnace: `src/gui/pattern.cpp:83` — the single most important file to
    study.)* Order list can use ImGui tables *(furnace: `src/gui/orders.cpp`)*.
@@ -95,11 +97,22 @@ Key decisions, all validated against Furnace:
    action-enum keymap with hardcoded defaults, so wiring TOML on top later is
    purely additive. *(furnace: color roles `gui.h:162`, action enum `gui.h:767`,
    def tables `guiConst.cpp`.)*
-5. **Never-broken app via a legacy bridge (recommended).** During the port,
-   render the existing `scrbuffer`/`colorbuffer` to an SDL texture and show it
-   inside an ImGui window. Panels are then carved out to real ImGui one at a
-   time while the rest of the editor keeps working. Optional but strongly
-   de-risks the migration and keeps intermediate builds shippable.
+5. **Never-broken app by layering the existing legacy frame inside ImGui.**
+   bme *already* renders the whole editor into an `SDL_Texture` every frame:
+   `gfx_flip` does `SDL_ConvertSurfaceFormat` → `SDL_UpdateTexture(sdlTexture)`
+   → `SDL_RenderCopy` → `SDL_RenderPresent` ([bme_gfx.c:72-77](../src/bme/bme_gfx.c#L72)).
+   That `sdlTexture` (currently a `static` in bme_gfx.c) is the complete old UI
+   as a GPU texture — i.e. an `ImTextureID`, essentially free to reuse. So:
+   **ImGui owns the window; the legacy frame is drawn as a base layer inside it,
+   and real ImGui panels composite on top.** Panels are carved out one at a
+   time while the rest of the editor keeps working — testable at every step,
+   intermediate builds shippable.
+
+   Progressive handoff has two levers: (a) cover a ported region with an opaque
+   ImGui window — optionally blanking that region in the old text buffer so
+   nothing shows through — and (b) gate input with
+   `io.WantCaptureMouse/WantCaptureKeyboard` so clicks in a finished panel don't
+   also reach the legacy `mousecommands`/`getkey` path.
 
 ### Library / build choices
 - **Dear ImGui**, *docking* branch (dockable, movable panels), vendored under
@@ -118,22 +131,41 @@ Key decisions, all validated against Furnace:
 > Numbering continues from the completed work: M1 = CMake + C++ (done),
 > plus the cleanup. These are UI milestones M2–M7. Each should build and run.
 
-### M2 — ImGui foundation (shell alongside the legacy path)
-Goal: an ImGui window renders, audio + data loading still work, legacy editor
-visible via the bridge. No functional ImGui editor yet.
-- Add a CMake option `GTULTRA_IMGUI` (default OFF initially). When ON, GTUltra
-  creates its **own** SDL2 window + ImGui context and does **not** init bme
-  gfx/win/kbd/mou; it *keeps* `bme_snd` (audio) and `bme_io` (data).
-- Vendor ImGui (docking) + the two backends; build as a static lib.
-- Implement the thin `Render` interface + `SDL_Renderer` backend.
-- Implement the `drawHalt`/`WAKE_UP` main loop, a menu bar, and the ImGui demo
-  window as a smoke test.
-- **Legacy bridge:** blit `gfx_screen` (or `scrbuffer`) to an `SDL_Texture`,
-  display as an `ImGui::Image` in a "Legacy" window. Feed ImGui mouse/keyboard
-  back into the old `key`/`rawkey`/`mousex`/`mousey` globals so the legacy UI
-  is *interactive* inside ImGui. → app fully usable, now hosted by ImGui.
-- Font + theme scaffolding: load mono + UI fonts, define the color-role enum
-  with a default (dark) theme, `dpiScale` handling.
+### M2 — ImGui foundation (layer ImGui over the running app)
+Goal: the full legacy editor keeps working, now composited inside an
+ImGui-owned window, with ImGui able to draw panels on top. No functional ImGui
+editor yet — this is the platform to iterate from.
+
+Reuse bme's **existing** window/renderer/frame rather than standing up a second
+one. bme already exposes `SDL_Window *win_window` (bme_win.h:34) and
+`SDL_Renderer *gfx_renderer` (bme_gfx.h:46), and already builds the whole frame
+into `sdlTexture` inside `gfx_flip`.
+
+- Add a CMake option `GTULTRA_IMGUI` (default OFF initially). Bump
+  `CMAKE_CXX_STANDARD` 14 → 17.
+- Vendor ImGui (docking branch) + `imgui_impl_sdl2` + `imgui_impl_sdlrenderer2`;
+  build as a static lib.
+- Init ImGui on bme's existing objects:
+  `ImGui_ImplSDL2_InitForSDLRenderer(win_window, gfx_renderer)` +
+  `ImGui_ImplSDLRenderer2_Init(gfx_renderer)`.
+- **Three tiny bme hooks** (bme is C, ImGui is C++ → route through a small
+  C-callable shim):
+  1. expose `sdlTexture` (a getter, or lift ownership out of bme_gfx.c);
+  2. add a "texture-only" mode to `gfx_flip` — update `sdlTexture` but skip its
+     `SDL_RenderClear`/`RenderCopy`/`RenderPresent` ([bme_gfx.c:75-77](../src/bme/bme_gfx.c#L75));
+  3. forward each SDL event to `ImGui_ImplSDL2_ProcessEvent` from inside
+     `win_checkmessages` ([bme_win.c:193](../src/bme/bme_win.c#L193)).
+- Main loop (per frame): let bme render the legacy frame into `sdlTexture`
+  (texture-only), then `NewFrame` → draw the legacy texture as a full-window
+  base-layer `ImGui::Image` → draw ImGui panels on top (start with just a menu
+  bar + the demo window as a smoke test) → `ImGui::Render` →
+  `SDL_RenderPresent` once. **Draw every frame; vsync paces it** (no
+  drawHalt).
+- Input handoff: gate the legacy `getkey`/`mousecommands` path on
+  `!io.WantCaptureKeyboard` / `!io.WantCaptureMouse` so ImGui panels and the old
+  UI don't fight over events.
+- Font + theme scaffolding: load a mono + a UI font (merge an icon font),
+  define the color-role enum with a default (dark) theme, single `dpiScale`.
 
 ### M3 — Input / action layer
 Goal: replace hardcoded key switches with a data-driven action system (also the
@@ -228,15 +260,43 @@ Design refined from Furnace's system (Furnace uses a flat home-grown
 - **Model functions reading `editorInfo`** — many `gsong.cpp` operations assume
   "current instrument/pattern" from globals. Decide per-function whether to add
   explicit-index overloads (cleaner) or keep populating `editorInfo`.
-- **Legacy bridge cost** — worth it for a never-broken app, but it's real
-  plumbing (texture upload + input remap). Alternative is a faster but riskier
-  big-bang view rewrite. Recommendation: build the bridge.
+- **Legacy layering cost is low** — we reuse bme's existing window/renderer and
+  the `sdlTexture` it already builds, so the bridge is ~3 tiny hooks, not a
+  second window + framebuffer copy. Preferred over a big-bang view rewrite.
 - **QWERTY "jamming" / MIDI note entry** — currently entangled in
   `waitkeymouse`; must be re-expressed as ImGui-driven input in M3.
-- **C++17 bump** for toml++ (and generally desirable).
+- **C++17 bump** for toml++ (and generally desirable); happens in M2.
+
+## 4a. Refactoring strategy (do NOT big-bang the globals)
+
+Tempting question: rewrite the global-state, C-style code into idiomatic C++
+(`std::string`/`std::vector`, encapsulation) *before* the UI port. Decision:
+**no up-front global refactor.** It has no functional payoff, high regression
+risk (globals are load-bearing across ~20 files, the audio thread reads them,
+and undo snapshots raw memory regions in `gundo.cpp`), is hard to regression-test
+on a GUI tracker, and tends to produce the wrong abstractions when done ahead of
+a consumer. Instead:
+
+- **Refactor opportunistically, in the direction of the port** — clean each
+  subsystem's interface as its panel is ported (M4/M5), letting the ImGui work
+  pull the boundaries out.
+- **Two targeted early exceptions that pay off:**
+  1. **Consolidate `editorInfo` + the split `GTOBJECT.editorUndoInfo` state**
+     (already M3) — both the UI and config bind to it.
+  2. **Rework the palette/preset subsystem into clean C++** — small, isolated,
+     currently C-with-globals (`char *paletteNames[16]`, `char* paletteText[]`,
+     raw `malloc`/`sprintf` in [gpaletteeditor.cpp](../src/gpaletteeditor.cpp)),
+     and it becomes the **color-theme system in M7**. A `std::vector<Palette>`
+     with `std::string` names + load/save methods is a low-risk warm-up that
+     produces reusable design. Good candidate for the *first* concrete task.
 
 ## 5. Suggested first step
-Prototype **M2** (ImGui shell + SDL_Renderer + the legacy-framebuffer bridge)
-behind `-DGTULTRA_IMGUI=ON`. That yields a running, ImGui-hosted GTUltra with
-the old editor fully usable inside it — the safe platform to iterate from — and
-a natural place to prototype `displayTable` as the first native panel.
+Either:
+- **(a) M2 scaffold** — layer ImGui over the running app (`-DGTULTRA_IMGUI=ON`):
+  reuse bme's window/renderer + `sdlTexture`, draw it as the base layer, draw a
+  menu bar + demo window on top. Yields a running, ImGui-hosted GTUltra with the
+  old editor fully usable inside it — the safe platform to iterate from — and a
+  natural place to prototype `displayTable` (~40 lines) as the first native
+  panel. Best for momentum.
+- **(b) Palette/preset C++ rework** — small, self-contained, de-risks M7. Best
+  as a low-risk warm-up that yields reusable design.
