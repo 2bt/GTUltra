@@ -114,6 +114,15 @@ int         instr_firstwave(int i);
 int         instr_pan(int i);
 void        instr_select(int i);    // click -> select instrument (EDIT_INSTRUMENT)
 
+// Edits routed through the legacy undo system (Ctrl-Z works). field indices:
+// 0 AD, 1 SR, 2..5 wave/pulse/filter/vibrato pointers, 6 vib delay, 7 gate
+// timer, 8 first-frame wave, 9 pan.
+enum { INSTR_FIELDS = 10 };
+enum { INSTR_NAME_MAX = 16 }; // == MAX_INSTRNAMELEN (checked in guimodel.cpp)
+int         instr_field(int i, int field);   // read field value by index
+void        instr_set_field(int i, int field, unsigned value);
+void        instr_set_name(int i, const char *name);
+
 } // namespace gtui
 
 #endif

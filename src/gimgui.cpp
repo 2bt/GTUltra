@@ -422,89 +422,86 @@ static void gimgui_draw_orderlist(void)
 }
 
 // Instrument table (deviates from the legacy single-instrument view): one
-// instrument per row, columns for name + the instrument fields. Read-only for
-// now; clicking a row selects that instrument (gtui::instr_select). Reuses the
-// shared grid scaffold.
+// instrument per row, editable, using a native ImGui table with a text input
+// for the name and hex inputs for the fields. Edits commit on defocus/Enter and
+// go through the legacy undo system (gtui::instr_set_*). Selecting/editing a row
+// sets the current instrument (einum).
 static void gimgui_draw_instruments(void)
 {
     const ImGuiCond posCond = g_reset_layout ? ImGuiCond_Always : ImGuiCond_FirstUseEver;
     ImGui::SetNextWindowPos(ImVec2(446, 292), posCond);
-    ImGui::SetNextWindowSize(ImVec2(356, 262), posCond);
+    ImGui::SetNextWindowSize(ImVec2(392, 262), posCond);
     if (!ImGui::Begin("Instruments"))
     {
         ImGui::End();
         return;
     }
 
-    const ImU32 cCursorRow = IM_COL32(64, 110, 190, 90);
-    const ImU32 cIdx       = IM_COL32(120, 140, 160, 255);
-    const ImU32 cName      = IM_COL32(224, 230, 238, 255);
-    const ImU32 cVal       = IM_COL32(200, 210, 225, 255);
-    const ImU32 cHeader    = IM_COL32(180, 200, 220, 255);
+    static const char *fieldLabel[gtui::INSTR_FIELDS] =
+        { "AD", "SR", "WA", "PU", "FI", "VB", "VD", "GT", "FW", "PN" };
 
     const int rows = gtui::instr_count();
     const int cur  = gtui::instr_current();
-
     const float charW = ImGui::CalcTextSize("0").x;
-    const float lineH = ImGui::GetTextLineHeight();
+    const float fieldW = charW * 2.5f + ImGui::GetStyle().FramePadding.x * 2.0f;
 
-    // Column layout, in character units.
-    const int   NAMEW = 16;
-    const float xIdx  = 0.0f;
-    const float xName = 3.0f * charW;
-    const float xFields = (3 + NAMEW + 1) * charW;
-    const float fieldW = 3.0f * charW; // "XX "
-    const char *fieldLabel[10] = { "AD","SR","WA","PU","FI","VB","VD","GT","FW","PN" };
-    const float totalW = xFields + 10 * fieldW;
-
-    // Field value for column f of instrument i.
-    auto fieldVal = [](int i, int f) -> int {
-        switch (f)
-        {
-        case 0: return gtui::instr_ad(i);
-        case 1: return gtui::instr_sr(i);
-        case 2: return gtui::instr_ptr(i, 0); // WTBL (wave)
-        case 3: return gtui::instr_ptr(i, 1); // PTBL (pulse)
-        case 4: return gtui::instr_ptr(i, 2); // FTBL (filter)
-        case 5: return gtui::instr_ptr(i, 3); // STBL (speed/vibrato)
-        case 6: return gtui::instr_vibdelay(i);
-        case 7: return gtui::instr_gatetimer(i);
-        case 8: return gtui::instr_firstwave(i);
-        default: return gtui::instr_pan(i);
-        }
-    };
-
-    // Fixed header row.
+    const ImGuiTableFlags tflags = ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg |
+        ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_SizingFixedFit;
+    if (!ImGui::BeginTable("instab", 2 + gtui::INSTR_FIELDS, tflags))
     {
-        ImDrawList *hdl = ImGui::GetWindowDrawList();
-        ImVec2 hp = ImGui::GetCursorScreenPos();
-        hdl->AddText(ImVec2(hp.x + xIdx, hp.y), cHeader, "##");
-        hdl->AddText(ImVec2(hp.x + xName, hp.y), cHeader, "NAME");
-        for (int f = 0; f < 10; f++)
-            hdl->AddText(ImVec2(hp.x + xFields + f * fieldW, hp.y), cHeader, fieldLabel[f]);
-        ImGui::Dummy(ImVec2(totalW, lineH));
-        ImGui::Separator();
+        ImGui::End();
+        return;
     }
 
-    gimgui_grid_body(
-        "insgrid", rows, totalW, lineH, cur,
-        [&](ImDrawList *dl, int r, float x, float y) {
-            char buf[24];
-            if (r == cur)
-                dl->AddRectFilled(ImVec2(x, y), ImVec2(x + totalW, y + lineH), cCursorRow);
+    ImGui::TableSetupScrollFreeze(0, 1); // keep the header row visible
+    ImGui::TableSetupColumn("##", ImGuiTableColumnFlags_WidthFixed, charW * 2.5f);
+    ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthFixed, charW * 12.0f);
+    for (int f = 0; f < gtui::INSTR_FIELDS; f++)
+        ImGui::TableSetupColumn(fieldLabel[f], ImGuiTableColumnFlags_WidthFixed, fieldW);
+    ImGui::TableHeadersRow();
 
-            snprintf(buf, sizeof buf, "%02X", r);
-            dl->AddText(ImVec2(x + xIdx, y), cIdx, buf);
-            snprintf(buf, sizeof buf, "%.16s", gtui::instr_name(r));
-            dl->AddText(ImVec2(x + xName, y), cName, buf);
-            for (int f = 0; f < 10; f++)
+    const ImGuiInputTextFlags hexFlags = ImGuiInputTextFlags_CharsHexadecimal |
+        ImGuiInputTextFlags_CharsUppercase | ImGuiInputTextFlags_AutoSelectAll;
+
+    ImGuiListClipper clipper;
+    clipper.Begin(rows);
+    while (clipper.Step())
+    {
+        for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++)
+        {
+            ImGui::TableNextRow();
+            if (i == cur)
+                ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, IM_COL32(64, 110, 190, 90));
+            ImGui::PushID(i);
+
+            ImGui::TableNextColumn();
+            ImGui::Text("%02X", i);
+
+            // Name: a regular text input.
+            ImGui::TableNextColumn();
+            char name[gtui::INSTR_NAME_MAX + 1];
+            snprintf(name, sizeof name, "%.*s", gtui::INSTR_NAME_MAX, gtui::instr_name(i));
+            ImGui::SetNextItemWidth(-FLT_MIN);
+            ImGui::InputText("##name", name, sizeof name);
+            if (ImGui::IsItemActivated()) gtui::instr_select(i);
+            if (ImGui::IsItemDeactivatedAfterEdit()) gtui::instr_set_name(i, name);
+
+            // Fields: hex inputs, committed on defocus/Enter.
+            for (int f = 0; f < gtui::INSTR_FIELDS; f++)
             {
-                snprintf(buf, sizeof buf, "%02X", fieldVal(r, f));
-                dl->AddText(ImVec2(x + xFields + f * fieldW, y), cVal, buf);
+                ImGui::TableNextColumn();
+                ImGui::PushID(f);
+                unsigned char v = (unsigned char)gtui::instr_field(i, f);
+                ImGui::SetNextItemWidth(-FLT_MIN);
+                ImGui::InputScalar("##f", ImGuiDataType_U8, &v, NULL, NULL, "%02X", hexFlags);
+                if (ImGui::IsItemActivated()) gtui::instr_select(i);
+                if (ImGui::IsItemDeactivatedAfterEdit()) gtui::instr_set_field(i, f, v);
+                ImGui::PopID();
             }
-        },
-        [&](int r, float) { gtui::instr_select(r); });
-
+            ImGui::PopID();
+        }
+    }
+    ImGui::EndTable();
     ImGui::End();
 }
 

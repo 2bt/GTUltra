@@ -162,14 +162,20 @@ editor yet — this is the platform to iterate from.
 >   in-process (51→62→undo→51).
 
 ### Decisions & notes
-- **Instrument view = table (deviates from legacy).** Instead of the legacy
-  single-instrument field view, show one instrument per row with columns
-  (name, AD, SR, wave/pulse/filter/vibrato pointers, vib delay, gate, 1st-frame
-  wave, pan). Read-only for now + click-to-select (`gtui::instr_select` sets
-  `einum`); reuses `gimgui_grid_body`. **Editing is deferred** because the
-  table's natural up/down (= instrument) conflicts with the legacy keyboard
-  model (up/down = field within one instrument): inline editing will need its
-  own `guimodel` write path + undo rather than reusing `instrumentcommands`.
+- **Instrument view = editable table (deviates from legacy).** One instrument
+  per row (columns: name, AD, SR, wave/pulse/filter/vibrato pointers, vib delay,
+  gate, 1st-frame wave, pan). Built as a native `ImGui::BeginTable` with a
+  **text input** for the name and **hex inputs** for the fields (not the custom
+  tracker grid) — appropriate for a data table and it sidesteps the keyboard-axis
+  problem (ImGui owns focus/editing, no legacy keyboard nav). Edits commit on
+  defocus/Enter through `gtui::instr_set_field`/`instr_set_name`, which bracket
+  the write in the legacy undo system (`UNDO_AREA_INSTRUMENTS`). Verified
+  write+undo round-trip.
+- **Known limitation: order-list cursor keys.** With the order list now vertical
+  but keyboard editing still going through the legacy (horizontal-layout) engine,
+  the arrow keys move along the wrong axis. Accepted for the transition; it
+  resolves when the ImGui order panel owns its own keyboard nav (part of legacy
+  removal, M6).
 - **Deferred: expanded order list.** A GTUltra-specific feature (not in original
   GoatTracker). Support it in the ImGui order panel later (relates to the
   `expandOrderListView` / `songOrderPatterns[]` caveat below).

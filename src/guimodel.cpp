@@ -265,6 +265,65 @@ void instr_select(int i)
     editorInfo.einum = i;
 }
 
+static unsigned char *instr_field_ptr(int i, int field)
+{
+    INSTR &in = instr[i];
+    switch (field)
+    {
+    case 0: return &in.ad;
+    case 1: return &in.sr;
+    case 2: return &in.ptr[0]; // WTBL
+    case 3: return &in.ptr[1]; // PTBL
+    case 4: return &in.ptr[2]; // FTBL
+    case 5: return &in.ptr[3]; // STBL (vibrato)
+    case 6: return &in.vibdelay;
+    case 7: return &in.gatetimer;
+    case 8: return &in.firstwave;
+    case 9: return &in.pan;
+    default: return 0;
+    }
+}
+
+// Bracket a mutation of instrument i in the legacy undo system (same areas the
+// legacy instrument editor marks). The mutation happens in `apply`.
+template <class Apply>
+static void instr_edit(int i, Apply apply)
+{
+    GTUNDO_OBJECT *ed = undoCreateEditorInfo();
+    undoAreaSetCheckForChange(UNDO_AREA_INSTRUMENTS, i, UNDO_AREA_DIRTY_CHECK);
+    apply();
+    if (undoValidateUndoAreas(ed) == 0)
+        undoFreeUndoObject(ed);
+}
+
+static_assert(INSTR_NAME_MAX == MAX_INSTRNAMELEN, "instrument name length mismatch");
+
+int instr_field(int i, int field)
+{
+    if (!instr_ok(i)) return 0;
+    unsigned char *p = instr_field_ptr(i, field);
+    return p ? *p : 0;
+}
+
+void instr_set_field(int i, int field, unsigned value)
+{
+    if (!instr_ok(i)) return;
+    unsigned char *p = instr_field_ptr(i, field);
+    if (!p) return;
+    unsigned char v = (unsigned char)(value & 0xff);
+    if (*p == v) return;
+    instr_edit(i, [&] { *p = v; });
+}
+
+void instr_set_name(int i, const char *name)
+{
+    if (!instr_ok(i) || !name) return;
+    char clean[MAX_INSTRNAMELEN];
+    strncpy(clean, name, MAX_INSTRNAMELEN); // truncate/pad to the fixed field width
+    if (memcmp(instr[i].name, clean, MAX_INSTRNAMELEN) == 0) return;
+    instr_edit(i, [&] { memcpy(instr[i].name, clean, MAX_INSTRNAMELEN); });
+}
+
 void pattern_set_cursor(int ch, int row, int col)
 {
     int chans = pattern_channels();
