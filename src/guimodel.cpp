@@ -239,6 +239,32 @@ void order_set_cursor(int ch, int row, int col)
     editorInfo.escolumn = col;
 }
 
+// ---- instruments ----
+
+static bool instr_ok(int i) { return i >= 0 && i < MAX_INSTR; }
+
+int instr_count() { return MAX_INSTR; }
+int instr_current() { return editorInfo.einum; }
+const char *instr_name(int i) { return instr_ok(i) ? instr[i].name : ""; }
+int instr_ad(int i) { return instr_ok(i) ? instr[i].ad : 0; }
+int instr_sr(int i) { return instr_ok(i) ? instr[i].sr : 0; }
+int instr_ptr(int i, int which)
+{
+    if (!instr_ok(i) || which < 0 || which >= MAX_TABLES) return 0;
+    return instr[i].ptr[which];
+}
+int instr_vibdelay(int i) { return instr_ok(i) ? instr[i].vibdelay : 0; }
+int instr_gatetimer(int i) { return instr_ok(i) ? instr[i].gatetimer : 0; }
+int instr_firstwave(int i) { return instr_ok(i) ? instr[i].firstwave : 0; }
+int instr_pan(int i) { return instr_ok(i) ? instr[i].pan : 0; }
+
+void instr_select(int i)
+{
+    if (!instr_ok(i)) return;
+    editorInfo.editmode = EDIT_INSTRUMENT;
+    editorInfo.einum = i;
+}
+
 void pattern_set_cursor(int ch, int row, int col)
 {
     int chans = pattern_channels();

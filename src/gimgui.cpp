@@ -421,6 +421,93 @@ static void gimgui_draw_orderlist(void)
     ImGui::End();
 }
 
+// Instrument table (deviates from the legacy single-instrument view): one
+// instrument per row, columns for name + the instrument fields. Read-only for
+// now; clicking a row selects that instrument (gtui::instr_select). Reuses the
+// shared grid scaffold.
+static void gimgui_draw_instruments(void)
+{
+    const ImGuiCond posCond = g_reset_layout ? ImGuiCond_Always : ImGuiCond_FirstUseEver;
+    ImGui::SetNextWindowPos(ImVec2(446, 292), posCond);
+    ImGui::SetNextWindowSize(ImVec2(356, 262), posCond);
+    if (!ImGui::Begin("Instruments"))
+    {
+        ImGui::End();
+        return;
+    }
+
+    const ImU32 cCursorRow = IM_COL32(64, 110, 190, 90);
+    const ImU32 cIdx       = IM_COL32(120, 140, 160, 255);
+    const ImU32 cName      = IM_COL32(224, 230, 238, 255);
+    const ImU32 cVal       = IM_COL32(200, 210, 225, 255);
+    const ImU32 cHeader    = IM_COL32(180, 200, 220, 255);
+
+    const int rows = gtui::instr_count();
+    const int cur  = gtui::instr_current();
+
+    const float charW = ImGui::CalcTextSize("0").x;
+    const float lineH = ImGui::GetTextLineHeight();
+
+    // Column layout, in character units.
+    const int   NAMEW = 16;
+    const float xIdx  = 0.0f;
+    const float xName = 3.0f * charW;
+    const float xFields = (3 + NAMEW + 1) * charW;
+    const float fieldW = 3.0f * charW; // "XX "
+    const char *fieldLabel[10] = { "AD","SR","WA","PU","FI","VB","VD","GT","FW","PN" };
+    const float totalW = xFields + 10 * fieldW;
+
+    // Field value for column f of instrument i.
+    auto fieldVal = [](int i, int f) -> int {
+        switch (f)
+        {
+        case 0: return gtui::instr_ad(i);
+        case 1: return gtui::instr_sr(i);
+        case 2: return gtui::instr_ptr(i, 0); // WTBL (wave)
+        case 3: return gtui::instr_ptr(i, 1); // PTBL (pulse)
+        case 4: return gtui::instr_ptr(i, 2); // FTBL (filter)
+        case 5: return gtui::instr_ptr(i, 3); // STBL (speed/vibrato)
+        case 6: return gtui::instr_vibdelay(i);
+        case 7: return gtui::instr_gatetimer(i);
+        case 8: return gtui::instr_firstwave(i);
+        default: return gtui::instr_pan(i);
+        }
+    };
+
+    // Fixed header row.
+    {
+        ImDrawList *hdl = ImGui::GetWindowDrawList();
+        ImVec2 hp = ImGui::GetCursorScreenPos();
+        hdl->AddText(ImVec2(hp.x + xIdx, hp.y), cHeader, "##");
+        hdl->AddText(ImVec2(hp.x + xName, hp.y), cHeader, "NAME");
+        for (int f = 0; f < 10; f++)
+            hdl->AddText(ImVec2(hp.x + xFields + f * fieldW, hp.y), cHeader, fieldLabel[f]);
+        ImGui::Dummy(ImVec2(totalW, lineH));
+        ImGui::Separator();
+    }
+
+    gimgui_grid_body(
+        "insgrid", rows, totalW, lineH, cur,
+        [&](ImDrawList *dl, int r, float x, float y) {
+            char buf[24];
+            if (r == cur)
+                dl->AddRectFilled(ImVec2(x, y), ImVec2(x + totalW, y + lineH), cCursorRow);
+
+            snprintf(buf, sizeof buf, "%02X", r);
+            dl->AddText(ImVec2(x + xIdx, y), cIdx, buf);
+            snprintf(buf, sizeof buf, "%.16s", gtui::instr_name(r));
+            dl->AddText(ImVec2(x + xName, y), cName, buf);
+            for (int f = 0; f < 10; f++)
+            {
+                snprintf(buf, sizeof buf, "%02X", fieldVal(r, f));
+                dl->AddText(ImVec2(x + xFields + f * fieldW, y), cVal, buf);
+            }
+        },
+        [&](int r, float) { gtui::instr_select(r); });
+
+    ImGui::End();
+}
+
 // Called by bme (via bme_overlay_render_hook) between its RenderCopy and its
 // RenderPresent, i.e. on top of the freshly-drawn legacy frame.
 extern "C" void gimgui_overlay_render(void)
@@ -447,6 +534,7 @@ extern "C" void gimgui_overlay_render(void)
     gimgui_draw_pattern();
     gimgui_draw_orderlist();
     gimgui_draw_tables();
+    gimgui_draw_instruments();
     if (g_show_demo)
         ImGui::ShowDemoWindow(&g_show_demo);
 

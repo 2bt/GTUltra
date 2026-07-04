@@ -101,6 +101,19 @@ int  order_mark_end();
 OrderCell order_cell(int ch, int row);
 void order_set_cursor(int ch, int row, int col); // click -> place cursor (EDIT_ORDERLIST)
 
+// ---- instruments (table view: one instrument per row) ----
+int         instr_count();          // number of instruments
+int         instr_current();        // selected instrument (einum)
+const char *instr_name(int i);
+int         instr_ad(int i);        // attack/decay
+int         instr_sr(int i);        // sustain/release
+int         instr_ptr(int i, int which); // table pointer: which = WTBL/PTBL/FTBL/STBL
+int         instr_vibdelay(int i);
+int         instr_gatetimer(int i);
+int         instr_firstwave(int i);
+int         instr_pan(int i);
+void        instr_select(int i);    // click -> select instrument (EDIT_INSTRUMENT)
+
 } // namespace gtui
 
 #endif

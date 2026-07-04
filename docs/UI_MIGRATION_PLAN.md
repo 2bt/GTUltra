@@ -162,6 +162,17 @@ editor yet — this is the platform to iterate from.
 >   in-process (51→62→undo→51).
 
 ### Decisions & notes
+- **Instrument view = table (deviates from legacy).** Instead of the legacy
+  single-instrument field view, show one instrument per row with columns
+  (name, AD, SR, wave/pulse/filter/vibrato pointers, vib delay, gate, 1st-frame
+  wave, pan). Read-only for now + click-to-select (`gtui::instr_select` sets
+  `einum`); reuses `gimgui_grid_body`. **Editing is deferred** because the
+  table's natural up/down (= instrument) conflicts with the legacy keyboard
+  model (up/down = field within one instrument): inline editing will need its
+  own `guimodel` write path + undo rather than reusing `instrumentcommands`.
+- **Deferred: expanded order list.** A GTUltra-specific feature (not in original
+  GoatTracker). Support it in the ImGui order panel later (relates to the
+  `expandOrderListView` / `songOrderPatterns[]` caveat below).
 - **Order list ported (vertical, modern).** Chosen over the legacy horizontal
   layout: positions are rows, channels are columns (Furnace-style), reusing
   `gimgui_grid_body`. Cells decode to pattern numbers or commands (`+X`/`-X`
