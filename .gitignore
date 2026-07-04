@@ -20,3 +20,6 @@ compile_commands.json
 # Editor / OS cruft
 *~
 .DS_Store
+
+# ImGui window-layout state (per-user, not source)
+imgui.ini

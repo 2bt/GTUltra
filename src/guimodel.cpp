@@ -137,4 +137,8 @@ PatCell pattern_cell(int ch, int row)
     return c;
 }
 
+int pattern_mark_channel() { return editorInfo.epmarkchn; }
+int pattern_mark_start() { return editorInfo.epmarkstart; }
+int pattern_mark_end() { return editorInfo.epmarkend; }
+
 } // namespace gtui

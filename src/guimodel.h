@@ -54,6 +54,12 @@ int  pattern_length(int ch);   // pattern length of that pattern
 int  pattern_actual_channel(int ch); // legacy channel number for the header
 PatCell pattern_cell(int ch, int row);
 
+// Selection (Shift+Up/Down mark). mark_channel is the *actual* channel number
+// (compare against pattern_actual_channel(ch)); -1 means no active selection.
+int  pattern_mark_channel();
+int  pattern_mark_start();
+int  pattern_mark_end();
+
 } // namespace gtui
 
 #endif

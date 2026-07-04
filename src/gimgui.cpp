@@ -118,24 +118,33 @@ static void gimgui_draw_pattern(void)
     }
 
     // Colors (hardcoded for now; the theme system is M7).
-    const ImU32 cBeat1    = IM_COL32(255, 255, 255, 16);
-    const ImU32 cBeat2    = IM_COL32(255, 255, 255, 32);
-    const ImU32 cCursorRow= IM_COL32(64, 110, 190, 90);
-    const ImU32 cCursorChn= IM_COL32(255, 232, 0, 40);
-    const ImU32 cRowNum   = IM_COL32(120, 140, 160, 255);
-    const ImU32 cRowNumHi = IM_COL32(210, 210, 130, 255);
-    const ImU32 cNote     = IM_COL32(224, 230, 238, 255);
-    const ImU32 cInstr    = IM_COL32(120, 205, 120, 255);
-    const ImU32 cCmd      = IM_COL32(235, 180, 90, 255);
-    const ImU32 cDots     = IM_COL32(85, 95, 108, 255);
-    const ImU32 cHeader   = IM_COL32(180, 200, 220, 255);
-    const ImU32 cEnd      = IM_COL32(150, 160, 175, 255);
+    const ImU32 cBeat1     = IM_COL32(255, 255, 255, 16);
+    const ImU32 cBeat2     = IM_COL32(255, 255, 255, 32);
+    const ImU32 cCursorRow = IM_COL32(255, 255, 255, 20);
+    const ImU32 cSelect    = IM_COL32(48, 96, 200, 110);   // Shift+Up/Down mark
+    const ImU32 cCursorFill= IM_COL32(235, 225, 120, 70);  // cursor cell
+    const ImU32 cCursorEdge= IM_COL32(235, 225, 120, 230);
+    const ImU32 cRowNum    = IM_COL32(120, 140, 160, 255);
+    const ImU32 cRowNumHi  = IM_COL32(210, 210, 130, 255);
+    const ImU32 cNote      = IM_COL32(224, 230, 238, 255);
+    const ImU32 cInstr     = IM_COL32(120, 205, 120, 255);
+    const ImU32 cCmd       = IM_COL32(235, 180, 90, 255);
+    const ImU32 cDots      = IM_COL32(85, 95, 108, 255);
+    const ImU32 cHeader    = IM_COL32(180, 200, 220, 255);
+    const ImU32 cEnd       = IM_COL32(150, 160, 175, 255);
 
     const int   chans = gtui::pattern_channels();
     const int   rows  = gtui::pattern_rows();
     const int   step  = gtui::pattern_step() > 0 ? gtui::pattern_step() : 4;
     const int   curRow = gtui::pattern_cursor_row();
     const int   curChn = gtui::pattern_cursor_chn();
+    const int   curCol = gtui::pattern_cursor_col();
+
+    // Active selection (Shift+Up/Down): actual channel + inclusive row range.
+    const int   markChn = gtui::pattern_mark_channel();
+    int markLo = gtui::pattern_mark_start();
+    int markHi = gtui::pattern_mark_end();
+    if (markLo > markHi) { int t = markLo; markLo = markHi; markHi = t; }
 
     const float charW = ImGui::CalcTextSize("0").x;
     const float lineH = ImGui::GetTextLineHeight();
@@ -206,9 +215,22 @@ static void gimgui_draw_pattern(void)
             for (int c = 0; c < chans; c++)
             {
                 const float cx = origin.x + rowNumW + c * chanW;
-                if (c == curChn)
-                    dl->AddRectFilled(ImVec2(cx - charW * 0.25f, y),
-                                      ImVec2(cx + charW * 8.5f, y + lineH), cCursorChn);
+
+                // Selection background (blue) for the marked channel + row range.
+                if (markChn >= 0 && gtui::pattern_actual_channel(c) == markChn &&
+                    r >= markLo && r <= markHi)
+                    dl->AddRectFilled(ImVec2(cx, y), ImVec2(cx + charW * 8.0f, y + lineH), cSelect);
+
+                // Cursor cell: highlight the exact sub-field the cursor is on.
+                // epcolumn 0 = note (3 chars); 1..5 = a single nibble at
+                // cell offset (2 + epcolumn).
+                if (r == curRow && c == curChn)
+                {
+                    float cs = (curCol == 0) ? cx : cx + (2 + curCol) * charW;
+                    float cw = (curCol == 0) ? charW * 3.0f : charW;
+                    dl->AddRectFilled(ImVec2(cs, y), ImVec2(cs + cw, y + lineH), cCursorFill);
+                    dl->AddRect(ImVec2(cs, y), ImVec2(cs + cw, y + lineH), cCursorEdge);
+                }
 
                 gtui::PatCell cell = gtui::pattern_cell(c, r);
                 if (!cell.valid)
