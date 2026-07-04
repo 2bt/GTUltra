@@ -153,8 +153,30 @@ editor yet — this is the platform to iterate from.
 >   screenshot.
 >
 > Model/view seam: ImGui panels read the legacy globals only through
-> `guimodel` — extend it per panel. Next: make a panel editable (write-back +
-> undo), then tackle the pattern grid (M4).
+> `guimodel` — extend it per panel.
+>
+> - **Editable panel done:** the SID Tables cells are editable hex fields that
+>   write via `gtui::table_set`, which brackets the write in the legacy undo
+>   system (create editor info → mark `UNDO_AREA_TABLES+t` L/R → mutate →
+>   validate). Edits show live in both UIs and are Ctrl-Z-undoable. Verified
+>   in-process (51→62→undo→51).
+
+### Decisions & notes
+- **Tables panel is a throwaway stepping stone.** It uses stock ImGui
+  `InputScalar` fields (mouse/click/Enter), which does NOT match the tracker's
+  keyboard-cursor + direct-nibble-entry model. Do **not** polish it. The
+  pattern editor (M4) will build a reusable custom `ImDrawList` grid with a
+  keyboard cursor; **re-skin the tables with that widget** afterward so all
+  grids share one interaction model.
+- **Transition model = overlay-and-cover, not a window split.** The legacy UI
+  renders the whole editor into one framebuffer (monolithic), so a hardcoded
+  split would just shrink+duplicate it. Instead, ImGui panels sit over the
+  legacy frame and each ported panel eventually blanks its legacy region, until
+  nothing legacy remains (then delete the legacy renderer, M6). A
+  "legacy-as-a-dockable-window" variant was considered and declined — the plain
+  overlay is fine.
+
+Next: the pattern grid (M4), starting read-only.
 
 Reuse bme's **existing** window/renderer/frame rather than standing up a second
 one. bme already exposes `SDL_Window *win_window` (bme_win.h:34) and
