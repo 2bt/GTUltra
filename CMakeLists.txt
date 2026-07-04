@@ -207,9 +207,11 @@ endif()
 add_executable(gtultra "${SRC}/gt2stereo.cpp" "${SRC}/greloc.cpp")
 target_link_libraries(gtultra PRIVATE gtcore)
 if(GTULTRA_IMGUI)
-    target_sources(gtultra PRIVATE "${SRC}/gimgui.cpp")
+    target_sources(gtultra PRIVATE "${SRC}/gimgui.cpp" "${SRC}/guimodel.cpp")
     target_compile_definitions(gtultra PRIVATE GTULTRA_IMGUI)
     target_link_libraries(gtultra PRIVATE imgui)
+    # guimodel.cpp needs the legacy headers (model globals) + bme/asm include dirs
+    target_include_directories(gtultra PRIVATE "${SRC}/bme" "${SRC}/asm" ${SDL2_INCLUDE_DIRS})
 endif()
 
 # Standalone relocator/exporter (includes greloc.cpp with GT2RELOC)

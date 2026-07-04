@@ -15,6 +15,8 @@
 #include "backends/imgui_impl_sdl2.h"
 #include "backends/imgui_impl_sdlrenderer2.h"
 
+#include "guimodel.h" // SDL-free bridge to the legacy model
+
 // bme globals/hooks we bind to. Declared here (with C linkage) instead of
 // including bme's headers, so we pull the *system* SDL2 headers that the ImGui
 // backends use rather than bme's bundled copy. Both are SDL2, so the opaque
@@ -28,6 +30,55 @@ extern "C" {
 }
 
 static bool g_imgui_ready = false;
+static bool g_show_demo = false; // toggleable ImGui reference/demo window
+
+// First native panel: the four SID tables (wave/pulse/filter/speed), read-only.
+// Reads live model state via the guimodel bridge, so it mirrors the legacy
+// tables as the user navigates them. A proof-of-concept for the model-binding +
+// per-cell rendering that the editable panels will build on.
+static void gimgui_draw_tables(void)
+{
+    if (!ImGui::Begin("SID Tables"))
+    {
+        ImGui::End();
+        return;
+    }
+
+    const int cursorTable = gtui::table_cursor_table();
+    const int cursorPos = gtui::table_cursor_pos();
+    const int rows = gtui::table_len();
+    const ImU32 cursorCol = IM_COL32(255, 232, 0, 255);
+
+    for (int t = 0; t < gtui::table_count(); t++)
+    {
+        if (t)
+            ImGui::SameLine();
+
+        ImGui::BeginChild(gtui::table_name(t), ImVec2(92, 320), true);
+        ImGui::TextUnformatted(gtui::table_name(t));
+        ImGui::Separator();
+
+        // 255 rows * 4 tables per frame - clip to the visible ones.
+        ImGuiListClipper clipper;
+        clipper.Begin(rows);
+        while (clipper.Step())
+        {
+            for (int r = clipper.DisplayStart; r < clipper.DisplayEnd; r++)
+            {
+                const bool atCursor = (t == cursorTable && r == cursorPos);
+                if (atCursor)
+                    ImGui::PushStyleColor(ImGuiCol_Text, cursorCol);
+                ImGui::Text("%02X:%02X %02X", r + 1,
+                            gtui::table_left(t, r), gtui::table_right(t, r));
+                if (atCursor)
+                    ImGui::PopStyleColor();
+            }
+        }
+        ImGui::EndChild();
+    }
+
+    ImGui::End();
+}
 
 // Called by bme (via bme_overlay_render_hook) between its RenderCopy and its
 // RenderPresent, i.e. on top of the freshly-drawn legacy frame.
@@ -40,8 +91,19 @@ extern "C" void gimgui_overlay_render(void)
     ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
 
-    // M2 smoke test: the ImGui demo window. Real panels replace this later.
-    ImGui::ShowDemoWindow();
+    if (ImGui::BeginMainMenuBar())
+    {
+        if (ImGui::BeginMenu("View"))
+        {
+            ImGui::MenuItem("ImGui Demo", nullptr, &g_show_demo);
+            ImGui::EndMenu();
+        }
+        ImGui::EndMainMenuBar();
+    }
+
+    gimgui_draw_tables();
+    if (g_show_demo)
+        ImGui::ShowDemoWindow(&g_show_demo);
 
     ImGui::Render();
 

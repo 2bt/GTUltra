@@ -136,13 +136,25 @@ Goal: the full legacy editor keeps working, now composited inside an
 ImGui-owned window, with ImGui able to draw panels on top. No functional ImGui
 editor yet — this is the platform to iterate from.
 
-> **Status:** step 1 landed — Dear ImGui (docking 1.92.9) vendored under
-> `extern/imgui`, wired into CMake behind `-DGTULTRA_IMGUI=ON` (C++17), and
-> composited over the running editor via bme's existing renderer + the overlay
-> render/event hooks. Currently draws the ImGui demo window as a smoke test.
-> Verified: the demo window generates real draw geometry each frame on bme's
-> renderer (checked headless via the SDL `offscreen` driver). Next: base-layer
-> the legacy `sdlTexture` explicitly + input handoff, then the first real panel.
+> **Status: M2 complete + first native panel landed.**
+> - Step 1: Dear ImGui (docking 1.92.9) vendored under `extern/imgui`, wired
+>   into CMake behind `-DGTULTRA_IMGUI=ON` (C++17), composited over the running
+>   editor via bme's renderer + overlay/event hooks.
+> - Legacy base-layer: `gfx_flip` letterboxes the frame to an explicit dest rect
+>   (fell out of the mouse/HiDPI fix); ImGui draws over it in full window pixels.
+> - Step 2: input handoff — `getkey` consults `bme_input_capture_hook`; when
+>   ImGui reports `WantCaptureMouse/Keyboard`, legacy input is swallowed. Default
+>   build leaves the hook NULL (no-op).
+> - **First native panel:** a read-only "SID Tables" window
+>   (wave/pulse/filter/speed) reading live model state, with cursor highlight and
+>   an `ImGuiListClipper`. Introduces `guimodel.{h,cpp}` — a **SDL-free
+>   read/query bridge** between the legacy model and the ImGui layer (so ImGui
+>   never pulls bme's bundled SDL). Verified against the legacy tables via
+>   screenshot.
+>
+> Model/view seam: ImGui panels read the legacy globals only through
+> `guimodel` — extend it per panel. Next: make a panel editable (write-back +
+> undo), then tackle the pattern grid (M4).
 
 Reuse bme's **existing** window/renderer/frame rather than standing up a second
 one. bme already exposes `SDL_Window *win_window` (bme_win.h:34) and
