@@ -161,6 +161,84 @@ int pattern_mark_channel() { return editorInfo.epmarkchn; }
 int pattern_mark_start() { return editorInfo.epmarkstart; }
 int pattern_mark_end() { return editorInfo.epmarkend; }
 
+// ---- order list ----
+
+int order_channels() { return pattern_channels(); } // same 3/6 rule as patterns
+int order_actual_channel(int ch) { return getActualChannel(editorInfo.esnum, ch); }
+int order_cursor_row() { return editorInfo.eseditpos; }
+int order_cursor_chn() { return editorInfo.eschn; }
+int order_cursor_col() { return editorInfo.escolumn; }
+int order_mark_chn() { return editorInfo.esmarkchn; }
+int order_mark_start() { return editorInfo.esmarkstart; }
+int order_mark_end() { return editorInfo.esmarkend; }
+
+int order_length(int ch)
+{
+    if (ch < 0 || ch >= MAX_CHN) return 0;
+    return songlen[editorInfo.esnum][ch];
+}
+
+int order_rows()
+{
+    int maxlen = 0;
+    int chans = order_channels();
+    for (int c = 0; c < chans; c++)
+        if (order_length(c) > maxlen) maxlen = order_length(c);
+    if (maxlen > MAX_SONGLEN) maxlen = MAX_SONGLEN;
+    return maxlen + 2; // include the RST + loop-position rows
+}
+
+OrderCell order_cell(int ch, int row)
+{
+    OrderCell c;
+    c.text[0] = ' '; c.text[1] = ' '; c.text[2] = ' '; c.text[3] = 0;
+    c.kind = 0;
+    c.valid = false;
+    if (ch < 0 || ch >= MAX_CHN) return c;
+
+    int sn = editorInfo.esnum;
+    int len = songlen[sn][ch];
+    if (row < 0 || row > len + 1 || row > MAX_SONGLEN + 1) return c;
+
+    c.valid = true;
+    int v = songorder[sn][ch][row];
+    if (v == LOOPSONG)
+    {
+        c.text[0] = 'R'; c.text[1] = 'S'; c.text[2] = 'T';
+        c.kind = 3;
+        return c;
+    }
+    if (v < REPEAT || row >= len) // pattern number (or a raw value past the end)
+    {
+        snprintf(c.text, sizeof c.text, "%02X ", v);
+        c.kind = 1;
+        return c;
+    }
+    // Command
+    if (v >= TRANSUP)        snprintf(c.text, sizeof c.text, "+%X ", v & 0xf);
+    else if (v >= TRANSDOWN) snprintf(c.text, sizeof c.text, "-%X ", 16 - (v & 0xf));
+    else                     snprintf(c.text, sizeof c.text, "R%X ", (v + 1) & 0xf);
+    c.kind = 2;
+    return c;
+}
+
+void order_set_cursor(int ch, int row, int col)
+{
+    int chans = order_channels();
+    if (ch < 0) ch = 0;
+    if (ch >= chans) ch = chans - 1;
+    int len = order_length(ch);
+    if (row < 0) row = 0;
+    if (row > len + 1) row = len + 1;
+    if (col < 0) col = 0;
+    if (col > 2) col = 2;
+
+    editorInfo.editmode = EDIT_ORDERLIST;
+    editorInfo.eschn = ch;
+    editorInfo.eseditpos = row;
+    editorInfo.escolumn = col;
+}
+
 void pattern_set_cursor(int ch, int row, int col)
 {
     int chans = pattern_channels();

@@ -79,6 +79,28 @@ int  pattern_mark_end();
 // then flows through the existing legacy pattern editor.
 void pattern_set_cursor(int ch, int row, int col);
 
+// ---- order list (vertical view: positions = rows, channels = columns) ----
+
+// One decoded order entry.
+struct OrderCell {
+    char text[4];  // 3 visible chars + NUL: "0A ", "+2 ", "-3 ", "R4 ", "RST", "   "
+    int  kind;     // 0 empty, 1 pattern, 2 command (transpose/repeat), 3 loop (RST)
+    bool valid;    // within this channel's order length (+ loop row)
+};
+
+int  order_channels();          // visible channel count (3 or 6)
+int  order_rows();              // rows to render (max order length across channels)
+int  order_cursor_row();        // edit cursor position (eseditpos)
+int  order_cursor_chn();        // edit cursor channel (display index, eschn)
+int  order_cursor_col();        // cursor column within the cell (escolumn)
+int  order_actual_channel(int ch);
+int  order_length(int ch);      // order length of display channel ch
+int  order_mark_chn();          // selection channel (display index), -1 if none
+int  order_mark_start();
+int  order_mark_end();
+OrderCell order_cell(int ch, int row);
+void order_set_cursor(int ch, int row, int col); // click -> place cursor (EDIT_ORDERLIST)
+
 } // namespace gtui
 
 #endif

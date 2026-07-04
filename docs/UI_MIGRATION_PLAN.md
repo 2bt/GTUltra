@@ -162,6 +162,14 @@ editor yet — this is the platform to iterate from.
 >   in-process (51→62→undo→51).
 
 ### Decisions & notes
+- **Order list ported (vertical, modern).** Chosen over the legacy horizontal
+  layout: positions are rows, channels are columns (Furnace-style), reusing
+  `gimgui_grid_body`. Cells decode to pattern numbers or commands (`+X`/`-X`
+  transpose, `RX` repeat, `RST` loop) from `songorder[]`; click places the cursor
+  (`gtui::order_set_cursor` → `EDIT_ORDERLIST`), keyboard via the legacy editor.
+  Caveat: reads the *normal* `songorder[]`; when the legacy "expanded order list"
+  mode (`expandOrderListView`) is active it edits `songOrderPatterns[]`, so the
+  vertical view can lag until that data is synced — revisit if it matters.
 - **Shared grid scaffold extracted.** `gimgui_grid_body` (a template in
   `gimgui.cpp`) owns the reusable parts of a scrolling monospace grid: child
   window, content reservation, row virtualization, no-lag cursor-follow (per-grid

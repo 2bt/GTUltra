@@ -326,6 +326,101 @@ static void gimgui_draw_pattern(void)
     ImGui::End();
 }
 
+// Order list, vertical layout (positions = rows, channels = columns) via the
+// shared grid scaffold. Cells are pattern numbers or commands (+/-/R/RST).
+// Keyboard editing flows through the legacy order editor; clicking places the
+// cursor (gtui::order_set_cursor).
+static void gimgui_draw_orderlist(void)
+{
+    const ImGuiCond posCond = g_reset_layout ? ImGuiCond_Always : ImGuiCond_FirstUseEver;
+    ImGui::SetNextWindowPos(ImVec2(446, 24), posCond);
+    ImGui::SetNextWindowSize(ImVec2(300, 260), posCond);
+    if (!ImGui::Begin("Order List"))
+    {
+        ImGui::End();
+        return;
+    }
+
+    const ImU32 cCursorRow = IM_COL32(255, 255, 255, 20);
+    const ImU32 cSelect    = IM_COL32(48, 96, 200, 110);
+    const ImU32 cCursorFill= IM_COL32(235, 225, 120, 70);
+    const ImU32 cCursorEdge= IM_COL32(235, 225, 120, 230);
+    const ImU32 cRowNum    = IM_COL32(120, 140, 160, 255);
+    const ImU32 cPat       = IM_COL32(224, 230, 238, 255);
+    const ImU32 cCmd       = IM_COL32(235, 180, 90, 255);
+    const ImU32 cLoop      = IM_COL32(150, 160, 175, 255);
+    const ImU32 cHeader    = IM_COL32(180, 200, 220, 255);
+
+    const int chans = gtui::order_channels();
+    const int rows  = gtui::order_rows();
+    const int curRow = gtui::order_cursor_row();
+    const int curChn = gtui::order_cursor_chn();
+    const int curCol = gtui::order_cursor_col();
+    const int markChn = gtui::order_mark_chn();
+    int markLo = gtui::order_mark_start(), markHi = gtui::order_mark_end();
+    if (markLo > markHi) { int tmp = markLo; markLo = markHi; markHi = tmp; }
+
+    const float charW = ImGui::CalcTextSize("0").x;
+    const float lineH = ImGui::GetTextLineHeight();
+    const float rowNumW = charW * 4.0f; // "PP "
+    const float colW = charW * 4.0f;    // "PP " cell + gutter
+    const float totalW = rowNumW + chans * colW;
+
+    // Fixed header: POS + channel numbers.
+    {
+        ImDrawList *hdl = ImGui::GetWindowDrawList();
+        ImVec2 hp = ImGui::GetCursorScreenPos();
+        char hbuf[16];
+        hdl->AddText(ImVec2(hp.x, hp.y), cHeader, "POS");
+        for (int c = 0; c < chans; c++)
+        {
+            snprintf(hbuf, sizeof hbuf, "CH%X", gtui::order_actual_channel(c));
+            hdl->AddText(ImVec2(hp.x + rowNumW + c * colW, hp.y), cHeader, hbuf);
+        }
+        ImGui::Dummy(ImVec2(totalW, lineH));
+        ImGui::Separator();
+    }
+
+    gimgui_grid_body(
+        "olgrid", rows, totalW, lineH, curRow,
+        [&](ImDrawList *dl, int r, float x, float y) {
+            char buf[8];
+            if (r == curRow)
+                dl->AddRectFilled(ImVec2(x, y), ImVec2(x + totalW, y + lineH), cCursorRow);
+            snprintf(buf, sizeof buf, "%02X", r);
+            dl->AddText(ImVec2(x, y), cRowNum, buf);
+
+            for (int c = 0; c < chans; c++)
+            {
+                const float cx = x + rowNumW + c * colW;
+                if (markChn == c && r >= markLo && r <= markHi)
+                    dl->AddRectFilled(ImVec2(cx, y), ImVec2(cx + charW * 3, y + lineH), cSelect);
+                if (r == curRow && c == curChn)
+                {
+                    float cs = cx + (curCol < 0 ? 0 : (curCol > 2 ? 2 : curCol)) * charW;
+                    dl->AddRectFilled(ImVec2(cs, y), ImVec2(cs + charW, y + lineH), cCursorFill);
+                    dl->AddRect(ImVec2(cs, y), ImVec2(cs + charW, y + lineH), cCursorEdge);
+                }
+
+                gtui::OrderCell cell = gtui::order_cell(c, r);
+                if (!cell.valid)
+                    continue;
+                ImU32 col = cell.kind == 2 ? cCmd : cell.kind == 3 ? cLoop : cPat;
+                dl->AddText(ImVec2(cx, y), col, cell.text);
+            }
+        },
+        [&](int r, float localX) {
+            float rx = localX - rowNumW;
+            if (rx < 0) return;
+            int c = (int)(rx / colW);
+            if (c < 0 || c >= chans) return;
+            int off = (int)((rx - c * colW) / charW);
+            gtui::order_set_cursor(c, r, off > 2 ? 2 : off);
+        });
+
+    ImGui::End();
+}
+
 // Called by bme (via bme_overlay_render_hook) between its RenderCopy and its
 // RenderPresent, i.e. on top of the freshly-drawn legacy frame.
 extern "C" void gimgui_overlay_render(void)
@@ -350,6 +445,7 @@ extern "C" void gimgui_overlay_render(void)
     }
 
     gimgui_draw_pattern();
+    gimgui_draw_orderlist();
     gimgui_draw_tables();
     if (g_show_demo)
         ImGui::ShowDemoWindow(&g_show_demo);
