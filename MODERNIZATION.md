@@ -73,6 +73,20 @@ Result: `cmake --build build` produces all five binaries as C++. Tightening
 `-fpermissive`/`-Wno-narrowing` back down to clean, idiomatic C++ is left for
 follow-up work.
 
+### Stage C — remove obsolete build cruft
+
+Now that CMake owns the build, the following were removed (all recoverable
+from git history):
+
+- `linux/`, `mac/`, `win32/` — these held build outputs / committed prebuilt
+  binaries. Builds now go to `build/`. (Prebuilt Mac/Windows binaries and the
+  bundled `win32/SDL2.dll` / `win32/gtultra.cfg` went with them; the editor
+  regenerates its own config on first run.)
+- the per-platform makefiles (`src/makefile*`, `src/bme/makefile*`) and the
+  `.bat` helpers (`_make.bat`, `remakedata.bat`).
+- committed Windows host-tool binaries (`src/**/datafile.exe`,
+  `src/**/dat2inc.exe`) — these are built from source by CMake now.
+
 ## Planned milestones
 
 - **SDL2/SDL3.** The Linux build already links system **SDL2** (via

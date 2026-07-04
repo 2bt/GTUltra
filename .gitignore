@@ -17,17 +17,6 @@ cmake_install.cmake
 CTestTestfile.cmake
 compile_commands.json
 
-# Host codegen tools (built into build/, not the source tree)
-/src/bme/datafile
-/src/bme/dat2inc
-
-# Built binaries (produced by the build, not source)
-/linux/gtultra
-/linux/gt2reloc
-/linux/ins2snd2
-/linux/mod2sng2
-/linux/ss2stereo
-
 # Editor / OS cruft
 *~
 .DS_Store
