@@ -162,6 +162,13 @@ editor yet — this is the platform to iterate from.
 >   in-process (51→62→undo→51).
 
 ### Decisions & notes
+- **Deferred: table "detailed" view.** A GTUltra addition (not in original
+  GoatTracker): clicking a table header (all except the speed table) toggles an
+  alternative view that interprets the raw bytes in a more user-friendly way.
+  Legacy code: `modifyWaveTableDetailed*` / `detailedTable*` /
+  `checkForMouseInDetailed*Table` in `gtable.cpp`/`gdisplay.cpp`. Re-add an
+  equivalent in the ImGui tables eventually (there's a `TODO` on the header in
+  `gimgui_draw_one_table`). Ignore for now.
 - **Tables panel re-skinned (done).** The stock `InputScalar` stopgap was
   replaced with a custom `ImDrawList` grid matching the pattern editor:
   monospace `II:LL RR` cells, cursor cell box (per `etcolumn`), Shift-select
