@@ -334,7 +334,7 @@ static void gimgui_draw_orderlist(void)
 {
     const ImGuiCond posCond = g_reset_layout ? ImGuiCond_Always : ImGuiCond_FirstUseEver;
     ImGui::SetNextWindowPos(ImVec2(446, 24), posCond);
-    ImGui::SetNextWindowSize(ImVec2(300, 260), posCond);
+    ImGui::SetNextWindowSize(ImVec2(350, 200), posCond);
     if (!ImGui::Begin("Order List"))
     {
         ImGui::End();
@@ -429,8 +429,8 @@ static void gimgui_draw_orderlist(void)
 static void gimgui_draw_instruments(void)
 {
     const ImGuiCond posCond = g_reset_layout ? ImGuiCond_Always : ImGuiCond_FirstUseEver;
-    ImGui::SetNextWindowPos(ImVec2(446, 292), posCond);
-    ImGui::SetNextWindowSize(ImVec2(392, 262), posCond);
+    ImGui::SetNextWindowPos(ImVec2(446, 230), posCond);
+    ImGui::SetNextWindowSize(ImVec2(350, 190), posCond);
     if (!ImGui::Begin("Instruments"))
     {
         ImGui::End();
@@ -505,6 +505,60 @@ static void gimgui_draw_instruments(void)
     ImGui::End();
 }
 
+// Song info + transport: name/author/copyright text fields and play/stop
+// controls. A plain form panel (regular ImGui widgets). Metadata edits write
+// directly (not undo-tracked, as in the legacy); transport calls the legacy
+// play/stop.
+static void gimgui_draw_song(void)
+{
+    const ImGuiCond posCond = g_reset_layout ? ImGuiCond_Always : ImGuiCond_FirstUseEver;
+    ImGui::SetNextWindowPos(ImVec2(446, 426), posCond);
+    ImGui::SetNextWindowSize(ImVec2(350, 140), posCond);
+    if (!ImGui::Begin("Song"))
+    {
+        ImGui::End();
+        return;
+    }
+
+    struct Field { const char *label; const char *(*get)(); void (*set)(const char *); };
+    static const Field fields[3] = {
+        { "Name",      gtui::song_name,      gtui::song_set_name },
+        { "Author",    gtui::song_author,    gtui::song_set_author },
+        { "Copyright", gtui::song_copyright, gtui::song_set_copyright },
+    };
+
+    for (int f = 0; f < 3; f++)
+    {
+        char buf[gtui::SONG_STR_MAX + 1];
+        snprintf(buf, sizeof buf, "%.*s", (int)gtui::SONG_STR_MAX, fields[f].get());
+        ImGui::AlignTextToFramePadding();
+        ImGui::TextUnformatted(fields[f].label);
+        ImGui::SameLine(72.0f);
+        ImGui::PushID(f);
+        ImGui::PushItemWidth(-1.0f);
+        if (ImGui::InputText("##v", buf, sizeof buf))
+            fields[f].set(buf); // metadata: commit as typed (no undo, like legacy)
+        ImGui::PopItemWidth();
+        ImGui::PopID();
+    }
+
+    ImGui::Separator();
+
+    if (ImGui::Button("Play"))
+        gtui::transport_play_start();
+    ImGui::SameLine();
+    if (ImGui::Button("Pattern"))
+        gtui::transport_play_pattern();
+    ImGui::SameLine();
+    if (ImGui::Button("Stop"))
+        gtui::transport_stop();
+    ImGui::SameLine();
+    ImGui::Text("%s  %02d:%02d", gtui::transport_playing() ? "|>" : "[]",
+                gtui::transport_time_min(), gtui::transport_time_sec());
+
+    ImGui::End();
+}
+
 // Called by bme (via bme_overlay_render_hook) between its RenderCopy and its
 // RenderPresent, i.e. on top of the freshly-drawn legacy frame.
 extern "C" void gimgui_overlay_render(void)
@@ -532,6 +586,7 @@ extern "C" void gimgui_overlay_render(void)
     gimgui_draw_orderlist();
     gimgui_draw_tables();
     gimgui_draw_instruments();
+    gimgui_draw_song();
     if (g_show_demo)
         ImGui::ShowDemoWindow(&g_show_demo);
 

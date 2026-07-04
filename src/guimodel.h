@@ -123,6 +123,22 @@ int         instr_field(int i, int field);   // read field value by index
 void        instr_set_field(int i, int field, unsigned value);
 void        instr_set_name(int i, const char *name);
 
+// ---- song info + transport ----
+enum { SONG_STR_MAX = 31 }; // usable chars (== MAX_STR-1, checked in .cpp)
+const char *song_name();
+const char *song_author();
+const char *song_copyright();
+void        song_set_name(const char *s);
+void        song_set_author(const char *s);
+void        song_set_copyright(const char *s);
+
+void        transport_play_start();   // play from the start of the song
+void        transport_play_pattern(); // play the current pattern
+void        transport_stop();
+bool        transport_playing();
+int         transport_time_min();
+int         transport_time_sec();
+
 } // namespace gtui
 
 #endif

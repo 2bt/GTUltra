@@ -324,6 +324,31 @@ void instr_set_name(int i, const char *name)
     instr_edit(i, [&] { memcpy(instr[i].name, clean, MAX_INSTRNAMELEN); });
 }
 
+// ---- song info + transport ----
+
+static_assert(SONG_STR_MAX == MAX_STR - 1, "song string length mismatch");
+
+const char *song_name() { return songname; }
+const char *song_author() { return authorname; }
+const char *song_copyright() { return copyrightname; }
+
+static void song_set_str(char *dst, const char *s)
+{
+    if (!s) return;
+    strncpy(dst, s, MAX_STR - 1);
+    dst[MAX_STR - 1] = 0;
+}
+void song_set_name(const char *s) { song_set_str(songname, s); }
+void song_set_author(const char *s) { song_set_str(authorname, s); }
+void song_set_copyright(const char *s) { song_set_str(copyrightname, s); }
+
+void transport_play_start() { initsong(editorInfo.esnum, PLAY_BEGINNING, &gtObject); }
+void transport_play_pattern() { initsong(editorInfo.esnum, PLAY_PATTERN, &gtObject); }
+void transport_stop() { stopsong(&gtObject); }
+bool transport_playing() { return isplaying(&gtObject) != 0; }
+int transport_time_min() { return gtObject.timemin; }
+int transport_time_sec() { return gtObject.timesec; }
+
 void pattern_set_cursor(int ch, int row, int col)
 {
     int chans = pattern_channels();
