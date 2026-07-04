@@ -901,6 +901,7 @@ void getkey(void)
 			prevmouseb = 0;
 			mousebDoubleClick = 0;
 			mouseheld = 0;
+			win_mousewheel = 0; // don't let scroll over an ImGui panel reach the editor
 		}
 		if (cap & 2)
 		{
