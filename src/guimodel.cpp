@@ -120,6 +120,22 @@ int pattern_rows()
     return maxlen + 1; // include the PATT.END row
 }
 
+// Currently-playing row for display channel ch, or -1 when not playing or the
+// channel is playing a different pattern than the one shown. Mirrors the legacy
+// pattern-view playhead (gdisplay.cpp): row = lastpattptr/4, clamped to length.
+int pattern_play_row(int ch)
+{
+    if (!isplaying(&gtObject)) return -1;
+    int c2 = getActualChannel(editorInfo.esnum, ch);
+    if (gtObject.editorUndoInfo.editorInfo[c2].epnum != gtObject.chn[c2].lastpattnum)
+        return -1;
+    int chnrow = gtObject.chn[c2].lastpattptr / 4;
+    int pnum = gtObject.chn[c2].lastpattnum;
+    if (pnum >= 0 && pnum < MAX_PATT && chnrow > pattlen[pnum])
+        chnrow = pattlen[pnum];
+    return chnrow;
+}
+
 int pattern_step() { return stepsize; }
 int pattern_cursor_row() { return editorInfo.eppos; }
 int pattern_cursor_chn() { return editorInfo.epchn; }

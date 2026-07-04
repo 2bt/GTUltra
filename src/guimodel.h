@@ -64,6 +64,7 @@ int  pattern_cursor_chn();     // edit cursor channel (display index, epchn)
 int  pattern_cursor_col();     // edit cursor column within the cell (epcolumn)
 int  pattern_number(int ch);   // pattern index shown in display channel ch
 int  pattern_length(int ch);   // pattern length of that pattern
+int  pattern_play_row(int ch); // currently-playing row in display channel ch, -1 if none
 int  pattern_actual_channel(int ch); // legacy channel number for the header
 PatCell pattern_cell(int ch, int row);
 

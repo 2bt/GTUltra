@@ -208,6 +208,7 @@ static void gimgui_draw_pattern(void)
     const ImU32 cBeat1     = IM_COL32(255, 255, 255, 16);
     const ImU32 cBeat2     = IM_COL32(255, 255, 255, 32);
     const ImU32 cCursorRow = IM_COL32(255, 255, 255, 20);
+    const ImU32 cPlayRow   = IM_COL32(80, 190, 90, 80);    // per-channel playhead
     const ImU32 cSelect    = IM_COL32(48, 96, 200, 110);   // Shift+Up/Down mark
     const ImU32 cCursorFill= IM_COL32(235, 225, 120, 70);  // cursor cell
     const ImU32 cCursorEdge= IM_COL32(235, 225, 120, 230);
@@ -232,6 +233,12 @@ static void gimgui_draw_pattern(void)
     int markLo = gtui::pattern_mark_start();
     int markHi = gtui::pattern_mark_end();
     if (markLo > markHi) { int t = markLo; markLo = markHi; markHi = t; }
+
+    // Per-channel playhead rows (-1 when that channel isn't showing its playing
+    // pattern). chans <= MAX_CHN (6).
+    int playRow[8];
+    for (int c = 0; c < chans && c < 8; c++)
+        playRow[c] = gtui::pattern_play_row(c);
 
     const float charW = ImGui::CalcTextSize("0").x;
     const float lineH = ImGui::GetTextLineHeight();
@@ -278,6 +285,10 @@ static void gimgui_draw_pattern(void)
             for (int c = 0; c < chans; c++)
             {
                 const float cx = x + rowNumW + c * chanW;
+
+                // Playing-row highlight (per channel; follows playback).
+                if (r == playRow[c])
+                    dl->AddRectFilled(ImVec2(cx, y), ImVec2(cx + charW * 8.0f, y + lineH), cPlayRow);
 
                 // Selection background for the marked channel + row range.
                 if (markChn >= 0 && gtui::pattern_actual_channel(c) == markChn &&
@@ -445,17 +456,18 @@ static void gimgui_draw_instruments(void)
     const float charW = ImGui::CalcTextSize("0").x;
     const float fieldW = charW * 2.5f + ImGui::GetStyle().FramePadding.x * 2.0f;
 
-    const ImGuiTableFlags tflags = ImGuiTableFlags_ScrollY | ImGuiTableFlags_RowBg |
-        ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_SizingFixedFit;
+    const ImGuiTableFlags tflags = ImGuiTableFlags_ScrollY | ImGuiTableFlags_ScrollX |
+        ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerV | ImGuiTableFlags_SizingFixedFit;
     if (!ImGui::BeginTable("instab", 2 + gtui::INSTR_FIELDS, tflags))
     {
         ImGui::End();
         return;
     }
 
-    ImGui::TableSetupScrollFreeze(0, 1); // keep the header row visible
+    ImGui::TableSetupScrollFreeze(2, 1); // keep header row + index/name columns visible
     ImGui::TableSetupColumn("##", ImGuiTableColumnFlags_WidthFixed, charW * 2.5f);
-    ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthFixed, charW * 12.0f);
+    ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthFixed,
+        charW * gtui::INSTR_NAME_MAX + ImGui::GetStyle().FramePadding.x * 2.0f);
     for (int f = 0; f < gtui::INSTR_FIELDS; f++)
         ImGui::TableSetupColumn(fieldLabel[f], ImGuiTableColumnFlags_WidthFixed, fieldW);
     ImGui::TableHeadersRow();
