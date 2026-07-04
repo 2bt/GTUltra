@@ -27,6 +27,26 @@ int table_view(int t)
 
 int table_cursor_table() { return editorInfo.etnum; }
 int table_cursor_pos() { return editorInfo.etpos; }
+int table_cursor_col() { return editorInfo.etcolumn; }
+int table_mark_table() { return editorInfo.etmarknum; }
+int table_mark_start() { return editorInfo.etmarkstart; }
+int table_mark_end() { return editorInfo.etmarkend; }
+
+void table_set_cursor(int t, int row, int col)
+{
+    if (t < 0) t = 0;
+    if (t >= MAX_TABLES) t = MAX_TABLES - 1;
+    if (row < 0) row = 0;
+    if (row >= MAX_TABLELEN) row = MAX_TABLELEN - 1;
+    if (col < 0) col = 0;
+    if (col > 3) col = 3;
+
+    editorInfo.editmode = EDIT_TABLES;
+    editorInfo.editTableMode = t + 1; // EDIT_TABLE_WAVE..SPEED
+    editorInfo.etnum = t;
+    editorInfo.etpos = row;
+    editorInfo.etcolumn = col;
+}
 
 unsigned table_left(int t, int row)
 {

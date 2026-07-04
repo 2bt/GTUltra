@@ -162,12 +162,13 @@ editor yet — this is the platform to iterate from.
 >   in-process (51→62→undo→51).
 
 ### Decisions & notes
-- **Tables panel is a throwaway stepping stone.** It uses stock ImGui
-  `InputScalar` fields (mouse/click/Enter), which does NOT match the tracker's
-  keyboard-cursor + direct-nibble-entry model. Do **not** polish it. The
-  pattern editor (M4) will build a reusable custom `ImDrawList` grid with a
-  keyboard cursor; **re-skin the tables with that widget** afterward so all
-  grids share one interaction model.
+- **Tables panel re-skinned (done).** The stock `InputScalar` stopgap was
+  replaced with a custom `ImDrawList` grid matching the pattern editor:
+  monospace `II:LL RR` cells, cursor cell box (per `etcolumn`), Shift-select
+  blue background, and click-to-place-cursor (`gtui::table_set_cursor` →
+  `EDIT_TABLES`), with keyboard editing flowing through the legacy `tablecommands`
+  (same reuse-the-legacy-engine approach as the pattern grid). Both grids now
+  share one interaction model.
 - **Transition model = overlay-and-cover, not a window split.** The legacy UI
   renders the whole editor into one framebuffer (monolithic), so a hardcoded
   split would just shrink+duplicate it. Instead, ImGui panels sit over the

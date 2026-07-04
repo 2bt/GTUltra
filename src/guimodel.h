@@ -22,13 +22,26 @@ const char *table_name(int t);      // display name, "" if out of range
 int         table_view(int t);      // first visible row (scroll offset)
 int         table_cursor_table();   // table index the edit cursor is in
 int         table_cursor_pos();     // cursor row within its table
+int         table_cursor_col();     // cursor column (0..3 = L hi/lo, R hi/lo)
 unsigned    table_left(int t, int row);   // left/value byte
 unsigned    table_right(int t, int row);  // right/arg byte
+
+// Selection (Shift-marked range in a table). mark_table is the table index the
+// mark is in, -1 if none.
+int         table_mark_table();
+int         table_mark_start();
+int         table_mark_end();
 
 // Write one table byte (col 0 = left, 1 = right), routed through the legacy
 // undo system so it participates in Ctrl-Z like a native edit. No-op if the
 // value is unchanged or the indices are out of range.
 void        table_set(int t, int row, int col, unsigned value);
+
+// Move the table edit cursor from a click: switches to table-edit mode and
+// positions the cursor. col follows the legacy etcolumn convention (0..3 =
+// left hi/lo, right hi/lo). Keyboard editing then flows through the legacy
+// table editor.
+void        table_set_cursor(int t, int row, int col);
 
 // ---- pattern editor (read-only for now) ----
 
