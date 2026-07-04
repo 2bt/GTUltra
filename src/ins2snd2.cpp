@@ -6,7 +6,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include "bme_end.h"
+#ifdef __cplusplus
+}
+#endif
 #include "gcommon.h"
 
 int main(int argc, char **argv);

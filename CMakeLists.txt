@@ -18,7 +18,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # The original codebase relies on lax conversion rules; keep -fpermissive for
 # the C++ translation units so the incremental C -> C++ migration can proceed.
+# (No effect on the remaining C sources in asm/ and bme/.)
 add_compile_options(-Wall)
+# -fpermissive: allow the lax C-style conversions the code relies on.
+# -Wno-narrowing: the code initialises char[] tables with values > 127 (byte
+#   graphics data), which is a hard error in C++ braced-init but fine in C.
+add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fpermissive>)
+add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-Wno-narrowing>)
 
 set(SRC "${CMAKE_CURRENT_SOURCE_DIR}/src")
 set(GEN "${CMAKE_CURRENT_BINARY_DIR}/generated")
@@ -63,12 +69,12 @@ add_custom_command(
     COMMENT "Packing embedded data -> gt2stereo.dat"
     VERBATIM)
 
-set(GOATDATA "${GEN}/goatdata.c")
+set(GOATDATA "${GEN}/goatdata.cpp")
 add_custom_command(
     OUTPUT "${GOATDATA}"
     COMMAND dat2inc "${GEN}/gt2stereo.dat" "${GOATDATA}"
     DEPENDS dat2inc "${GEN}/gt2stereo.dat"
-    COMMENT "Embedding data blob -> goatdata.c"
+    COMMENT "Embedding data blob -> goatdata.cpp"
     VERBATIM)
 
 # ---------------------------------------------------------------------------
@@ -142,26 +148,26 @@ target_link_libraries(bme PUBLIC ${SDL2_LIBRARIES} ${ALSA_LIBRARIES} Threads::Th
 # ---------------------------------------------------------------------------
 add_library(gtcore STATIC
     "${GOATDATA}"
-    "${SRC}/gsong.c"
-    "${SRC}/gorder.c"
-    "${SRC}/gpattern.c"
-    "${SRC}/ginstr.c"
-    "${SRC}/gtable.c"
-    "${SRC}/gplay.c"
-    "${SRC}/gdisplay.c"
-    "${SRC}/gfile.c"
-    "${SRC}/ghelp.c"
-    "${SRC}/gsound.c"
-    "${SRC}/gconsole.c"
+    "${SRC}/gsong.cpp"
+    "${SRC}/gorder.cpp"
+    "${SRC}/gpattern.cpp"
+    "${SRC}/ginstr.cpp"
+    "${SRC}/gtable.cpp"
+    "${SRC}/gplay.cpp"
+    "${SRC}/gdisplay.cpp"
+    "${SRC}/gfile.cpp"
+    "${SRC}/ghelp.cpp"
+    "${SRC}/gsound.cpp"
+    "${SRC}/gconsole.cpp"
     "${SRC}/gsid.cpp"
-    "${SRC}/ginfo.c"
+    "${SRC}/ginfo.cpp"
     "${SRC}/gmidi.cpp"
-    "${SRC}/gundo.c"
-    "${SRC}/gchareditor.c"
+    "${SRC}/gundo.cpp"
+    "${SRC}/gchareditor.cpp"
     "${SRC}/RtMidi.cpp"
-    "${SRC}/gmidiselect.c"
-    "${SRC}/gpaletteeditor.c"
-    "${SRC}/gfkeys.c")
+    "${SRC}/gmidiselect.cpp"
+    "${SRC}/gpaletteeditor.cpp"
+    "${SRC}/gfkeys.cpp")
 # Note: ${SRC} is deliberately NOT on the include path. Project headers are
 # quote-includes resolved next to each source file; keeping src/ off the angle
 # search path prevents the bundled (incomplete) src/SDL headers from shadowing
@@ -176,22 +182,22 @@ target_link_libraries(gtcore PUBLIC resid residfp gtasm bme ${SDL2_LIBRARIES} ${
 # ---------------------------------------------------------------------------
 
 # The main editor
-add_executable(gtultra "${SRC}/gt2stereo.c" "${SRC}/greloc.c")
+add_executable(gtultra "${SRC}/gt2stereo.cpp" "${SRC}/greloc.cpp")
 target_link_libraries(gtultra PRIVATE gtcore)
 
-# Standalone relocator/exporter (includes greloc.c with GT2RELOC)
-add_executable(gt2reloc "${SRC}/gt2reloc.c")
+# Standalone relocator/exporter (includes greloc.cpp with GT2RELOC)
+add_executable(gt2reloc "${SRC}/gt2reloc.cpp")
 target_link_libraries(gt2reloc PRIVATE gtcore)
 
 # Small standalone conversion utilities (no SDL/resid needed).
 # Only bme/ is on the include path: gcommon.h is picked up as a quote-include
 # relative to each tool's own source, and keeping ${SRC} off the path avoids
 # the bundled (incomplete) src/SDL headers shadowing the system SDL.
-add_executable(mod2sng2 "${SRC}/mod2sng2.c" "${SRC}/bme/bme_end.c")
+add_executable(mod2sng2 "${SRC}/mod2sng2.cpp" "${SRC}/bme/bme_end.c")
 target_include_directories(mod2sng2 PRIVATE "${SRC}/bme")
 
-add_executable(ins2snd2 "${SRC}/ins2snd2.c" "${SRC}/bme/bme_end.c")
+add_executable(ins2snd2 "${SRC}/ins2snd2.cpp" "${SRC}/bme/bme_end.c")
 target_include_directories(ins2snd2 PRIVATE "${SRC}/bme")
 
-add_executable(ss2stereo "${SRC}/ss2stereo.c" "${SRC}/bme/bme_end.c")
+add_executable(ss2stereo "${SRC}/ss2stereo.cpp" "${SRC}/bme/bme_end.c")
 target_include_directories(ss2stereo PRIVATE "${SRC}/bme")

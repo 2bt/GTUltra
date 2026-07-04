@@ -42,15 +42,36 @@ Notes:
 - Build artifacts (object files, binaries) are no longer committed; see
   `.gitignore`. The stale prebuilt binaries under `linux/` were untracked.
 
-### Stage B — switch from C to C++ (in progress)
+### Stage B — switch from C to C++
 
-The project's own sources are being migrated from C to C++. Out of scope
-(will be replaced wholesale later, so left as C):
+All of the project's own sources were renamed `.c` → `.cpp` (via `git mv`, so
+history is preserved) and now compile as C++. Out of scope (will be replaced
+wholesale later, so left as C, compiled as C):
 
-- `src/asm/*` — the 6502 assembler
+- `src/asm/*` — the 6502 assembler (includes flex-generated `lexyy.c`)
 - `src/bme/*` — the media engine
 
 `resid` / `resid-fp` were already C++.
+
+Because `asm` and `bme` stay C, the C-header includes are wrapped in
+`extern "C"` at their include sites in the C++ code (`goattrk2.h` for `bme.h`,
+`greloc.cpp` for the `asm` headers, and each standalone tool for `bme_end.h`)
+so their symbols link correctly.
+
+Migration flags applied to the C++ translation units (`-fpermissive`,
+`-Wno-narrowing`) absorb the lax conversions and `char[]` byte-table
+initializers the old C relied on. A handful of genuine C++ errors were fixed
+by hand rather than flagged away:
+
+- `gplay.cpp` / `greloc.cpp`: `goto` statements that jumped across local
+  variable initializations (legal in C, ill-formed in C++) — variables were
+  re-scoped / hoisted.
+- `goattrk2.h`: empty-parameter-list prototypes (`f()`) for functions actually
+  taking arguments — given real signatures, since in C++ `f()` means "no args".
+
+Result: `cmake --build build` produces all five binaries as C++. Tightening
+`-fpermissive`/`-Wno-narrowing` back down to clean, idiomatic C++ is left for
+follow-up work.
 
 ## Planned milestones
 

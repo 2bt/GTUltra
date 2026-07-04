@@ -9,7 +9,15 @@
 #include <dirent.h>
 #include <sys/stat.h>
 #include <math.h>
+
+// bme is a C library; give its declarations C linkage when compiled as C++.
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include "bme.h"
+#ifdef __cplusplus
+}
+#endif
 
 
 #include "gmidi.h"
@@ -256,9 +264,9 @@ int mouseTrackModify(int editorWindow);
 void mouseTrack();
 void ModifyTrackGetOriginalValue();
 int checkForMouseInTable(int c,int OX,int OY);
-int checkForMouseInDetailedWaveTable();
-int checkForMouseInDetailedFilterTable();
-int checkForMouseInDetailedPulseTable();
+int checkForMouseInDetailedWaveTable(int OX, int OY);
+int checkForMouseInDetailedFilterTable(int OX, int OY);
+int checkForMouseInDetailedPulseTable(int OX, int OY);
 void detailedWaveTableChangeRelativeNote(int x, int y);
 void detailedWaveTableChangeData(int x, int y);
 void detailedWaveTableChangeCommand(int x, int y);

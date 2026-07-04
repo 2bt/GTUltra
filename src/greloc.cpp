@@ -7,8 +7,16 @@
 #include <stdio.h>
 
 #include "goattrk2.h"
+
+// asm is a C library; give its declarations C linkage when compiled as C++.
+#ifdef __cplusplus
+extern "C" {
+#endif
 #include "membuf.h"
 #include "parse.h"
+#ifdef __cplusplus
+}
+#endif
 
 char *playeroptname[] =
 {
@@ -107,6 +115,12 @@ extern char packedsongname[MAX_PATHNAME];
 
 void relocator(GTOBJECT *gt, int gt2relocMode, int autoSave)
 {
+	// Hoisted so the many `goto PRCLEANUP` statements do not jump across these
+	// initializations (ill-formed in C++, harmless in C).
+	int sds = 0;
+	int jpA000Fix = 0;
+	int doAgain = 0;
+
 	//	char *tempFirstSIDBuffer;		// Used for 9 channel SID creation
 	//	int tempSecondSIDOffset;
 
@@ -1085,7 +1099,7 @@ void relocator(GTOBJECT *gt, int gt2relocMode, int autoSave)
 	// Generate songorderlists & songtable
 	//songdatasize = 0;
 
-	int sds = 0;
+	sds = 0;
 
 	for (c = 0; c < songs; c++)
 	{
@@ -1433,8 +1447,8 @@ void relocator(GTOBJECT *gt, int gt2relocMode, int autoSave)
 		lastnote = MAX_NOTES - 1;
 	}
 
-	int jpA000Fix = 0;
-	int doAgain = 0;
+	jpA000Fix = 0;
+	doAgain = 0;
 	do
 	{
 		membuf_free(&src);

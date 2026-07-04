@@ -1516,15 +1516,17 @@ void updateExpandedSeq(int c, CHN *cptr, GTOBJECT *gt)
 		}
 	}
 
-	int t = songOrderTranspose[jnum][c2][cptr->songptr];
-	if (t & 0x80)
 	{
-		t &= 0x7f;
-		cptr->trans = -t;
-	}
-	else
-	{
-		cptr->trans = t;
+		int t = songOrderTranspose[jnum][c2][cptr->songptr];
+		if (t & 0x80)
+		{
+			t &= 0x7f;
+			cptr->trans = -t;
+		}
+		else
+		{
+			cptr->trans = t;
+		}
 	}
 
 

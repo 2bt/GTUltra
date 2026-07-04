@@ -694,4 +694,4 @@ void playUntilEnd2(int songNumber)
 
 #define GT2RELOC
 
-#include "greloc.c"
+#include "greloc.cpp"
