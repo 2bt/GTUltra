@@ -30,7 +30,8 @@ extern "C" {
 }
 
 static bool g_imgui_ready = false;
-static bool g_show_demo = false; // toggleable ImGui reference/demo window
+static bool g_show_demo = false;    // toggleable ImGui reference/demo window
+static bool g_reset_layout = false; // one-shot: snap panels back to defaults
 
 // Draw one SID table as an independently-scrolling column: a fixed header over
 // a virtualized scrolling body (fills the available height). Only the active
@@ -139,8 +140,9 @@ static void gimgui_draw_one_table(int t, float colW, float charW, float lineH)
 // clicking a cell places the cursor.
 static void gimgui_draw_tables(void)
 {
-    ImGui::SetNextWindowPos(ImVec2(8, 330), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(380, 236), ImGuiCond_FirstUseEver);
+    const ImGuiCond posCond = g_reset_layout ? ImGuiCond_Always : ImGuiCond_FirstUseEver;
+    ImGui::SetNextWindowPos(ImVec2(8, 330), posCond);
+    ImGui::SetNextWindowSize(ImVec2(380, 236), posCond);
     if (!ImGui::Begin("SID Tables"))
     {
         ImGui::End();
@@ -171,8 +173,9 @@ static void gimgui_draw_tables(void)
 // per-field coloring. Reads live model state via guimodel; editing comes later.
 static void gimgui_draw_pattern(void)
 {
-    ImGui::SetNextWindowPos(ImVec2(8, 24), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(430, 300), ImGuiCond_FirstUseEver);
+    const ImGuiCond posCond = g_reset_layout ? ImGuiCond_Always : ImGuiCond_FirstUseEver;
+    ImGui::SetNextWindowPos(ImVec2(8, 24), posCond);
+    ImGui::SetNextWindowSize(ImVec2(430, 300), posCond);
     if (!ImGui::Begin("Pattern"))
     {
         ImGui::End();
@@ -364,6 +367,8 @@ extern "C" void gimgui_overlay_render(void)
     {
         if (ImGui::BeginMenu("View"))
         {
+            if (ImGui::MenuItem("Reset window layout"))
+                g_reset_layout = true;
             ImGui::MenuItem("ImGui Demo", nullptr, &g_show_demo);
             ImGui::EndMenu();
         }
@@ -374,6 +379,8 @@ extern "C" void gimgui_overlay_render(void)
     gimgui_draw_tables();
     if (g_show_demo)
         ImGui::ShowDemoWindow(&g_show_demo);
+
+    g_reset_layout = false; // one-shot, consumed by this frame's windows
 
     ImGui::Render();
 
