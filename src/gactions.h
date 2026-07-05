@@ -75,6 +75,8 @@ enum class Action : uint16_t {
     PatternPageDown,
     PatternHome,
     PatternEnd,
+    PatternPrev,
+    PatternNext,
 
     TableRowUp,
     TableRowDown,
@@ -123,6 +125,9 @@ Ctx context_from_editmode(int editmode);
 Chord chord_from_input(int rawkey, int ascii_key, int shift, int ctrl);
 Action resolve(Ctx ctx, Chord chord);
 
+// Default or overridden chord for an action in a context (kNoChord if unbound).
+Chord binding_for(Action action, Ctx ctx);
+
 const char* action_name(Action a);
 const char* action_label(Action a);
 
@@ -144,6 +149,11 @@ bool dispatch_instrument_navigation();
 
 // Global actions (save, undo, quit, edit-mode tab, …). Uses gtObject.
 bool dispatch_global(Ctx ctx);
+
+// Runtime keymap overrides (M7 TOML will call these).
+bool set_binding(Action action, Ctx ctx, Chord chord);
+bool clear_binding(Action action, Ctx ctx);
+void reset_bindings();
 
 void clear_input();
 

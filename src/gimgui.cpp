@@ -574,6 +574,9 @@ void gimgui_draw_song(ImVec2 pos, ImVec2 size) {
         { "Copyright", gtui::song_copyright, gtui::song_set_copyright },
     };
 
+    float raw_char_width = ImGui::GetFont()->CalcTextSizeA(ImGui::GetFontSize(), FLT_MAX, 0.0f, "0").x;
+    float input_width = raw_char_width * gtui::SONG_STR_MAX + ImGui::GetStyle().FramePadding.x * 2.0f;
+
     for (int f = 0; f < 3; f++) {
         char buf[gtui::SONG_STR_MAX + 1];
         snprintf(buf, sizeof buf, "%.*s", (int)gtui::SONG_STR_MAX, fields[f].get());
@@ -581,7 +584,7 @@ void gimgui_draw_song(ImVec2 pos, ImVec2 size) {
         ImGui::TextUnformatted(fields[f].label);
         ImGui::SameLine(72.0f);
         ImGui::PushID(f);
-        ImGui::PushItemWidth(-1.0f);
+        ImGui::PushItemWidth(input_width);
         if (ImGui::InputText("##v", buf, sizeof buf))
             fields[f].set(buf); // metadata: commit as typed (no undo, like legacy)
         ImGui::PopItemWidth();

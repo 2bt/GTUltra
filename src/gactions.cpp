@@ -13,6 +13,8 @@
 #include "gdisplay.h"
 #include "gsound.h"
 
+#include <vector>
+
 namespace gtaction {
 
 namespace {
@@ -74,6 +76,8 @@ const ActionMeta kActionMeta[] = {
     { Action::PatternPageDown,   "PatternPageDown",   "Pattern: page down" },
     { Action::PatternHome,       "PatternHome",       "Pattern: first row" },
     { Action::PatternEnd,        "PatternEnd",        "Pattern: last row" },
+    { Action::PatternPrev,       "PatternPrev",       "Pattern: previous pattern" },
+    { Action::PatternNext,       "PatternNext",       "Pattern: next pattern" },
     { Action::TableRowUp,        "TableRowUp",        "Table: previous row" },
     { Action::TableRowDown,      "TableRowDown",      "Table: next row" },
     { Action::TableColLeft,      "TableColLeft",      "Table: previous table" },
@@ -186,6 +190,8 @@ const Binding kBindings[] = {
     { Action::PatternPageDown, Ctx::Pattern, make_chord(KEY_PGDN) },
     { Action::PatternHome,     Ctx::Pattern, make_chord(KEY_HOME) },
     { Action::PatternEnd,      Ctx::Pattern, make_chord(KEY_END) },
+    { Action::PatternPrev,     Ctx::Pattern, make_chord(KEY_LEFT, Shift) },
+    { Action::PatternNext,     Ctx::Pattern, make_chord(KEY_RIGHT, Shift) },
 
     // SID tables — ImGui four-column layout
     { Action::TableRowUp,    Ctx::Tables, make_chord(KEY_UP) },
@@ -206,20 +212,43 @@ const Binding kBindings[] = {
     { Action::InstrEnd,      Ctx::Instrument, make_chord(KEY_END) },
 };
 
+std::vector<Binding> g_overrides;
+
+Action lookup_table(Ctx ctx, Chord chord, const Binding* begin, const Binding* end)
+{
+    for (const Binding* p = begin; p != end; ++p) {
+        if (p->ctx == ctx && p->chord == chord)
+            return p->action;
+    }
+    for (const Binding* p = begin; p != end; ++p) {
+        if (p->ctx == Ctx::Global && p->chord == chord)
+            return p->action;
+    }
+    return Action::None;
+}
+
+Chord binding_in_table(Action action, Ctx ctx, const Binding* begin, const Binding* end)
+{
+    for (const Binding* p = begin; p != end; ++p) {
+        if (p->action == action && p->ctx == ctx)
+            return p->chord;
+    }
+    return kNoChord;
+}
+
 Action lookup(Ctx ctx, Chord chord)
 {
     if (chord == kNoChord)
         return Action::None;
 
-    for (const Binding& b : kBindings) {
-        if (b.ctx == ctx && b.chord == chord)
-            return b.action;
+    if (!g_overrides.empty()) {
+        Action a = lookup_table(ctx, chord, g_overrides.data(),
+                                g_overrides.data() + g_overrides.size());
+        if (a != Action::None)
+            return a;
     }
-    for (const Binding& b : kBindings) {
-        if (b.ctx == Ctx::Global && b.chord == chord)
-            return b.action;
-    }
-    return Action::None;
+
+    return lookup_table(ctx, chord, kBindings, kBindings + sizeof(kBindings) / sizeof(kBindings[0]));
 }
 
 int order_max_channels()
@@ -897,6 +926,12 @@ bool handle_pattern_action(Action act)
     case Action::PatternEnd:
         pattern_nav_end(gt);
         return true;
+    case Action::PatternPrev:
+        prevpattern(gt);
+        return true;
+    case Action::PatternNext:
+        nextpattern(gt);
+        return true;
     default:
         return false;
     }
@@ -1035,6 +1070,56 @@ Action resolve(Ctx ctx, Chord chord)
     return lookup(ctx, chord);
 }
 
+Chord binding_for(Action action, Ctx ctx)
+{
+    if (action == Action::None)
+        return kNoChord;
+
+    Chord c = binding_in_table(action, ctx, g_overrides.data(),
+                               g_overrides.data() + g_overrides.size());
+    if (c != kNoChord)
+        return c;
+
+    return binding_in_table(action, ctx, kBindings,
+                            kBindings + sizeof(kBindings) / sizeof(kBindings[0]));
+}
+
+bool set_binding(Action action, Ctx ctx, Chord chord)
+{
+    if (action == Action::None || chord == kNoChord)
+        return false;
+
+    for (auto it = g_overrides.begin(); it != g_overrides.end();) {
+        if ((it->action == action && it->ctx == ctx) ||
+            (it->ctx == ctx && it->chord == chord))
+            it = g_overrides.erase(it);
+        else
+            ++it;
+    }
+
+    g_overrides.push_back({ action, ctx, chord });
+    return true;
+}
+
+bool clear_binding(Action action, Ctx ctx)
+{
+    bool removed = false;
+    for (auto it = g_overrides.begin(); it != g_overrides.end();) {
+        if (it->action == action && it->ctx == ctx) {
+            it = g_overrides.erase(it);
+            removed = true;
+        } else {
+            ++it;
+        }
+    }
+    return removed;
+}
+
+void reset_bindings()
+{
+    g_overrides.clear();
+}
+
 const char* action_name(Action a)
 {
     for (const ActionMeta& m : kActionMeta) {
@@ -1092,8 +1177,8 @@ bool dispatch_pattern_navigation()
     if (editorInfo.editmode != EDIT_PATTERN)
         return false;
 
-    // Shift/Ctrl variants stay in patterncommands (prev/next pattern, etc.).
-    if (shiftOrCtrlPressed)
+    // Ctrl+arrow is global song transport.
+    if (ctrlpressed)
         return false;
 
     const Chord chord = chord_from_input(rawkey, key, shiftpressed, ctrlpressed);
@@ -1256,6 +1341,8 @@ bool perform(Action act)
     case Action::PatternPageDown:
     case Action::PatternHome:
     case Action::PatternEnd:
+    case Action::PatternPrev:
+    case Action::PatternNext:
         return handle_pattern_action(act);
     case Action::TableRowUp:
     case Action::TableRowDown:

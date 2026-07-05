@@ -1086,15 +1086,11 @@ void patterncommands(GTOBJECT *gt, int midiNote)
 	case KEY_RIGHT:
 		if (!shiftOrCtrlPressed)
 			pattern_col_right(gt);
-		else if (!ctrlpressed)
-			nextpattern(gt);
 		break;
 
 	case KEY_LEFT:
 		if (!shiftOrCtrlPressed)
 			pattern_col_left(gt);
-		else if (!ctrlpressed)
-			prevpattern(gt);
 		break;
 
 	case KEY_HOME:
@@ -1871,6 +1867,19 @@ int handlePolyphonicKeyboard(GTOBJECT *gt)
 	int newnote = -1;
 	int c = 0;
 
+	// ImGui text fields (instrument name, song metadata, …) consume keyboard
+	// input via bme_input_capture_hook; don't jam/record from held QWERTY keys.
+	if (bme_input_capture_hook && (bme_input_capture_hook() & 2))
+	{
+		for (int i = 0; i < KEYBOARD_POLYPHONY; i++)
+		{
+			if (playingChannelOnKey[i] >= 0)
+				clearPolyChannel(i, gt);
+		}
+		for (c = 0; c < SDL_NUM_SCANCODES; c++)
+			keyNoteDown[c] = 0;
+		return 1;
+	}
 
 	if (shiftOrCtrlPressed)
 		return noKeysPressed;
