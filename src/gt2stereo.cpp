@@ -30,9 +30,7 @@
 #include "goattrk2.h"
 #include "bme.h"
 
-#ifdef GTULTRA_IMGUI
 #include "gimgui.h"
-#endif
 
 int songExportSuccessFlag = 0;
 int sidAddr1 = 0xd400;
@@ -674,10 +672,8 @@ int main(int argc, char** argv)
 	if (!initscreen())
 		return 1;
 
-#ifdef GTULTRA_IMGUI
 	// Composite the experimental ImGui layer on top of the legacy editor.
 	gimgui_init();
-#endif
 
 	waveformDisplayInfo.displayOnOff = 0;
 
@@ -826,7 +822,7 @@ int main(int argc, char** argv)
 	#endif
 
 	*/
-	//	paletteChanged = 0;	// JP TEST TO REMOVE SAVE 
+	//	paletteChanged = 0;	// JP TEST TO REMOVE SAVE
 	//	if (paletteChanged)
 	//	{
 	//		configfile = fopen("gtskins.bin", "wb");		// wb write binary. wt = write text
@@ -1603,7 +1599,7 @@ void mousecommands(GTOBJECT* gt)
 		{
 			if (validateAllSongs() > 0xff)
 			{
-				// at least one channel in expanded view is too large (over 0xff bytes when compressed...)	
+				// at least one channel in expanded view is too large (over 0xff bytes when compressed...)
 				invalidCompressedDataLength++;
 			}
 		}
@@ -1872,7 +1868,7 @@ void mousecommands(GTOBJECT* gt)
 			{
 				if (!editPan)
 				{
-					//					undoCreateEditorInfoBackup();					
+					//					undoCreateEditorInfoBackup();
 					editadsr(gt);
 					//				undoAddEditorSettingsToList();
 				}
@@ -3017,7 +3013,7 @@ void readscalatuningfile()
 		configptr = configbuf;
 		sscanf(configptr, "%d", &tuningcount);
 
-		// Tunings 
+		// Tunings
 		for (i = 0; i < tuningcount; i++)
 		{
 			for (;;)
@@ -4150,7 +4146,7 @@ int mouseTrackModify(int editorWindow)
 			if (editorInfo.eipos == 1)
 				dptr = (char*)&instr[editorInfo.einum].sr;
 
-			if (editorInfo.eicolumn == 0)	// high nybble			
+			if (editorInfo.eicolumn == 0)	// high nybble
 				v >>= 4;
 			else
 				v &= 0xf;
@@ -4801,7 +4797,7 @@ int checkMouseInWaveformInfo()
 }
 
 
-// Wrote all this, then realised I could just easily modify the existing calculatefreqtable 
+// Wrote all this, then realised I could just easily modify the existing calculatefreqtable
 // Will leave it here anyway. May use it again one day...
 float noteToHz(int note)
 {

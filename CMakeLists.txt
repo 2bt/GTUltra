@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.16)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+
 project(GTUltra
     VERSION 1.0.0
     DESCRIPTION "GTUltra - a modernized fork of GoatTracker 2 Stereo"
@@ -15,10 +18,6 @@ endif()
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-# Experimental Dear ImGui UI (milestone M2, see docs/UI_MIGRATION_PLAN.md).
-# When ON, an ImGui layer is composited on top of the legacy editor.
-option(GTULTRA_IMGUI "Build with the experimental Dear ImGui UI layer" OFF)
 
 # The original codebase relies on lax conversion rules; keep -fpermissive for
 # the C++ translation units so the incremental C -> C++ migration can proceed.
@@ -183,21 +182,18 @@ target_link_libraries(gtcore PUBLIC resid residfp gtasm bme ${SDL2_LIBRARIES} ${
 
 # ---------------------------------------------------------------------------
 # Dear ImGui (vendored, docking branch) + SDL2 / SDL_Renderer backends.
-# Only built when GTULTRA_IMGUI is ON.
 # ---------------------------------------------------------------------------
-if(GTULTRA_IMGUI)
-    set(IMGUI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/extern/imgui")
-    add_library(imgui STATIC
-        "${IMGUI_DIR}/imgui.cpp"
-        "${IMGUI_DIR}/imgui_draw.cpp"
-        "${IMGUI_DIR}/imgui_tables.cpp"
-        "${IMGUI_DIR}/imgui_widgets.cpp"
-        "${IMGUI_DIR}/imgui_demo.cpp"
-        "${IMGUI_DIR}/backends/imgui_impl_sdl2.cpp"
-        "${IMGUI_DIR}/backends/imgui_impl_sdlrenderer2.cpp")
-    target_include_directories(imgui PUBLIC "${IMGUI_DIR}" "${IMGUI_DIR}/backends" ${SDL2_INCLUDE_DIRS})
-    target_link_libraries(imgui PUBLIC ${SDL2_LIBRARIES})
-endif()
+set(IMGUI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/extern/imgui")
+add_library(imgui STATIC
+    "${IMGUI_DIR}/imgui.cpp"
+    "${IMGUI_DIR}/imgui_draw.cpp"
+    "${IMGUI_DIR}/imgui_tables.cpp"
+    "${IMGUI_DIR}/imgui_widgets.cpp"
+    "${IMGUI_DIR}/imgui_demo.cpp"
+    "${IMGUI_DIR}/backends/imgui_impl_sdl2.cpp"
+    "${IMGUI_DIR}/backends/imgui_impl_sdlrenderer2.cpp")
+target_include_directories(imgui PUBLIC "${IMGUI_DIR}" "${IMGUI_DIR}/backends" ${SDL2_INCLUDE_DIRS})
+target_link_libraries(imgui PUBLIC ${SDL2_LIBRARIES})
 
 # ---------------------------------------------------------------------------
 # Executables
@@ -206,21 +202,18 @@ endif()
 # The main editor
 add_executable(gtultra "${SRC}/gt2stereo.cpp" "${SRC}/greloc.cpp")
 target_link_libraries(gtultra PRIVATE gtcore)
-if(GTULTRA_IMGUI)
-    target_sources(gtultra PRIVATE "${SRC}/gimgui.cpp" "${SRC}/guimodel.cpp")
-    target_compile_definitions(gtultra PRIVATE GTULTRA_IMGUI)
-    target_link_libraries(gtultra PRIVATE imgui)
-    # guimodel.cpp needs the legacy headers (model globals) + bme/asm include dirs
-    target_include_directories(gtultra PRIVATE "${SRC}/bme" "${SRC}/asm" ${SDL2_INCLUDE_DIRS})
-    # Absolute path to bundled assets (fonts, ...) for runtime loading. A proper
-    # install layout / config-driven paths come with M7; this is the dev default.
-    target_compile_definitions(gtultra PRIVATE
-        GTULTRA_ASSETS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/assets")
-    # Also stage assets next to the binary so an installed/copied build finds them.
-    add_custom_command(TARGET gtultra POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_directory
-            "${CMAKE_CURRENT_SOURCE_DIR}/assets" "$<TARGET_FILE_DIR:gtultra>/assets")
-endif()
+target_sources(gtultra PRIVATE "${SRC}/gimgui.cpp" "${SRC}/guimodel.cpp")
+target_link_libraries(gtultra PRIVATE imgui)
+# guimodel.cpp needs the legacy headers (model globals) + bme/asm include dirs
+target_include_directories(gtultra PRIVATE "${SRC}/bme" "${SRC}/asm" ${SDL2_INCLUDE_DIRS})
+# Absolute path to bundled assets (fonts, ...) for runtime loading. A proper
+# install layout / config-driven paths come with M7; this is the dev default.
+target_compile_definitions(gtultra PRIVATE
+    GTULTRA_ASSETS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/assets")
+# Also stage assets next to the binary so an installed/copied build finds them.
+add_custom_command(TARGET gtultra POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_CURRENT_SOURCE_DIR}/assets" "$<TARGET_FILE_DIR:gtultra>/assets")
 
 # Standalone relocator/exporter (includes greloc.cpp with GT2RELOC)
 add_executable(gt2reloc "${SRC}/gt2reloc.cpp")
