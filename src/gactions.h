@@ -47,6 +47,11 @@ enum class Action : uint16_t {
     SongPosNext,
     SongPosPrev,
 
+    OctaveUp,
+    OctaveDown,
+    PrevInstr,
+    NextInstr,
+
     OrderRowUp,
     OrderRowDown,
     OrderColLeft,

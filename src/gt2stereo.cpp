@@ -1913,131 +1913,10 @@ void mousecommands(GTOBJECT* gt)
 void generalcommands(GTOBJECT* gt)
 {
 	int validSize = 1;
-	//	int c;
-	//	int songNum;
-	//	int ac = getActualChannel(editorInfo.esnum, editorInfo.epchn);
-	//	int ok = 0;
 
-		//if (fkeys_check(gt, rawkey) == 1)
-		//	return;
-
-	switch (key)
-	{
-	case '?':
-	case '-':
-		if ((editorInfo.editmode != EDIT_NAMES) && (editorInfo.editmode != EDIT_ORDERLIST))
-		{
-			if (!((editorInfo.editmode == EDIT_INSTRUMENT) && (editorInfo.eipos == 9))) previnstr();
-		}
-		break;
-
-	case '+':
-	case '_':
-		if ((editorInfo.editmode != EDIT_NAMES) && (editorInfo.editmode != EDIT_ORDERLIST))
-		{
-			if (!((editorInfo.editmode == EDIT_INSTRUMENT) && (editorInfo.eipos >= 9))) nextinstr();
-
-		}
-		break;
-
-	case '*':
-		if (editorInfo.editmode != EDIT_NAMES)
-		{
-			if (!((editorInfo.editmode == EDIT_INSTRUMENT) && (editorInfo.eipos >= 9)))
-			{
-				if (editorInfo.epoctave < 7) editorInfo.epoctave++;
-			}
-		}
-		break;
-
-	case '/':
-	case '\'':
-		if (editorInfo.editmode != EDIT_NAMES)
-		{
-			if (!((editorInfo.editmode == EDIT_INSTRUMENT) && (editorInfo.eipos >= 9)))
-			{
-				if (editorInfo.epoctave > 0) editorInfo.epoctave--;
-			}
-		}
-		break;
-
-	case '<':
-		if (((editorInfo.editmode == EDIT_INSTRUMENT) && (editorInfo.eipos != 9)) || (editorInfo.editmode == EDIT_TABLES))
-			previnstr();
-		break;
-
-	case '>':
-		if (((editorInfo.editmode == EDIT_INSTRUMENT) && (editorInfo.eipos != 9)) || (editorInfo.editmode == EDIT_TABLES))
-			nextinstr();
-		break;
-
-	case ';':
-		previousSongPos(gt, 1);
-		break;
-
-	case ':':
-
-		nextSongPos(gt);
-		break;
-
-	}
 	if (win_quitted) exitprogram = 1;
 	switch (rawkey)
 	{
-	case KEY_ESC:
-		if (!shiftOrCtrlPressed)
-			quit(gt);
-		else
-			clear(gt);
-		break;
-
-	case KEY_KPMULTIPLY:
-		if ((editorInfo.editmode != EDIT_NAMES) && (!key))
-		{
-			if (!((editorInfo.editmode == EDIT_INSTRUMENT) && (editorInfo.eipos >= 9)))
-			{
-				if (editorInfo.epoctave < 7) editorInfo.epoctave++;
-			}
-		}
-		break;
-
-	case KEY_KPDIVIDE:
-		if ((editorInfo.editmode != EDIT_NAMES) && (!key))
-		{
-			if (!((editorInfo.editmode == EDIT_INSTRUMENT) && (editorInfo.eipos >= 9)))
-			{
-				if (editorInfo.epoctave > 0) editorInfo.epoctave--;
-			}
-		}
-		break;
-
-
-	case KEY_S:
-		if (!ctrlpressed) break;
-
-		if (editorInfo.expandOrderListView)
-		{
-			int maxSize = validateAllSongs();
-			if (maxSize > 0xff)
-				validSize = 0;
-		}
-		if (validSize)
-		{
-			int s = quickSave();	// compressAllSongs called from within savesong
-			if (s)
-				sprintf(infoTextBuffer, "quick save: %d", s);
-			else
-				save(gt, 0);
-		}
-		return;
-
-	case KEY_Z:
-		if (!ctrlpressed) break;
-
-		if (!editPaletteMode)
-			undoPerform(gt);
-		return;
-
 	case KEY_F12:
 		if (shiftOrCtrlPressed)
 		{
@@ -2048,173 +1927,21 @@ void generalcommands(GTOBJECT* gt)
 			else
 				sprintf(infoTextBuffer, "SIDTracker64 Mode: Enabled");
 			forceInfoLine = 1;
-			break;
 		}
-	case SDLK_HELP:
-	{
-		stopScreenDisplay();
-		onlinehelp(0, shiftOrCtrlPressed, gt);
-		restartScreenDisplay();
-		break;
-	}
-
-	case KEY_TAB:
-		if (!shiftOrCtrlPressed) editorInfo.editmode++;
-		else editorInfo.editmode--;
-		if (editorInfo.editmode > EDIT_NAMES) editorInfo.editmode = EDIT_PATTERN;
-		if (editorInfo.editmode < EDIT_PATTERN) editorInfo.editmode = EDIT_NAMES;
-
-		setMasterLoopChannel(gt, "debug_8");
-		break;
-
-	case KEY_F1:
-		if (editPaletteMode)
-			break;
-
-		// JP - Shift_F1  changed to just turn looping on/off
-		playUntilEnd(editorInfo.esnum);
-		//		break;	// JP TEST
-
-		if (useOriginalGTFunctionKeys)
-		{
-			transportLoopPattern = 0;
-			if (shiftOrCtrlPressed)
-				followplay = 1;
-			else
-				followplay = 0;
-			orderPlayFromPosition(gt, 0, 0, 0, 1);
-		}
-		else
-		{
-			if (shiftpressed)
-				orderPlayFromPosition(gt, 0, 0, 0, 1);
-			else
-				playFromCurrentPosition(gt, 0);
-		}
-
-
-
-
-		break;
-
-		// PLAY FROM START OF SELECTED PATTERN
-	case KEY_F2:
-
-		if (editPaletteMode)
-			break;
-
-		// in SIDTracker mode, just use F2 for playing current position
-		if (SIDTracker64ForIPadIsAmazing != 0)
-		{
-			if (shiftOrCtrlPressed)
-				followplay = 1 - followplay;
-			else
-				playFromCurrentPosition(gt, 0);	// editorInfo.eppos);
-		}
-		else
-		{
-			if (useOriginalGTFunctionKeys)
-			{
-				playFromCurrentPosition(gt, 0);
-				transportLoopPattern = 0;
-				if (shiftOrCtrlPressed)
-					followplay = 1;
-				else
-					followplay = 0;
-			}
-			else
-			{
-
-				if (shiftOrCtrlPressed)
-					followplay = 1 - followplay;
-				else
-				{
-					transportLoopPattern = 1 - transportLoopPattern;
-					if (!transportLoopPattern)
-					{
-						editorInfo.highlightLoopChannel = 999;			// remove from display
-						editorInfo.highlightLoopPatternNumber = -1;
-						editorInfo.highlightLoopStart = editorInfo.highlightLoopEnd = 0;
-					}
-				}
-			}
-		}
-		break;
-
-
-
-	case KEY_F3:
-
-		if (editPaletteMode)
-			break;
-
-		// ORIGINAL GT: LOOP PATTERN, PLAYING FROM SELECTED
-		if (useOriginalGTFunctionKeys && SIDTracker64ForIPadIsAmazing == 0)
-		{
-			transportLoopPattern = 1;
-			if (shiftOrCtrlPressed)
-				followplay = 1;
-			else
-				followplay = 0;
-			playFromCurrentPosition(gt, 0);
-		}
-		else
-		{
-			if (shiftOrCtrlPressed)
-			{
-				transportLoopPattern = 1 - transportLoopPattern;
-			}
-			else
-			{
-				if (editorInfo.editmode == EDIT_ORDERLIST)	// 1.1.7: Fast select / playback when in OrderList. Just press F3 to play from the cursor pos
-				{
-					orderSelectPatternsFromSelected(gt);
-					orderPlayFromPosition(gt, 0, editorInfo.eseditpos, editorInfo.eschn, 1);
-				}
-				else
-				{
-					playFromCurrentPosition(gt, editorInfo.eppos);	//  F3 = plays from the current pattern pos
-				}
-			}
-		}
-		break;
-
-	case KEY_F4:
-		if (shiftOrCtrlPressed)
-			mutechannel(editorInfo.epchn, gt);
-		else
-		{
-			if (gt->songinit != PLAY_STOPPED)
-			{
-				stopsong(gt);
-				setMasterLoopChannel(gt, "debug_9");
-			}
-		}
-
 		break;
 
 	case KEY_F5:
-		if (!shiftOrCtrlPressed)
-			editorInfo.editmode = EDIT_PATTERN;
-		else prevmultiplier();
+		if (shiftOrCtrlPressed)
+			prevmultiplier();
 		break;
 
 	case KEY_F6:
-		if (!shiftOrCtrlPressed)
-			editorInfo.editmode = EDIT_ORDERLIST;
-		else nextmultiplier();
+		if (shiftOrCtrlPressed)
+			nextmultiplier();
 		break;
 
 	case KEY_F7:
-		if (!shiftOrCtrlPressed)
-		{
-			if (editorInfo.editmode == EDIT_INSTRUMENT)
-				editorInfo.editmode = EDIT_TABLES;
-			else
-				editorInfo.editmode = EDIT_INSTRUMENT;
-			disableEnterToReturnToLastPos = 1;
-		}
-		else
+		if (shiftOrCtrlPressed)
 		{
 			if (!editPan)
 				editadsr(gt);
@@ -2224,12 +1951,7 @@ void generalcommands(GTOBJECT* gt)
 		break;
 
 	case KEY_F8:
-		if (!shiftOrCtrlPressed)
-		{
-			editorInfo.editmode = EDIT_TABLES;		// 'Cos JAMMAR SAID SO!
-			disableEnterToReturnToLastPos = 1;
-		}
-		else
+		if (shiftOrCtrlPressed)
 		{
 			editorInfo.sidmodel ^= 1;
 			sound_init(b, mr, writer, hardsid, editorInfo.sidmodel, editorInfo.ntsc, editorInfo.multiplier, catweasel, interpolate, customclockrate);

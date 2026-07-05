@@ -25,7 +25,7 @@ struct Binding {
     Chord  chord;
 };
 
-static const ActionMeta kActionMeta[] = {
+const ActionMeta kActionMeta[] = {
     { Action::Save,              "Save",              "Save song" },
     { Action::Undo,              "Undo",              "Undo" },
     { Action::Quit,              "Quit",              "Quit" },
@@ -45,6 +45,10 @@ static const ActionMeta kActionMeta[] = {
     { Action::ToggleLoop,        "ToggleLoop",        "Toggle pattern loop" },
     { Action::SongPosNext,       "SongPosNext",       "Next song position" },
     { Action::SongPosPrev,       "SongPosPrev",       "Previous song position" },
+    { Action::OctaveUp,          "OctaveUp",          "Octave up" },
+    { Action::OctaveDown,        "OctaveDown",        "Octave down" },
+    { Action::PrevInstr,         "PrevInstr",         "Previous instrument" },
+    { Action::NextInstr,         "NextInstr",         "Next instrument" },
     { Action::OrderRowUp,        "OrderRowUp",        "Order list: previous row" },
     { Action::OrderRowDown,      "OrderRowDown",      "Order list: next row" },
     { Action::OrderColLeft,      "OrderColLeft",      "Order list: previous channel" },
@@ -52,7 +56,7 @@ static const ActionMeta kActionMeta[] = {
 };
 
 // Default keymap. Context-specific entries override Global for the same chord.
-static const Binding kBindings[] = {
+const Binding kBindings[] = {
     // Global file / session
     { Action::Save,         Ctx::Global, make_chord(KEY_S, Ctrl) },
     { Action::Undo,         Ctx::Global, make_chord(KEY_Z, Ctrl) },
@@ -68,11 +72,28 @@ static const Binding kBindings[] = {
     { Action::EditModeInstrument, Ctx::Global, make_chord(KEY_F7) },
     { Action::EditModeTables,     Ctx::Global, make_chord(KEY_F8) },
 
-    // Transport (F-keys without modifiers — shift variants stay in legacy for now)
+    // Transport — handler reads shift/ctrl for variant behaviour
     { Action::PlaySongStart,    Ctx::Global, make_chord(KEY_F1) },
+    { Action::PlaySongStart,    Ctx::Global, make_chord(KEY_F1, Shift) },
     { Action::PlayPatternStart, Ctx::Global, make_chord(KEY_F2) },
+    { Action::PlayPatternStart, Ctx::Global, make_chord(KEY_F2, Shift) },
     { Action::PlayCurrent,      Ctx::Global, make_chord(KEY_F3) },
+    { Action::PlayCurrent,      Ctx::Global, make_chord(KEY_F3, Shift) },
     { Action::Stop,             Ctx::Global, make_chord(KEY_F4) },
+    { Action::Stop,             Ctx::Global, make_chord(KEY_F4, Shift) },
+
+    // Octave / instrument (legacy switch(key) shortcuts)
+    { Action::OctaveUp,   Ctx::Global, make_chord('*') },
+    { Action::OctaveDown, Ctx::Global, make_chord('/') },
+    { Action::OctaveDown, Ctx::Global, make_chord('\'') },
+    { Action::OctaveUp,   Ctx::Global, make_chord(KEY_KPMULTIPLY) },
+    { Action::OctaveDown, Ctx::Global, make_chord(KEY_KPDIVIDE) },
+    { Action::PrevInstr,  Ctx::Global, make_chord('?') },
+    { Action::PrevInstr,  Ctx::Global, make_chord('-') },
+    { Action::PrevInstr,  Ctx::Global, make_chord('<') },
+    { Action::NextInstr,  Ctx::Global, make_chord('+') },
+    { Action::NextInstr,  Ctx::Global, make_chord('_') },
+    { Action::NextInstr,  Ctx::Global, make_chord('>') },
 
     // Song position (legacy ';' / ':' keys)
     { Action::SongPosPrev, Ctx::Global, make_chord(KEY_SEMICOLON) },
@@ -87,7 +108,7 @@ static const Binding kBindings[] = {
     { Action::OrderColRight, Ctx::Order, make_chord(KEY_RIGHT) },
 };
 
-static Action lookup(Ctx ctx, Chord chord)
+Action lookup(Ctx ctx, Chord chord)
 {
     if (chord == kNoChord)
         return Action::None;
@@ -103,7 +124,7 @@ static Action lookup(Ctx ctx, Chord chord)
     return Action::None;
 }
 
-static int order_max_channels()
+int order_max_channels()
 {
     int maxCh = 6;
     if ((editorInfo.maxSIDChannels == 3) ||
@@ -112,7 +133,7 @@ static int order_max_channels()
     return maxCh;
 }
 
-static void order_clamp_cursor_to_channel()
+void order_clamp_cursor_to_channel()
 {
     if ((editorInfo.eseditpos == songlen[editorInfo.esnum][editorInfo.eschn]) ||
         (editorInfo.eseditpos > songlen[editorInfo.esnum][editorInfo.eschn] + 1))
@@ -122,7 +143,7 @@ static void order_clamp_cursor_to_channel()
     }
 }
 
-static void order_sync_view()
+void order_sync_view()
 {
     if (editorInfo.eseditpos - editorInfo.esview < 0)
         editorInfo.esview = editorInfo.eseditpos;
@@ -136,7 +157,7 @@ static void order_sync_view()
     }
 }
 
-static void order_row_up(GTOBJECT* gt)
+void order_row_up(GTOBJECT* gt)
 {
     if (editorInfo.expandOrderListView) {
         if (shiftOrCtrlPressed) {
@@ -162,7 +183,7 @@ static void order_row_up(GTOBJECT* gt)
     (void)gt;
 }
 
-static void order_row_down(GTOBJECT* gt)
+void order_row_down(GTOBJECT* gt)
 {
     if (editorInfo.expandOrderListView) {
         if (shiftOrCtrlPressed) {
@@ -188,7 +209,7 @@ static void order_row_down(GTOBJECT* gt)
     (void)gt;
 }
 
-static void order_col_left(GTOBJECT* gt)
+void order_col_left(GTOBJECT* gt)
 {
     const int maxCh = order_max_channels();
 
@@ -210,7 +231,7 @@ static void order_col_left(GTOBJECT* gt)
     order_sync_view();
 }
 
-static void order_col_right(GTOBJECT* gt)
+void order_col_right(GTOBJECT* gt)
 {
     const int maxCh = order_max_channels();
 
@@ -230,7 +251,136 @@ static void order_col_right(GTOBJECT* gt)
     order_sync_view();
 }
 
-static bool handle_global_action(Action act)
+// ---- transport (migrated from generalcommands KEY_F1..F4) ----
+
+void transport_on_f1(GTOBJECT* gt)
+{
+    if (editPaletteMode)
+        return;
+
+    playUntilEnd(editorInfo.esnum);
+
+    if (useOriginalGTFunctionKeys) {
+        transportLoopPattern = 0;
+        followplay         = shiftOrCtrlPressed ? 1 : 0;
+        orderPlayFromPosition(gt, 0, 0, 0, 1);
+    } else {
+        if (shiftpressed)
+            orderPlayFromPosition(gt, 0, 0, 0, 1);
+        else
+            playFromCurrentPosition(gt, 0);
+    }
+}
+
+void transport_on_f2(GTOBJECT* gt)
+{
+    if (editPaletteMode)
+        return;
+
+    if (SIDTracker64ForIPadIsAmazing != 0) {
+        if (shiftOrCtrlPressed)
+            followplay = 1 - followplay;
+        else
+            playFromCurrentPosition(gt, 0);
+    } else if (useOriginalGTFunctionKeys) {
+        playFromCurrentPosition(gt, 0);
+        transportLoopPattern = 0;
+        followplay         = shiftOrCtrlPressed ? 1 : 0;
+    } else {
+        if (shiftOrCtrlPressed) {
+            followplay = 1 - followplay;
+        } else {
+            transportLoopPattern = 1 - transportLoopPattern;
+            if (!transportLoopPattern) {
+                editorInfo.highlightLoopChannel       = 999;
+                editorInfo.highlightLoopPatternNumber   = -1;
+                editorInfo.highlightLoopStart           = 0;
+                editorInfo.highlightLoopEnd             = 0;
+            }
+        }
+    }
+}
+
+void transport_on_f3(GTOBJECT* gt)
+{
+    if (editPaletteMode)
+        return;
+
+    if (useOriginalGTFunctionKeys && SIDTracker64ForIPadIsAmazing == 0) {
+        transportLoopPattern = 1;
+        followplay         = shiftOrCtrlPressed ? 1 : 0;
+        playFromCurrentPosition(gt, 0);
+    } else {
+        if (shiftOrCtrlPressed) {
+            transportLoopPattern = 1 - transportLoopPattern;
+        } else if (editorInfo.editmode == EDIT_ORDERLIST) {
+            orderSelectPatternsFromSelected(gt);
+            orderPlayFromPosition(gt, 0, editorInfo.eseditpos, editorInfo.eschn, 1);
+        } else {
+            playFromCurrentPosition(gt, editorInfo.eppos);
+        }
+    }
+}
+
+void transport_on_f4(GTOBJECT* gt)
+{
+    if (shiftOrCtrlPressed) {
+        mutechannel(editorInfo.epchn, gt);
+        return;
+    }
+    if (gt->songinit != PLAY_STOPPED) {
+        stopsong(gt);
+        setMasterLoopChannel(gt, "debug_9");
+    }
+}
+
+void edit_octave_up()
+{
+    if (editorInfo.editmode == EDIT_NAMES)
+        return;
+    if (editorInfo.editmode == EDIT_INSTRUMENT && editorInfo.eipos >= 9)
+        return;
+    if (editorInfo.epoctave < 7)
+        editorInfo.epoctave++;
+}
+
+void edit_octave_down()
+{
+    if (editorInfo.editmode == EDIT_NAMES)
+        return;
+    if (editorInfo.editmode == EDIT_INSTRUMENT && editorInfo.eipos >= 9)
+        return;
+    if (editorInfo.epoctave > 0)
+        editorInfo.epoctave--;
+}
+
+void edit_prev_instr()
+{
+    if ((editorInfo.editmode == EDIT_INSTRUMENT && editorInfo.eipos != 9) ||
+        editorInfo.editmode == EDIT_TABLES) {
+        previnstr();
+        return;
+    }
+    if (editorInfo.editmode != EDIT_NAMES && editorInfo.editmode != EDIT_ORDERLIST) {
+        if (!(editorInfo.editmode == EDIT_INSTRUMENT && editorInfo.eipos == 9))
+            previnstr();
+    }
+}
+
+void edit_next_instr()
+{
+    if ((editorInfo.editmode == EDIT_INSTRUMENT && editorInfo.eipos != 9) ||
+        editorInfo.editmode == EDIT_TABLES) {
+        nextinstr();
+        return;
+    }
+    if (editorInfo.editmode != EDIT_NAMES && editorInfo.editmode != EDIT_ORDERLIST) {
+        if (!(editorInfo.editmode == EDIT_INSTRUMENT && editorInfo.eipos >= 9))
+            nextinstr();
+    }
+}
+
+bool handle_global_action(Action act)
 {
     GTOBJECT* gt = &gtObject;
     switch (act) {
@@ -267,10 +417,9 @@ static bool handle_global_action(Action act)
         return true;
 
     case Action::Help:
-        if (shiftOrCtrlPressed)
-            onlinehelp(0, 1, gt);
-        else
-            onlinehelp(0, 0, gt);
+        stopScreenDisplay();
+        onlinehelp(0, shiftOrCtrlPressed ? 1 : 0, gt);
+        restartScreenDisplay();
         return true;
 
     case Action::EditModeNext:
@@ -326,20 +475,44 @@ static bool handle_global_action(Action act)
         previousSongPos(gt, 1);
         return true;
 
-    // Transport actions with modifier variants are still handled by
-    // generalcommands(); only unmodified F-keys are migrated here for now.
     case Action::PlaySongStart:
+        transport_on_f1(gt);
+        return true;
+
     case Action::PlayPatternStart:
+        transport_on_f2(gt);
+        return true;
+
     case Action::PlayCurrent:
+        transport_on_f3(gt);
+        return true;
+
     case Action::Stop:
-        return false;
+        transport_on_f4(gt);
+        return true;
+
+    case Action::OctaveUp:
+        edit_octave_up();
+        return true;
+
+    case Action::OctaveDown:
+        edit_octave_down();
+        return true;
+
+    case Action::PrevInstr:
+        edit_prev_instr();
+        return true;
+
+    case Action::NextInstr:
+        edit_next_instr();
+        return true;
 
     default:
         return false;
     }
 }
 
-static bool handle_order_action(Action act)
+bool handle_order_action(Action act)
 {
     GTOBJECT* gt = &gtObject;
     switch (act) {
