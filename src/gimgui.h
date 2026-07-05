@@ -6,3 +6,6 @@ void gimgui_init();
 
 // Tear down ImGui. Call once on shutdown.
 void gimgui_shutdown();
+
+// True while the native ImGui panels are shown (false = legacy chargen UI visible).
+bool gimgui_new_ui_active();

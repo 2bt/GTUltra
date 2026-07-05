@@ -28,6 +28,7 @@
 #include <time.h>
 
 #include "goattrk2.h"
+#include "gactions.h"
 #include "bme.h"
 
 #include "gimgui.h"
@@ -1006,208 +1007,177 @@ int forceKeys = 1;
 
 int backupSongTimer = 0;
 
+// Per-frame editor upkeep decoupled from the input-wait loop (M3). Polls SDL
+// input, runs autosave/MIDI/jamming side effects, and refreshes the display.
+void editor_frame_update(GTOBJECT* gt)
+{
+	if (dropFileDir != NULL)
+	{
+		handleLoad(gt, dropFileDir);
+		dropFileDir = NULL;
+	}
+
+	if (backupTimeSeconds > 0)
+	{
+		msDelta = SDL_GetTicks() - lastMS;
+
+		backupSongTimer += msDelta;
+		if (backupSongTimer > backupTimeSeconds * 1000)
+		{
+			if (gt->songinit == PLAY_STOPPED)
+			{
+				if (currentUndoPosition != lastUndoPosition)	// Only auto-save if something has changed..
+				{
+					lastUndoPosition = currentUndoPosition;
+					int allowBackup = 1;
+					if (editorInfo.expandOrderListView)
+					{
+						int maxSize = validateAllSongs();
+						if (maxSize < 0xff)
+							compressAllSongs();
+						else
+							allowBackup = 0;
+					}
+					if (allowBackup)
+						saveBackupSong();
+					backupSongTimer = 0;
+				}
+			}
+		}
+		lastMS = SDL_GetTicks();
+	}
+
+	if (!jdebugPlaying)
+		displayupdate(gt);
+
+	getkey();
+
+	editorInfo.mouseTrack = 0;
+
+	if (win_mousewheel)
+	{
+		int keyUp = KEY_UP;
+		int keyDown = KEY_DOWN;
+
+		// Legacy horizontal order list used left/right for position; the ImGui
+		// vertical layout uses up/down for rows.
+		if (editorInfo.editmode == EDIT_ORDERLIST && editorInfo.expandOrderListView == 0 &&
+		    gimgui_new_ui_active())
+		{
+			keyUp = KEY_UP;
+			keyDown = KEY_DOWN;
+		}
+		else if (editorInfo.editmode == EDIT_ORDERLIST && editorInfo.expandOrderListView == 0)
+		{
+			keyUp = KEY_LEFT;
+			keyDown = KEY_RIGHT;
+		}
+
+		if (win_mousewheel < 0)
+			rawkey = keyDown;
+		else
+			rawkey = keyUp;
+
+		win_mousewheel = 0;
+	}
+
+	handlePolyphonicKeyboard(&gtObject);
+
+	if (!jdebugPlaying)
+	{
+		if (recordmode && editorInfo.editmode == EDIT_PATTERN && midiEnabled)
+		{
+			if (midiEnabled)
+			{
+				checkForMidiInput(&midiMessage, selectedMIDIPort);
+				int i = 0;
+				for (int c = 0;c < midiMessage.size / 3;c++)
+				{
+					unsigned char midiInstruction = midiMessage.message[i];
+					unsigned char midiNote = midiMessage.message[i + 1];
+					unsigned char midiVel = midiMessage.message[i + 2];
+					i += 3;
+
+					if (midiInstruction == 0x90 && midiVel > 0)	// key on
+					{
+						gMIDINote = midiNote + FIRSTNOTE;	// editing pattern data and have received keyon from MIDI device
+						key = 0;
+						rawkey = 0;
+						handleMIDIPolykeyboard(&gtObject, midiMessage);
+						return;
+					}
+					else
+						handleMIDIPolykeyboard(&gtObject, midiMessage);
+				}
+			}
+		}
+		else  if ((!recordmode) || (editorInfo.epcolumn == 0 && editorInfo.editmode == EDIT_PATTERN))	//else if ((!recordmode) || (recordmode && editorInfo.editmode != EDIT_PATTERN))
+		{
+			if (midiEnabled)
+			{
+				do {
+
+					checkForMidiInput(&midiMessage, selectedMIDIPort);
+					handleMIDIPolykeyboard(&gtObject, midiMessage);
+
+				} while (midiMessage.size);
+			}
+
+			handlePolyphonicKeyboard(&gtObject);	// update for QWERTY too
+
+			if (!checkAnyPolyPlaying())
+			{
+				for (int i = 0;i < KEYBOARD_POLYPHONY;i++)
+				{
+					clearPolyChannel(i, gt);
+				}
+				if (clearInfoLine)
+				{
+					clearInfoLine = 0;
+					if (editorInfo.editmode == EDIT_PATTERN)
+					{
+						lastInfoPatternCh = -1;	// force text
+						displayPatternInfo(gt);
+					}
+					else
+					{
+						sprintf(&keyOffsetText[0], "                        ");
+						sprintf(infoTextBuffer, keyOffsetText);
+					}
+				}
+			}
+			else
+			{
+				calculateNoteOffsets();
+				sprintf(infoTextBuffer, keyOffsetText);
+			}
+		}
+	}
+}
+
 void waitkeymouse(GTOBJECT* gt)
 {
-	//int jc = 0;
-	//int rk = 0;
-
 	for (;;)
 	{
 		SDL_Delay(10);	// add this
 
-		if (dropFileDir != NULL)
-		{
-			handleLoad(gt, dropFileDir);
-			dropFileDir = NULL;
-		}
-
-		if (backupTimeSeconds > 0)
-		{
-			msDelta = SDL_GetTicks() - lastMS;
-
-			backupSongTimer += msDelta;
-			if (backupSongTimer > backupTimeSeconds * 1000)
-			{
-				if (gt->songinit == PLAY_STOPPED)
-				{
-					if (currentUndoPosition != lastUndoPosition)	// Only auto-save if something has changed..
-					{
-						lastUndoPosition = currentUndoPosition;
-						int allowBackup = 1;
-						if (editorInfo.expandOrderListView)
-						{
-							int maxSize = validateAllSongs();
-							if (maxSize < 0xff)
-								compressAllSongs();
-							else
-								allowBackup = 0;
-						}
-						if (allowBackup)
-							saveBackupSong();
-						backupSongTimer = 0;
-					}
-				}
-			}
-			lastMS = SDL_GetTicks();
-		}
-
-
-
-		if (!jdebugPlaying)
-			displayupdate(gt);
-
-		getkey();
-		if (mouseb)
-		{
-			break;
-		}
-		else if (prevmouseb)
-		{
-			break;		// Handle modifying values when hold / dragging. We've released the mouse
-		}
-
-		editorInfo.mouseTrack = 0;
-
-
-#if 0
-		// Debug - Force key presses
-		if (debugCurrentUndoBufferSize < 1000)
-		{
-			if (forceKeys)
-			{
-				jcnt2++;
-				jcnt2 %= 3;
-				key = KEY_O + jcnt2;
-				rawkey = key;
-			}
-		}
-		else
-			forceKeys = 0;
-#endif
-
-		if (win_mousewheel)
-		{
-			int keyUp = KEY_UP;
-			int keyDown = KEY_DOWN;
-
-			if (editorInfo.editmode == EDIT_ORDERLIST && editorInfo.expandOrderListView == 0)
-			{
-				keyUp = KEY_LEFT;
-				keyDown = KEY_RIGHT;
-			}
-
-			if (win_mousewheel < 0)
-				rawkey = keyDown;
-			else
-				rawkey = keyUp;
-
-			win_mousewheel = 0;
-		}
-		// Debug end
-
-		handlePolyphonicKeyboard(&gtObject);
-
-		if ((rawkey) || (key))
-		{
-			break;
-		}
-		if (win_quitted) break;
-
-
-		win_enableKeyRepeat();
-
-		//	SDL_Delay(50);
-
+		gMIDINote = -1;
 		midiMessage.size = 0;
 
-		/*
-		Allow MIDI Jamming if not editing PATTERN (so also enable if we've got cursor on other areas)
-		*/
-		gMIDINote = -1;
+		editor_frame_update(gt);
 
-		//		sprintf(textbuffer, "%x,%x,%x", jdebug[1], jdebug[2], jdebug[3]);
-		//		printtext(70, 36, 0xe, textbuffer);
+		if (mouseb)
+			break;
+		if (prevmouseb)
+			break;		// Handle modifying values when hold / dragging. We've released the mouse
 
-		//		sprintf(textbuffer, "hello: %s", paletteStringBuffer);	// paletteFolderEntry->d_name);
-		//		printtext(5, 37, 0xe, textbuffer);
+		if ((rawkey) || (key))
+			break;
+		if (win_quitted) break;
 
-		if (!jdebugPlaying)
-		{
-			if (recordmode && editorInfo.editmode == EDIT_PATTERN && midiEnabled)
-			{
-				if (midiEnabled)
-				{
-					checkForMidiInput(&midiMessage, selectedMIDIPort);
-					int i = 0;
-					for (int c = 0;c < midiMessage.size / 3;c++)
-					{
-						unsigned char midiInstruction = midiMessage.message[i];
-						unsigned char midiNote = midiMessage.message[i + 1];
-						unsigned char midiVel = midiMessage.message[i + 2];
-						i += 3;
-
-						if (midiInstruction == 0x90 && midiVel > 0)	// key on
-						{
-							gMIDINote = midiNote + FIRSTNOTE;	// editing pattern data and have received keyon from MIDI device
-							key = 0;
-							rawkey = 0;
-							handleMIDIPolykeyboard(&gtObject, midiMessage);
-							return;
-						}
-						else
-							handleMIDIPolykeyboard(&gtObject, midiMessage);
-					}
-				}
-			}
-			else  if ((!recordmode) || (editorInfo.epcolumn == 0 && editorInfo.editmode == EDIT_PATTERN))	//else if ((!recordmode) || (recordmode && editorInfo.editmode != EDIT_PATTERN))
-			{
-				if (midiEnabled)
-				{
-					do {
-
-						checkForMidiInput(&midiMessage, selectedMIDIPort);
-						handleMIDIPolykeyboard(&gtObject, midiMessage);
-
-					} while (midiMessage.size);
-				}
-
-				handlePolyphonicKeyboard(&gtObject);	// update for QWERTY too
-
-
-				// Need to change this so that it checks actual keyed on channels, rather than keys pressed
-
-
-				if (!checkAnyPolyPlaying())
-				{
-					for (int i = 0;i < KEYBOARD_POLYPHONY;i++)
-					{
-						clearPolyChannel(i, gt);
-					}
-					if (clearInfoLine)
-					{
-						clearInfoLine = 0;
-						if (editorInfo.editmode == EDIT_PATTERN)
-						{
-							lastInfoPatternCh = -1;	// force text
-							displayPatternInfo(gt);
-						}
-						else
-						{
-							sprintf(&keyOffsetText[0], "                        ");
-							sprintf(infoTextBuffer, keyOffsetText);
-						}
-					}
-				}
-				else
-				{
-					calculateNoteOffsets();
-					sprintf(infoTextBuffer, keyOffsetText);
-				}
-			}
-		}
+		win_enableKeyRepeat();
 	}
 	converthex();
-
 }
 
 void waitkeymousenoupdate(void)
@@ -1313,7 +1283,8 @@ void docommand(void)
 
 		//	undoAreaSetCheckForChange(UNDO_AREA_CHANNEL_EDITOR_INFO, c2, UNDO_AREA_DIRTY_CHECK);
 
-		orderlistcommands(gt);
+		if (!gtaction::dispatch_order_navigation())
+			orderlistcommands(gt);
 		displayOrderTableInfo(gt);
 		break;
 
@@ -1395,8 +1366,10 @@ void docommand(void)
 	else
 		undoFreeUndoObject((GTUNDO_OBJECT*)ed);
 
-	// General commands
-	generalcommands(gt);
+	// Global commands — action layer handles migrated bindings first.
+	const gtaction::Ctx actx = gtaction::context_from_editmode(editorInfo.editmode);
+	if (!gtaction::dispatch_global(actx))
+		generalcommands(gt);
 }
 
 void mousecommands(GTOBJECT* gt)

@@ -220,6 +220,7 @@ void getparam(FILE *handle,  unsigned int *value);
 void getfloatparam(FILE *handle, float *value);
 void getstringparam(FILE *handle, char *value);
 void waitkey(GTOBJECT *gt);
+void editor_frame_update(GTOBJECT *gt);
 void waitkeymouse(GTOBJECT *gt);
 void waitkeynoupdate(void);
 void waitkeymousenoupdate(void);
