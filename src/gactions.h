@@ -76,6 +76,22 @@ enum class Action : uint16_t {
     PatternHome,
     PatternEnd,
 
+    TableRowUp,
+    TableRowDown,
+    TableColLeft,
+    TableColRight,
+    TablePageUp,
+    TablePageDown,
+    TableHome,
+    TableEnd,
+
+    InstrRowUp,
+    InstrRowDown,
+    InstrPageUp,
+    InstrPageDown,
+    InstrHome,
+    InstrEnd,
+
     ToggleSIDTracker64,
     PrevMultiplier,
     NextMultiplier,
@@ -121,6 +137,10 @@ bool dispatch_order_navigation();
 
 // Pattern cursor navigation (unmodified keys). Uses gtObject.
 bool dispatch_pattern_navigation();
+
+// Table / instrument cursor navigation (ImGui panels). Uses gtObject.
+bool dispatch_table_navigation();
+bool dispatch_instrument_navigation();
 
 // Global actions (save, undo, quit, edit-mode tab, …). Uses gtObject.
 bool dispatch_global(Ctx ctx);

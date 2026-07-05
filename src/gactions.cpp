@@ -9,6 +9,7 @@
 #include "ginfo.h"
 #include "gimgui.h"
 #include "gpattern.h"
+#include "gtable.h"
 #include "gdisplay.h"
 #include "gsound.h"
 
@@ -73,6 +74,20 @@ const ActionMeta kActionMeta[] = {
     { Action::PatternPageDown,   "PatternPageDown",   "Pattern: page down" },
     { Action::PatternHome,       "PatternHome",       "Pattern: first row" },
     { Action::PatternEnd,        "PatternEnd",        "Pattern: last row" },
+    { Action::TableRowUp,        "TableRowUp",        "Table: previous row" },
+    { Action::TableRowDown,      "TableRowDown",      "Table: next row" },
+    { Action::TableColLeft,      "TableColLeft",      "Table: previous table" },
+    { Action::TableColRight,     "TableColRight",     "Table: next table" },
+    { Action::TablePageUp,       "TablePageUp",       "Table: page up" },
+    { Action::TablePageDown,     "TablePageDown",     "Table: page down" },
+    { Action::TableHome,         "TableHome",         "Table: first row" },
+    { Action::TableEnd,          "TableEnd",          "Table: last row" },
+    { Action::InstrRowUp,        "InstrRowUp",        "Instrument: previous" },
+    { Action::InstrRowDown,      "InstrRowDown",      "Instrument: next" },
+    { Action::InstrPageUp,       "InstrPageUp",       "Instrument: page up" },
+    { Action::InstrPageDown,     "InstrPageDown",     "Instrument: page down" },
+    { Action::InstrHome,         "InstrHome",         "Instrument: first" },
+    { Action::InstrEnd,          "InstrEnd",          "Instrument: last" },
     { Action::ToggleSIDTracker64,"ToggleSIDTracker64","Toggle SIDTracker64 mode" },
     { Action::PrevMultiplier,    "PrevMultiplier",    "Previous speed multiplier" },
     { Action::NextMultiplier,    "NextMultiplier",    "Next speed multiplier" },
@@ -171,6 +186,24 @@ const Binding kBindings[] = {
     { Action::PatternPageDown, Ctx::Pattern, make_chord(KEY_PGDN) },
     { Action::PatternHome,     Ctx::Pattern, make_chord(KEY_HOME) },
     { Action::PatternEnd,      Ctx::Pattern, make_chord(KEY_END) },
+
+    // SID tables — ImGui four-column layout
+    { Action::TableRowUp,    Ctx::Tables, make_chord(KEY_UP) },
+    { Action::TableRowDown,  Ctx::Tables, make_chord(KEY_DOWN) },
+    { Action::TableColLeft,  Ctx::Tables, make_chord(KEY_LEFT) },
+    { Action::TableColRight, Ctx::Tables, make_chord(KEY_RIGHT) },
+    { Action::TablePageUp,   Ctx::Tables, make_chord(KEY_PGUP) },
+    { Action::TablePageDown, Ctx::Tables, make_chord(KEY_PGDN) },
+    { Action::TableHome,     Ctx::Tables, make_chord(KEY_HOME) },
+    { Action::TableEnd,      Ctx::Tables, make_chord(KEY_END) },
+
+    // Instrument list — ImGui table layout
+    { Action::InstrRowUp,    Ctx::Instrument, make_chord(KEY_UP) },
+    { Action::InstrRowDown,  Ctx::Instrument, make_chord(KEY_DOWN) },
+    { Action::InstrPageUp,   Ctx::Instrument, make_chord(KEY_PGUP) },
+    { Action::InstrPageDown, Ctx::Instrument, make_chord(KEY_PGDN) },
+    { Action::InstrHome,     Ctx::Instrument, make_chord(KEY_HOME) },
+    { Action::InstrEnd,      Ctx::Instrument, make_chord(KEY_END) },
 };
 
 Action lookup(Ctx ctx, Chord chord)
@@ -365,6 +398,107 @@ void order_nav_end(GTOBJECT* gt)
     if (shiftOrCtrlPressed)
         editorInfo.esmarkend = editorInfo.eseditpos;
     order_sync_view();
+    (void)gt;
+}
+
+void table_col_left(GTOBJECT* gt)
+{
+    disableEnterToReturnToLastPos = 1;
+    editorInfo.etnum--;
+    if (editorInfo.etnum < 0)
+        editorInfo.etnum = MAX_TABLES - 1;
+    editorInfo.editTableMode = editorInfo.etnum + 1;
+    editorInfo.etcolumn = 0;
+    if (shiftpressed)
+        editorInfo.etmarknum = -1;
+    (void)gt;
+}
+
+void table_col_right(GTOBJECT* gt)
+{
+    disableEnterToReturnToLastPos = 1;
+    editorInfo.etnum++;
+    if (editorInfo.etnum >= MAX_TABLES)
+        editorInfo.etnum = 0;
+    editorInfo.editTableMode = editorInfo.etnum + 1;
+    editorInfo.etcolumn = 0;
+    if (shiftpressed)
+        editorInfo.etmarknum = -1;
+    (void)gt;
+}
+
+void table_page_up(GTOBJECT* gt)
+{
+    for (int i = 0; i < PGUPDNREPEAT; i++)
+        tableup();
+    (void)gt;
+}
+
+void table_page_down(GTOBJECT* gt)
+{
+    for (int i = 0; i < PGUPDNREPEAT; i++)
+        tabledown();
+    (void)gt;
+}
+
+void table_nav_home(GTOBJECT* gt)
+{
+    editorInfo.etpos = 0;
+    (void)gt;
+}
+
+void table_nav_end(GTOBJECT* gt)
+{
+    editorInfo.etpos = MAX_TABLELEN - 1;
+    (void)gt;
+}
+
+void instr_row_up(GTOBJECT* gt)
+{
+    if (editorInfo.einum > 0)
+        editorInfo.einum--;
+    else
+        editorInfo.einum = MAX_INSTR - 1;
+    (void)gt;
+}
+
+void instr_row_down(GTOBJECT* gt)
+{
+    if (editorInfo.einum < MAX_INSTR - 1)
+        editorInfo.einum++;
+    else
+        editorInfo.einum = 0;
+    (void)gt;
+}
+
+void instr_page_up(GTOBJECT* gt)
+{
+    int step = VISIBLETABLEROWS;
+    if (editorInfo.einum > step)
+        editorInfo.einum -= step;
+    else
+        editorInfo.einum = 0;
+    (void)gt;
+}
+
+void instr_page_down(GTOBJECT* gt)
+{
+    int step = VISIBLETABLEROWS;
+    editorInfo.einum += step;
+    if (editorInfo.einum >= MAX_INSTR)
+        editorInfo.einum = MAX_INSTR - 1;
+    (void)gt;
+}
+
+void instr_nav_home(GTOBJECT* gt)
+{
+    editorInfo.einum = 0;
+    (void)gt;
+}
+
+void instr_nav_end(GTOBJECT* gt)
+{
+    editorInfo.einum = MAX_INSTR - 1;
     (void)gt;
 }
 
@@ -768,6 +902,66 @@ bool handle_pattern_action(Action act)
     }
 }
 
+bool handle_table_action(Action act)
+{
+    GTOBJECT* gt = &gtObject;
+    switch (act) {
+    case Action::TableRowUp:
+        tableup();
+        return true;
+    case Action::TableRowDown:
+        tabledown();
+        return true;
+    case Action::TableColLeft:
+        table_col_left(gt);
+        return true;
+    case Action::TableColRight:
+        table_col_right(gt);
+        return true;
+    case Action::TablePageUp:
+        table_page_up(gt);
+        return true;
+    case Action::TablePageDown:
+        table_page_down(gt);
+        return true;
+    case Action::TableHome:
+        table_nav_home(gt);
+        return true;
+    case Action::TableEnd:
+        table_nav_end(gt);
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool handle_instrument_action(Action act)
+{
+    GTOBJECT* gt = &gtObject;
+    switch (act) {
+    case Action::InstrRowUp:
+        instr_row_up(gt);
+        return true;
+    case Action::InstrRowDown:
+        instr_row_down(gt);
+        return true;
+    case Action::InstrPageUp:
+        instr_page_up(gt);
+        return true;
+    case Action::InstrPageDown:
+        instr_page_down(gt);
+        return true;
+    case Action::InstrHome:
+        instr_nav_home(gt);
+        return true;
+    case Action::InstrEnd:
+        instr_nav_end(gt);
+        return true;
+    default:
+        return false;
+    }
+}
+
 bool handle_order_action(Action act)
 {
     GTOBJECT* gt = &gtObject;
@@ -927,6 +1121,77 @@ bool dispatch_pattern_navigation()
     return true;
 }
 
+bool dispatch_table_navigation()
+{
+    if (editorInfo.editmode != EDIT_TABLES)
+        return false;
+
+    if (!gimgui_new_ui_active())
+        return false;
+
+    // Ctrl+arrow is global song transport; leave to dispatch_global.
+    if (ctrlpressed)
+        return false;
+
+    const Chord chord = chord_from_input(rawkey, key, shiftpressed, ctrlpressed);
+    const Action act  = resolve(Ctx::Tables, chord);
+    if (act == Action::None)
+        return false;
+
+    switch (rawkey) {
+    case KEY_UP:
+    case KEY_DOWN:
+    case KEY_LEFT:
+    case KEY_RIGHT:
+    case KEY_PGUP:
+    case KEY_PGDN:
+        win_enableKeyRepeat();
+        break;
+    default:
+        break;
+    }
+
+    if (!handle_table_action(act))
+        return false;
+
+    clear_input();
+    return true;
+}
+
+bool dispatch_instrument_navigation()
+{
+    if (editorInfo.editmode != EDIT_INSTRUMENT)
+        return false;
+
+    if (!gimgui_new_ui_active())
+        return false;
+
+    if (ctrlpressed)
+        return false;
+
+    const Chord chord = chord_from_input(rawkey, key, shiftpressed, ctrlpressed);
+    const Action act  = resolve(Ctx::Instrument, chord);
+    if (act == Action::None)
+        return false;
+
+    switch (rawkey) {
+    case KEY_UP:
+    case KEY_DOWN:
+    case KEY_PGUP:
+    case KEY_PGDN:
+        win_enableKeyRepeat();
+        break;
+    default:
+        break;
+    }
+
+    if (!handle_instrument_action(act))
+        return false;
+
+    clear_input();
+    return true;
+}
+
 bool dispatch_mode_navigation()
 {
     switch (editorInfo.editmode) {
@@ -934,6 +1199,10 @@ bool dispatch_mode_navigation()
         return dispatch_order_navigation();
     case EDIT_PATTERN:
         return dispatch_pattern_navigation();
+    case EDIT_TABLES:
+        return dispatch_table_navigation();
+    case EDIT_INSTRUMENT:
+        return dispatch_instrument_navigation();
     default:
         return false;
     }
@@ -988,6 +1257,22 @@ bool perform(Action act)
     case Action::PatternHome:
     case Action::PatternEnd:
         return handle_pattern_action(act);
+    case Action::TableRowUp:
+    case Action::TableRowDown:
+    case Action::TableColLeft:
+    case Action::TableColRight:
+    case Action::TablePageUp:
+    case Action::TablePageDown:
+    case Action::TableHome:
+    case Action::TableEnd:
+        return handle_table_action(act);
+    case Action::InstrRowUp:
+    case Action::InstrRowDown:
+    case Action::InstrPageUp:
+    case Action::InstrPageDown:
+    case Action::InstrHome:
+    case Action::InstrEnd:
+        return handle_instrument_action(act);
     default:
         return handle_global_action(act);
     }

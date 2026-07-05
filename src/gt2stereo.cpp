@@ -1296,7 +1296,8 @@ void docommand(void)
 		{
 			undoAreaSetCheckForChange(UNDO_AREA_INSTRUMENTS, editorInfo.einum, UNDO_AREA_DIRTY_CHECK);
 		}
-		instrumentcommands(gt);
+		if (!gtaction::dispatch_mode_navigation())
+			instrumentcommands(gt);
 		displayInstrumentInfo(gt);
 		break;
 
@@ -1309,7 +1310,8 @@ void docommand(void)
 			undoAreaSetCheckForChange(UNDO_AREA_TABLES + editorInfo.etnum, 1, UNDO_AREA_DIRTY_CHECK);	// right table
 		}
 
-		tablecommands(gt);
+		if (!gtaction::dispatch_mode_navigation())
+			tablecommands(gt);
 		displayTableInfo(gt);
 		break;
 
