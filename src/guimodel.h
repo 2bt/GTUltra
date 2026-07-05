@@ -140,6 +140,13 @@ bool        transport_playing();
 int         transport_time_min();
 int         transport_time_sec();
 
+bool        transport_follow();        // follow playback (auto-scroll) on?
+void        transport_toggle_follow();
+bool        transport_loop();          // loop the current pattern on play?
+void        transport_toggle_loop();
+void        transport_ff();            // step to next song position
+void        transport_rewind();        // step to previous song position
+
 } // namespace gtui
 
 #endif

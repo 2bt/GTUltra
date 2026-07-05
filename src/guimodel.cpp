@@ -365,6 +365,17 @@ bool transport_playing() { return isplaying(&gtObject) != 0; }
 int transport_time_min() { return gtObject.timemin; }
 int transport_time_sec() { return gtObject.timesec; }
 
+// Follow playback (scroll the editor to the play position) and pattern-loop
+// flags: plain view/transport state, so no undo bracket. Fast-forward / rewind
+// step the song position one order entry (working stopped or playing), matching
+// Ctrl-Right / the rewind handler in the legacy editor.
+bool transport_follow() { return followplay != 0; }
+void transport_toggle_follow() { followplay = 1 - followplay; }
+bool transport_loop() { return transportLoopPattern != 0; }
+void transport_toggle_loop() { transportLoopPattern = 1 - transportLoopPattern; }
+void transport_ff() { nextSongPos(&gtObject); }
+void transport_rewind() { previousSongPos(&gtObject, 1); }
+
 void pattern_set_cursor(int ch, int row, int col)
 {
     int chans = pattern_channels();

@@ -162,6 +162,21 @@ static const ImU32 kAppBg      = IM_COL32(18, 20, 24, 255);   // gutter/backgrou
 static const ImU32 kHeaderBg   = IM_COL32(38, 66, 104, 255);
 static const ImU32 kHeaderTx   = IM_COL32(224, 234, 246, 255);
 
+// A button that renders in its "active" colour while toggled on (Follow, Loop).
+static bool gimgui_toggle_button(const char *label, bool active)
+{
+    if (active)
+    {
+        const ImVec4 on = ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive);
+        ImGui::PushStyleColor(ImGuiCol_Button, on);
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, on);
+    }
+    bool clicked = ImGui::Button(label);
+    if (active)
+        ImGui::PopStyleColor(2);
+    return clicked;
+}
+
 // Fixed, non-floating panel. Positioned/sized every frame to tile the app
 // window (no title bar, no move/resize) so the UI reads as one cohesive tracker
 // rather than a set of ImGui windows. Draws an edge-to-edge section header.
@@ -584,21 +599,58 @@ static void gimgui_draw_song(ImVec2 pos, ImVec2 size)
         ImGui::PopID();
     }
 
-    ImGui::Separator();
+    gimgui_end_panel();
+}
 
-    if (ImGui::Button("Play"))
+// Full-width transport toolbar (no section header): rewind / play / pattern /
+// fast-forward / stop, then the Follow and Loop toggles, then a play indicator
+// and elapsed time. Sits at the top of the window, below the menu bar.
+static void gimgui_draw_transport(ImVec2 pos, ImVec2 size)
+{
+    ImGui::SetNextWindowPos(pos);
+    ImGui::SetNextWindowSize(size);
+    const ImGuiWindowFlags flags =
+        ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove |
+        ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse |
+        ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse |
+        ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8, 6));
+    bool open = ImGui::Begin("##transport", nullptr, flags);
+    ImGui::PopStyleVar();
+    if (!open)
+    {
+        ImGui::End();
+        return;
+    }
+
+    if (ImGui::Button("<<"))        // fast-backward: previous song position
+        gtui::transport_rewind();
+    ImGui::SameLine();
+    if (ImGui::Button(">"))         // play from start of song
         gtui::transport_play_start();
     ImGui::SameLine();
-    if (ImGui::Button("Pattern"))
+    if (ImGui::Button("Pat"))       // play current pattern
         gtui::transport_play_pattern();
+    ImGui::SameLine();
+    if (ImGui::Button(">>"))        // fast-forward: next song position
+        gtui::transport_ff();
     ImGui::SameLine();
     if (ImGui::Button("Stop"))
         gtui::transport_stop();
+
+    ImGui::SameLine(0.0f, 16.0f);
+    if (gimgui_toggle_button("Follow", gtui::transport_follow()))
+        gtui::transport_toggle_follow();
     ImGui::SameLine();
-    ImGui::Text("%s  %02d:%02d", gtui::transport_playing() ? "|>" : "[]",
+    if (gimgui_toggle_button("Loop", gtui::transport_loop()))
+        gtui::transport_toggle_loop();
+
+    ImGui::SameLine(0.0f, 16.0f);
+    ImGui::AlignTextToFramePadding();
+    ImGui::Text("%s %02d:%02d", gtui::transport_playing() ? "|>" : "[]",
                 gtui::transport_time_min(), gtui::transport_time_sec());
 
-    gimgui_end_panel();
+    ImGui::End();
 }
 
 // Called by bme (via bme_overlay_render_hook) between its RenderCopy and its
@@ -631,9 +683,16 @@ extern "C" void gimgui_overlay_render(void)
     ImGui::GetBackgroundDrawList()->AddRectFilled(
         vp->Pos, ImVec2(vp->Pos.x + vp->Size.x, vp->Pos.y + vp->Size.y), kAppBg);
 
-    const ImVec2 o = vp->WorkPos;   // origin below the menu bar
-    const ImVec2 s = vp->WorkSize;  // area excluding the menu bar
+    const ImVec2 vo = vp->WorkPos;  // origin below the menu bar
+    const ImVec2 vs = vp->WorkSize; // area excluding the menu bar
     const float g = 3.0f;           // gutter between panels
+
+    // Full-width transport toolbar across the top; the two columns fill below it.
+    const float transportH = ImGui::GetFrameHeight() + 12.0f;
+    gimgui_draw_transport(vo, ImVec2(vs.x, transportH));
+
+    const ImVec2 o = ImVec2(vo.x, vo.y + transportH + g);
+    const ImVec2 s = ImVec2(vs.x, vs.y - transportH - g);
 
     const float leftW  = floorf(s.x * 0.60f);
     const float rightW = s.x - leftW - g;
