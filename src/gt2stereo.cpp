@@ -1912,8 +1912,6 @@ void mousecommands(GTOBJECT* gt)
 
 void generalcommands(GTOBJECT* gt)
 {
-	int validSize = 1;
-
 	if (win_quitted) exitprogram = 1;
 	switch (rawkey)
 	{
@@ -1959,36 +1957,11 @@ void generalcommands(GTOBJECT* gt)
 		break;
 
 	case KEY_F9:
-		if (!shiftOrCtrlPressed)
-		{
-			if (editorInfo.expandOrderListView)
-			{
-				int maxSize = validateAllSongs();
-				if (maxSize > 0xff)
-					validSize = 0;
-				else
-					compressAllSongs();
-
-			}
-			if (validSize)
-			{
-				stopScreenDisplay();
-				relocator(gt, 0, 0);
-				restartScreenDisplay();
-				printmainscreen(gt);
-				sprintf(infoTextBuffer, " ");
-
-			}
-		}
-		else if (shiftpressed)
-		{
+		if (shiftpressed) {
 			stereoMode++;
 			stereoMode %= 3;
 			validateStereoMode();
-		}
-		else if (ctrlpressed)
-		{
-			// Fast relocator - No menus. Use last export settings
+		} else if (ctrlpressed) {
 			if (songExported)
 				relocator(gt, 0, 1);
 			if (songExported)
@@ -1996,25 +1969,9 @@ void generalcommands(GTOBJECT* gt)
 		}
 		break;
 
-	case KEY_F10:
-
-		handleLoad(gt, NULL);
-		break;
-
 	case KEY_F11:
 		if (shiftOrCtrlPressed)
 			save(gt, 1);
-		else
-		{
-			if (editorInfo.expandOrderListView)
-			{
-				int maxSize = validateAllSongs();
-				if (maxSize > 0xff)
-					validSize = 0;
-			}
-			if (validSize)
-				save(gt, 0);		// compressAllSongs called from within savesong
-		}
 		break;
 
 	case KEY_LEFT:

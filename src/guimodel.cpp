@@ -4,6 +4,7 @@
 //
 #include "guimodel.h"
 #include "goattrk2.h"
+#include "gactions.h"
 
 namespace gtui {
 
@@ -358,23 +359,19 @@ void song_set_name(const char *s) { song_set_str(songname, s); }
 void song_set_author(const char *s) { song_set_str(authorname, s); }
 void song_set_copyright(const char *s) { song_set_str(copyrightname, s); }
 
-void transport_play_start() { initsong(editorInfo.esnum, PLAY_BEGINNING, &gtObject); }
-void transport_play_pattern() { initsong(editorInfo.esnum, PLAY_PATTERN, &gtObject); }
-void transport_stop() { stopsong(&gtObject); }
+void transport_play_start() { gtaction::perform(gtaction::Action::PlayFromBeginning); }
+void transport_play_pattern() { gtaction::perform(gtaction::Action::PlayPatternMode); }
+void transport_stop() { gtaction::perform(gtaction::Action::Stop); }
 bool transport_playing() { return isplaying(&gtObject) != 0; }
 int transport_time_min() { return gtObject.timemin; }
 int transport_time_sec() { return gtObject.timesec; }
 
-// Follow playback (scroll the editor to the play position) and pattern-loop
-// flags: plain view/transport state, so no undo bracket. Fast-forward / rewind
-// step the song position one order entry (working stopped or playing), matching
-// Ctrl-Right / the rewind handler in the legacy editor.
 bool transport_follow() { return followplay != 0; }
-void transport_toggle_follow() { followplay = 1 - followplay; }
+void transport_toggle_follow() { gtaction::perform(gtaction::Action::ToggleFollow); }
 bool transport_loop() { return transportLoopPattern != 0; }
-void transport_toggle_loop() { transportLoopPattern = 1 - transportLoopPattern; }
-void transport_ff() { nextSongPos(&gtObject); }
-void transport_rewind() { previousSongPos(&gtObject, 1); }
+void transport_toggle_loop() { gtaction::perform(gtaction::Action::ToggleLoop); }
+void transport_ff() { gtaction::perform(gtaction::Action::SongPosNext); }
+void transport_rewind() { gtaction::perform(gtaction::Action::SongPosPrev); }
 
 void pattern_set_cursor(int ch, int row, int col)
 {

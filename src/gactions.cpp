@@ -41,10 +41,15 @@ const ActionMeta kActionMeta[] = {
     { Action::PlayPatternStart,  "PlayPatternStart",  "Play from pattern start" },
     { Action::PlayCurrent,       "PlayCurrent",       "Play from cursor" },
     { Action::Stop,              "Stop",              "Stop playback" },
+    { Action::PlayFromBeginning,"PlayFromBeginning", "Play from beginning" },
+    { Action::PlayPatternMode,  "PlayPatternMode",   "Play pattern" },
     { Action::ToggleFollow,      "ToggleFollow",      "Toggle follow mode" },
     { Action::ToggleLoop,        "ToggleLoop",        "Toggle pattern loop" },
     { Action::SongPosNext,       "SongPosNext",       "Next song position" },
     { Action::SongPosPrev,       "SongPosPrev",       "Previous song position" },
+    { Action::Relocate,          "Relocate",          "Open relocator" },
+    { Action::LoadSong,          "LoadSong",          "Load song" },
+    { Action::SaveSong,          "SaveSong",          "Save song" },
     { Action::OctaveUp,          "OctaveUp",          "Octave up" },
     { Action::OctaveDown,        "OctaveDown",        "Octave down" },
     { Action::PrevInstr,         "PrevInstr",         "Previous instrument" },
@@ -81,6 +86,10 @@ const Binding kBindings[] = {
     { Action::PlayCurrent,      Ctx::Global, make_chord(KEY_F3, Shift) },
     { Action::Stop,             Ctx::Global, make_chord(KEY_F4) },
     { Action::Stop,             Ctx::Global, make_chord(KEY_F4, Shift) },
+
+    { Action::Relocate,  Ctx::Global, make_chord(KEY_F9) },
+    { Action::LoadSong,  Ctx::Global, make_chord(KEY_F10) },
+    { Action::SaveSong,  Ctx::Global, make_chord(KEY_F11) },
 
     // Octave / instrument (legacy switch(key) shortcuts)
     { Action::OctaveUp,   Ctx::Global, make_chord('*') },
@@ -491,6 +500,57 @@ bool handle_global_action(Action act)
         transport_on_f4(gt);
         return true;
 
+    case Action::PlayFromBeginning:
+        initsong(editorInfo.esnum, PLAY_BEGINNING, gt);
+        return true;
+
+    case Action::PlayPatternMode:
+        initsong(editorInfo.esnum, PLAY_PATTERN, gt);
+        return true;
+
+    case Action::ToggleFollow:
+        followplay = 1 - followplay;
+        return true;
+
+    case Action::ToggleLoop:
+        transportLoopPattern = 1 - transportLoopPattern;
+        return true;
+
+    case Action::Relocate: {
+        int ok = 1;
+        if (editorInfo.expandOrderListView) {
+            int maxSize = validateAllSongs();
+            if (maxSize > 0xff)
+                ok = 0;
+            else
+                compressAllSongs();
+        }
+        if (ok) {
+            stopScreenDisplay();
+            relocator(gt, 0, 0);
+            restartScreenDisplay();
+            printmainscreen(gt);
+            sprintf(infoTextBuffer, " ");
+        }
+        return true;
+    }
+
+    case Action::LoadSong:
+        handleLoad(gt, NULL);
+        return true;
+
+    case Action::SaveSong: {
+        int ok = 1;
+        if (editorInfo.expandOrderListView) {
+            int maxSize = validateAllSongs();
+            if (maxSize > 0xff)
+                ok = 0;
+        }
+        if (ok)
+            save(gt, 0);
+        return true;
+    }
+
     case Action::OctaveUp:
         edit_octave_up();
         return true;
@@ -635,6 +695,22 @@ void clear_input()
 {
     key    = 0;
     rawkey = 0;
+}
+
+bool perform(Action act)
+{
+    if (act == Action::None)
+        return false;
+
+    switch (act) {
+    case Action::OrderRowUp:
+    case Action::OrderRowDown:
+    case Action::OrderColLeft:
+    case Action::OrderColRight:
+        return handle_order_action(act);
+    default:
+        return handle_global_action(act);
+    }
 }
 
 } // namespace gtaction

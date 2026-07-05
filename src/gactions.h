@@ -42,10 +42,16 @@ enum class Action : uint16_t {
     PlayPatternStart,
     PlayCurrent,
     Stop,
+    PlayFromBeginning,
+    PlayPatternMode,
     ToggleFollow,
     ToggleLoop,
     SongPosNext,
     SongPosPrev,
+
+    Relocate,
+    LoadSong,
+    SaveSong,
 
     OctaveUp,
     OctaveDown,
@@ -80,6 +86,9 @@ Action resolve(Ctx ctx, Chord chord);
 
 const char* action_name(Action a);
 const char* action_label(Action a);
+
+// Run an action programmatically (ImGui toolbar, scripts, …).
+bool perform(Action act);
 
 // Vertical ImGui order-list navigation. Uses the global gtObject.
 bool dispatch_order_navigation();
