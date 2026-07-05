@@ -688,26 +688,26 @@ extern "C" void gimgui_overlay_render(void)
     const ImVec2 o = ImVec2(vo.x, vo.y + transportH + g);
     const ImVec2 s = ImVec2(vs.x, vs.y - transportH - g);
 
-    // Three columns: left = Instruments / SID Tables / Song stacked;
-    // centre = Pattern (widest); right = Order List (narrow, rightmost).
-    const float leftW  = floorf(s.x * 0.31f);
+    // Three columns: left = Order List (narrow, leftmost); centre = Pattern
+    // (widest); right = Instruments / SID Tables / Song stacked.
     const float orderW = floorf(s.x * 0.22f);
-    const float patW   = s.x - leftW - orderW - 2 * g;
-    const float leftX  = o.x;
-    const float patX   = o.x + leftW + g;
-    const float orderX = o.x + leftW + patW + 2 * g;
+    const float rightW = floorf(s.x * 0.31f);
+    const float patW   = s.x - orderW - rightW - 2 * g;
+    const float orderX = o.x;
+    const float patX   = o.x + orderW + g;
+    const float rightX = o.x + orderW + patW + 2 * g;
 
-    // Left column split: Instruments / Tables / Song.
+    // Left and centre columns, full height.
+    gimgui_draw_orderlist(ImVec2(orderX, o.y), ImVec2(orderW, s.y));
+    gimgui_draw_pattern  (ImVec2(patX, o.y),   ImVec2(patW, s.y));
+
+    // Right column split: Instruments / Tables / Song.
     const float insH  = floorf(s.y * 0.40f);
     const float tblH  = floorf(s.y * 0.34f);
     const float songH = s.y - insH - tblH - 2 * g;
-    gimgui_draw_instruments(ImVec2(leftX, o.y),                       ImVec2(leftW, insH));
-    gimgui_draw_tables     (ImVec2(leftX, o.y + insH + g),            ImVec2(leftW, tblH));
-    gimgui_draw_song       (ImVec2(leftX, o.y + insH + tblH + 2 * g), ImVec2(leftW, songH));
-
-    // Centre and right columns, full height.
-    gimgui_draw_pattern  (ImVec2(patX, o.y),   ImVec2(patW, s.y));
-    gimgui_draw_orderlist(ImVec2(orderX, o.y), ImVec2(orderW, s.y));
+    gimgui_draw_instruments(ImVec2(rightX, o.y),                       ImVec2(rightW, insH));
+    gimgui_draw_tables     (ImVec2(rightX, o.y + insH + g),            ImVec2(rightW, tblH));
+    gimgui_draw_song       (ImVec2(rightX, o.y + insH + tblH + 2 * g), ImVec2(rightW, songH));
 
     if (g_show_demo)
         ImGui::ShowDemoWindow(&g_show_demo);
