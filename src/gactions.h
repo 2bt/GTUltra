@@ -62,6 +62,10 @@ enum class Action : uint16_t {
     OrderRowDown,
     OrderColLeft,
     OrderColRight,
+    OrderPageUp,
+    OrderPageDown,
+    OrderHome,
+    OrderEnd,
 
     PatternRowUp,
     PatternRowDown,

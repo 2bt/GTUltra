@@ -61,6 +61,10 @@ const ActionMeta kActionMeta[] = {
     { Action::OrderRowDown,      "OrderRowDown",      "Order list: next row" },
     { Action::OrderColLeft,      "OrderColLeft",      "Order list: previous channel" },
     { Action::OrderColRight,     "OrderColRight",     "Order list: next channel" },
+    { Action::OrderPageUp,       "OrderPageUp",       "Order list: page up" },
+    { Action::OrderPageDown,     "OrderPageDown",     "Order list: page down" },
+    { Action::OrderHome,         "OrderHome",         "Order list: first row" },
+    { Action::OrderEnd,          "OrderEnd",          "Order list: last row" },
     { Action::PatternRowUp,      "PatternRowUp",      "Pattern: previous row" },
     { Action::PatternRowDown,    "PatternRowDown",    "Pattern: next row" },
     { Action::PatternColLeft,    "PatternColLeft",    "Pattern: previous column" },
@@ -153,6 +157,10 @@ const Binding kBindings[] = {
     { Action::OrderRowDown,  Ctx::Order, make_chord(KEY_DOWN) },
     { Action::OrderColLeft,  Ctx::Order, make_chord(KEY_LEFT) },
     { Action::OrderColRight, Ctx::Order, make_chord(KEY_RIGHT) },
+    { Action::OrderPageUp,   Ctx::Order, make_chord(KEY_PGUP) },
+    { Action::OrderPageDown, Ctx::Order, make_chord(KEY_PGDN) },
+    { Action::OrderHome,     Ctx::Order, make_chord(KEY_HOME) },
+    { Action::OrderEnd,      Ctx::Order, make_chord(KEY_END) },
 
     // Pattern editor — unmodified arrow keys
     { Action::PatternRowUp,    Ctx::Pattern, make_chord(KEY_UP) },
@@ -306,6 +314,58 @@ void order_col_right(GTOBJECT* gt)
         editorInfo.esmarkchnend = -1;
     }
     order_sync_view();
+}
+
+int order_max_row()
+{
+    return songlen[editorInfo.esnum][editorInfo.eschn] + 1;
+}
+
+void order_page_up(GTOBJECT* gt)
+{
+    if (editorInfo.eseditpos > VISIBLEORDERLIST)
+        editorInfo.eseditpos -= VISIBLEORDERLIST;
+    else
+        editorInfo.eseditpos = 0;
+
+    if (shiftOrCtrlPressed)
+        editorInfo.esmarkend = editorInfo.eseditpos;
+
+    order_sync_view();
+    (void)gt;
+}
+
+void order_page_down(GTOBJECT* gt)
+{
+    const int maxRow = order_max_row();
+
+    editorInfo.eseditpos += VISIBLEORDERLIST;
+    if (editorInfo.eseditpos > maxRow)
+        editorInfo.eseditpos = maxRow;
+
+    if (shiftOrCtrlPressed)
+        editorInfo.esmarkend = editorInfo.eseditpos;
+
+    order_sync_view();
+    (void)gt;
+}
+
+void order_nav_home(GTOBJECT* gt)
+{
+    editorInfo.eseditpos = 0;
+    if (shiftOrCtrlPressed)
+        editorInfo.esmarkend = editorInfo.eseditpos;
+    order_sync_view();
+    (void)gt;
+}
+
+void order_nav_end(GTOBJECT* gt)
+{
+    editorInfo.eseditpos = order_max_row();
+    if (shiftOrCtrlPressed)
+        editorInfo.esmarkend = editorInfo.eseditpos;
+    order_sync_view();
+    (void)gt;
 }
 
 // ---- transport (migrated from generalcommands KEY_F1..F4) ----
@@ -728,6 +788,18 @@ bool handle_order_action(Action act)
             return false;
         order_col_right(gt);
         return true;
+    case Action::OrderPageUp:
+        order_page_up(gt);
+        return true;
+    case Action::OrderPageDown:
+        order_page_down(gt);
+        return true;
+    case Action::OrderHome:
+        order_nav_home(gt);
+        return true;
+    case Action::OrderEnd:
+        order_nav_end(gt);
+        return true;
     default:
         return false;
     }
@@ -800,6 +872,19 @@ bool dispatch_order_navigation()
     const Action act  = resolve(Ctx::Order, chord);
     if (act == Action::None)
         return false;
+
+    switch (rawkey) {
+    case KEY_UP:
+    case KEY_DOWN:
+    case KEY_LEFT:
+    case KEY_RIGHT:
+    case KEY_PGUP:
+    case KEY_PGDN:
+        win_enableKeyRepeat();
+        break;
+    default:
+        break;
+    }
 
     if (!handle_order_action(act))
         return false;
@@ -889,6 +974,10 @@ bool perform(Action act)
     case Action::OrderRowDown:
     case Action::OrderColLeft:
     case Action::OrderColRight:
+    case Action::OrderPageUp:
+    case Action::OrderPageDown:
+    case Action::OrderHome:
+    case Action::OrderEnd:
         return handle_order_action(act);
     case Action::PatternRowUp:
     case Action::PatternRowDown:
