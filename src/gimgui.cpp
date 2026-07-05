@@ -259,21 +259,19 @@ static void gimgui_draw_pattern(ImVec2 pos, ImVec2 size)
     }
 
     // Colors (hardcoded for now; the theme system is M7).
-    const ImU32 cBeat1     = IM_COL32(255, 255, 255, 16);
-    const ImU32 cBeat2     = IM_COL32(255, 255, 255, 32);
-    const ImU32 cCursorRow = IM_COL32(255, 255, 255, 20);
-    const ImU32 cPlayRow   = IM_COL32(80, 190, 90, 80);    // per-channel playhead
-    const ImU32 cSelect    = IM_COL32(48, 96, 200, 110);   // Shift+Up/Down mark
-    const ImU32 cCursorFill= IM_COL32(235, 225, 120, 70);  // cursor cell
-    const ImU32 cCursorEdge= IM_COL32(235, 225, 120, 230);
-    const ImU32 cRowNum    = IM_COL32(120, 140, 160, 255);
-    const ImU32 cRowNumHi  = IM_COL32(210, 210, 130, 255);
-    const ImU32 cNote      = IM_COL32(224, 230, 238, 255);
-    const ImU32 cInstr     = IM_COL32(120, 205, 120, 255);
-    const ImU32 cCmd       = IM_COL32(235, 180, 90, 255);
-    const ImU32 cDots      = IM_COL32(85, 95, 108, 255);
-    const ImU32 cHeader    = IM_COL32(180, 200, 220, 255);
-    const ImU32 cEnd       = IM_COL32(150, 160, 175, 255);
+    const ImU32 cBeat       = IM_COL32(255, 255, 255, 10);
+    const ImU32 cCursorRow  = IM_COL32(255, 255, 100, 20);
+    const ImU32 cPlayRow    = IM_COL32(80, 190, 90, 80);   // per-channel playhead
+    const ImU32 cSelect     = IM_COL32(48, 96, 200, 110);  // Shift+Up/Down mark
+    const ImU32 cCursorFill = IM_COL32(235, 225, 120, 70); // cursor cell
+    const ImU32 cCursorEdge = IM_COL32(235, 225, 120, 230);
+    const ImU32 cRowNum     = IM_COL32(120, 140, 160, 255);
+    const ImU32 cNote       = IM_COL32(224, 230, 238, 255);
+    const ImU32 cInstr      = IM_COL32(120, 205, 120, 255);
+    const ImU32 cCmd        = IM_COL32(235, 180, 90, 255);
+    const ImU32 cDots       = IM_COL32(85, 95, 108, 255);
+    const ImU32 cHeader     = IM_COL32(180, 200, 220, 255);
+    const ImU32 cEnd        = IM_COL32(150, 160, 175, 255);
 
     const int   chans = gtui::pattern_channels();
     const int   rows  = gtui::pattern_rows();
@@ -322,19 +320,15 @@ static void gimgui_draw_pattern(ImVec2 pos, ImVec2 size)
             char buf[16];
 
             // Row background: beat highlight + cursor row.
-            const bool firstOfBeat = (r % step) == 0;
-            const bool secondBeat = (r % (step * 2)) < step;
-            ImU32 bg = 0;
-            if (secondBeat) bg = firstOfBeat ? cBeat2 : cBeat1;
-            else if (firstOfBeat) bg = cBeat1;
-            if (bg)
-                dl->AddRectFilled(ImVec2(x, y), ImVec2(x + totalW, y + lineH), bg);
+            bool first_of_beat = (r % step) == 0;
+            if (first_of_beat)
+                dl->AddRectFilled(ImVec2(x, y), ImVec2(x + totalW, y + lineH), cBeat);
             if (r == curRow)
                 dl->AddRectFilled(ImVec2(x, y), ImVec2(x + totalW, y + lineH), cCursorRow);
 
             // Row number.
             snprintf(buf, sizeof buf, "%3d", r);
-            dl->AddText(ImVec2(x, y), firstOfBeat ? cRowNumHi : cRowNum, buf);
+            dl->AddText(ImVec2(x, y), cRowNum, buf);
 
             for (int c = 0; c < chans; c++)
             {
@@ -694,21 +688,26 @@ extern "C" void gimgui_overlay_render(void)
     const ImVec2 o = ImVec2(vo.x, vo.y + transportH + g);
     const ImVec2 s = ImVec2(vs.x, vs.y - transportH - g);
 
-    const float leftW  = floorf(s.x * 0.60f);
-    const float rightW = s.x - leftW - g;
-    const float rightX = o.x + leftW + g;
+    // Three columns: left = Instruments / SID Tables / Song stacked;
+    // centre = Pattern (widest); right = Order List (narrow, rightmost).
+    const float leftW  = floorf(s.x * 0.31f);
+    const float orderW = floorf(s.x * 0.22f);
+    const float patW   = s.x - leftW - orderW - 2 * g;
+    const float leftX  = o.x;
+    const float patX   = o.x + leftW + g;
+    const float orderX = o.x + leftW + patW + 2 * g;
 
-    const float patH = floorf(s.y * 0.68f);
-    const float tblH = s.y - patH - g;
-    gimgui_draw_pattern(ImVec2(o.x, o.y),            ImVec2(leftW, patH));
-    gimgui_draw_tables (ImVec2(o.x, o.y + patH + g), ImVec2(leftW, tblH));
+    // Left column split: Instruments / Tables / Song.
+    const float insH  = floorf(s.y * 0.40f);
+    const float tblH  = floorf(s.y * 0.34f);
+    const float songH = s.y - insH - tblH - 2 * g;
+    gimgui_draw_instruments(ImVec2(leftX, o.y),                       ImVec2(leftW, insH));
+    gimgui_draw_tables     (ImVec2(leftX, o.y + insH + g),            ImVec2(leftW, tblH));
+    gimgui_draw_song       (ImVec2(leftX, o.y + insH + tblH + 2 * g), ImVec2(leftW, songH));
 
-    const float ordH  = floorf(s.y * 0.30f);
-    const float songH = floorf(s.y * 0.26f);
-    const float insH  = s.y - ordH - songH - 2 * g;
-    gimgui_draw_orderlist  (ImVec2(rightX, o.y),                    ImVec2(rightW, ordH));
-    gimgui_draw_instruments(ImVec2(rightX, o.y + ordH + g),        ImVec2(rightW, insH));
-    gimgui_draw_song       (ImVec2(rightX, o.y + ordH + insH + 2 * g), ImVec2(rightW, songH));
+    // Centre and right columns, full height.
+    gimgui_draw_pattern  (ImVec2(patX, o.y),   ImVec2(patW, s.y));
+    gimgui_draw_orderlist(ImVec2(orderX, o.y), ImVec2(orderW, s.y));
 
     if (g_show_demo)
         ImGui::ShowDemoWindow(&g_show_demo);
@@ -786,51 +785,51 @@ static void gimgui_load_font()
 // app. A full theme/config system arrives with M7.
 static void gimgui_apply_style()
 {
-    ImGuiStyle &s = ImGui::GetStyle();
-    s.WindowRounding = 0.0f;
-    s.ChildRounding = 0.0f;
-    s.FrameRounding = 2.0f;
-    s.PopupRounding = 2.0f;
+    ImGuiStyle& s       = ImGui::GetStyle();
+    s.WindowRounding    = 0.0f;
+    s.ChildRounding     = 0.0f;
+    s.FrameRounding     = 2.0f;
+    s.PopupRounding     = 2.0f;
     s.ScrollbarRounding = 2.0f;
-    s.GrabRounding = 2.0f;
-    s.TabRounding = 0.0f;
-    s.WindowBorderSize = 0.0f;
-    s.ChildBorderSize = 0.0f;
-    s.FrameBorderSize = 0.0f;
-    s.WindowPadding = ImVec2(8, 6);
-    s.FramePadding = ImVec2(6, 3);
-    s.ItemSpacing = ImVec2(6, 4);
-    s.ItemInnerSpacing = ImVec2(4, 4);
-    s.ScrollbarSize = 12.0f;
+    s.GrabRounding      = 2.0f;
+    s.TabRounding       = 0.0f;
+    s.WindowBorderSize  = 0.0f;
+    s.ChildBorderSize   = 0.0f;
+    s.FrameBorderSize   = 0.0f;
+    s.WindowPadding     = ImVec2(8, 6);
+    s.FramePadding      = ImVec2(6, 3);
+    s.ItemSpacing       = ImVec2(6, 4);
+    s.ItemInnerSpacing  = ImVec2(4, 4);
+    s.ScrollbarSize     = 12.0f;
 
-    ImVec4 *c = s.Colors;
-    c[ImGuiCol_Text]              = ImVec4(0.86f, 0.89f, 0.93f, 1.00f);
-    c[ImGuiCol_TextDisabled]      = ImVec4(0.45f, 0.48f, 0.52f, 1.00f);
-    c[ImGuiCol_WindowBg]          = ImVec4(0.13f, 0.14f, 0.16f, 1.00f);
-    c[ImGuiCol_ChildBg]           = ImVec4(0.13f, 0.14f, 0.16f, 1.00f);
-    c[ImGuiCol_PopupBg]           = ImVec4(0.11f, 0.12f, 0.14f, 1.00f);
-    c[ImGuiCol_Border]            = ImVec4(0.24f, 0.26f, 0.30f, 1.00f);
-    c[ImGuiCol_FrameBg]           = ImVec4(0.20f, 0.22f, 0.26f, 1.00f);
-    c[ImGuiCol_FrameBgHovered]    = ImVec4(0.26f, 0.30f, 0.36f, 1.00f);
-    c[ImGuiCol_FrameBgActive]     = ImVec4(0.30f, 0.36f, 0.44f, 1.00f);
-    c[ImGuiCol_TitleBg]           = ImVec4(0.11f, 0.12f, 0.14f, 1.00f);
-    c[ImGuiCol_TitleBgActive]     = ImVec4(0.15f, 0.26f, 0.41f, 1.00f);
-    c[ImGuiCol_MenuBarBg]         = ImVec4(0.11f, 0.12f, 0.14f, 1.00f);
-    c[ImGuiCol_ScrollbarBg]       = ImVec4(0.11f, 0.12f, 0.14f, 1.00f);
-    c[ImGuiCol_ScrollbarGrab]     = ImVec4(0.28f, 0.31f, 0.36f, 1.00f);
+    ImVec4* c                        = s.Colors;
+    c[ImGuiCol_Text]                 = ImVec4(0.86f, 0.89f, 0.93f, 1.00f);
+    c[ImGuiCol_TextDisabled]         = ImVec4(0.45f, 0.48f, 0.52f, 1.00f);
+    c[ImGuiCol_WindowBg]             = ImVec4(0.13f, 0.14f, 0.16f, 1.00f);
+    c[ImGuiCol_ChildBg]              = ImVec4(0.13f, 0.14f, 0.16f, 1.00f);
+    c[ImGuiCol_PopupBg]              = ImVec4(0.11f, 0.12f, 0.14f, 1.00f);
+    c[ImGuiCol_Border]               = ImVec4(0.24f, 0.26f, 0.30f, 1.00f);
+    c[ImGuiCol_FrameBg]              = ImVec4(0.20f, 0.22f, 0.26f, 1.00f);
+    c[ImGuiCol_FrameBgHovered]       = ImVec4(0.26f, 0.30f, 0.36f, 1.00f);
+    c[ImGuiCol_FrameBgActive]        = ImVec4(0.30f, 0.36f, 0.44f, 1.00f);
+    c[ImGuiCol_TitleBg]              = ImVec4(0.11f, 0.12f, 0.14f, 1.00f);
+    c[ImGuiCol_TitleBgActive]        = ImVec4(0.15f, 0.26f, 0.41f, 1.00f);
+    c[ImGuiCol_MenuBarBg]            = ImVec4(0.11f, 0.12f, 0.14f, 1.00f);
+    c[ImGuiCol_ScrollbarBg]          = ImVec4(0.11f, 0.12f, 0.14f, 1.00f);
+    c[ImGuiCol_ScrollbarGrab]        = ImVec4(0.28f, 0.31f, 0.36f, 1.00f);
     c[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.36f, 0.40f, 0.46f, 1.00f);
-    c[ImGuiCol_Button]            = ImVec4(0.22f, 0.30f, 0.42f, 1.00f);
-    c[ImGuiCol_ButtonHovered]     = ImVec4(0.30f, 0.42f, 0.58f, 1.00f);
-    c[ImGuiCol_ButtonActive]      = ImVec4(0.36f, 0.52f, 0.72f, 1.00f);
-    c[ImGuiCol_Header]            = ImVec4(0.20f, 0.34f, 0.52f, 1.00f);
-    c[ImGuiCol_HeaderHovered]     = ImVec4(0.26f, 0.42f, 0.62f, 1.00f);
-    c[ImGuiCol_HeaderActive]      = ImVec4(0.30f, 0.48f, 0.70f, 1.00f);
-    c[ImGuiCol_Separator]         = ImVec4(0.24f, 0.26f, 0.30f, 1.00f);
-    c[ImGuiCol_TableHeaderBg]     = ImVec4(0.17f, 0.19f, 0.23f, 1.00f);
-    c[ImGuiCol_TableRowBg]        = ImVec4(0.14f, 0.15f, 0.18f, 1.00f);
-    c[ImGuiCol_TableRowBgAlt]     = ImVec4(0.16f, 0.17f, 0.21f, 1.00f);
-    c[ImGuiCol_TableBorderLight]  = ImVec4(0.22f, 0.24f, 0.28f, 1.00f);
-    c[ImGuiCol_TableBorderStrong] = ImVec4(0.28f, 0.30f, 0.35f, 1.00f);
+    c[ImGuiCol_Button]               = ImVec4(0.22f, 0.30f, 0.42f, 1.00f);
+    c[ImGuiCol_ButtonHovered]        = ImVec4(0.30f, 0.42f, 0.58f, 1.00f);
+    c[ImGuiCol_ButtonActive]         = ImVec4(0.36f, 0.52f, 0.72f, 1.00f);
+    c[ImGuiCol_Header]               = ImVec4(0.20f, 0.34f, 0.52f, 1.00f);
+    c[ImGuiCol_HeaderHovered]        = ImVec4(0.26f, 0.42f, 0.62f, 1.00f);
+    c[ImGuiCol_HeaderActive]         = ImVec4(0.30f, 0.48f, 0.70f, 1.00f);
+    c[ImGuiCol_Separator]            = ImVec4(0.24f, 0.26f, 0.30f, 1.00f);
+    c[ImGuiCol_TableHeaderBg]        = ImVec4(0.17f, 0.19f, 0.23f, 1.00f);
+    c[ImGuiCol_TableRowBg]           = ImVec4(0.14f, 0.15f, 0.18f, 1.00f);
+    c[ImGuiCol_TableRowBgAlt]        = ImVec4(0.16f, 0.17f, 0.21f, 1.00f);
+    c[ImGuiCol_TableBorderLight]     = ImVec4(0.22f, 0.24f, 0.28f, 1.00f);
+    c[ImGuiCol_TableBorderStrong]    = ImVec4(0.28f, 0.30f, 0.35f, 1.00f);
 }
 
 void gimgui_init()
