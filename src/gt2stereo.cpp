@@ -1283,7 +1283,7 @@ void docommand(void)
 
 		//	undoAreaSetCheckForChange(UNDO_AREA_CHANNEL_EDITOR_INFO, c2, UNDO_AREA_DIRTY_CHECK);
 
-		if (!gtaction::dispatch_order_navigation())
+		if (!gtaction::dispatch_mode_navigation())
 			orderlistcommands(gt);
 		displayOrderTableInfo(gt);
 		break;
@@ -1342,7 +1342,7 @@ void docommand(void)
 
 		// if gMIDINote!=-1, then use this as input instead of QWERTY note input
 		// Also, if this is the case, set key and rawkey=0 so that only note input is recognised - just in case..
-		if (!gtaction::dispatch_pattern_navigation())
+		if (!gtaction::dispatch_mode_navigation())
 			patterncommands(gt, gMIDINote);
 
 		displayPatternInfo(gt);

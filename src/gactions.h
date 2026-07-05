@@ -67,6 +67,10 @@ enum class Action : uint16_t {
     PatternRowDown,
     PatternColLeft,
     PatternColRight,
+    PatternPageUp,
+    PatternPageDown,
+    PatternHome,
+    PatternEnd,
 
     ToggleSIDTracker64,
     PrevMultiplier,
@@ -105,10 +109,13 @@ const char* action_label(Action a);
 // Run an action programmatically (ImGui toolbar, scripts, …).
 bool perform(Action act);
 
+// Mode-specific navigation (order list, pattern cursor). Uses gtObject.
+bool dispatch_mode_navigation();
+
 // Vertical ImGui order-list navigation. Uses the global gtObject.
 bool dispatch_order_navigation();
 
-// Pattern cursor navigation (unmodified arrow keys). Uses gtObject.
+// Pattern cursor navigation (unmodified keys). Uses gtObject.
 bool dispatch_pattern_navigation();
 
 // Global actions (save, undo, quit, edit-mode tab, …). Uses gtObject.

@@ -65,6 +65,10 @@ const ActionMeta kActionMeta[] = {
     { Action::PatternRowDown,    "PatternRowDown",    "Pattern: next row" },
     { Action::PatternColLeft,    "PatternColLeft",    "Pattern: previous column" },
     { Action::PatternColRight,   "PatternColRight",   "Pattern: next column" },
+    { Action::PatternPageUp,     "PatternPageUp",     "Pattern: page up" },
+    { Action::PatternPageDown,   "PatternPageDown",   "Pattern: page down" },
+    { Action::PatternHome,       "PatternHome",       "Pattern: first row" },
+    { Action::PatternEnd,        "PatternEnd",        "Pattern: last row" },
     { Action::ToggleSIDTracker64,"ToggleSIDTracker64","Toggle SIDTracker64 mode" },
     { Action::PrevMultiplier,    "PrevMultiplier",    "Previous speed multiplier" },
     { Action::NextMultiplier,    "NextMultiplier",    "Next speed multiplier" },
@@ -155,6 +159,10 @@ const Binding kBindings[] = {
     { Action::PatternRowDown,  Ctx::Pattern, make_chord(KEY_DOWN) },
     { Action::PatternColLeft,  Ctx::Pattern, make_chord(KEY_LEFT) },
     { Action::PatternColRight, Ctx::Pattern, make_chord(KEY_RIGHT) },
+    { Action::PatternPageUp,   Ctx::Pattern, make_chord(KEY_PGUP) },
+    { Action::PatternPageDown, Ctx::Pattern, make_chord(KEY_PGDN) },
+    { Action::PatternHome,     Ctx::Pattern, make_chord(KEY_HOME) },
+    { Action::PatternEnd,      Ctx::Pattern, make_chord(KEY_END) },
 };
 
 Action lookup(Ctx ctx, Chord chord)
@@ -683,6 +691,18 @@ bool handle_pattern_action(Action act)
     case Action::PatternColRight:
         pattern_col_right(gt);
         return true;
+    case Action::PatternPageUp:
+        pattern_nav_page_up(gt);
+        return true;
+    case Action::PatternPageDown:
+        pattern_nav_page_down(gt);
+        return true;
+    case Action::PatternHome:
+        pattern_nav_home(gt);
+        return true;
+    case Action::PatternEnd:
+        pattern_nav_end(gt);
+        return true;
     default:
         return false;
     }
@@ -807,6 +827,8 @@ bool dispatch_pattern_navigation()
     case KEY_DOWN:
     case KEY_LEFT:
     case KEY_RIGHT:
+    case KEY_PGUP:
+    case KEY_PGDN:
         win_enableKeyRepeat();
         break;
     default:
@@ -818,6 +840,18 @@ bool dispatch_pattern_navigation()
 
     clear_input();
     return true;
+}
+
+bool dispatch_mode_navigation()
+{
+    switch (editorInfo.editmode) {
+    case EDIT_ORDERLIST:
+        return dispatch_order_navigation();
+    case EDIT_PATTERN:
+        return dispatch_pattern_navigation();
+    default:
+        return false;
+    }
 }
 
 bool dispatch_global(Ctx ctx)
@@ -860,6 +894,10 @@ bool perform(Action act)
     case Action::PatternRowDown:
     case Action::PatternColLeft:
     case Action::PatternColRight:
+    case Action::PatternPageUp:
+    case Action::PatternPageDown:
+    case Action::PatternHome:
+    case Action::PatternEnd:
         return handle_pattern_action(act);
     default:
         return handle_global_action(act);

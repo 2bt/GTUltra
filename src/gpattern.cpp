@@ -44,7 +44,7 @@ void patterncommands(GTOBJECT *gt, int midiNote)
 	}
 
 	int ret;
-	int c, scrrep;
+	int c;
 
 	int c2 = getActualChannel(editorInfo.esnum, editorInfo.epchn);	// 0-12
 
@@ -1098,25 +1098,19 @@ void patterncommands(GTOBJECT *gt, int midiNote)
 		break;
 
 	case KEY_HOME:
-		while (editorInfo.eppos != 0) patternup(gt);
-
+		pattern_nav_home(gt);
 		break;
 
 	case KEY_END:
-		while (editorInfo.eppos != pattlen[gt->editorUndoInfo.editorInfo[c2].epnum]) patterndown(gt);
-
+		pattern_nav_end(gt);
 		break;
 
 	case KEY_PGUP:
-		for (scrrep = PGUPDNREPEAT; scrrep; scrrep--)
-			patternup(gt);
-
+		pattern_nav_page_up(gt);
 		break;
 
 	case KEY_PGDN:
-		for (scrrep = PGUPDNREPEAT; scrrep; scrrep--)
-			patterndown(gt);
-
+		pattern_nav_page_down(gt);
 		break;
 
 	case KEY_UP:
@@ -1441,6 +1435,39 @@ void pattern_nav_down(GTOBJECT *gt)
 				editorInfo.esview = editorInfo.eseditpos - VISIBLEORDERLIST + 1;
 		}
 	}
+}
+
+
+void pattern_nav_home(GTOBJECT *gt)
+{
+	while (editorInfo.eppos != 0)
+		patternup(gt);
+	(void)gt;
+}
+
+
+void pattern_nav_end(GTOBJECT *gt)
+{
+	int c2 = getActualChannel(editorInfo.esnum, editorInfo.epchn);
+
+	while (editorInfo.eppos != pattlen[gt->editorUndoInfo.editorInfo[c2].epnum])
+		patterndown(gt);
+}
+
+
+void pattern_nav_page_up(GTOBJECT *gt)
+{
+	for (int i = 0; i < PGUPDNREPEAT; i++)
+		patternup(gt);
+	(void)gt;
+}
+
+
+void pattern_nav_page_down(GTOBJECT *gt)
+{
+	for (int i = 0; i < PGUPDNREPEAT; i++)
+		patterndown(gt);
+	(void)gt;
 }
 
 
