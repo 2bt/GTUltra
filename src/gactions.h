@@ -62,6 +62,21 @@ enum class Action : uint16_t {
     OrderRowDown,
     OrderColLeft,
     OrderColRight,
+
+    PatternRowUp,
+    PatternRowDown,
+    PatternColLeft,
+    PatternColRight,
+
+    ToggleSIDTracker64,
+    PrevMultiplier,
+    NextMultiplier,
+    ToggleAdsrOrPan,
+    ToggleSidModel,
+    CycleStereoMode,
+    FastRelocate,
+    SaveWav,
+    SongRewind,
 };
 
 using Chord = uint32_t;
@@ -92,6 +107,9 @@ bool perform(Action act);
 
 // Vertical ImGui order-list navigation. Uses the global gtObject.
 bool dispatch_order_navigation();
+
+// Pattern cursor navigation (unmodified arrow keys). Uses gtObject.
+bool dispatch_pattern_navigation();
 
 // Global actions (save, undo, quit, edit-mode tab, …). Uses gtObject.
 bool dispatch_global(Ctx ctx);

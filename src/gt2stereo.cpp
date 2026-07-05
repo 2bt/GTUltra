@@ -1342,7 +1342,8 @@ void docommand(void)
 
 		// if gMIDINote!=-1, then use this as input instead of QWERTY note input
 		// Also, if this is the case, set key and rawkey=0 so that only note input is recognised - just in case..
-		patterncommands(gt, gMIDINote);
+		if (!gtaction::dispatch_pattern_navigation())
+			patterncommands(gt, gMIDINote);
 
 		displayPatternInfo(gt);
 		countInstrumentsInPattern(gt->editorUndoInfo.editorInfo[c2].epnum);
@@ -1912,92 +1913,9 @@ void mousecommands(GTOBJECT* gt)
 
 void generalcommands(GTOBJECT* gt)
 {
-	if (win_quitted) exitprogram = 1;
-	switch (rawkey)
-	{
-	case KEY_F12:
-		if (shiftOrCtrlPressed)
-		{
-			SIDTracker64ForIPadIsAmazing = 1 - SIDTracker64ForIPadIsAmazing;
-			setSIDTracker64KeyOnStyle();
-			if (!SIDTracker64ForIPadIsAmazing)
-				sprintf(infoTextBuffer, "SIDTracker64 Mode: Disabled");
-			else
-				sprintf(infoTextBuffer, "SIDTracker64 Mode: Enabled");
-			forceInfoLine = 1;
-		}
-		break;
-
-	case KEY_F5:
-		if (shiftOrCtrlPressed)
-			prevmultiplier();
-		break;
-
-	case KEY_F6:
-		if (shiftOrCtrlPressed)
-			nextmultiplier();
-		break;
-
-	case KEY_F7:
-		if (shiftOrCtrlPressed)
-		{
-			if (!editPan)
-				editadsr(gt);
-			else
-				editSIDPan(gt);
-		}
-		break;
-
-	case KEY_F8:
-		if (shiftOrCtrlPressed)
-		{
-			editorInfo.sidmodel ^= 1;
-			sound_init(b, mr, writer, hardsid, editorInfo.sidmodel, editorInfo.ntsc, editorInfo.multiplier, catweasel, interpolate, customclockrate);
-		}
-		break;
-
-	case KEY_F9:
-		if (shiftpressed) {
-			stereoMode++;
-			stereoMode %= 3;
-			validateStereoMode();
-		} else if (ctrlpressed) {
-			if (songExported)
-				relocator(gt, 0, 1);
-			if (songExported)
-				sprintf(infoTextBuffer, "Song Exported:%s", packedsongname);
-		}
-		break;
-
-	case KEY_F11:
-		if (shiftOrCtrlPressed)
-			save(gt, 1);
-		break;
-
-	case KEY_LEFT:
-		if (ctrlpressed)
-		{
-			leftKeyTicksDelta = SDL_GetTicks() - leftKeyTicks;
-			leftKeyTicks = SDL_GetTicks();
-			if (leftKeyTicksDelta < 300)
-			{
-				handlePressRewind(1, gt);		// double click
-			}
-			else
-			{
-				handlePressRewind(0, gt);		// single click
-			}
-		}
-		break;
-
-	case KEY_RIGHT:
-		if (ctrlpressed)
-		{
-			nextSongPos(&gtObject);
-		}
-		break;
-
-	}
+	if (win_quitted)
+		exitprogram = 1;
+	(void)gt;
 }
 
 int load(GTOBJECT* gt, char* dragDropFileName)

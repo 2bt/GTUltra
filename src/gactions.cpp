@@ -8,6 +8,9 @@
 #include "gorder.h"
 #include "ginfo.h"
 #include "gimgui.h"
+#include "gpattern.h"
+#include "gdisplay.h"
+#include "gsound.h"
 
 namespace gtaction {
 
@@ -58,6 +61,19 @@ const ActionMeta kActionMeta[] = {
     { Action::OrderRowDown,      "OrderRowDown",      "Order list: next row" },
     { Action::OrderColLeft,      "OrderColLeft",      "Order list: previous channel" },
     { Action::OrderColRight,     "OrderColRight",     "Order list: next channel" },
+    { Action::PatternRowUp,      "PatternRowUp",      "Pattern: previous row" },
+    { Action::PatternRowDown,    "PatternRowDown",    "Pattern: next row" },
+    { Action::PatternColLeft,    "PatternColLeft",    "Pattern: previous column" },
+    { Action::PatternColRight,   "PatternColRight",   "Pattern: next column" },
+    { Action::ToggleSIDTracker64,"ToggleSIDTracker64","Toggle SIDTracker64 mode" },
+    { Action::PrevMultiplier,    "PrevMultiplier",    "Previous speed multiplier" },
+    { Action::NextMultiplier,    "NextMultiplier",    "Next speed multiplier" },
+    { Action::ToggleAdsrOrPan,   "ToggleAdsrOrPan",   "Toggle ADSR / pan edit" },
+    { Action::ToggleSidModel,    "ToggleSidModel",    "Toggle SID model" },
+    { Action::CycleStereoMode,   "CycleStereoMode",   "Cycle stereo mode" },
+    { Action::FastRelocate,      "FastRelocate",      "Fast relocate export" },
+    { Action::SaveWav,           "SaveWav",           "Save WAV" },
+    { Action::SongRewind,        "SongRewind",        "Rewind song position" },
 };
 
 // Default keymap. Context-specific entries override Global for the same chord.
@@ -68,6 +84,8 @@ const Binding kBindings[] = {
     { Action::Quit,         Ctx::Global, make_chord(KEY_ESC) },
     { Action::Clear,        Ctx::Global, make_chord(KEY_ESC, Shift) },
     { Action::Help,         Ctx::Global, make_chord(KEY_F12) },
+    { Action::ToggleSIDTracker64, Ctx::Global, make_chord(KEY_F12, Shift) },
+    { Action::ToggleSIDTracker64, Ctx::Global, make_chord(KEY_F12, Ctrl) },
 
     // Edit mode
     { Action::EditModeNext, Ctx::Global, make_chord(KEY_TAB) },
@@ -76,6 +94,14 @@ const Binding kBindings[] = {
     { Action::EditModeOrder,      Ctx::Global, make_chord(KEY_F6) },
     { Action::EditModeInstrument, Ctx::Global, make_chord(KEY_F7) },
     { Action::EditModeTables,     Ctx::Global, make_chord(KEY_F8) },
+    { Action::PrevMultiplier, Ctx::Global, make_chord(KEY_F5, Shift) },
+    { Action::NextMultiplier, Ctx::Global, make_chord(KEY_F6, Shift) },
+    { Action::ToggleAdsrOrPan, Ctx::Global, make_chord(KEY_F7, Shift) },
+    { Action::ToggleSidModel,  Ctx::Global, make_chord(KEY_F8, Shift) },
+    { Action::PrevMultiplier, Ctx::Global, make_chord(KEY_F5, Ctrl) },
+    { Action::NextMultiplier, Ctx::Global, make_chord(KEY_F6, Ctrl) },
+    { Action::ToggleAdsrOrPan, Ctx::Global, make_chord(KEY_F7, Ctrl) },
+    { Action::ToggleSidModel,  Ctx::Global, make_chord(KEY_F8, Ctrl) },
 
     // Transport — handler reads shift/ctrl for variant behaviour
     { Action::PlaySongStart,    Ctx::Global, make_chord(KEY_F1) },
@@ -88,8 +114,12 @@ const Binding kBindings[] = {
     { Action::Stop,             Ctx::Global, make_chord(KEY_F4, Shift) },
 
     { Action::Relocate,  Ctx::Global, make_chord(KEY_F9) },
+    { Action::CycleStereoMode, Ctx::Global, make_chord(KEY_F9, Shift) },
+    { Action::FastRelocate,    Ctx::Global, make_chord(KEY_F9, Ctrl) },
     { Action::LoadSong,  Ctx::Global, make_chord(KEY_F10) },
     { Action::SaveSong,  Ctx::Global, make_chord(KEY_F11) },
+    { Action::SaveWav,   Ctx::Global, make_chord(KEY_F11, Shift) },
+    { Action::SaveWav,   Ctx::Global, make_chord(KEY_F11, Ctrl) },
 
     // Octave / instrument (legacy switch(key) shortcuts)
     { Action::OctaveUp,   Ctx::Global, make_chord('*') },
@@ -110,11 +140,21 @@ const Binding kBindings[] = {
     { Action::SongPosNext, Ctx::Global, make_chord(KEY_COLON) },
     { Action::SongPosNext, Ctx::Global, make_chord(':') },
 
+    // Song transport (Ctrl+arrow)
+    { Action::SongRewind,  Ctx::Global, make_chord(KEY_LEFT, Ctrl) },
+    { Action::SongPosNext, Ctx::Global, make_chord(KEY_RIGHT, Ctrl) },
+
     // Order list — vertical ImGui layout (only when legacy horizontal nav is active)
     { Action::OrderRowUp,    Ctx::Order, make_chord(KEY_UP) },
     { Action::OrderRowDown,  Ctx::Order, make_chord(KEY_DOWN) },
     { Action::OrderColLeft,  Ctx::Order, make_chord(KEY_LEFT) },
     { Action::OrderColRight, Ctx::Order, make_chord(KEY_RIGHT) },
+
+    // Pattern editor — unmodified arrow keys
+    { Action::PatternRowUp,    Ctx::Pattern, make_chord(KEY_UP) },
+    { Action::PatternRowDown,  Ctx::Pattern, make_chord(KEY_DOWN) },
+    { Action::PatternColLeft,  Ctx::Pattern, make_chord(KEY_LEFT) },
+    { Action::PatternColRight, Ctx::Pattern, make_chord(KEY_RIGHT) },
 };
 
 Action lookup(Ctx ctx, Chord chord)
@@ -567,6 +607,82 @@ bool handle_global_action(Action act)
         edit_next_instr();
         return true;
 
+    case Action::ToggleSIDTracker64:
+        SIDTracker64ForIPadIsAmazing = 1 - SIDTracker64ForIPadIsAmazing;
+        setSIDTracker64KeyOnStyle();
+        if (!SIDTracker64ForIPadIsAmazing)
+            sprintf(infoTextBuffer, "SIDTracker64 Mode: Disabled");
+        else
+            sprintf(infoTextBuffer, "SIDTracker64 Mode: Enabled");
+        forceInfoLine = 1;
+        return true;
+
+    case Action::PrevMultiplier:
+        prevmultiplier();
+        return true;
+
+    case Action::NextMultiplier:
+        nextmultiplier();
+        return true;
+
+    case Action::ToggleAdsrOrPan:
+        if (!editPan)
+            editadsr(gt);
+        else
+            editSIDPan(gt);
+        return true;
+
+    case Action::ToggleSidModel:
+        editorInfo.sidmodel ^= 1;
+        sound_init(b, mr, writer, hardsid, editorInfo.sidmodel, editorInfo.ntsc,
+                   editorInfo.multiplier, catweasel, interpolate, customclockrate);
+        return true;
+
+    case Action::CycleStereoMode:
+        stereoMode++;
+        stereoMode %= 3;
+        validateStereoMode();
+        return true;
+
+    case Action::FastRelocate:
+        if (songExported) {
+            relocator(gt, 0, 1);
+            sprintf(infoTextBuffer, "Song Exported:%s", packedsongname);
+        }
+        return true;
+
+    case Action::SaveWav:
+        save(gt, 1);
+        return true;
+
+    case Action::SongRewind: {
+        leftKeyTicksDelta = SDL_GetTicks() - leftKeyTicks;
+        leftKeyTicks = SDL_GetTicks();
+        handlePressRewind(leftKeyTicksDelta < 300 ? 1 : 0, gt);
+        return true;
+    }
+
+    default:
+        return false;
+    }
+}
+
+bool handle_pattern_action(Action act)
+{
+    GTOBJECT* gt = &gtObject;
+    switch (act) {
+    case Action::PatternRowUp:
+        pattern_nav_up(gt);
+        return true;
+    case Action::PatternRowDown:
+        pattern_nav_down(gt);
+        return true;
+    case Action::PatternColLeft:
+        pattern_col_left(gt);
+        return true;
+    case Action::PatternColRight:
+        pattern_col_right(gt);
+        return true;
     default:
         return false;
     }
@@ -672,6 +788,38 @@ bool dispatch_order_navigation()
     return true;
 }
 
+bool dispatch_pattern_navigation()
+{
+    if (editorInfo.editmode != EDIT_PATTERN)
+        return false;
+
+    // Shift/Ctrl variants stay in patterncommands (prev/next pattern, etc.).
+    if (shiftOrCtrlPressed)
+        return false;
+
+    const Chord chord = chord_from_input(rawkey, key, shiftpressed, ctrlpressed);
+    const Action act  = resolve(Ctx::Pattern, chord);
+    if (act == Action::None)
+        return false;
+
+    switch (rawkey) {
+    case KEY_UP:
+    case KEY_DOWN:
+    case KEY_LEFT:
+    case KEY_RIGHT:
+        win_enableKeyRepeat();
+        break;
+    default:
+        break;
+    }
+
+    if (!handle_pattern_action(act))
+        return false;
+
+    clear_input();
+    return true;
+}
+
 bool dispatch_global(Ctx ctx)
 {
     if (editPaletteMode)
@@ -708,6 +856,11 @@ bool perform(Action act)
     case Action::OrderColLeft:
     case Action::OrderColRight:
         return handle_order_action(act);
+    case Action::PatternRowUp:
+    case Action::PatternRowDown:
+    case Action::PatternColLeft:
+    case Action::PatternColRight:
+        return handle_pattern_action(act);
     default:
         return handle_global_action(act);
     }

@@ -1085,54 +1085,16 @@ void patterncommands(GTOBJECT *gt, int midiNote)
 
 	case KEY_RIGHT:
 		if (!shiftOrCtrlPressed)
-		{
-			int maxCh = 6;
-			if (editorInfo.maxSIDChannels == 3 || (editorInfo.maxSIDChannels == 9 && (editorInfo.esnum & 1)))
-				maxCh = 3;
-
-			editorInfo.epcolumn++;
-			if (editorInfo.epcolumn >= 6)
-			{
-				editorInfo.epcolumn = 0;
-				editorInfo.epchn++;
-				if (editorInfo.epchn >= maxCh)
-					editorInfo.epchn = 0;
-				if (editorInfo.eppos > pattlen[gt->editorUndoInfo.editorInfo[c2].epnum])
-					editorInfo.eppos = pattlen[gt->editorUndoInfo.editorInfo[c2].epnum];
-
-				setMasterLoopChannel(gt, "debug_5");
-			}
-
-		}
+			pattern_col_right(gt);
 		else if (!ctrlpressed)
-		{
 			nextpattern(gt);
-		}
 		break;
 
 	case KEY_LEFT:
 		if (!shiftOrCtrlPressed)
-		{
-			editorInfo.epcolumn--;
-			if (editorInfo.epcolumn < 0)
-			{
-				int maxCh = 6;
-				if (editorInfo.maxSIDChannels == 3 || (editorInfo.maxSIDChannels == 9 && (editorInfo.esnum & 1)))
-					maxCh = 3;
-
-				editorInfo.epcolumn = 5;
-				editorInfo.epchn--;
-				if (editorInfo.epchn < 0) editorInfo.epchn = maxCh - 1;
-				if (editorInfo.eppos > pattlen[gt->editorUndoInfo.editorInfo[c2].epnum]) editorInfo.eppos = pattlen[gt->editorUndoInfo.editorInfo[c2].epnum];
-				setMasterLoopChannel(gt, "debug_6");
-
-			}
-
-		}
+			pattern_col_left(gt);
 		else if (!ctrlpressed)
-		{
 			prevpattern(gt);
-		}
 		break;
 
 	case KEY_HOME:
@@ -1158,84 +1120,11 @@ void patterncommands(GTOBJECT *gt, int midiNote)
 		break;
 
 	case KEY_UP:
-		ret = patternup(gt);
-		if (ret && autoNextPattern && transportLoopPattern==0)
-		{
-			int songPat;
-
-			if (editorInfo.expandOrderListView == 0)
-				songPat = songorder[editorInfo.esnum][c3][gt->editorUndoInfo.editorInfo[c2].espos];	// pattern number at currently select order list channel
-			else
-				songPat = songOrderPatterns[editorInfo.esnum][c3][gt->editorUndoInfo.editorInfo[c2].espos];
-
-		if (songPat == gt->editorUndoInfo.editorInfo[c2].epnum)	// pattern matches the editing pattern number.. So move to the next pattern
-			{
-				if (gt->editorUndoInfo.editorInfo[c2].espos == 0)
-				{
-					if (editorInfo.expandOrderListView == 0)
-						gt->editorUndoInfo.editorInfo[c2].espos = songlen[editorInfo.esnum][c3];
-					else
-						gt->editorUndoInfo.editorInfo[c2].espos = songOrderLength[editorInfo.esnum][c3];
-				}
-
-				editorInfo.eseditpos = gt->editorUndoInfo.editorInfo[c2].espos - 1;
-
-				orderSelectPatternsFromSelected(gt);
-
-				editorInfo.eppos = pattlen[gt->editorUndoInfo.editorInfo[c2].epnum];
-				if (editorInfo.eseditpos < editorInfo.esview)
-					editorInfo.esview = editorInfo.eseditpos;
-				if (editorInfo.eseditpos - editorInfo.esview >= VISIBLEORDERLIST)
-				{
-					editorInfo.esview = editorInfo.eseditpos - VISIBLEORDERLIST + 1;
-				}
-			}
-		}
-
+		pattern_nav_up(gt);
 		break;
 
 	case KEY_DOWN:
-
-		ret = patterndown(gt);
-		if (ret && autoNextPattern && transportLoopPattern == 0)
-		{
-			int songPat;
-
-			if (editorInfo.expandOrderListView == 0)
-				songPat = songorder[editorInfo.esnum][c3][gt->editorUndoInfo.editorInfo[c2].espos];	// pattern number at currently select order list channel
-			else
-				songPat = songOrderPatterns[editorInfo.esnum][c3][gt->editorUndoInfo.editorInfo[c2].espos];
-
-			if (songPat == gt->editorUndoInfo.editorInfo[c2].epnum)	// pattern matches the editing pattern number.. So move to the next pattern
-			{
-				if (editorInfo.expandOrderListView == 0)
-				{
-					if (gt->editorUndoInfo.editorInfo[c2].espos == songlen[editorInfo.esnum][c3] - 1)
-					{
-						gt->editorUndoInfo.editorInfo[c2].espos = -1;
-					}
-				}
-				else
-				{
-					if (gt->editorUndoInfo.editorInfo[c2].espos == songOrderLength[editorInfo.esnum][c3] - 1)
-					{
-						gt->editorUndoInfo.editorInfo[c2].espos = -1;
-					}
-				}
-
-				editorInfo.eseditpos = gt->editorUndoInfo.editorInfo[c2].espos + 1;
-
-				orderSelectPatternsFromSelected(gt);
-				if (editorInfo.eseditpos < editorInfo.esview)
-					editorInfo.esview = editorInfo.eseditpos;
-				if (editorInfo.eseditpos - editorInfo.esview >= VISIBLEORDERLIST)
-				{
-					editorInfo.esview = editorInfo.eseditpos - VISIBLEORDERLIST + 1;
-				}
-			}
-
-		}
-
+		pattern_nav_down(gt);
 		break;
 
 	case KEY_APOST2:
@@ -1424,6 +1313,134 @@ int patternup(GTOBJECT *gt)
 	}
 
 	return ret;
+}
+
+
+static int pattern_max_channels()
+{
+	if (editorInfo.maxSIDChannels == 3 || (editorInfo.maxSIDChannels == 9 && (editorInfo.esnum & 1)))
+		return 3;
+	return 6;
+}
+
+
+void pattern_col_right(GTOBJECT *gt)
+{
+	int c2 = getActualChannel(editorInfo.esnum, editorInfo.epchn);
+
+	editorInfo.epcolumn++;
+	if (editorInfo.epcolumn >= 6)
+	{
+		int maxCh = pattern_max_channels();
+
+		editorInfo.epcolumn = 0;
+		editorInfo.epchn++;
+		if (editorInfo.epchn >= maxCh)
+			editorInfo.epchn = 0;
+		if (editorInfo.eppos > pattlen[gt->editorUndoInfo.editorInfo[c2].epnum])
+			editorInfo.eppos = pattlen[gt->editorUndoInfo.editorInfo[c2].epnum];
+
+		setMasterLoopChannel(gt, "debug_5");
+	}
+}
+
+
+void pattern_col_left(GTOBJECT *gt)
+{
+	int c2 = getActualChannel(editorInfo.esnum, editorInfo.epchn);
+
+	editorInfo.epcolumn--;
+	if (editorInfo.epcolumn < 0)
+	{
+		int maxCh = pattern_max_channels();
+
+		editorInfo.epcolumn = 5;
+		editorInfo.epchn--;
+		if (editorInfo.epchn < 0)
+			editorInfo.epchn = maxCh - 1;
+		if (editorInfo.eppos > pattlen[gt->editorUndoInfo.editorInfo[c2].epnum])
+			editorInfo.eppos = pattlen[gt->editorUndoInfo.editorInfo[c2].epnum];
+		setMasterLoopChannel(gt, "debug_6");
+	}
+}
+
+
+void pattern_nav_up(GTOBJECT *gt)
+{
+	int c2 = getActualChannel(editorInfo.esnum, editorInfo.epchn);
+	int c3 = c2 % 6;
+	int ret = patternup(gt);
+
+	if (ret && autoNextPattern && transportLoopPattern == 0)
+	{
+		int songPat;
+
+		if (editorInfo.expandOrderListView == 0)
+			songPat = songorder[editorInfo.esnum][c3][gt->editorUndoInfo.editorInfo[c2].espos];
+		else
+			songPat = songOrderPatterns[editorInfo.esnum][c3][gt->editorUndoInfo.editorInfo[c2].espos];
+
+		if (songPat == gt->editorUndoInfo.editorInfo[c2].epnum)
+		{
+			if (gt->editorUndoInfo.editorInfo[c2].espos == 0)
+			{
+				if (editorInfo.expandOrderListView == 0)
+					gt->editorUndoInfo.editorInfo[c2].espos = songlen[editorInfo.esnum][c3];
+				else
+					gt->editorUndoInfo.editorInfo[c2].espos = songOrderLength[editorInfo.esnum][c3];
+			}
+
+			editorInfo.eseditpos = gt->editorUndoInfo.editorInfo[c2].espos - 1;
+
+			orderSelectPatternsFromSelected(gt);
+
+			editorInfo.eppos = pattlen[gt->editorUndoInfo.editorInfo[c2].epnum];
+			if (editorInfo.eseditpos < editorInfo.esview)
+				editorInfo.esview = editorInfo.eseditpos;
+			if (editorInfo.eseditpos - editorInfo.esview >= VISIBLEORDERLIST)
+				editorInfo.esview = editorInfo.eseditpos - VISIBLEORDERLIST + 1;
+		}
+	}
+}
+
+
+void pattern_nav_down(GTOBJECT *gt)
+{
+	int c2 = getActualChannel(editorInfo.esnum, editorInfo.epchn);
+	int c3 = c2 % 6;
+	int ret = patterndown(gt);
+
+	if (ret && autoNextPattern && transportLoopPattern == 0)
+	{
+		int songPat;
+
+		if (editorInfo.expandOrderListView == 0)
+			songPat = songorder[editorInfo.esnum][c3][gt->editorUndoInfo.editorInfo[c2].espos];
+		else
+			songPat = songOrderPatterns[editorInfo.esnum][c3][gt->editorUndoInfo.editorInfo[c2].espos];
+
+		if (songPat == gt->editorUndoInfo.editorInfo[c2].epnum)
+		{
+			if (editorInfo.expandOrderListView == 0)
+			{
+				if (gt->editorUndoInfo.editorInfo[c2].espos == songlen[editorInfo.esnum][c3] - 1)
+					gt->editorUndoInfo.editorInfo[c2].espos = -1;
+			}
+			else
+			{
+				if (gt->editorUndoInfo.editorInfo[c2].espos == songOrderLength[editorInfo.esnum][c3] - 1)
+					gt->editorUndoInfo.editorInfo[c2].espos = -1;
+			}
+
+			editorInfo.eseditpos = gt->editorUndoInfo.editorInfo[c2].espos + 1;
+
+			orderSelectPatternsFromSelected(gt);
+			if (editorInfo.eseditpos < editorInfo.esview)
+				editorInfo.esview = editorInfo.eseditpos;
+			if (editorInfo.eseditpos - editorInfo.esview >= VISIBLEORDERLIST)
+				editorInfo.esview = editorInfo.eseditpos - VISIBLEORDERLIST + 1;
+		}
+	}
 }
 
 
