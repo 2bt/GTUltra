@@ -109,6 +109,19 @@ const ActionMeta kActionMeta[] = {
     { Action::PatternPlayFromCursor,  "PatternPlayFromCursor",  "Pattern: play from cursor" },
     { Action::PatternChnNext,         "PatternChnNext",         "Pattern: next channel" },
     { Action::PatternChnPrev,         "PatternChnPrev",         "Pattern: previous channel" },
+    { Action::PatternToggleAutoAdvance, "PatternToggleAutoAdvance", "Pattern: cycle autoadvance" },
+    { Action::PatternCmdCopy,         "PatternCmdCopy",         "Pattern: copy command" },
+    { Action::PatternCmdPaste,        "PatternCmdPaste",        "Pattern: paste command" },
+    { Action::PatternInvert,          "PatternInvert",          "Pattern: invert rows" },
+    { Action::PatternTransposeUp,     "PatternTransposeUp",     "Pattern: transpose up" },
+    { Action::PatternTransposeDown,   "PatternTransposeDown",   "Pattern: transpose down" },
+    { Action::PatternOctaveUp,        "PatternOctaveUp",        "Pattern: octave up" },
+    { Action::PatternOctaveDown,      "PatternOctaveDown",      "Pattern: octave down" },
+    { Action::PatternStepSizeUp,      "PatternStepSizeUp",      "Pattern: increase step size" },
+    { Action::PatternStepSizeDown,    "PatternStepSizeDown",    "Pattern: decrease step size" },
+    { Action::PatternMarkAll,         "PatternMarkAll",         "Pattern: mark all rows" },
+    { Action::PatternAutoPitchbend,   "PatternAutoPitchbend",   "Pattern: auto pitchbend" },
+    { Action::PatternPortamentoHelper, "PatternPortamentoHelper", "Pattern: portamento helper" },
     { Action::TableRowUp,             "TableRowUp",             "Table: previous row" },
     { Action::TableRowDown,           "TableRowDown",           "Table: next row" },
     { Action::TableColLeft,           "TableColLeft",           "Table: previous nibble" },
@@ -285,6 +298,19 @@ const Binding kBindings[] = {
     { Action::PatternPlayFromCursor, Ctx::Pattern, make_scancode_chord(KEY_SPACE, Shift) },
     { Action::PatternChnNext,        Ctx::Pattern, make_scancode_chord(KEY_APOST2) },
     { Action::PatternChnPrev,        Ctx::Pattern, make_scancode_chord(KEY_APOST2, Shift) },
+    { Action::PatternToggleAutoAdvance, Ctx::Pattern, make_scancode_chord(KEY_Z, Shift) },
+    { Action::PatternCmdCopy,        Ctx::Pattern, make_scancode_chord(KEY_E, Shift) },
+    { Action::PatternCmdPaste,       Ctx::Pattern, make_scancode_chord(KEY_R, Shift) },
+    { Action::PatternInvert,         Ctx::Pattern, make_scancode_chord(KEY_I, Shift) },
+    { Action::PatternTransposeUp,    Ctx::Pattern, make_scancode_chord(KEY_Q, Shift) },
+    { Action::PatternTransposeDown,  Ctx::Pattern, make_scancode_chord(KEY_A, Shift) },
+    { Action::PatternOctaveUp,       Ctx::Pattern, make_scancode_chord(KEY_W, Shift) },
+    { Action::PatternOctaveDown,     Ctx::Pattern, make_scancode_chord(KEY_S, Shift) },
+    { Action::PatternStepSizeUp,     Ctx::Pattern, make_scancode_chord(KEY_M, Shift) },
+    { Action::PatternStepSizeDown,   Ctx::Pattern, make_scancode_chord(KEY_N, Shift) },
+    { Action::PatternMarkAll,        Ctx::Pattern, make_scancode_chord(KEY_A, Ctrl) },
+    { Action::PatternAutoPitchbend,  Ctx::Pattern, make_scancode_chord(KEY_Y, Shift) },
+    { Action::PatternPortamentoHelper, Ctx::Pattern, make_scancode_chord(KEY_H, Shift) },
 
     // SID tables — ImGui four-column layout
     { Action::TableRowUp,       Ctx::Tables, make_scancode_chord(KEY_UP) },
@@ -1086,6 +1112,45 @@ bool handle_pattern_action(Action act) {
     case Action::PatternChnPrev:
         pattern_chn_prev(gt);
         return true;
+    case Action::PatternToggleAutoAdvance:
+        pattern_toggle_autoadvance();
+        return true;
+    case Action::PatternCmdCopy:
+        pattern_cmd_copy(gt);
+        return true;
+    case Action::PatternCmdPaste:
+        pattern_cmd_paste(gt);
+        return true;
+    case Action::PatternInvert:
+        pattern_invert(gt);
+        return true;
+    case Action::PatternTransposeUp:
+        pattern_transpose_up(gt);
+        return true;
+    case Action::PatternTransposeDown:
+        pattern_transpose_down(gt);
+        return true;
+    case Action::PatternOctaveUp:
+        pattern_octave_up(gt);
+        return true;
+    case Action::PatternOctaveDown:
+        pattern_octave_down(gt);
+        return true;
+    case Action::PatternStepSizeUp:
+        pattern_step_size_up();
+        return true;
+    case Action::PatternStepSizeDown:
+        pattern_step_size_down();
+        return true;
+    case Action::PatternMarkAll:
+        pattern_mark_all(gt);
+        return true;
+    case Action::PatternAutoPitchbend:
+        pattern_auto_pitchbend(gt);
+        return true;
+    case Action::PatternPortamentoHelper:
+        pattern_portamento_helper(gt);
+        return true;
     default: return false;
     }
 }
@@ -1103,7 +1168,22 @@ bool pattern_action_needs_imgui(Action act) {
     case Action::PatternJoin:
     case Action::PatternSplit:
     case Action::PatternToggleJam:
-    case Action::PatternPlayFromCursor: return true;
+    case Action::PatternPlayFromCursor:
+    case Action::PatternChnNext:
+    case Action::PatternChnPrev:
+    case Action::PatternToggleAutoAdvance:
+    case Action::PatternCmdCopy:
+    case Action::PatternCmdPaste:
+    case Action::PatternInvert:
+    case Action::PatternTransposeUp:
+    case Action::PatternTransposeDown:
+    case Action::PatternOctaveUp:
+    case Action::PatternOctaveDown:
+    case Action::PatternStepSizeUp:
+    case Action::PatternStepSizeDown:
+    case Action::PatternMarkAll:
+    case Action::PatternAutoPitchbend:
+    case Action::PatternPortamentoHelper: return true;
     default: return false;
     }
 }
@@ -1660,6 +1740,19 @@ bool perform(Action act) {
     case Action::PatternPlayFromCursor:
     case Action::PatternChnNext:
     case Action::PatternChnPrev:
+    case Action::PatternToggleAutoAdvance:
+    case Action::PatternCmdCopy:
+    case Action::PatternCmdPaste:
+    case Action::PatternInvert:
+    case Action::PatternTransposeUp:
+    case Action::PatternTransposeDown:
+    case Action::PatternOctaveUp:
+    case Action::PatternOctaveDown:
+    case Action::PatternStepSizeUp:
+    case Action::PatternStepSizeDown:
+    case Action::PatternMarkAll:
+    case Action::PatternAutoPitchbend:
+    case Action::PatternPortamentoHelper:
         ok = handle_pattern_action(act);
         break;
     case Action::TableRowUp:

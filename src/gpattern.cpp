@@ -457,18 +457,9 @@ void patterncommands(GTOBJECT *gt, int midiNote)
 	switch (jrawkey)
 	{
 
-	case KEY_Y:	//0x5c:		// hash/tilde
+	case KEY_Y:
 		if (shiftOrCtrlPressed)
-		{
-
-			undoAreaSetCheckForChange(UNDO_AREA_TABLES + STBL, 0, UNDO_AREA_DIRTY_CHECK);	// left table
-			undoAreaSetCheckForChange(UNDO_AREA_TABLES + STBL, 1, UNDO_AREA_DIRTY_CHECK);	// right table
-
-			autoPitchbendToNextNote(gt);
-
-			refreshVariables();
-		}
-
+			pattern_auto_pitchbend(gt);
 		break;
 
 	case KEY_O:
@@ -489,404 +480,59 @@ void patterncommands(GTOBJECT *gt, int midiNote)
 
 	case KEY_Z:
 		if (shiftpressed)
-		{
-			if (!ctrlpressed)
-			{
-				autoadvance++;
-				if (autoadvance > 2) autoadvance = 0;
-				if (keypreset == KEY_TRACKER)
-				{
-	//				if (autoadvance == 1) autoadvance = 2;
-				}
-				forceInfoLine++;
-
-				if (autoadvance == 0)
-					sprintf(infoTextBuffer, "AutoAdvance:ALL (NOTES & VALUES)");
-				else if (autoadvance ==1)
-					sprintf(infoTextBuffer, "AutoAdvance:NOTES ONLY");
-				else if (autoadvance == 2)
-					sprintf(infoTextBuffer, "AutoAdvance:OFF");
-			}
-		}
+			pattern_toggle_autoadvance();
 		break;
 
 	case KEY_E:
 		if (shiftOrCtrlPressed)
-		{
-			if (editorInfo.epmarkchn != -1)
-			{
-				int mc2 = getActualChannel(editorInfo.esnum, editorInfo.epmarkchn);	// 0-12
-
-				if (editorInfo.epmarkstart < editorInfo.epmarkend)
-				{
-					int d = 0;
-					for (c = editorInfo.epmarkstart; c <= editorInfo.epmarkend; c++)
-					{
-						if (c >= pattlen[gt->editorUndoInfo.editorInfo[mc2].epnum]) break;
-						cmdcopybuffer[d * 4 + 2] = pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4 + 2];
-						cmdcopybuffer[d * 4 + 3] = pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4 + 3];
-						d++;
-					}
-					cmdcopyrows = d;
-				}
-				else
-				{
-					int d = 0;
-					for (c = editorInfo.epmarkend; c <= editorInfo.epmarkstart; c++)
-					{
-						if (c >= pattlen[gt->editorUndoInfo.editorInfo[mc2].epnum]) break;
-						cmdcopybuffer[d * 4 + 2] = pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4 + 2];
-						cmdcopybuffer[d * 4 + 3] = pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4 + 3];
-						d++;
-					}
-					cmdcopyrows = d;
-				}
-				editorInfo.epmarkchn = -1;
-			}
-			else
-			{
-				if (editorInfo.eppos < pattlen[gt->editorUndoInfo.editorInfo[c2].epnum])
-				{
-					cmdcopybuffer[2] = pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4 + 2];
-					cmdcopybuffer[3] = pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4 + 3];
-					cmdcopyrows = 1;
-				}
-			}
-		}
+			pattern_cmd_copy(gt);
 		break;
 
 	case KEY_R:
 		if (shiftOrCtrlPressed)
-		{
-			for (c = 0; c < cmdcopyrows; c++)
-			{
-				if (editorInfo.eppos >= pattlen[gt->editorUndoInfo.editorInfo[c2].epnum]) break;
-				pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4 + 2] = cmdcopybuffer[c * 4 + 2];
-				pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4 + 3] = cmdcopybuffer[c * 4 + 3];
-				editorInfo.eppos++;
-			}
-		}
+			pattern_cmd_paste(gt);
 		break;
 
 	case KEY_I:
 		if (shiftOrCtrlPressed)
-		{
-			int d, e;
-			char temp;
-			if (editorInfo.epmarkchn != -1)
-			{
-				int mc2 = getActualChannel(editorInfo.esnum, editorInfo.epmarkchn);	// 0-12
-
-				if (editorInfo.epmarkstart <= editorInfo.epmarkend)
-				{
-					e = editorInfo.epmarkend;
-					for (c = editorInfo.epmarkstart; c <= editorInfo.epmarkend; c++)
-					{
-						if (c >= pattlen[gt->editorUndoInfo.editorInfo[mc2].epnum]) break;
-						for (d = 0; d < 4; d++)
-						{
-							temp = pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4 + d];
-							pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4 + d] = pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][e * 4 + d];
-							pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][e * 4 + d] = temp;
-						}
-						e--;
-						if (e < c) break;
-					}
-				}
-				else
-				{
-					e = editorInfo.epmarkstart;
-					for (c = editorInfo.epmarkend; c <= editorInfo.epmarkstart; c++)
-					{
-						if (c >= pattlen[gt->editorUndoInfo.editorInfo[mc2].epnum]) break;
-						for (d = 0; d < 4; d++)
-						{
-							temp = pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4 + d];
-							pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4 + d] = pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][e * 4 + d];
-							pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][e * 4 + d] = temp;
-						}
-						e--;
-						if (e < c) break;
-					}
-				}
-			}
-			else
-			{
-				e = pattlen[gt->editorUndoInfo.editorInfo[c2].epnum] - 1;
-				for (c = 0; c < pattlen[gt->editorUndoInfo.editorInfo[c2].epnum]; c++)
-				{
-					for (d = 0; d < 4; d++)
-					{
-						temp = pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4 + d];
-						pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4 + d] = pattern[gt->editorUndoInfo.editorInfo[c2].epnum][e * 4 + d];
-						pattern[gt->editorUndoInfo.editorInfo[c2].epnum][e * 4 + d] = temp;
-					}
-					e--;
-					if (e < c) break;
-				}
-			}
-		}
+			pattern_invert(gt);
 		break;
 
 	case KEY_Q:
 		if (shiftOrCtrlPressed)
-		{
-			if (editorInfo.epmarkchn != -1)
-			{
-				int mc2 = getActualChannel(editorInfo.esnum, editorInfo.epmarkchn);	// 0-12
-
-				if (editorInfo.epmarkstart <= editorInfo.epmarkend)
-				{
-					for (c = editorInfo.epmarkstart; c <= editorInfo.epmarkend; c++)
-					{
-						if (c >= pattlen[gt->editorUndoInfo.editorInfo[mc2].epnum]) break;
-						if ((pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] < LASTNOTE) &&
-							(pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] >= FIRSTNOTE))
-							pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4]++;
-					}
-				}
-				else
-				{
-					for (c = editorInfo.epmarkend; c <= editorInfo.epmarkstart; c++)
-					{
-						if (c >= pattlen[gt->editorUndoInfo.editorInfo[mc2].epnum]) break;
-						if ((pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] < LASTNOTE) &&
-							(pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] >= FIRSTNOTE))
-							pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4]++;
-					}
-				}
-			}
-			else
-			{
-				for (c = 0; c < pattlen[gt->editorUndoInfo.editorInfo[c2].epnum]; c++)
-				{
-					if ((pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4] < LASTNOTE) &&
-						(pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4] >= FIRSTNOTE))
-						pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4]++;
-				}
-			}
-		}
+			pattern_transpose_up(gt);
 		break;
 
 	case KEY_A:
 		if (ctrlpressed)
-		{
-			int c2 = getActualChannel(editorInfo.esnum, editorInfo.epchn);
-			if ((editorInfo.epmarkchn != gt->masterLoopChannel) || (editorInfo.eppos != editorInfo.epmarkend))
-			{
-				editorInfo.epmarkchn = gt->masterLoopChannel;	//  editorInfo.epchn;
-				editorInfo.epmarkstart = 0;
-				editorInfo.epmarkend = pattlen[gt->editorUndoInfo.editorInfo[c2].epnum];
-			}
-		}
-		else if (shiftpressed)		// was shiftOrCtrlPressed. Changed to SHIFT to free up Ctrl_A for select all.
-		{
-			if (editorInfo.epmarkchn != -1)
-			{
-				int mc2 = getActualChannel(editorInfo.esnum, editorInfo.epmarkchn);	// 0-12
-
-				if (editorInfo.epmarkstart <= editorInfo.epmarkend)
-				{
-					for (c = editorInfo.epmarkstart; c <= editorInfo.epmarkend; c++)
-					{
-						if (c >= pattlen[gt->editorUndoInfo.editorInfo[mc2].epnum]) break;
-						if ((pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] <= LASTNOTE) &&
-							(pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] > FIRSTNOTE))
-							pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4]--;
-					}
-				}
-				else
-				{
-					for (c = editorInfo.epmarkend; c <= editorInfo.epmarkstart; c++)
-					{
-						if (c >= pattlen[gt->editorUndoInfo.editorInfo[mc2].epnum]) break;
-						if ((pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] <= LASTNOTE) &&
-							(pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] > FIRSTNOTE))
-							pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4]--;
-					}
-				}
-			}
-			else
-			{
-				for (c = 0; c < pattlen[gt->editorUndoInfo.editorInfo[c2].epnum]; c++)
-				{
-					if ((pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4] <= LASTNOTE) &&
-						(pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4] > FIRSTNOTE))
-						pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4]--;
-				}
-			}
-		}
+			pattern_mark_all(gt);
+		else if (shiftpressed)
+			pattern_transpose_down(gt);
 		break;
 
 	case KEY_W:
 		if (shiftOrCtrlPressed)
-		{
-			if (editorInfo.epmarkchn != -1)
-			{
-				int mc2 = getActualChannel(editorInfo.esnum, editorInfo.epmarkchn);	// 0-12
-
-				if (editorInfo.epmarkstart <= editorInfo.epmarkend)
-				{
-					for (c = editorInfo.epmarkstart; c <= editorInfo.epmarkend; c++)
-					{
-						if (c >= pattlen[gt->editorUndoInfo.editorInfo[mc2].epnum]) break;
-						if ((pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] <= LASTNOTE) &&
-							(pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] >= FIRSTNOTE))
-						{
-							pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] += 12;
-							if (pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] > LASTNOTE)
-								pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] = LASTNOTE;
-						}
-					}
-				}
-				else
-				{
-					for (c = editorInfo.epmarkend; c <= editorInfo.epmarkstart; c++)
-					{
-						if (c >= pattlen[gt->editorUndoInfo.editorInfo[mc2].epnum]) break;
-						if ((pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] <= LASTNOTE) &&
-							(pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] >= FIRSTNOTE))
-						{
-							pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] += 12;
-							if (pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] > LASTNOTE)
-								pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] = LASTNOTE;
-						}
-					}
-				}
-			}
-			else
-			{
-				for (c = 0; c < pattlen[gt->editorUndoInfo.editorInfo[c2].epnum]; c++)
-				{
-					if ((pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4] <= LASTNOTE) &&
-						(pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4] >= FIRSTNOTE))
-					{
-						pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4] += 12;
-						if (pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4] > LASTNOTE)
-							pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4] = LASTNOTE;
-					}
-				}
-			}
-		}
+			pattern_octave_up(gt);
 		break;
 
 	case KEY_S:
 		if (shiftpressed)
-		{
-			if (!ctrlpressed)
-			{
-				if (editorInfo.epmarkchn != -1)
-				{
-					int mc2 = getActualChannel(editorInfo.esnum, editorInfo.epmarkchn);	// 0-12
-
-					if (editorInfo.epmarkstart <= editorInfo.epmarkend)
-					{
-						for (c = editorInfo.epmarkstart; c <= editorInfo.epmarkend; c++)
-						{
-							if (c >= pattlen[gt->editorUndoInfo.editorInfo[mc2].epnum]) break;
-							if ((pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] <= LASTNOTE) &&
-								(pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] >= FIRSTNOTE))
-							{
-								pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] -= 12;
-								if (pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] < FIRSTNOTE)
-									pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] = FIRSTNOTE;
-							}
-						}
-					}
-					else
-					{
-						for (c = editorInfo.epmarkend; c <= editorInfo.epmarkstart; c++)
-						{
-							if (c >= pattlen[gt->editorUndoInfo.editorInfo[mc2].epnum]) break;
-							if ((pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] <= LASTNOTE) &&
-								(pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] >= FIRSTNOTE))
-							{
-								pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] -= 12;
-								if (pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] < FIRSTNOTE)
-									pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] = FIRSTNOTE;
-							}
-						}
-					}
-				}
-				else
-				{
-					for (c = 0; c < pattlen[gt->editorUndoInfo.editorInfo[c2].epnum]; c++)
-					{
-						if ((pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4] <= LASTNOTE) &&
-							(pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4] >= FIRSTNOTE))
-						{
-							pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4] -= 12;
-							if (pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4] < FIRSTNOTE)
-								pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4] = FIRSTNOTE;
-						}
-					}
-				}
-			}
-		}
+			pattern_octave_down(gt);
 		break;
 
 	case KEY_M:
 		if (shiftOrCtrlPressed)
-		{
-			stepsize++;
-			if (stepsize > MAX_PATTROWS) stepsize = MAX_PATTROWS;
-		}
+			pattern_step_size_up();
 		break;
 
 	case KEY_N:
 		if (shiftOrCtrlPressed)
-		{
-			stepsize--;
-			if (stepsize < 2) stepsize = 2;
-		}
+			pattern_step_size_down();
 		break;
 
 	case KEY_H:
 		if (shiftOrCtrlPressed)
-		{
-			switch (pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4 + 2])
-			{
-			case CMD_PORTAUP:
-			case CMD_PORTADOWN:
-			case CMD_VIBRATO:
-			case CMD_TONEPORTA:
-				if (pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4 + 2] == CMD_TONEPORTA)
-					c = editorInfo.eppos - 1;
-				else
-					c = editorInfo.eppos;
-				for (; c >= 0; c--)
-				{
-					if ((pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4] >= FIRSTNOTE) &&
-						(pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4] <= LASTNOTE))
-					{
-						int delta;
-						int pitch1;
-						int pitch2;
-						int pos;
-						int note = pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4] - FIRSTNOTE;
-						int right = pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4 + 3] & 0xf;
-						int left = pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4 + 3] >> 4;
-
-						if (note > MAX_NOTES - 1) note--;
-						pitch1 = freqtbllo[note] | (freqtblhi[note] << 8);
-						pitch2 = freqtbllo[note + 1] | (freqtblhi[note + 1] << 8);
-						delta = pitch2 - pitch1;
-
-						while (left--) delta <<= 1;
-						while (right--) delta >>= 1;
-
-						if (pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4 + 2] == CMD_VIBRATO)
-						{
-							if (delta > 0xff) delta = 0xff;
-						}
-						pos = makespeedtable(delta, MST_RAW, 1);
-						pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4 + 3] = pos + 1;
-						break;
-					}
-				}
-				break;
-			}
-		}
+			pattern_portamento_helper(gt);
 		break;
 
 	case KEY_L:
@@ -2596,3 +2242,388 @@ void pattern_mute_channel(GTOBJECT *gt, int ch)
 		mutechannel(ch, gt);
 }
 
+void pattern_toggle_autoadvance(void)
+{
+	if (!shiftpressed || ctrlpressed)
+		return;
+
+	autoadvance++;
+	if (autoadvance > 2) autoadvance = 0;
+	forceInfoLine++;
+
+	if (autoadvance == 0)
+		sprintf(infoTextBuffer, "AutoAdvance:ALL (NOTES & VALUES)");
+	else if (autoadvance == 1)
+		sprintf(infoTextBuffer, "AutoAdvance:NOTES ONLY");
+	else if (autoadvance == 2)
+		sprintf(infoTextBuffer, "AutoAdvance:OFF");
+}
+
+void pattern_cmd_copy(GTOBJECT *gt)
+{
+	int c;
+	int c2 = getActualChannel(editorInfo.esnum, editorInfo.epchn);
+
+	if (!shiftOrCtrlPressed)
+		return;
+
+	if (editorInfo.epmarkchn != -1)
+	{
+		int mc2 = getActualChannel(editorInfo.esnum, editorInfo.epmarkchn);
+
+		if (editorInfo.epmarkstart < editorInfo.epmarkend)
+		{
+			int d = 0;
+			for (c = editorInfo.epmarkstart; c <= editorInfo.epmarkend; c++)
+			{
+				if (c >= pattlen[gt->editorUndoInfo.editorInfo[mc2].epnum]) break;
+				cmdcopybuffer[d * 4 + 2] = pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4 + 2];
+				cmdcopybuffer[d * 4 + 3] = pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4 + 3];
+				d++;
+			}
+			cmdcopyrows = d;
+		}
+		else
+		{
+			int d = 0;
+			for (c = editorInfo.epmarkend; c <= editorInfo.epmarkstart; c++)
+			{
+				if (c >= pattlen[gt->editorUndoInfo.editorInfo[mc2].epnum]) break;
+				cmdcopybuffer[d * 4 + 2] = pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4 + 2];
+				cmdcopybuffer[d * 4 + 3] = pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4 + 3];
+				d++;
+			}
+			cmdcopyrows = d;
+		}
+		editorInfo.epmarkchn = -1;
+	}
+	else if (editorInfo.eppos < pattlen[gt->editorUndoInfo.editorInfo[c2].epnum])
+	{
+		cmdcopybuffer[2] = pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4 + 2];
+		cmdcopybuffer[3] = pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4 + 3];
+		cmdcopyrows = 1;
+	}
+}
+
+void pattern_cmd_paste(GTOBJECT *gt)
+{
+	int c;
+	int c2 = getActualChannel(editorInfo.esnum, editorInfo.epchn);
+
+	if (!shiftOrCtrlPressed)
+		return;
+
+	for (c = 0; c < cmdcopyrows; c++)
+	{
+		if (editorInfo.eppos >= pattlen[gt->editorUndoInfo.editorInfo[c2].epnum]) break;
+		pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4 + 2] = cmdcopybuffer[c * 4 + 2];
+		pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4 + 3] = cmdcopybuffer[c * 4 + 3];
+		editorInfo.eppos++;
+	}
+}
+
+void pattern_invert(GTOBJECT *gt)
+{
+	int c, d, e;
+	char temp;
+	int c2 = getActualChannel(editorInfo.esnum, editorInfo.epchn);
+
+	if (!shiftOrCtrlPressed)
+		return;
+
+	if (editorInfo.epmarkchn != -1)
+	{
+		int mc2 = getActualChannel(editorInfo.esnum, editorInfo.epmarkchn);
+
+		if (editorInfo.epmarkstart <= editorInfo.epmarkend)
+		{
+			e = editorInfo.epmarkend;
+			for (c = editorInfo.epmarkstart; c <= editorInfo.epmarkend; c++)
+			{
+				if (c >= pattlen[gt->editorUndoInfo.editorInfo[mc2].epnum]) break;
+				for (d = 0; d < 4; d++)
+				{
+					temp = pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4 + d];
+					pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4 + d] = pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][e * 4 + d];
+					pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][e * 4 + d] = temp;
+				}
+				e--;
+				if (e < c) break;
+			}
+		}
+		else
+		{
+			e = editorInfo.epmarkstart;
+			for (c = editorInfo.epmarkend; c <= editorInfo.epmarkstart; c++)
+			{
+				if (c >= pattlen[gt->editorUndoInfo.editorInfo[mc2].epnum]) break;
+				for (d = 0; d < 4; d++)
+				{
+					temp = pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4 + d];
+					pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4 + d] = pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][e * 4 + d];
+					pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][e * 4 + d] = temp;
+				}
+				e--;
+				if (e < c) break;
+			}
+		}
+	}
+	else
+	{
+		e = pattlen[gt->editorUndoInfo.editorInfo[c2].epnum] - 1;
+		for (c = 0; c < pattlen[gt->editorUndoInfo.editorInfo[c2].epnum]; c++)
+		{
+			for (d = 0; d < 4; d++)
+			{
+				temp = pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4 + d];
+				pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4 + d] = pattern[gt->editorUndoInfo.editorInfo[c2].epnum][e * 4 + d];
+				pattern[gt->editorUndoInfo.editorInfo[c2].epnum][e * 4 + d] = temp;
+			}
+			e--;
+			if (e < c) break;
+		}
+	}
+}
+
+static void pattern_transpose_semitone_inner(GTOBJECT *gt, int delta)
+{
+	int c;
+	int c2 = getActualChannel(editorInfo.esnum, editorInfo.epchn);
+
+	if (editorInfo.epmarkchn != -1)
+	{
+		int mc2 = getActualChannel(editorInfo.esnum, editorInfo.epmarkchn);
+
+		if (editorInfo.epmarkstart <= editorInfo.epmarkend)
+		{
+			for (c = editorInfo.epmarkstart; c <= editorInfo.epmarkend; c++)
+			{
+				if (c >= pattlen[gt->editorUndoInfo.editorInfo[mc2].epnum]) break;
+				if (delta > 0)
+				{
+					if ((pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] < LASTNOTE) &&
+						(pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] >= FIRSTNOTE))
+						pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4]++;
+				}
+				else
+				{
+					if ((pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] <= LASTNOTE) &&
+						(pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] > FIRSTNOTE))
+						pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4]--;
+				}
+			}
+		}
+		else
+		{
+			for (c = editorInfo.epmarkend; c <= editorInfo.epmarkstart; c++)
+			{
+				if (c >= pattlen[gt->editorUndoInfo.editorInfo[mc2].epnum]) break;
+				if (delta > 0)
+				{
+					if ((pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] < LASTNOTE) &&
+						(pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] >= FIRSTNOTE))
+						pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4]++;
+				}
+				else
+				{
+					if ((pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] <= LASTNOTE) &&
+						(pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] > FIRSTNOTE))
+						pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4]--;
+				}
+			}
+		}
+	}
+	else
+	{
+		for (c = 0; c < pattlen[gt->editorUndoInfo.editorInfo[c2].epnum]; c++)
+		{
+			if (delta > 0)
+			{
+				if ((pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4] < LASTNOTE) &&
+					(pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4] >= FIRSTNOTE))
+					pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4]++;
+			}
+			else
+			{
+				if ((pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4] <= LASTNOTE) &&
+					(pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4] > FIRSTNOTE))
+					pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4]--;
+			}
+		}
+	}
+}
+
+void pattern_transpose_up(GTOBJECT *gt)
+{
+	if (!shiftOrCtrlPressed) return;
+	pattern_transpose_semitone_inner(gt, 1);
+}
+
+void pattern_transpose_down(GTOBJECT *gt)
+{
+	if (!shiftpressed) return;
+	pattern_transpose_semitone_inner(gt, -1);
+}
+
+static void pattern_transpose_octave_inner(GTOBJECT *gt, int delta)
+{
+	int c;
+	int c2 = getActualChannel(editorInfo.esnum, editorInfo.epchn);
+
+	if (editorInfo.epmarkchn != -1)
+	{
+		int mc2 = getActualChannel(editorInfo.esnum, editorInfo.epmarkchn);
+
+		if (editorInfo.epmarkstart <= editorInfo.epmarkend)
+		{
+			for (c = editorInfo.epmarkstart; c <= editorInfo.epmarkend; c++)
+			{
+				if (c >= pattlen[gt->editorUndoInfo.editorInfo[mc2].epnum]) break;
+				if ((pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] <= LASTNOTE) &&
+					(pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] >= FIRSTNOTE))
+				{
+					pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] += delta;
+					if (pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] > LASTNOTE)
+						pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] = LASTNOTE;
+					if (pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] < FIRSTNOTE)
+						pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] = FIRSTNOTE;
+				}
+			}
+		}
+		else
+		{
+			for (c = editorInfo.epmarkend; c <= editorInfo.epmarkstart; c++)
+			{
+				if (c >= pattlen[gt->editorUndoInfo.editorInfo[mc2].epnum]) break;
+				if ((pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] <= LASTNOTE) &&
+					(pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] >= FIRSTNOTE))
+				{
+					pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] += delta;
+					if (pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] > LASTNOTE)
+						pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] = LASTNOTE;
+					if (pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] < FIRSTNOTE)
+						pattern[gt->editorUndoInfo.editorInfo[mc2].epnum][c * 4] = FIRSTNOTE;
+				}
+			}
+		}
+	}
+	else
+	{
+		for (c = 0; c < pattlen[gt->editorUndoInfo.editorInfo[c2].epnum]; c++)
+		{
+			if ((pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4] <= LASTNOTE) &&
+				(pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4] >= FIRSTNOTE))
+			{
+				pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4] += delta;
+				if (pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4] > LASTNOTE)
+					pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4] = LASTNOTE;
+				if (pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4] < FIRSTNOTE)
+					pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4] = FIRSTNOTE;
+			}
+		}
+	}
+}
+
+void pattern_octave_up(GTOBJECT *gt)
+{
+	if (!shiftOrCtrlPressed) return;
+	pattern_transpose_octave_inner(gt, 12);
+}
+
+void pattern_octave_down(GTOBJECT *gt)
+{
+	if (!shiftpressed || ctrlpressed) return;
+	pattern_transpose_octave_inner(gt, -12);
+}
+
+void pattern_step_size_up(void)
+{
+	if (!shiftOrCtrlPressed) return;
+	stepsize++;
+	if (stepsize > MAX_PATTROWS) stepsize = MAX_PATTROWS;
+}
+
+void pattern_step_size_down(void)
+{
+	if (!shiftOrCtrlPressed) return;
+	stepsize--;
+	if (stepsize < 2) stepsize = 2;
+}
+
+void pattern_mark_all(GTOBJECT *gt)
+{
+	int c2 = getActualChannel(editorInfo.esnum, editorInfo.epchn);
+
+	if (!ctrlpressed)
+		return;
+
+	if ((editorInfo.epmarkchn != gt->masterLoopChannel) || (editorInfo.eppos != editorInfo.epmarkend))
+	{
+		editorInfo.epmarkchn = gt->masterLoopChannel;
+		editorInfo.epmarkstart = 0;
+		editorInfo.epmarkend = pattlen[gt->editorUndoInfo.editorInfo[c2].epnum];
+	}
+}
+
+void pattern_auto_pitchbend(GTOBJECT *gt)
+{
+	if (!shiftOrCtrlPressed)
+		return;
+
+	undoAreaSetCheckForChange(UNDO_AREA_TABLES + STBL, 0, UNDO_AREA_DIRTY_CHECK);
+	undoAreaSetCheckForChange(UNDO_AREA_TABLES + STBL, 1, UNDO_AREA_DIRTY_CHECK);
+	autoPitchbendToNextNote(gt);
+	refreshVariables();
+}
+
+void pattern_portamento_helper(GTOBJECT *gt)
+{
+	int c;
+	int c2 = getActualChannel(editorInfo.esnum, editorInfo.epchn);
+
+	if (!shiftOrCtrlPressed)
+		return;
+
+	switch (pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4 + 2])
+	{
+	case CMD_PORTAUP:
+	case CMD_PORTADOWN:
+	case CMD_VIBRATO:
+	case CMD_TONEPORTA:
+		if (pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4 + 2] == CMD_TONEPORTA)
+			c = editorInfo.eppos - 1;
+		else
+			c = editorInfo.eppos;
+		for (; c >= 0; c--)
+		{
+			if ((pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4] >= FIRSTNOTE) &&
+				(pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4] <= LASTNOTE))
+			{
+				int delta;
+				int pitch1;
+				int pitch2;
+				int pos;
+				int note = pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4] - FIRSTNOTE;
+				int right = pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4 + 3] & 0xf;
+				int left = pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4 + 3] >> 4;
+
+				if (note > MAX_NOTES - 1) note--;
+				pitch1 = freqtbllo[note] | (freqtblhi[note] << 8);
+				pitch2 = freqtbllo[note + 1] | (freqtblhi[note + 1] << 8);
+				delta = pitch2 - pitch1;
+
+				while (left--) delta <<= 1;
+				while (right--) delta >>= 1;
+
+				if (pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4 + 2] == CMD_VIBRATO)
+				{
+					if (delta > 0xff) delta = 0xff;
+				}
+				pos = makespeedtable(delta, MST_RAW, 1);
+				pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4 + 3] = pos + 1;
+				break;
+			}
+		}
+		break;
+	}
+}

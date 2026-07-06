@@ -280,9 +280,11 @@ into `sdlTexture` inside `gfx_flip`.
 >   in pattern).
 > - Names panel: Up/Down/Enter field navigation via `dispatch_names_navigation`,
 >   ImGui `InputText` focus on the Song form.
+> - Pattern power shortcuts (transpose, autoadvance, cmd copy/paste, invert,
+>   step size, mark-all, pitchbend, portamento helper) in the action layer.
 >
 > **Still open:** mouse → actions, refactor `*commands()` off `key`/`rawkey`
->   globals, expanded order list, pattern power shortcuts (transpose, …).
+>   globals, expanded order list.
 
 Goal: replace hardcoded key switches with a data-driven action system (also the
 foundation the config keymap needs later).
