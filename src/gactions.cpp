@@ -360,6 +360,8 @@ int order_max_channels() {
 }
 
 void order_clamp_cursor_to_channel() {
+    if (editorInfo.escolumn > 1) editorInfo.escolumn = 1;
+
     if ((editorInfo.eseditpos == songlen[editorInfo.esnum][editorInfo.eschn]) ||
         (editorInfo.eseditpos > songlen[editorInfo.esnum][editorInfo.eschn] + 1)) {
         editorInfo.eseditpos = songlen[editorInfo.esnum][editorInfo.eschn] + 1;
@@ -437,7 +439,7 @@ void order_col_left(GTOBJECT* gt) {
     else {
         editorInfo.eschn--;
         if (editorInfo.eschn < 0) editorInfo.eschn = maxCh - 1;
-        editorInfo.escolumn = 2;
+        editorInfo.escolumn = 1;
         setMasterLoopChannel(gt, "action_order_col_left");
     }
 
@@ -455,7 +457,7 @@ void order_col_right(GTOBJECT* gt) {
 
     const int maxCh = order_max_channels();
 
-    if (editorInfo.escolumn < 2) {
+    if (editorInfo.escolumn < 1) {
         editorInfo.escolumn++;
     }
     else {

@@ -106,7 +106,8 @@ float gimgui_mono_width(int cols) { return gimgui_mono_advance() * (float)cols; 
 // Fixed left-column width shared by Song + Order List (content-driven, not % of window).
 float gimgui_order_grid_width() {
     constexpr int kMaxChans = 6;
-    return gimgui_mono_width(4) + kMaxChans * gimgui_mono_width(4); // "POS" + CH0..5
+    return gimgui_mono_width(4) + (float)kMaxChans * gimgui_mono_width(2) +
+           (float)(kMaxChans - 1) * gimgui_mono_advance(); // 2-char cells + 1-char gaps
 }
 
 float gimgui_song_content_width() {
@@ -130,7 +131,7 @@ float gimgui_song_panel_height() {
            kPanelBodyPad;
 }
 
-// Fixed right-column width shared by Instruments + Tables (content-driven).
+// Fixed right-side panel widths (content-driven, not % of window).
 float gimgui_instruments_grid_width() {
     const float charW = gimgui_mono_advance();
     return gimgui_mono_width(3) + gimgui_mono_width(gtui::INSTR_NAME_MAX) + charW +
@@ -151,12 +152,9 @@ float gimgui_tables_row_width() {
     return (float)n * colW + (float)(n - 1) * gap;
 }
 
-float gimgui_right_column_width() {
-    const float inner = (gimgui_instruments_grid_width() > gimgui_tables_row_width())
-                            ? gimgui_instruments_grid_width()
-                            : gimgui_tables_row_width();
-    return inner + kPanelBodyPad * 2.0f;
-}
+float gimgui_instruments_panel_width() { return gimgui_instruments_grid_width() + kPanelBodyPad * 2.0f; }
+
+float gimgui_tables_panel_width() { return gimgui_tables_row_width() + kPanelBodyPad * 2.0f; }
 
 // Reusable scaffold for a scrolling, virtualized monospace grid body (used by
 // the pattern editor and each SID table). Handles the child window, content
@@ -512,7 +510,7 @@ void gimgui_draw_pattern(ImVec2 pos, ImVec2 size) {
         ImVec2      hp  = ImGui::GetCursorScreenPos();
         char        hbuf[32];
         for (int c = 0; c < chans; c++) {
-            snprintf(hbuf, sizeof hbuf, "CH%X %02X", gtui::pattern_actual_channel(c), gtui::pattern_number(c));
+            snprintf(hbuf, sizeof hbuf, "%X  %02X", gtui::pattern_actual_channel(c), gtui::pattern_number(c));
             hdl->AddText(ImVec2(hp.x + rowNumW + c * chanW, hp.y), cHeader, hbuf);
         }
         gimgui_snap_body_pad_x();
@@ -607,8 +605,8 @@ void gimgui_draw_pattern(ImVec2 pos, ImVec2 size) {
 }
 
 // Order list, vertical layout (positions = rows, channels = columns) via the
-// shared grid scaffold. Cells are pattern numbers or commands (+/-/R/RST).
-// Keyboard editing flows through the legacy order editor; clicking places the
+// shared grid scaffold. Cells are pattern numbers or commands (+/-/R); loop
+// marker row shows "==". Keyboard editing flows through the legacy order editor; clicking places the
 // cursor (gtui::order_set_cursor).
 void gimgui_draw_orderlist(ImVec2 pos, ImVec2 size) {
     char hdr[16];
@@ -631,7 +629,7 @@ void gimgui_draw_orderlist(ImVec2 pos, ImVec2 size) {
     const ImU32 cRowNum     = IM_COL32(120, 140, 160, 255);
     const ImU32 cPat        = IM_COL32(224, 230, 238, 255);
     const ImU32 cCmd        = IM_COL32(235, 180, 90, 255);
-    const ImU32 cLoop       = IM_COL32(150, 160, 175, 255);
+    const ImU32 cEnd        = IM_COL32(150, 160, 175, 255);
     const ImU32 cHeader     = IM_COL32(180, 200, 220, 255);
 
     const int chans   = gtui::order_channels();
@@ -649,9 +647,11 @@ void gimgui_draw_orderlist(ImVec2 pos, ImVec2 size) {
 
     const float charW   = gimgui_mono_advance();
     const float lineH   = ImGui::GetTextLineHeight();
-    const float rowNumW = gimgui_mono_width(4); // "PP "
-    const float colW    = gimgui_mono_width(4); // "PP " cell + gutter
-    const float totalW  = rowNumW + chans * colW;
+    const float rowNumW = gimgui_mono_width(4); // "POS "
+    const float cellW   = gimgui_mono_width(2); // two nibbles per channel
+    const float colGap  = charW;                // one char between columns
+    const float colPitch = cellW + colGap;
+    const float totalW  = rowNumW + (float)chans * cellW + (float)(chans - 1) * colGap;
 
     int selRow[8], endRow[8], playRow[8];
     for (int c = 0; c < chans && c < 8; c++) {
@@ -660,16 +660,15 @@ void gimgui_draw_orderlist(ImVec2 pos, ImVec2 size) {
         playRow[c] = gtui::order_play_row(c);
     }
 
-    // Fixed header: POS + channel numbers.
+    // Fixed header: empty column + channel numbers.
     {
         gimgui_snap_body_pad_x();
         ImDrawList* hdl = ImGui::GetWindowDrawList();
         ImVec2      hp  = ImGui::GetCursorScreenPos();
         char        hbuf[16];
-        hdl->AddText(ImVec2(hp.x, hp.y), cHeader, "POS");
         for (int c = 0; c < chans; c++) {
-            snprintf(hbuf, sizeof hbuf, "CH%X", gtui::order_actual_channel(c));
-            hdl->AddText(ImVec2(hp.x + rowNumW + c * colW, hp.y), cHeader, hbuf);
+            snprintf(hbuf, sizeof hbuf, "%X", gtui::order_actual_channel(c));
+            hdl->AddText(ImVec2(hp.x + rowNumW + (float)c * colPitch, hp.y), cHeader, hbuf);
         }
         gimgui_snap_body_pad_x();
         ImGui::Dummy(ImVec2(totalW, lineH));
@@ -691,35 +690,41 @@ void gimgui_draw_orderlist(ImVec2 pos, ImVec2 size) {
             dl->AddText(ImVec2(x, y), cRowNum, buf);
 
             for (int c = 0; c < chans; c++) {
-                const float cx = x + rowNumW + c * colW;
+                const float cx = x + rowNumW + (float)c * colPitch;
 
                 gtui::OrderCell cell = gtui::order_cell(c, r);
-                const float cw =
-                    cell.valid && cell.kind == 3 ? gimgui_mono_width(3) : gimgui_mono_width(2);
+                const float cw = cellW;
 
                 if (r == playRow[c]) dl->AddRectFilled(ImVec2(cx, y), ImVec2(cx + cw, y + lineH), cPlayRow);
                 if (r == selRow[c] || r == endRow[c])
                     dl->AddRectFilled(ImVec2(cx, y), ImVec2(cx + cw, y + lineH), cSynced);
                 if (markChn == c && r >= markLo && r <= markHi)
                     dl->AddRectFilled(ImVec2(cx, y), ImVec2(cx + cw, y + lineH), cSelect);
-                if (r == curRow && c == curChn) {
-                    float cs = cx + (curCol < 0 ? 0 : (curCol > 2 ? 2 : curCol)) * charW;
+                if (r == curRow && c == curChn && cell.kind != 3) {
+                    float cs = cx + (curCol < 0 ? 0 : (curCol > 1 ? 1 : curCol)) * charW;
                     dl->AddRectFilled(ImVec2(cs, y), ImVec2(cs + charW, y + lineH), cCursorFill);
                     dl->AddRect(ImVec2(cs, y), ImVec2(cs + charW, y + lineH), cCursorEdge);
                 }
 
                 if (!cell.valid) continue;
-                ImU32 col = cell.kind == 2 ? cCmd : cell.kind == 3 ? cLoop : cPat;
+                if (cell.kind == 3) {
+                    dl->AddText(ImVec2(cx, y), cEnd, "==");
+                    continue;
+                }
+                ImU32 col = cell.kind == 2 ? cCmd : cPat;
                 dl->AddText(ImVec2(cx, y), col, cell.text);
             }
         },
         [&](int r, float localX) {
             float rx = localX - rowNumW;
             if (rx < 0) return;
-            int c = (int)(rx / colW);
+            int c = (int)(rx / colPitch);
             if (c < 0 || c >= chans) return;
-            int off = (int)((rx - c * colW) / charW);
-            gtui::order_set_cursor(c, r, off > 2 ? 2 : off);
+            float cx = rx - (float)c * colPitch;
+            if (cx >= cellW) return;
+            int off = (int)(cx / charW);
+            if (off > 1) off = 1;
+            gtui::order_set_cursor(c, r, off);
         });
 
     gimgui_end_panel();
@@ -809,9 +814,10 @@ void gimgui_draw_instruments(ImVec2 pos, ImVec2 size) {
 
             if (r == curRow) {
                 dl->AddRectFilled(ImVec2(x, y), ImVec2(x + totalW, y + lineH), cCursorRow);
+
                 dl->AddRectFilled(ImVec2(x + colX[0], y),
-                                   ImVec2(x + colX[0] + gimgui_mono_width(2), y + lineH),
-                                   cInstrSel);
+                                  ImVec2(x + colX[0] + gimgui_mono_width(2), y + lineH),
+                                  cInstrSel);
             }
 
             snprintf(buf, sizeof buf, "%02X", inst);
@@ -1101,10 +1107,10 @@ extern "C" void gimgui_overlay_render(void) {
 
 
     // Fixed tiled layout filling the whole window. Panels are opaque and cover the legacy screen; a full-window
-    // background fill hides the legacy in the gutters between panels. Three columns:
-    //   left  : Song (top) + Order List (bottom), fixed width from grid metrics
-    //   centre: Pattern (fills remaining width between left and right)
-    //   right : Instruments / SID Tables stacked, fixed width from grid metrics
+    // background fill hides the legacy in the gutters between panels. Five columns:
+    //   left       : Song (top) + Order List (bottom), fixed width
+    //   centre     : Pattern (fills remaining width)
+    //   right pair : Instruments + Tables side by side, each fixed width
     const ImGuiViewport* vp = ImGui::GetMainViewport();
     ImGui::GetBackgroundDrawList()->AddRectFilled(vp->Pos,
                                                   ImVec2(vp->Pos.x + vp->Size.x, vp->Pos.y + vp->Size.y),
@@ -1123,21 +1129,19 @@ extern "C" void gimgui_overlay_render(void) {
 
     const float leftW  = gimgui_left_column_width();
     const float songH  = gimgui_song_panel_height();
-    const float rightW = gimgui_right_column_width();
-    const float patW   = s.x - leftW - rightW - 2 * g;
+    const float insW   = gimgui_instruments_panel_width();
+    const float tblW   = gimgui_tables_panel_width();
+    const float patW   = s.x - leftW - insW - tblW - 4 * g;
     const float leftX  = o.x;
     const float patX   = o.x + leftW + g;
-    const float rightX = o.x + leftW + patW + 2 * g;
+    const float insX   = o.x + leftW + patW + 2 * g;
+    const float tblX   = insX + insW + g;
 
     gimgui_draw_song(ImVec2(leftX, o.y), ImVec2(leftW, songH));
     gimgui_draw_orderlist(ImVec2(leftX, o.y + songH + g), ImVec2(leftW, s.y - songH - g));
     gimgui_draw_pattern(ImVec2(patX, o.y), ImVec2(patW, s.y));
-
-    // Right column split: Instruments / Tables.
-    const float insH  = floorf(s.y * 0.54f);
-    const float tblH  = s.y - insH - g;
-    gimgui_draw_instruments(ImVec2(rightX, o.y), ImVec2(rightW, insH));
-    gimgui_draw_tables(ImVec2(rightX, o.y + insH + g), ImVec2(rightW, tblH));
+    gimgui_draw_instruments(ImVec2(insX, o.y), ImVec2(insW, s.y));
+    gimgui_draw_tables(ImVec2(tblX, o.y), ImVec2(tblW, s.y));
 
     if (g_show_demo) ImGui::ShowDemoWindow(&g_show_demo);
 

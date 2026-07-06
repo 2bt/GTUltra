@@ -255,20 +255,20 @@ OrderCell order_cell(int ch, int row)
     int v = songorder[sn][ch][row];
     if (v == LOOPSONG)
     {
-        c.text[0] = 'R'; c.text[1] = 'S'; c.text[2] = 'T';
+        c.text[0] = '='; c.text[1] = '='; c.text[2] = 0;
         c.kind = 3;
         return c;
     }
     if (v < REPEAT || row >= len) // pattern number (or a raw value past the end)
     {
-        snprintf(c.text, sizeof c.text, "%02X ", v);
+        snprintf(c.text, sizeof c.text, "%02X", v);
         c.kind = 1;
         return c;
     }
     // Command
-    if (v >= TRANSUP)        snprintf(c.text, sizeof c.text, "+%X ", v & 0xf);
-    else if (v >= TRANSDOWN) snprintf(c.text, sizeof c.text, "-%X ", 16 - (v & 0xf));
-    else                     snprintf(c.text, sizeof c.text, "R%X ", (v + 1) & 0xf);
+    if (v >= TRANSUP)        snprintf(c.text, sizeof c.text, "+%X", v & 0xf);
+    else if (v >= TRANSDOWN) snprintf(c.text, sizeof c.text, "-%X", 16 - (v & 0xf));
+    else                     snprintf(c.text, sizeof c.text, "R%X", (v + 1) & 0xf);
     c.kind = 2;
     return c;
 }
@@ -281,8 +281,12 @@ void order_set_cursor(int ch, int row, int col)
     int len = order_length(ch);
     if (row < 0) row = 0;
     if (row > len + 1) row = len + 1;
+    if (row == len) {
+        row = len + 1;
+        col = 0;
+    }
     if (col < 0) col = 0;
-    if (col > 2) col = 2;
+    if (col > 1) col = 1;
 
     editorInfo.editmode = EDIT_ORDERLIST;
     editorInfo.eschn = ch;

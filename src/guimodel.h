@@ -101,8 +101,8 @@ void pattern_set_cursor(int ch, int row, int col);
 
 // One decoded order entry.
 struct OrderCell {
-    char text[4];  // 3 visible chars + NUL: "0A ", "+2 ", "-3 ", "R4 ", "RST", "   "
-    int  kind;     // 0 empty, 1 pattern, 2 command (transpose/repeat), 3 loop (RST)
+    char text[4];  // up to 2 visible chars + NUL: "0A", "+2", "-3", "R4", "=="
+    int  kind;     // 0 empty, 1 pattern, 2 command (transpose/repeat), 3 loop marker (==)
     bool valid;    // within this channel's order length (+ loop row)
 };
 
