@@ -1527,6 +1527,21 @@ void clear_input() {
     rawkey = 0;
 }
 
+bool consume_legacy_hex_input(int hex_at_frame_start) {
+    if (hex_at_frame_start < 0) return false;
+    if (!gimgui_new_ui_active()) return false;
+    switch (editorInfo.editmode) {
+    case EDIT_ORDERLIST:
+    case EDIT_PATTERN:
+    case EDIT_TABLES:
+    case EDIT_INSTRUMENT:
+        hexnybble = -1;
+        clear_input();
+        return true;
+    default: return false;
+    }
+}
+
 bool perform(Action act) {
     if (act == Action::None) return false;
 

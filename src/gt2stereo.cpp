@@ -1243,6 +1243,8 @@ void docommand(void)
 
 	gt = &gtObject;
 
+	const int legacy_hex = hexnybble;
+
 	// "GUI" operation :)
 	int m = mousebDoubleClick;
 	mousecommands(gt);
@@ -1373,9 +1375,11 @@ void docommand(void)
 		undoFreeUndoObject((GTUNDO_OBJECT*)ed);
 
 	// Global commands — action layer handles migrated bindings first.
-	const gtaction::Ctx actx = gtaction::context_from_editmode(editorInfo.editmode);
-	if (!gtaction::dispatch_global(actx))
-		generalcommands(gt);
+	if (!gtaction::consume_legacy_hex_input(legacy_hex)) {
+		const gtaction::Ctx actx = gtaction::context_from_editmode(editorInfo.editmode);
+		if (!gtaction::dispatch_global(actx))
+			generalcommands(gt);
+	}
 }
 
 void mousecommands(GTOBJECT* gt)

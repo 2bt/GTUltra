@@ -316,9 +316,7 @@ void gimgui_draw_one_table(int t, float colW, float charW, float lineH) {
     // TODO: clicking a table header should toggle an alternative "detailed"
     // interpreted view (a GTUltra feature; not for the speed table). For now the
     // header is plain text.
-    static const char *kTableNames[] = {
-        "WAVE", "PULSE", "FILTER", "SPEED"
-    };
+    static const char* kTableNames[] = { "Wave", "Pulse", "Filter", "Speed" };
     ImGui::TextUnformatted(kTableNames[t]);
     ImGui::Separator();
 
@@ -525,7 +523,8 @@ void gimgui_draw_pattern(ImVec2 pos, ImVec2 size) {
         ImVec2      hp  = ImGui::GetCursorScreenPos();
         char        hbuf[32];
         for (int c = 0; c < chans; c++) {
-            snprintf(hbuf, sizeof hbuf, "%X  %02X", gtui::pattern_actual_channel(c), gtui::pattern_number(c));
+            snprintf(hbuf, sizeof hbuf, "%X:%02X", gtui::pattern_actual_channel(c), gtui::pattern_number(c));
+            // snprintf(hbuf, sizeof hbuf, "%02X", gtui::pattern_number(c));
             hdl->AddText(ImVec2(hp.x + rowNumW + c * chanW, hp.y), cHeader, hbuf);
         }
         gimgui_snap_body_pad_x();

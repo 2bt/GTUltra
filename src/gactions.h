@@ -209,4 +209,7 @@ void reset_bindings();
 
 void clear_input();
 
+// After legacy *commands() handled a hex nybble, suppress trailing global dispatch.
+bool consume_legacy_hex_input(int hex_at_frame_start);
+
 } // namespace gtaction

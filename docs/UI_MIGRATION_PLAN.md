@@ -262,6 +262,23 @@ into `sdlTexture` inside `gfx_flip`.
   define the color-role enum with a default (dark) theme, single `dpiScale`.
 
 ### M3 — Input / action layer
+
+> **Status: largely complete for the ImGui new UI path.**
+> - `gactions.h/cpp`: `Action` enum by context, chord keymap (`kBindings[]`),
+>   `resolve` / `dispatch_mode_navigation` / `dispatch_global` / `perform()`,
+>   runtime `set_binding()` overrides.
+> - `editor_frame_update()` split out of `waitkeymouse` (autosave, MIDI, jam).
+> - ImGui panels: navigation + structural edits (insert/delete/copy/cut/paste,
+>   page/home/end, jam toggle, …) routed through actions; hex/note/cell entry
+>   still delegated to legacy `*commands()` after dispatch misses.
+> - Order/table column semantics fixed for vertical ImGui layout (nibble cursor,
+>   `EDIT_TABLE_NONE` raw hex, per-table `etview` scroll sync).
+> - Hex input: `consume_legacy_hex_input()` prevents trailing global dispatch
+>   from stealing digit keys after legacy editors consume a nybble.
+>
+> **Still open:** mouse → actions, `generalcommands()` shrink, refactor
+> `*commands()` off `key`/`rawkey` globals, expanded order list, names panel.
+
 Goal: replace hardcoded key switches with a data-driven action system (also the
 foundation the config keymap needs later).
 - Define `enum Action` partitioned by context (global / pattern / order /
