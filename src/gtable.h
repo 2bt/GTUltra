@@ -37,4 +37,15 @@ void modifyPulseTableDetailedRight(int hexnybble);
 
 void allowEnterToReturnToPosition();
 
+void table_list_insert(GTOBJECT *gt);
+void table_list_delete(GTOBJECT *gt);
+void table_copy_or_cut(int cut);
+void table_paste(void);
+void table_optimize(void);
+void table_toggle_lock(void);
+void table_test_note(GTOBJECT *gt);
+void table_release_note(GTOBJECT *gt);
+void table_negate_value(void);
+void table_convert_note(void);
+
 #endif

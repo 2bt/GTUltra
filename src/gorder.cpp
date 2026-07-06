@@ -2428,6 +2428,24 @@ int order_go_pattern(GTOBJECT *gt)
 	return ret;
 }
 
+void order_select_patterns(GTOBJECT *gt)
+{
+	if (editorInfo.expandOrderListView == 0)
+	{
+		if (editorInfo.eseditpos >= songlen[editorInfo.esnum][editorInfo.eschn])
+			return;
+	}
+	else
+	{
+		if (editorInfo.eseditpos >= songOrderLength[editorInfo.esnum][editorInfo.eschn] - 1)
+			return;
+	}
+
+	backupPatternDisplayInfo(gt);
+	orderSelectPatternsFromSelected(gt);
+	restorePatternDisplayInfo(gt);
+}
+
 void order_play_range_start(GTOBJECT *gt)
 {
 	if (!shiftOrCtrlPressed)

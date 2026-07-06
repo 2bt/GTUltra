@@ -1283,8 +1283,12 @@ void docommand(void)
 
 		//	undoAreaSetCheckForChange(UNDO_AREA_CHANNEL_EDITOR_INFO, c2, UNDO_AREA_DIRTY_CHECK);
 
-		if (!gtaction::dispatch_mode_navigation())
-			orderlistcommands(gt);
+		if (!gtaction::dispatch_mode_navigation()) {
+			if (!gimgui_new_ui_active() || !gtaction::dispatch_global(gtaction::Ctx::Order)) {
+				gtaction::log_legacy_fallback("orderlistcommands");
+				orderlistcommands(gt);
+			}
+		}
 		displayOrderTableInfo(gt);
 		break;
 
@@ -1344,8 +1348,10 @@ void docommand(void)
 
 		// if gMIDINote!=-1, then use this as input instead of QWERTY note input
 		// Also, if this is the case, set key and rawkey=0 so that only note input is recognised - just in case..
-		if (!gtaction::dispatch_mode_navigation())
+		if (!gtaction::dispatch_mode_navigation()) {
+			gtaction::log_legacy_fallback("patterncommands");
 			patterncommands(gt, gMIDINote);
+		}
 
 		displayPatternInfo(gt);
 		countInstrumentsInPattern(gt->editorUndoInfo.editorInfo[c2].epnum);
@@ -1614,7 +1620,7 @@ void mousecommands(GTOBJECT* gt)
 
 	//	if (((!prevmouseb) || (mouseheld > HOLDDELAY)) && (mousey == 2) && (mousex >= 64 + 20) && (mousex <= 65 + 20))
 
-	if (!prevmouseb && (mousey == 2) && (mousex >= 64 + 20) && (mousex <= 65 + 20))
+	if (!gimgui_new_ui_active() && !prevmouseb && (mousey == 2) && (mousex >= 64 + 20) && (mousex <= 65 + 20))
 	{
 		if (mouseb & MOUSEB_LEFT) nextsong(gt);
 		if (mouseb & MOUSEB_RIGHT) prevsong(gt);

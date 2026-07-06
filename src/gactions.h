@@ -70,6 +70,7 @@ enum class Action : uint16_t {
     OrderInsert,
     OrderDelete,
     OrderGoPattern,
+    OrderSelectPatterns,
     OrderCopy,
     OrderCut,
     OrderPaste,
@@ -113,6 +114,17 @@ enum class Action : uint16_t {
     TablePageDown,
     TableHome,
     TableEnd,
+    TableInsert,
+    TableDelete,
+    TableCopy,
+    TableCut,
+    TablePaste,
+    TableOptimize,
+    TableToggleLock,
+    TableTestNote,
+    TableReleaseNote,
+    TableNegate,
+    TableConvertNote,
 
     InstrRowUp,
     InstrRowDown,
@@ -137,13 +149,20 @@ enum class Action : uint16_t {
 using Chord = uint32_t;
 
 enum Mod : uint32_t {
-    Shift = 1u << 16,
-    Ctrl  = 1u << 17,
-    Alt   = 1u << 18,
+    Shift    = 1u << 16,
+    Ctrl     = 1u << 17,
+    Alt      = 1u << 18,
+    Scancode = 1u << 19, // distinguishes SDL scancodes from ASCII key codes
 };
 
-constexpr Chord make_chord(int scancode, uint32_t mods = 0) {
-    return static_cast<Chord>(static_cast<uint32_t>(scancode & 0xffff) | mods);
+// ASCII / legacy key character (same namespace as old make_chord).
+constexpr Chord make_chord(int ascii_key, uint32_t mods = 0) {
+    return static_cast<Chord>(static_cast<uint32_t>(ascii_key & 0xffff) | mods);
+}
+
+// SDL scancode (KEY_F5, KEY_INS, …) — never collides with ASCII '>' (62) etc.
+constexpr Chord make_scancode_chord(int scancode, uint32_t mods = 0) {
+    return make_chord(scancode, mods | Scancode);
 }
 
 constexpr Chord kNoChord = 0;
@@ -151,7 +170,9 @@ constexpr Chord kNoChord = 0;
 Ctx context_from_editmode(int editmode);
 
 Chord  chord_from_input(int rawkey, int ascii_key, int shift, int ctrl);
-Action resolve(Ctx ctx, Chord chord);
+Action resolve(Ctx ctx, Chord chord);       // ctx bindings, then Global
+Action resolve_ctx(Ctx ctx, Chord chord);   // ctx bindings only
+Action resolve_input(Ctx ctx, int raw_scancode, int ascii_key, int shift, int ctrl);
 
 // Default or overridden chord for an action in a context (kNoChord if unbound).
 Chord binding_for(Action action, Ctx ctx);
@@ -177,6 +198,9 @@ bool dispatch_instrument_navigation();
 
 // Global actions (save, undo, quit, edit-mode tab, …). Uses gtObject.
 bool dispatch_global(Ctx ctx);
+
+// Debug: log when legacy *commands() handles a key the action layer did not.
+void log_legacy_fallback(const char* handler);
 
 // Runtime keymap overrides (M7 TOML will call these).
 bool set_binding(Action action, Ctx ctx, Chord chord);

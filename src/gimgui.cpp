@@ -224,6 +224,7 @@ bool gimgui_grid_body(const char* id,
 void gimgui_draw_one_table(int t, float colW, float charW, float lineH) {
     const ImU32      cCursorRow  = IM_COL32(255, 255, 255, 20);
     const ImU32      cSelect     = IM_COL32(48, 96, 200, 110);
+    const ImU32      cInstrSel   = IM_COL32(100, 210, 130, 110); // legacy instrument/table chain
     const ImU32      cCursorFill = IM_COL32(235, 225, 120, 70);
     const ImU32      cCursorEdge = IM_COL32(235, 225, 120, 230);
     const ImU32      cIdx        = IM_COL32(120, 140, 160, 255);
@@ -260,8 +261,10 @@ void gimgui_draw_one_table(int t, float colW, float charW, float lineH) {
         active ? curPos : -1,
         [&](ImDrawList* dl, int r, float x, float y) {
             char buf[16];
+            if (gtui::table_row_uses_selected_instrument(t, r))
+                dl->AddRectFilled(ImVec2(x, y), ImVec2(x + cellW8, y + lineH), cInstrSel);
             if (markTab == t && r >= markLo && r <= markHi)
-                dl->AddRectFilled(ImVec2(x + gimgui_mono_width(3), y), ImVec2(x + cellW8, y + lineH), cSelect);
+                dl->AddRectFilled(ImVec2(x, y), ImVec2(x + cellW8, y + lineH), cSelect);
             if (active && curPos == r) {
                 dl->AddRectFilled(ImVec2(x, y), ImVec2(x + cellW8, y + lineH), cCursorRow);
                 float cs = x + colOff[curCol < 0 ? 0 : (curCol > 3 ? 3 : curCol)] * charW;
@@ -288,7 +291,6 @@ const ImU32 kHeaderBg       = IM_COL32(30, 44, 60, 255);
 const ImU32 kHeaderBgActive = IM_COL32(52, 98, 158, 255);
 const ImU32 kHeaderTx       = IM_COL32(150, 168, 186, 255);
 const ImU32 kHeaderTxActive = IM_COL32(244, 250, 255, 255);
-const ImU32 kHeaderAccent   = IM_COL32(235, 200, 100, 255);
 
 // A button that renders in its "active" colour while toggled on (Follow, Loop).
 bool gimgui_toggle_button(const char* label, bool active) {
@@ -324,7 +326,6 @@ bool gimgui_begin_panel(const char* title, ImVec2 pos, ImVec2 size, bool active)
     const float  hpad = kPanelBodyPad;
     const float  hh   = ImGui::GetTextLineHeight() + hpad * 2.0f;
     dl->AddRectFilled(wp, ImVec2(wp.x + ww, wp.y + hh), active ? kHeaderBgActive : kHeaderBg);
-    if (active) dl->AddRectFilled(ImVec2(wp.x, wp.y + hh - 2.0f), ImVec2(wp.x + ww, wp.y + hh), kHeaderAccent);
     dl->AddText(ImVec2(wp.x + hpad, wp.y + hpad), active ? kHeaderTxActive : kHeaderTx, title);
 
     // Inset the body below the header, with a small left/top gutter.
@@ -348,6 +349,8 @@ void gimgui_draw_tables(ImVec2 pos, ImVec2 size) {
     const float lineH = ImGui::GetTextLineHeight();
     const float colW =
         charW * 8.0f + ImGui::GetStyle().ScrollbarSize + ImGui::GetStyle().WindowPadding.x * 2.0f + 2.0f;
+
+    gtui::table_refresh_instr_highlights();
 
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(2, 2));
     for (int t = 0; t < gtui::table_count(); t++) {
@@ -375,6 +378,7 @@ void gimgui_draw_pattern(ImVec2 pos, ImVec2 size) {
     const ImU32 cCursorRow  = IM_COL32(255, 255, 100, 20);
     const ImU32 cPlayRow    = IM_COL32(80, 190, 90, 80);   // per-channel playhead
     const ImU32 cSelect     = IM_COL32(48, 96, 200, 110);  // Shift+Up/Down mark
+    const ImU32 cInstrSel   = IM_COL32(100, 210, 130, 110); // matches selected instrument
     const ImU32 cCursorFill = IM_COL32(235, 225, 120, 70); // cursor cell
     const ImU32 cCursorEdge = IM_COL32(235, 225, 120, 230);
     const ImU32 cRowNum     = IM_COL32(120, 140, 160, 255);
@@ -388,9 +392,10 @@ void gimgui_draw_pattern(ImVec2 pos, ImVec2 size) {
     const int chans  = gtui::pattern_channels();
     const int rows   = gtui::pattern_rows();
     const int step   = gtui::pattern_step() > 0 ? gtui::pattern_step() : 4;
-    const int curRow = gtui::pattern_cursor_row();
-    const int curChn = gtui::pattern_cursor_chn();
-    const int curCol = gtui::pattern_cursor_col();
+    const int curRow  = gtui::pattern_cursor_row();
+    const int curChn  = gtui::pattern_cursor_chn();
+    const int curCol  = gtui::pattern_cursor_col();
+    const int selInstr = gtui::instr_current();
 
     // Active selection (Shift+Up/Down): actual channel + inclusive row range.
     const int markChn = gtui::pattern_mark_channel();
@@ -476,6 +481,12 @@ void gimgui_draw_pattern(ImVec2 pos, ImVec2 size) {
                     continue;
                 }
 
+                // Highlight instrument IDs that match the selected instrument.
+                if (selInstr >= gtui::INSTR_FIRST && cell.instr == selInstr) {
+                    const float ix = cx + noteW;
+                    dl->AddRectFilled(ImVec2(ix, y), ImVec2(ix + gimgui_mono_width(2), y + lineH), cInstrSel);
+                }
+
                 // Note (dim an empty/REST note), instrument, command+data.
                 const bool emptyNote = (cell.note[0] == '.');
                 dl->AddText(ImVec2(cx, y), emptyNote ? cDots : cNote, cell.note);
@@ -521,6 +532,8 @@ void gimgui_draw_orderlist(ImVec2 pos, ImVec2 size) {
 
     const ImU32 cCursorRow  = IM_COL32(255, 255, 255, 20);
     const ImU32 cSelect     = IM_COL32(48, 96, 200, 110);
+    const ImU32 cSynced     = IM_COL32(100, 210, 130, 110); // legacy CORDER_INST_TABLE_EDITING
+    const ImU32 cPlayRow    = IM_COL32(80, 190, 90, 80);
     const ImU32 cCursorFill = IM_COL32(235, 225, 120, 70);
     const ImU32 cCursorEdge = IM_COL32(235, 225, 120, 230);
     const ImU32 cRowNum     = IM_COL32(120, 140, 160, 255);
@@ -547,6 +560,13 @@ void gimgui_draw_orderlist(ImVec2 pos, ImVec2 size) {
     const float rowNumW = gimgui_mono_width(4); // "PP "
     const float colW    = gimgui_mono_width(4); // "PP " cell + gutter
     const float totalW  = rowNumW + chans * colW;
+
+    int selRow[8], endRow[8], playRow[8];
+    for (int c = 0; c < chans && c < 8; c++) {
+        selRow[c]  = gtui::order_selected_row(c);
+        endRow[c]  = gtui::order_range_end_row(c);
+        playRow[c] = gtui::order_play_row(c);
+    }
 
     // Fixed header: POS + channel numbers.
     {
@@ -580,15 +600,22 @@ void gimgui_draw_orderlist(ImVec2 pos, ImVec2 size) {
 
             for (int c = 0; c < chans; c++) {
                 const float cx = x + rowNumW + c * colW;
+
+                gtui::OrderCell cell = gtui::order_cell(c, r);
+                const float cw =
+                    cell.valid && cell.kind == 3 ? gimgui_mono_width(3) : gimgui_mono_width(2);
+
+                if (r == playRow[c]) dl->AddRectFilled(ImVec2(cx, y), ImVec2(cx + cw, y + lineH), cPlayRow);
+                if (r == selRow[c] || r == endRow[c])
+                    dl->AddRectFilled(ImVec2(cx, y), ImVec2(cx + cw, y + lineH), cSynced);
                 if (markChn == c && r >= markLo && r <= markHi)
-                    dl->AddRectFilled(ImVec2(cx, y), ImVec2(cx + gimgui_mono_width(3), y + lineH), cSelect);
+                    dl->AddRectFilled(ImVec2(cx, y), ImVec2(cx + cw, y + lineH), cSelect);
                 if (r == curRow && c == curChn) {
                     float cs = cx + (curCol < 0 ? 0 : (curCol > 2 ? 2 : curCol)) * charW;
                     dl->AddRectFilled(ImVec2(cs, y), ImVec2(cs + charW, y + lineH), cCursorFill);
                     dl->AddRect(ImVec2(cs, y), ImVec2(cs + charW, y + lineH), cCursorEdge);
                 }
 
-                gtui::OrderCell cell = gtui::order_cell(c, r);
                 if (!cell.valid) continue;
                 ImU32 col = cell.kind == 2 ? cCmd : cell.kind == 3 ? cLoop : cPat;
                 dl->AddText(ImVec2(cx, y), col, cell.text);
@@ -621,6 +648,7 @@ void gimgui_draw_instruments(ImVec2 pos, ImVec2 size) {
                                                           "VP", "VD", "GT", "1W", "PN" };
 
     const ImU32 cCursorRow  = IM_COL32(255, 255, 255, 20);
+    const ImU32 cInstrSel   = IM_COL32(100, 210, 130, 110); // selected instrument id
     const ImU32 cCursorFill = IM_COL32(235, 225, 120, 70);
     const ImU32 cCursorEdge = IM_COL32(235, 225, 120, 230);
     const ImU32 cRowNum     = IM_COL32(120, 140, 160, 255);
@@ -686,7 +714,12 @@ void gimgui_draw_instruments(ImVec2 pos, ImVec2 size) {
             const int inst = r + gtui::INSTR_FIRST;
             char      buf[32];
 
-            if (r == curRow) dl->AddRectFilled(ImVec2(x, y), ImVec2(x + totalW, y + lineH), cCursorRow);
+            if (r == curRow) {
+                dl->AddRectFilled(ImVec2(x, y), ImVec2(x + totalW, y + lineH), cCursorRow);
+                dl->AddRectFilled(ImVec2(x + colX[0], y),
+                                   ImVec2(x + colX[0] + gimgui_mono_width(2), y + lineH),
+                                   cInstrSel);
+            }
 
             snprintf(buf, sizeof buf, "%02X", inst);
             dl->AddText(ImVec2(x + colX[0], y), cRowNum, buf);

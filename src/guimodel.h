@@ -53,6 +53,12 @@ void        table_set(int t, int row, int col, unsigned value);
 // table editor.
 void        table_set_cursor(int t, int row, int col);
 
+// Recompute tableBackgroundColors for the selected instrument (legacy
+// setTableBackgroundColours). Call once per tables-panel frame before drawing.
+void table_refresh_instr_highlights();
+// True when row is part of the selected instrument's table chain (green in legacy).
+bool table_row_uses_selected_instrument(int t, int row);
+
 // ---- pattern editor (read-only for now) ----
 
 // One decoded pattern cell. note points into a static name table (valid until
@@ -109,6 +115,9 @@ int  order_length(int ch);      // order length of display channel ch
 int  order_mark_chn();          // selection channel (display index), -1 if none
 int  order_mark_start();
 int  order_mark_end();
+int  order_selected_row(int ch);   // synced pattern position (espos), -1 if none
+int  order_range_end_row(int ch); // F2 range end (esend), -1 if unset
+int  order_play_row(int ch);       // playback position in order list, -1 if none
 OrderCell order_cell(int ch, int row);
 void order_set_cursor(int ch, int row, int col); // click -> place cursor (EDIT_ORDERLIST)
 

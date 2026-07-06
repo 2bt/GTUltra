@@ -1616,4 +1616,168 @@ void allowEnterToReturnToPosition()
 	memcpy((char*)&editorInfoBackup, (char*)&editorInfo, sizeof(EDITOR_INFO));
 }
 
+static void table_mark_patterns_dirty_for_undo()
+{
+	for (int i = 0; i < MAX_PATT; i++)
+		undoAreaSetCheckForChange(UNDO_AREA_PATTERN, i, UNDO_AREA_DIRTY_CHECK);
+}
+
+void table_list_insert(GTOBJECT *gt)
+{
+	table_mark_patterns_dirty_for_undo();
+	inserttable(editorInfo.etnum, editorInfo.etpos, shiftOrCtrlPressed);
+	(void)gt;
+}
+
+void table_list_delete(GTOBJECT *gt)
+{
+	table_mark_patterns_dirty_for_undo();
+	deletetable(editorInfo.etnum, editorInfo.etpos);
+	(void)gt;
+}
+
+void table_copy_or_cut(int cut)
+{
+	int c;
+
+	if (!shiftOrCtrlPressed)
+		return;
+
+	if (editorInfo.etmarknum == -1)
+	{
+		editorInfo.etmarknum = editorInfo.etnum;
+		editorInfo.etmarkstart = editorInfo.etpos;
+		editorInfo.etmarkend = editorInfo.etmarkstart;
+	}
+
+	if (editorInfo.etmarknum != -1)
+	{
+		int d = 0;
+		if (editorInfo.etmarkstart <= editorInfo.etmarkend)
+		{
+			for (c = editorInfo.etmarkstart; c <= editorInfo.etmarkend; c++)
+			{
+				ltablecopybuffer[d] = ltable[editorInfo.etmarknum][c];
+				rtablecopybuffer[d] = rtable[editorInfo.etmarknum][c];
+				if (cut)
+				{
+					ltable[editorInfo.etmarknum][c] = 0;
+					rtable[editorInfo.etmarknum][c] = 0;
+				}
+				d++;
+			}
+		}
+		else
+		{
+			for (c = editorInfo.etmarkend; c <= editorInfo.etmarkstart; c++)
+			{
+				ltablecopybuffer[d] = ltable[editorInfo.etmarknum][c];
+				rtablecopybuffer[d] = rtable[editorInfo.etmarknum][c];
+				if (cut)
+				{
+					ltable[editorInfo.etmarknum][c] = 0;
+					rtable[editorInfo.etmarknum][c] = 0;
+				}
+				d++;
+			}
+		}
+		tablecopyrows = d;
+	}
+	editorInfo.etmarknum = -1;
+}
+
+void table_paste(void)
+{
+	int c;
+
+	if (!shiftOrCtrlPressed || !tablecopyrows)
+		return;
+
+	for (c = 0; c < tablecopyrows; c++)
+	{
+		ltable[editorInfo.etnum][editorInfo.etpos] = ltablecopybuffer[c];
+		rtable[editorInfo.etnum][editorInfo.etpos] = rtablecopybuffer[c];
+		editorInfo.etpos++;
+		if (editorInfo.etpos >= MAX_TABLELEN) editorInfo.etpos = MAX_TABLELEN - 1;
+	}
+}
+
+void table_optimize(void)
+{
+	if (shiftOrCtrlPressed)
+		optimizetable(editorInfo.etnum);
+}
+
+void table_toggle_lock(void)
+{
+	if (!shiftOrCtrlPressed)
+		return;
+
+	editorInfo.etlock ^= 1;
+	validatetableview();
+	if (editorInfo.etlock)
+		sprintf(infoTextBuffer, "Table Lock: Enabled");
+	else
+		sprintf(infoTextBuffer, "Table Lock: Disabled");
+	forceInfoLine = 1;
+}
+
+void table_test_note(GTOBJECT *gt)
+{
+	if (!shiftOrCtrlPressed)
+		playtestnote(FIRSTNOTE + editorInfo.epoctave * 12, editorInfo.einum, editorInfo.epchn, gt);
+}
+
+void table_release_note(GTOBJECT *gt)
+{
+	if (shiftOrCtrlPressed)
+		releasenote(editorInfo.epchn, gt);
+}
+
+void table_negate_value(void)
+{
+	if (!shiftOrCtrlPressed)
+		return;
+
+	switch (editorInfo.etnum)
+	{
+	case FTBL:
+		if (!ltable[editorInfo.etnum][editorInfo.etpos]) break;
+	case PTBL:
+		if (ltable[editorInfo.etnum][editorInfo.etpos] < 0x80)
+			rtable[editorInfo.etnum][editorInfo.etpos] = (rtable[editorInfo.etnum][editorInfo.etpos] ^ 0xff) + 1;
+		break;
+
+	case WTBL:
+		if ((ltable[editorInfo.etnum][editorInfo.etpos] != 0xff) && (rtable[editorInfo.etnum][editorInfo.etpos] < 0x80))
+			rtable[editorInfo.etnum][editorInfo.etpos] = (0x80 - rtable[editorInfo.etnum][editorInfo.etpos]) & 0x7f;
+		break;
+	}
+}
+
+void table_convert_note(void)
+{
+	if (editorInfo.etnum != WTBL)
+		return;
+
+	if (ltable[editorInfo.etnum][editorInfo.etpos] == 0xff)
+		return;
+
+	int basenote = editorInfo.epoctave * 12;
+	int note = rtable[editorInfo.etnum][editorInfo.etpos];
+
+	if (note >= 0x80)
+	{
+		note -= basenote;
+		note &= 0x7f;
+	}
+	else
+	{
+		note += basenote;
+		note |= 0x80;
+	}
+
+	rtable[editorInfo.etnum][editorInfo.etpos] = note;
+}
+
 

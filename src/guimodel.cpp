@@ -35,6 +35,14 @@ int table_mark_table() { return editorInfo.etmarknum; }
 int table_mark_start() { return editorInfo.etmarkstart; }
 int table_mark_end() { return editorInfo.etmarkend; }
 
+void table_refresh_instr_highlights() { setTableBackgroundColours(editorInfo.einum); }
+
+bool table_row_uses_selected_instrument(int t, int row)
+{
+    if (t < 0 || t >= MAX_TABLES || row < 0 || row >= MAX_TABLELEN) return false;
+    return (tableBackgroundColors[t][row] & 0xff) == CTABLE_SELECTED_INSTRUMENT_FOREGROUND;
+}
+
 void table_set_cursor(int t, int row, int col)
 {
     if (t < 0) t = 0;
@@ -190,6 +198,33 @@ int order_cursor_col() { return editorInfo.escolumn; }
 int order_mark_chn() { return editorInfo.esmarkchn; }
 int order_mark_start() { return editorInfo.esmarkstart; }
 int order_mark_end() { return editorInfo.esmarkend; }
+
+int order_selected_row(int ch)
+{
+    if (ch < 0 || ch >= MAX_CHN) return -1;
+    int c2  = getActualChannel(editorInfo.esnum, ch);
+    int pos = gtObject.editorUndoInfo.editorInfo[c2].espos;
+    return pos >= 0 ? pos : -1;
+}
+
+int order_range_end_row(int ch)
+{
+    if (ch < 0 || ch >= MAX_CHN) return -1;
+    int c2  = getActualChannel(editorInfo.esnum, ch);
+    int end = gtObject.editorUndoInfo.editorInfo[c2].esend;
+    return end ? end : -1;
+}
+
+int order_play_row(int ch)
+{
+    if (!isplaying(&gtObject)) return -1;
+    int c2 = getActualChannel(editorInfo.esnum, ch);
+    int playingSong = getActualSongNumber(editorInfo.esnum, c2);
+    if (editorInfo.esnum != playingSong) return -1;
+    if (!gtObject.chn[c2].advance) return -1;
+    int pos = gtObject.chn[c2].songptr - 1;
+    return pos < 0 ? 0 : pos;
+}
 
 int order_length(int ch)
 {
