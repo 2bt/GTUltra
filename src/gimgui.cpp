@@ -32,7 +32,7 @@ extern int (*bme_input_capture_hook)(void);
 
 bool g_imgui_ready = false;
 bool g_show_demo   = false; // toggleable ImGui reference/demo window
-bool g_show_new_ui = true;  // false = legacy chargen UI visible for comparison
+extern bool g_show_new_ui;   // defined in guiflags.cpp (gtcore)
 
 // Instrument-name overlay editor (InputText while active).
 int  g_instr_name_edit        = -1;    // instrument index 1..3F, or -1
@@ -1194,12 +1194,10 @@ extern "C" int gimgui_input_capture(void) {
     }
     return flags;
 }
-
-bool gimgui_new_ui_active() { return g_show_new_ui; }
-
 bool gimgui_instr_name_editing() { return g_instr_name_edit >= gtui::INSTR_FIRST; }
 
 void gimgui_init() {
+    g_show_new_ui = true;
     if (g_imgui_ready) return;
     // gfx_renderer can be null under headless/unsupported video drivers.
     if (!win_window || !gfx_renderer) return;

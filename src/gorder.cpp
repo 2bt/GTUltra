@@ -5,6 +5,7 @@
 #define GORDER_C
 
 #include "goattrk2.h"
+#include "gimgui.h"
 
 unsigned char trackcopybuffer[MAX_SONGLEN + 2];
 int trackcopyrows = 0;
@@ -45,6 +46,11 @@ void orderlistcommands(GTOBJECT *gt)
 		else
 			orderListHandleHexInputExpandedView(gt);
 	}
+
+	// ImGui order panel routes navigation/edits through the action layer; legacy
+	// switches remain for hex entry and for the expanded order-list view.
+	if (gimgui_new_ui_active() && !editorInfo.expandOrderListView)
+		goto order_sync_view;
 
 	switch (rawkey)
 	{
@@ -641,6 +647,7 @@ void orderlistcommands(GTOBJECT *gt)
 		break;
 	}
 
+order_sync_view:
 	if (editorInfo.eseditpos - editorInfo.esview < 0)
 	{
 		editorInfo.esview = editorInfo.eseditpos;

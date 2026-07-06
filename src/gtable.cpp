@@ -5,6 +5,7 @@
 #define GTABLE_C
 
 #include "goattrk2.h"
+#include "gimgui.h"
 
 unsigned char ltablecopybuffer[MAX_TABLELEN];
 unsigned char rtablecopybuffer[MAX_TABLELEN];
@@ -14,6 +15,10 @@ int tablecopyrows = 0;
 void tablecommands(GTOBJECT *gt)
 {
 	int c;
+
+	// ImGui table panel: navigation/edits via actions; legacy path is hex only.
+	if (gimgui_new_ui_active())
+		goto table_hex_input;
 
 	switch (rawkey)
 	{
@@ -649,6 +654,7 @@ void tablecommands(GTOBJECT *gt)
 		}
 	}
 
+table_hex_input:
 	if (hexnybble >= 0)
 	{
 		if (editorInfo.editTableMode == EDIT_TABLE_WAVE && editorInfo.etnum == 0)

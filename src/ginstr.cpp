@@ -5,12 +5,17 @@
 #define GINSTR_C
 
 #include "goattrk2.h"
+#include "gimgui.h"
 
 INSTR instrcopybuffer;
 int cutinstr = -1;
 
 void instrumentcommands(GTOBJECT *gt)
 {
+	// ImGui instrument panel: navigation/edits via actions; legacy path is hex only.
+	if (gimgui_new_ui_active())
+		goto instr_hex_input;
+
 	switch (rawkey)
 	{
 	case KEY_UP:
@@ -213,6 +218,7 @@ void instrumentcommands(GTOBJECT *gt)
 		editstring(instr[editorInfo.einum].name, MAX_INSTRNAMELEN);
 	}
 
+instr_hex_input:
 	if ((hexnybble >= 0) && (editorInfo.eipos < LAST_INST) && (editorInfo.einum))
 	{
 		unsigned char *ptr = &instr[editorInfo.einum].ad;
