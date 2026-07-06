@@ -137,6 +137,9 @@ enum class Action : uint16_t {
     InstrHome,
     InstrEnd,
 
+    NamesFieldNext,
+    NamesFieldPrev,
+
     ToggleSIDTracker64,
     PrevMultiplier,
     NextMultiplier,
@@ -197,6 +200,7 @@ bool dispatch_pattern_navigation();
 // Table / instrument cursor navigation (ImGui panels). Uses gtObject.
 bool dispatch_table_navigation();
 bool dispatch_instrument_navigation();
+bool dispatch_names_navigation();
 
 // Global actions (save, undo, quit, edit-mode tab, …). Uses gtObject.
 bool dispatch_global(Ctx ctx);

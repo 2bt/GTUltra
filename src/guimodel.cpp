@@ -11,6 +11,15 @@ namespace gtui {
 
 EditPanel edit_panel() { return static_cast<EditPanel>(editorInfo.editmode); }
 
+int names_field() { return editorInfo.enpos; }
+
+void names_set_field(int field) {
+    if (field < 0) field = 0;
+    if (field > 2) field = 2;
+    editorInfo.enpos     = field;
+    editorInfo.nameIndex = field;
+}
+
 int table_count() { return MAX_TABLES; }
 int table_len() { return MAX_TABLELEN; }
 int table_visible_rows() { return VISIBLETABLEROWS; }

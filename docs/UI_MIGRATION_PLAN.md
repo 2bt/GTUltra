@@ -278,9 +278,11 @@ into `sdlTexture` inside `gfx_flip`.
 > - Legacy `*commands()` key switches gated when ImGui is active (order/table/
 >   instrument/pattern panels delegate navigation to actions; note/hex entry only
 >   in pattern).
+> - Names panel: Up/Down/Enter field navigation via `dispatch_names_navigation`,
+>   ImGui `InputText` focus on the Song form.
 >
-> **Still open:** mouse → actions, `generalcommands()` shrink, refactor
-> `*commands()` off `key`/`rawkey` globals, expanded order list, names panel.
+> **Still open:** mouse → actions, refactor `*commands()` off `key`/`rawkey`
+>   globals, expanded order list, pattern power shortcuts (transpose, …).
 
 Goal: replace hardcoded key switches with a data-driven action system (also the
 foundation the config keymap needs later).

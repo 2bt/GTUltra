@@ -24,6 +24,9 @@ enum EditPanel : int {
 };
 EditPanel edit_panel(); // current keyboard-focus edit mode
 
+int  names_field();       // selected metadata field (0=name, 1=author, 2=copyright)
+void names_set_field(int field);
+
 // ---- SID tables (wave / pulse / filter / speed) ----
 int         table_count();          // number of tables
 int         table_len();            // rows per table

@@ -41,6 +41,10 @@ bool g_instr_name_item_active = false; // InputText had focus last frame
 bool g_instr_name_had_focus   = false; // InputText had focus on a prior frame
 char g_instr_name_buf[gtui::INSTR_NAME_MAX + 1];
 
+// Song metadata field focus (0=name, 1=author, 2=copyright).
+int  g_song_field_want_focus  = -1;
+bool g_song_field_item_active = false;
+
 static void gimgui_instr_name_commit() {
     if (g_instr_name_edit < gtui::INSTR_FIRST) return;
     gtui::instr_set_name(g_instr_name_edit, g_instr_name_buf);
@@ -57,6 +61,15 @@ void gimgui_instr_name_begin(int inst) {
     g_instr_name_want_focus = inst;
     snprintf(g_instr_name_buf, sizeof g_instr_name_buf, "%.*s", gtui::INSTR_NAME_MAX, gtui::instr_name(inst));
 }
+
+void gimgui_song_field_begin(int field) {
+    if (field < 0 || field > 2) return;
+    g_song_field_want_focus = field;
+}
+
+bool gimgui_song_field_editing() { return g_song_field_item_active; }
+
+bool gimgui_instr_name_editing() { return g_instr_name_edit >= gtui::INSTR_FIRST; }
 
 // Commit when the name field had focus and the user left it (not on the first
 // idle frame before InputText attaches — that was clearing the edit immediately).
@@ -918,7 +931,9 @@ void gimgui_draw_song(ImVec2 pos, ImVec2 size) {
     const float labelCol = ImGui::CalcTextSize(kSongLabelWidest).x;
     const float inputX   = formX + labelCol + kSongLabelGap;
     const float inputW   = gimgui_mono_width(gtui::SONG_STR_MAX) + ImGui::GetStyle().FramePadding.x * 2.0f;
+    const bool  namesMode = (gtui::edit_panel() == gtui::EditPanelNames);
 
+    g_song_field_item_active = false;
     ImGui::PushItemFlag(ImGuiItemFlags_NoTabStop, true);
     for (int f = 0; f < 3; f++) {
         char buf[gtui::SONG_STR_MAX + 1];
@@ -932,8 +947,20 @@ void gimgui_draw_song(ImVec2 pos, ImVec2 size) {
         ImGui::SetCursorPos(ImVec2(inputX, rowY));
         ImGui::PushID(f);
         ImGui::PushItemWidth(inputW);
+        if (namesMode && f == gtui::names_field())
+            ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f);
+        if (g_song_field_want_focus == f)
+            ImGui::SetKeyboardFocusHere();
         if (ImGui::InputText("##v", buf, sizeof buf))
             fields[f].set(buf); // metadata: commit as typed (no undo, like legacy)
+        if (ImGui::IsItemActive())
+            g_song_field_item_active = true;
+        if (ImGui::IsItemActivated())
+            gtui::names_set_field(f);
+        if (g_song_field_want_focus == f && ImGui::IsItemActive())
+            g_song_field_want_focus = -1;
+        if (namesMode && f == gtui::names_field())
+            ImGui::PopStyleVar();
         ImGui::PopItemWidth();
         ImGui::PopID();
     }
@@ -1194,7 +1221,6 @@ extern "C" int gimgui_input_capture(void) {
     }
     return flags;
 }
-bool gimgui_instr_name_editing() { return g_instr_name_edit >= gtui::INSTR_FIRST; }
 
 void gimgui_init() {
     g_show_new_ui = true;

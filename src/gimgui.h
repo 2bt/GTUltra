@@ -15,3 +15,7 @@ bool gimgui_instr_name_editing();
 
 // Open the on-demand name editor for instrument @p inst (1..3F).
 void gimgui_instr_name_begin(int inst);
+
+// Song metadata field focus (names panel, field index 0..2).
+bool gimgui_song_field_editing();
+void gimgui_song_field_begin(int field);

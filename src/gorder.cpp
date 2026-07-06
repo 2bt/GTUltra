@@ -671,6 +671,8 @@ order_sync_view:
 
 void namecommands(GTOBJECT *gt)
 {
+	if (gimgui_new_ui_active())
+		return;
 
 	switch (rawkey)
 	{
