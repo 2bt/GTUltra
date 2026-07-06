@@ -1286,8 +1286,9 @@ void docommand(void)
 		//	undoAreaSetCheckForChange(UNDO_AREA_CHANNEL_EDITOR_INFO, c2, UNDO_AREA_DIRTY_CHECK);
 
 		if (!gtaction::dispatch_mode_navigation()) {
+			const EditorInput in = editor_input_snapshot();
 			if (!gimgui_new_ui_active() || !gtaction::dispatch_global(gtaction::Ctx::Order))
-				orderlistcommands(gt);
+				orderlistcommands(gt, &in);
 		}
 		displayOrderTableInfo(gt);
 		break;
@@ -1300,8 +1301,10 @@ void docommand(void)
 		{
 			undoAreaSetCheckForChange(UNDO_AREA_INSTRUMENTS, editorInfo.einum, UNDO_AREA_DIRTY_CHECK);
 		}
-		if (!gtaction::dispatch_mode_navigation())
-			instrumentcommands(gt);
+		if (!gtaction::dispatch_mode_navigation()) {
+			const EditorInput in = editor_input_snapshot();
+			instrumentcommands(gt, &in);
+		}
 		displayInstrumentInfo(gt);
 		break;
 
@@ -1314,8 +1317,10 @@ void docommand(void)
 			undoAreaSetCheckForChange(UNDO_AREA_TABLES + editorInfo.etnum, 1, UNDO_AREA_DIRTY_CHECK);	// right table
 		}
 
-		if (!gtaction::dispatch_mode_navigation())
-			tablecommands(gt);
+		if (!gtaction::dispatch_mode_navigation()) {
+			const EditorInput in = editor_input_snapshot();
+			tablecommands(gt, &in);
+		}
 		displayTableInfo(gt);
 		break;
 
@@ -1348,8 +1353,10 @@ void docommand(void)
 
 		// if gMIDINote!=-1, then use this as input instead of QWERTY note input
 		// Also, if this is the case, set key and rawkey=0 so that only note input is recognised - just in case..
-		if (!gtaction::dispatch_mode_navigation())
-			patterncommands(gt, gMIDINote);
+		if (!gtaction::dispatch_mode_navigation()) {
+			const EditorInput in = editor_input_snapshot();
+			patterncommands(gt, gMIDINote, &in);
+		}
 
 		displayPatternInfo(gt);
 		countInstrumentsInPattern(gt->editorUndoInfo.editorInfo[c2].epnum);
@@ -1358,8 +1365,9 @@ void docommand(void)
 
 	case EDIT_NAMES:
 		if (!gtaction::dispatch_mode_navigation()) {
+			const EditorInput in = editor_input_snapshot();
 			if (!gimgui_new_ui_active())
-				namecommands(gt);
+				namecommands(gt, &in);
 		}
 		break;
 	}

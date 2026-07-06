@@ -33,10 +33,11 @@ EDITOR_INFO editorInfo;
 EDITOR_INFO editorInfoBackup;
 int disableEnterToReturnToLastPos;
 
-void patterncommands(GTOBJECT *gt, int midiNote)
+void patterncommands(GTOBJECT *gt, int midiNote, const EditorInput *input)
 {
-	int jrawkey = rawkey;
-	int jkey = key;
+	const EditorInput in = input ? *input : editor_input_snapshot();
+	int jrawkey = in.rawkey;
+	int jkey = in.key;
 
 	if (midiNote >= 0)
 	{

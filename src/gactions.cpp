@@ -1671,8 +1671,7 @@ bool dispatch_global(Ctx ctx) {
 }
 
 void clear_input() {
-    key    = 0;
-    rawkey = 0;
+    editor_input_clear();
 }
 
 bool consume_legacy_hex_input(int hex_at_frame_start) {

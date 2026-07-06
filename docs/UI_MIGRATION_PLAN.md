@@ -284,8 +284,14 @@ into `sdlTexture` inside `gfx_flip`.
 >   step size, mark-all, pitchbend, portamento helper) in the action layer.
 > - Legacy `mousecommands` skipped when ImGui is active (panel grids own clicks).
 > - Expanded order-list column navigation via `order_col_*_expanded`.
+> - `EditorInput` snapshot (`ginput.h/cpp`): `docommand()` captures keyboard
+>   state once per frame and passes it into `*commands()` so handlers read
+>   explicit input instead of `key`/`rawkey` globals (hex nybble still uses the
+>   legacy global during multi-step entry; `editor_input_clear()` centralizes
+>   consume-after-dispatch).
 >
-> **Still open:** refactor `*commands()` off `key`/`rawkey` globals.
+> **Deferred to M6:** full removal of input globals inside `*commands()` bodies
+> (modifier flags, hex mutation paths).
 
 Goal: replace hardcoded key switches with a data-driven action system (also the
 foundation the config keymap needs later).

@@ -92,7 +92,7 @@ extern EDITOR_INFO editorInfoBackup;	// copy of editorInfo. Used when hitting en
 extern int disableEnterToReturnToLastPos;	// if true, pressing enter wont return cursor to previous position
 
 
-void patterncommands(GTOBJECT *gt, int midiNote);
+void patterncommands(GTOBJECT *gt, int midiNote, const EditorInput *input = nullptr);
 void nextpattern(GTOBJECT *gt);
 void prevpattern(GTOBJECT *gt);
 int patternup(GTOBJECT *gt);

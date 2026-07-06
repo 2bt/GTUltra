@@ -7,7 +7,7 @@
 extern INSTR instrcopybuffer;
 #endif
 
-void instrumentcommands(GTOBJECT *gt);
+void instrumentcommands(GTOBJECT *gt, const EditorInput *input = nullptr);
 void nextinstr(void);
 void previnstr(void);
 void clearinstr(int num);

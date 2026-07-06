@@ -171,7 +171,8 @@ add_library(gtcore STATIC
     "${SRC}/gmidiselect.cpp"
     "${SRC}/gpaletteeditor.cpp"
     "${SRC}/gfkeys.cpp"
-    "${SRC}/guiflags.cpp")
+    "${SRC}/guiflags.cpp"
+    "${SRC}/ginput.cpp")
 # Note: ${SRC} is deliberately NOT on the include path. Project headers are
 # quote-includes resolved next to each source file; keeping src/ off the angle
 # search path prevents the bundled (incomplete) src/SDL headers from shadowing

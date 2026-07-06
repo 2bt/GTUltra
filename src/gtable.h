@@ -7,7 +7,7 @@
 #define MST_PORTAMENTO 3
 #define MST_RAW 4
 
-void tablecommands(GTOBJECT *gt);
+void tablecommands(GTOBJECT *gt, const EditorInput *input = nullptr);
 void tableup(void);
 void tabledown(void);
 void inserttable(int num, int pos, int mode);

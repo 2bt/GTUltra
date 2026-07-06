@@ -25,6 +25,7 @@ extern "C" {
 
 #include "gcommon.h"
 #include "gconsole.h"
+#include "ginput.h"
 #include "gplay.h"
 #include "gsound.h"
 #include "gsid.h"

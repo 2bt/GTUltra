@@ -12,15 +12,17 @@ unsigned char rtablecopybuffer[MAX_TABLELEN];
 int tablecopyrows = 0;
 
 
-void tablecommands(GTOBJECT *gt)
+void tablecommands(GTOBJECT *gt, const EditorInput *input)
 {
+	const EditorInput in = input ? *input : editor_input_snapshot();
+	const int jrawkey = in.rawkey;
 	int c;
 
 	// ImGui table panel: navigation/edits via actions; legacy path is hex only.
 	if (gimgui_new_ui_active())
 		goto table_hex_input;
 
-	switch (rawkey)
+	switch (jrawkey)
 	{
 	case KEY_UP:
 	case KEY_DOWN:
@@ -34,7 +36,7 @@ void tablecommands(GTOBJECT *gt)
 	}
 
 
-	switch (rawkey)
+	switch (jrawkey)
 	{
 	case KEY_Q:
 		if ((shiftOrCtrlPressed) && (editorInfo.etnum == STBL))
@@ -278,7 +280,7 @@ void tablecommands(GTOBJECT *gt)
 					{
 						ltablecopybuffer[d] = ltable[editorInfo.etmarknum][c];
 						rtablecopybuffer[d] = rtable[editorInfo.etmarknum][c];
-						if (rawkey == KEY_X)
+						if (jrawkey == KEY_X)
 						{
 							ltable[editorInfo.etmarknum][c] = 0;
 							rtable[editorInfo.etmarknum][c] = 0;
@@ -292,7 +294,7 @@ void tablecommands(GTOBJECT *gt)
 					{
 						ltablecopybuffer[d] = ltable[editorInfo.etmarknum][c];
 						rtablecopybuffer[d] = rtable[editorInfo.etmarknum][c];
-						if (rawkey == KEY_X)
+						if (jrawkey == KEY_X)
 						{
 							ltable[editorInfo.etmarknum][c] = 0;
 							rtable[editorInfo.etmarknum][c] = 0;

@@ -10,13 +10,16 @@
 INSTR instrcopybuffer;
 int cutinstr = -1;
 
-void instrumentcommands(GTOBJECT *gt)
+void instrumentcommands(GTOBJECT *gt, const EditorInput *input)
 {
+	const EditorInput in = input ? *input : editor_input_snapshot();
+	const int jrawkey = in.rawkey;
+
 	// ImGui instrument panel: navigation/edits via actions; legacy path is hex only.
 	if (gimgui_new_ui_active())
 		goto instr_hex_input;
 
-	switch (rawkey)
+	switch (jrawkey)
 	{
 	case KEY_UP:
 	case KEY_DOWN:
@@ -29,7 +32,7 @@ void instrumentcommands(GTOBJECT *gt)
 			win_disableKeyRepeat();
 	}
 
-	switch (rawkey)
+	switch (jrawkey)
 	{
 	case 0x8:
 	case KEY_DEL:

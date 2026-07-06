@@ -12,16 +12,19 @@ int trackcopyrows = 0;
 int trackcopywhole;
 int trackcopyrpos;
 
-void orderlistcommands(GTOBJECT *gt);
-void namecommands(GTOBJECT *gt);
+void orderlistcommands(GTOBJECT *gt, const EditorInput *input);
+void namecommands(GTOBJECT *gt, const EditorInput *input);
 //void paletteEditCommands();
 //void paletteLeft();
 //void paletteRight();
 
 
 
-void orderlistcommands(GTOBJECT *gt)
+void orderlistcommands(GTOBJECT *gt, const EditorInput *input)
 {
+	const EditorInput in = input ? *input : editor_input_snapshot();
+	const int jkey = in.key;
+	const int jrawkey = in.rawkey;
 	int c, scrrep;
 	int ret = 0;
 
@@ -39,7 +42,7 @@ void orderlistcommands(GTOBJECT *gt)
 	if ((editorInfo.maxSIDChannels == 3) || (editorInfo.maxSIDChannels == 9 && (editorInfo.esnum & 1)))
 		maxCh = 3;
 
-	if (hexnybble >= 0)
+	if (in.hex_nybble >= 0)
 	{
 		if (editorInfo.expandOrderListView == 0)
 			orderListHandleHexInputOriginalView(gt);
@@ -52,7 +55,7 @@ void orderlistcommands(GTOBJECT *gt)
 	if (gimgui_new_ui_active() && !editorInfo.expandOrderListView)
 		goto order_sync_view;
 
-	switch (rawkey)
+	switch (jrawkey)
 	{
 	case KEY_UP:
 	case KEY_DOWN:
@@ -65,7 +68,7 @@ void orderlistcommands(GTOBJECT *gt)
 			win_disableKeyRepeat();
 	}
 
-	switch (key)
+	switch (jkey)
 	{
 	case 'R':
 		if (editorInfo.expandOrderListView == 0)
@@ -139,7 +142,7 @@ void orderlistcommands(GTOBJECT *gt)
 		prevsong(gt);
 		break;
 	}
-	switch (rawkey)
+	switch (jrawkey)
 	{
 	case KEY_1:
 	case KEY_2:
@@ -154,12 +157,12 @@ void orderlistcommands(GTOBJECT *gt)
 
 			editorInfo.esmarkchn = -1;
 			editorInfo.esmarkchnend = -1;
-			if (rawkey == KEY_1) tchn = 0;
-			if (rawkey == KEY_2) tchn = 1;
-			if (rawkey == KEY_3) tchn = 2;
-			if (rawkey == KEY_4) tchn = 3;
-			if (rawkey == KEY_5) tchn = 4;
-			if (rawkey == KEY_6) tchn = 5;
+			if (jrawkey == KEY_1) tchn = 0;
+			if (jrawkey == KEY_2) tchn = 1;
+			if (jrawkey == KEY_3) tchn = 2;
+			if (jrawkey == KEY_4) tchn = 3;
+			if (jrawkey == KEY_5) tchn = 4;
+			if (jrawkey == KEY_6) tchn = 5;
 			if (schn != tchn)
 			{
 				int lentemp = songlen[editorInfo.esnum][schn];
@@ -615,12 +618,14 @@ order_sync_view:
 
 }
 
-void namecommands(GTOBJECT *gt)
+void namecommands(GTOBJECT *gt, const EditorInput *input)
 {
+	const EditorInput in = input ? *input : editor_input_snapshot();
+
 	if (gimgui_new_ui_active())
 		return;
 
-	switch (rawkey)
+	switch (in.rawkey)
 	{
 	case KEY_DOWN:
 	case KEY_ENTER:
