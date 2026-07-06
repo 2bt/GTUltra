@@ -14,8 +14,6 @@
 #include "gdisplay.h"
 #include "gsound.h"
 
-#include <cstdio>
-
 #include <vector>
 
 namespace gtaction {
@@ -542,12 +540,15 @@ static void table_step_adjacent(int dir) {
     validatetableview();
 }
 
+static void table_finish_nav() { validatetableview(); }
+
 void table_col_left(GTOBJECT* gt) {
     disableEnterToReturnToLastPos = 1;
     table_use_raw_hex_mode();
 
     editorInfo.etcolumn--;
     if (editorInfo.etcolumn < 0) table_step_adjacent(-1);
+    else table_finish_nav();
 
     if (shiftpressed) editorInfo.etmarknum = -1;
     (void)gt;
@@ -559,6 +560,7 @@ void table_col_right(GTOBJECT* gt) {
 
     editorInfo.etcolumn++;
     if (editorInfo.etcolumn > 3) table_step_adjacent(+1);
+    else table_finish_nav();
 
     if (shiftpressed) editorInfo.etmarknum = -1;
     (void)gt;
@@ -1083,14 +1085,36 @@ bool pattern_action_needs_imgui(Action act) {
 bool handle_table_action(Action act) {
     GTOBJECT* gt = &gtObject;
     switch (act) {
-    case Action::TableRowUp: tableup(); return true;
-    case Action::TableRowDown: tabledown(); return true;
-    case Action::TableColLeft: table_col_left(gt); return true;
-    case Action::TableColRight: table_col_right(gt); return true;
-    case Action::TablePageUp: table_page_up(gt); return true;
-    case Action::TablePageDown: table_page_down(gt); return true;
-    case Action::TableHome: table_nav_home(gt); return true;
-    case Action::TableEnd: table_nav_end(gt); return true;
+    case Action::TableRowUp:
+        tableup();
+        table_finish_nav();
+        return true;
+    case Action::TableRowDown:
+        tabledown();
+        table_finish_nav();
+        return true;
+    case Action::TableColLeft:
+        table_col_left(gt);
+        return true;
+    case Action::TableColRight:
+        table_col_right(gt);
+        return true;
+    case Action::TablePageUp:
+        table_page_up(gt);
+        table_finish_nav();
+        return true;
+    case Action::TablePageDown:
+        table_page_down(gt);
+        table_finish_nav();
+        return true;
+    case Action::TableHome:
+        table_nav_home(gt);
+        table_finish_nav();
+        return true;
+    case Action::TableEnd:
+        table_nav_end(gt);
+        table_finish_nav();
+        return true;
     case Action::TableInsert:
         table_list_insert(gt);
         return true;
@@ -1220,31 +1244,7 @@ bool handle_order_action(Action act) {
 } // namespace
 
 void log_legacy_fallback(const char* handler) {
-    fprintf(stderr,
-            "[gtaction] legacy %s  rawkey=%d key=%d shift=%d ctrl=%d "
-            "editmode=%d esnum=%02X\n",
-            handler,
-            rawkey,
-            key,
-            shiftpressed,
-            ctrlpressed,
-            editorInfo.editmode,
-            editorInfo.esnum);
-}
-
-static void log_key(const char* tag, Ctx ctx, Action act) {
-    fprintf(stderr,
-            "[gtaction] %s  ctx=%d act=%s rawkey=%d key=%d shift=%d ctrl=%d "
-            "editmode=%d esnum=%02X\n",
-            tag,
-            static_cast<int>(ctx),
-            act == Action::None ? "-" : action_name(act),
-            rawkey,
-            key,
-            shiftpressed,
-            ctrlpressed,
-            editorInfo.editmode,
-            editorInfo.esnum);
+    (void)handler;
 }
 
 Ctx context_from_editmode(int editmode) {
@@ -1366,28 +1366,19 @@ const char* action_label(Action a) {
 }
 
 bool dispatch_order_navigation() {
-    log_key("dispatch_order enter", Ctx::Order, Action::None);
-
     if (editorInfo.editmode != EDIT_ORDERLIST) return false;
 
     // Vertical layout and editing actions apply to the ImGui order panel.
-    if (!gimgui_new_ui_active()) {
-        log_key("dispatch_order skip (legacy UI)", Ctx::Order, Action::None);
-        return false;
-    }
+    if (!gimgui_new_ui_active()) return false;
 
     if (shiftpressed && !ctrlpressed && rawkey >= KEY_1 && rawkey <= KEY_6) {
         order_list_swap_channel(&gtObject, rawkey - KEY_1);
-        log_key("dispatch_order swap channel", Ctx::Order, Action::None);
         clear_input();
         return true;
     }
 
     const Action act = resolve_input_ctx(Ctx::Order, rawkey, key, shiftpressed, ctrlpressed);
-    if (act == Action::None) {
-        log_key("dispatch_order unbound", Ctx::Order, Action::None);
-        return false;
-    }
+    if (act == Action::None) return false;
 
     switch (rawkey) {
     case KEY_UP:
@@ -1399,19 +1390,13 @@ bool dispatch_order_navigation() {
     default: break;
     }
 
-    if (!handle_order_action(act)) {
-        log_key("dispatch_order handle failed", Ctx::Order, act);
-        return false;
-    }
+    if (!handle_order_action(act)) return false;
 
-    log_key("dispatch_order ok", Ctx::Order, act);
     clear_input();
     return true;
 }
 
 bool dispatch_pattern_navigation() {
-    log_key("dispatch_pattern enter", Ctx::Pattern, Action::None);
-
     if (editorInfo.editmode != EDIT_PATTERN) return false;
 
     // Ctrl+arrow is global song transport.
@@ -1422,21 +1407,14 @@ bool dispatch_pattern_navigation() {
 
     if (gimgui_new_ui_active() && shiftpressed && !ctrlpressed && rawkey >= KEY_1 && rawkey <= KEY_6) {
         pattern_mute_channel(&gtObject, rawkey - KEY_1);
-        log_key("dispatch_pattern mute channel", Ctx::Pattern, Action::None);
         clear_input();
         return true;
     }
 
     const Action act = resolve_input_ctx(Ctx::Pattern, rawkey, key, shiftpressed, ctrlpressed);
-    if (act == Action::None) {
-        log_key("dispatch_pattern unbound", Ctx::Pattern, Action::None);
-        return false;
-    }
+    if (act == Action::None) return false;
 
-    if (pattern_action_needs_imgui(act) && !gimgui_new_ui_active()) {
-        log_key("dispatch_pattern skip (needs imgui)", Ctx::Pattern, act);
-        return false;
-    }
+    if (pattern_action_needs_imgui(act) && !gimgui_new_ui_active()) return false;
 
     switch (rawkey) {
     case KEY_UP:
@@ -1450,12 +1428,8 @@ bool dispatch_pattern_navigation() {
     default: break;
     }
 
-    if (!handle_pattern_action(act)) {
-        log_key("dispatch_pattern handle failed", Ctx::Pattern, act);
-        return false;
-    }
+    if (!handle_pattern_action(act)) return false;
 
-    log_key("dispatch_pattern ok", Ctx::Pattern, act);
     clear_input();
     return true;
 }
@@ -1540,19 +1514,10 @@ bool dispatch_global(Ctx ctx) {
     if (editPaletteMode) return false;
 
     const Action act = resolve_input(ctx, rawkey, key, shiftpressed, ctrlpressed);
-    if (act == Action::None) {
-        log_key("dispatch_global unbound", ctx, Action::None);
-        return false;
-    }
+    if (act == Action::None) return false;
 
-    log_key("dispatch_global", ctx, act);
+    if (!handle_global_action(act)) return false;
 
-    if (!handle_global_action(act)) {
-        log_key("dispatch_global handle failed", ctx, act);
-        return false;
-    }
-
-    log_key("dispatch_global ok", ctx, act);
     clear_input();
     return true;
 }
@@ -1564,17 +1529,6 @@ void clear_input() {
 
 bool perform(Action act) {
     if (act == Action::None) return false;
-
-    fprintf(stderr,
-            "[gtaction] perform %s  in: editmode=%d esnum=%02X rawkey=%d key=%d "
-            "shift=%d ctrl=%d\n",
-            action_name(act),
-            editorInfo.editmode,
-            editorInfo.esnum,
-            rawkey,
-            key,
-            shiftpressed,
-            ctrlpressed);
 
     bool ok;
     switch (act) {
@@ -1663,12 +1617,6 @@ bool perform(Action act) {
         break;
     }
 
-    fprintf(stderr,
-            "[gtaction] perform %s -> %s  out: editmode=%d esnum=%02X\n",
-            action_name(act),
-            ok ? "ok" : "fail",
-            editorInfo.editmode,
-            editorInfo.esnum);
     return ok;
 }
 
