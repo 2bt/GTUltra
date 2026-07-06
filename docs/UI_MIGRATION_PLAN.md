@@ -282,9 +282,10 @@ into `sdlTexture` inside `gfx_flip`.
 >   ImGui `InputText` focus on the Song form.
 > - Pattern power shortcuts (transpose, autoadvance, cmd copy/paste, invert,
 >   step size, mark-all, pitchbend, portamento helper) in the action layer.
+> - Legacy `mousecommands` skipped when ImGui is active (panel grids own clicks).
+> - Expanded order-list column navigation via `order_col_*_expanded`.
 >
-> **Still open:** mouse → actions, refactor `*commands()` off `key`/`rawkey`
->   globals, expanded order list.
+> **Still open:** refactor `*commands()` off `key`/`rawkey` globals.
 
 Goal: replace hardcoded key switches with a data-driven action system (also the
 foundation the config keymap needs later).

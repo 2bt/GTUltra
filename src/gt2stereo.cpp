@@ -1400,6 +1400,11 @@ void mousecommands(GTOBJECT* gt)
 		return;
 	}
 
+	// ImGui panels handle their own hit-testing; legacy text-cell coordinates
+	// do not map to the new layout.
+	if (gimgui_new_ui_active())
+		return;
+
 	if (mouseTransportBar(gt))
 		return;
 

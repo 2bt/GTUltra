@@ -496,36 +496,8 @@ void orderlistcommands(GTOBJECT *gt)
 		}
 		else
 		{
-			if (editorInfo.escolumn > 0)
-			{
-				editorInfo.escolumn--;
-				if (songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] < 0xff)
-				{
-					if (editorInfo.escolumn == 2)
-						editorInfo.escolumn--;
-				}
-			}
-			else
-			{
-				editorInfo.escolumn = 4;
-
-				editorInfo.eschn--;
-				if (editorInfo.eschn < 0)
-					editorInfo.eschn = maxCh - 1;
-
-				setMasterLoopChannel(gt, "debug_1");
-
-			}
-			if (shiftOrCtrlPressed)
-			{
-				if (editorInfo.esmarkchn == -1)
-				{
-					editorInfo.esmarkchn = editorInfo.esmarkchnend = editorInfo.eschn;
-					editorInfo.esmarkstart = editorInfo.esmarkend = editorInfo.eseditpos;
-				}
-				else
-					editorInfo.esmarkchnend = editorInfo.eschn;
-			}
+			if (!ctrlpressed)
+				order_col_left_expanded(gt);
 		}
 
 		break;
@@ -538,34 +510,8 @@ void orderlistcommands(GTOBJECT *gt)
 		}
 		else
 		{
-			editorInfo.escolumn++;
-			if (songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] < 0xff)
-			{
-				if (editorInfo.escolumn == 2)
-					editorInfo.escolumn++;
-			}
-			editorInfo.escolumn %= 5;
-			if (!editorInfo.escolumn)
-			{
-				editorInfo.eschn++;
-				if (editorInfo.eschn >= maxCh)
-					editorInfo.eschn = 0;
-
-				setMasterLoopChannel(gt, "debug_2");
-			}
-
-			if (shiftOrCtrlPressed)
-			{
-				if (editorInfo.esmarkchn == -1)
-				{
-					editorInfo.esmarkchn = editorInfo.esmarkchnend = editorInfo.eschn;
-					editorInfo.esmarkstart = editorInfo.esmarkend = editorInfo.eseditpos;
-				}
-				else
-					editorInfo.esmarkchnend = editorInfo.eschn;
-			}
-
-
+			if (!ctrlpressed)
+				order_col_right_expanded(gt);
 		}
 		break;
 
@@ -2412,6 +2358,84 @@ void order_list_swap_channel(GTOBJECT *gt, int tchn)
 	}
 
 	(void)gt;
+}
+
+static int order_expanded_max_channels(void)
+{
+	if ((editorInfo.maxSIDChannels == 3) || (editorInfo.maxSIDChannels == 9 && (editorInfo.esnum & 1)))
+		return 3;
+	return 6;
+}
+
+void order_col_left_expanded(GTOBJECT *gt)
+{
+	const int maxCh = order_expanded_max_channels();
+
+	if (ctrlpressed)
+		return;
+
+	if (editorInfo.escolumn > 0)
+	{
+		editorInfo.escolumn--;
+		if (songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] < 0xff)
+		{
+			if (editorInfo.escolumn == 2)
+				editorInfo.escolumn--;
+		}
+	}
+	else
+	{
+		editorInfo.escolumn = 4;
+		editorInfo.eschn--;
+		if (editorInfo.eschn < 0)
+			editorInfo.eschn = maxCh - 1;
+		setMasterLoopChannel(gt, "action_order_col_left_exp");
+	}
+
+	if (shiftOrCtrlPressed)
+	{
+		if (editorInfo.esmarkchn == -1)
+		{
+			editorInfo.esmarkchn = editorInfo.esmarkchnend = editorInfo.eschn;
+			editorInfo.esmarkstart = editorInfo.esmarkend = editorInfo.eseditpos;
+		}
+		else
+			editorInfo.esmarkchnend = editorInfo.eschn;
+	}
+}
+
+void order_col_right_expanded(GTOBJECT *gt)
+{
+	const int maxCh = order_expanded_max_channels();
+
+	if (ctrlpressed)
+		return;
+
+	editorInfo.escolumn++;
+	if (songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] < 0xff)
+	{
+		if (editorInfo.escolumn == 2)
+			editorInfo.escolumn++;
+	}
+	editorInfo.escolumn %= 5;
+	if (!editorInfo.escolumn)
+	{
+		editorInfo.eschn++;
+		if (editorInfo.eschn >= maxCh)
+			editorInfo.eschn = 0;
+		setMasterLoopChannel(gt, "action_order_col_right_exp");
+	}
+
+	if (shiftOrCtrlPressed)
+	{
+		if (editorInfo.esmarkchn == -1)
+		{
+			editorInfo.esmarkchn = editorInfo.esmarkchnend = editorInfo.eschn;
+			editorInfo.esmarkstart = editorInfo.esmarkend = editorInfo.eseditpos;
+		}
+		else
+			editorInfo.esmarkchnend = editorInfo.eschn;
+	}
 }
 
 int order_go_pattern(GTOBJECT *gt)

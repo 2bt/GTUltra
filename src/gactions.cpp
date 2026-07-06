@@ -470,7 +470,10 @@ void order_row_down(GTOBJECT* gt) {
 }
 
 void order_col_left(GTOBJECT* gt) {
-    if (editorInfo.expandOrderListView) return;
+    if (editorInfo.expandOrderListView) {
+        order_col_left_expanded(gt);
+        return;
+    }
 
     const int maxCh = order_max_channels();
 
@@ -494,7 +497,10 @@ void order_col_left(GTOBJECT* gt) {
 }
 
 void order_col_right(GTOBJECT* gt) {
-    if (editorInfo.expandOrderListView) return;
+    if (editorInfo.expandOrderListView) {
+        order_col_right_expanded(gt);
+        return;
+    }
 
     const int maxCh = order_max_channels();
 
@@ -1300,11 +1306,9 @@ bool handle_order_action(Action act) {
     case Action::OrderRowUp: order_row_up(gt); return true;
     case Action::OrderRowDown: order_row_down(gt); return true;
     case Action::OrderColLeft:
-        if (editorInfo.expandOrderListView) return false;
         order_col_left(gt);
         return true;
     case Action::OrderColRight:
-        if (editorInfo.expandOrderListView) return false;
         order_col_right(gt);
         return true;
     case Action::OrderPageUp: order_page_up(gt); return true;

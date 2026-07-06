@@ -53,6 +53,8 @@ void order_list_transpose_up(void);
 void order_list_transpose_down(void);
 void order_list_insert_repeat(void);
 void order_list_swap_channel(GTOBJECT *gt, int targetCh);
+void order_col_left_expanded(GTOBJECT *gt);
+void order_col_right_expanded(GTOBJECT *gt);
 int order_go_pattern(GTOBJECT *gt);
 void order_select_patterns(GTOBJECT *gt);
 void order_play_range_start(GTOBJECT *gt);
