@@ -28,7 +28,6 @@ EditPanel edit_panel(); // current keyboard-focus edit mode
 int         table_count();          // number of tables
 int         table_len();            // rows per table
 int         table_visible_rows();   // how many rows the legacy view shows
-const char *table_name(int t);      // display name, "" if out of range
 int         table_view(int t);      // first visible row (scroll offset)
 int         table_cursor_table();   // table index the edit cursor is in
 int         table_cursor_pos();     // cursor row within its table
@@ -89,6 +88,8 @@ PatCell pattern_cell(int ch, int row);
 int  pattern_mark_channel();
 int  pattern_mark_start();
 int  pattern_mark_end();
+int  pattern_octave();           // note input octave (epoctave, 0..6)
+bool pattern_jam_mode();         // true = jam (live keys), false = edit/record-to-pattern
 
 // Move the edit cursor (e.g. from a mouse click in the ImGui grid): switches to
 // pattern-edit mode and positions the cursor. col follows the legacy epcolumn
@@ -106,6 +107,7 @@ struct OrderCell {
 };
 
 int  order_channels();          // visible channel count (3 or 6)
+int  order_subtune();           // current subtune index (esnum)
 int  order_rows();              // rows to render (max order length across channels)
 int  order_cursor_row();        // edit cursor position (eseditpos)
 int  order_cursor_chn();        // edit cursor channel (display index, eschn)

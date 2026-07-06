@@ -8,20 +8,12 @@
 
 namespace gtui {
 
-static const char *kTableNames[MAX_TABLES] = {
-    "WAVE TBL", "PULSETBL", "FILT.TBL", "SPEEDTBL"
-};
 
 EditPanel edit_panel() { return static_cast<EditPanel>(editorInfo.editmode); }
 
 int table_count() { return MAX_TABLES; }
 int table_len() { return MAX_TABLELEN; }
 int table_visible_rows() { return VISIBLETABLEROWS; }
-
-const char *table_name(int t)
-{
-    return (t >= 0 && t < MAX_TABLES) ? kTableNames[t] : "";
-}
 
 int table_view(int t)
 {
@@ -188,9 +180,14 @@ int pattern_mark_channel() { return editorInfo.epmarkchn; }
 int pattern_mark_start() { return editorInfo.epmarkstart; }
 int pattern_mark_end() { return editorInfo.epmarkend; }
 
+int pattern_octave() { return editorInfo.epoctave; }
+
+bool pattern_jam_mode() { return recordmode == 0; }
+
 // ---- order list ----
 
 int order_channels() { return pattern_channels(); } // same 3/6 rule as patterns
+int order_subtune() { return editorInfo.esnum; }
 int order_actual_channel(int ch) { return getActualChannel(editorInfo.esnum, ch); }
 int order_cursor_row() { return editorInfo.eseditpos; }
 int order_cursor_chn() { return editorInfo.eschn; }
