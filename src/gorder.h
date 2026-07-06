@@ -45,4 +45,15 @@ void orderListInsert_External(GTOBJECT *gt);
 void orderListInsertRowAtCursor_External(GTOBJECT *gt, int sng, int chn, int row);
 void orderListDeleteRowAtCursor_External(int sng,int chn, int row);
 void orderListDelete_External();
+void order_list_insert(GTOBJECT *gt);
+void order_list_delete(GTOBJECT *gt);
+void order_list_cut(GTOBJECT *gt);
+void order_list_mark_toggle(void);
+void order_list_transpose_up(void);
+void order_list_transpose_down(void);
+void order_list_insert_repeat(void);
+void order_list_swap_channel(GTOBJECT *gt, int targetCh);
+int order_go_pattern(GTOBJECT *gt);
+void order_play_range_start(GTOBJECT *gt);
+void order_play_range_end(GTOBJECT *gt);
 #endif

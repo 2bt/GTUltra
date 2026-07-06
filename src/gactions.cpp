@@ -70,6 +70,20 @@ const ActionMeta kActionMeta[] = {
     { Action::OrderPageDown,     "OrderPageDown",     "Order list: page down" },
     { Action::OrderHome,         "OrderHome",         "Order list: first row" },
     { Action::OrderEnd,          "OrderEnd",          "Order list: last row" },
+    { Action::OrderInsert,       "OrderInsert",       "Order list: insert row" },
+    { Action::OrderDelete,       "OrderDelete",       "Order list: delete row" },
+    { Action::OrderGoPattern,    "OrderGoPattern",    "Order list: go to pattern" },
+    { Action::OrderCopy,         "OrderCopy",         "Order list: copy" },
+    { Action::OrderCut,          "OrderCut",          "Order list: cut" },
+    { Action::OrderPaste,        "OrderPaste",        "Order list: paste" },
+    { Action::OrderMarkToggle,   "OrderMarkToggle",   "Order list: mark all/none" },
+    { Action::OrderTransposeUp,  "OrderTransposeUp",  "Order list: transpose up" },
+    { Action::OrderTransposeDown,"OrderTransposeDown","Order list: transpose down" },
+    { Action::OrderInsertRepeat, "OrderInsertRepeat", "Order list: insert repeat" },
+    { Action::OrderSubtunePrev,  "OrderSubtunePrev",  "Order list: previous subtune" },
+    { Action::OrderSubtuneNext,  "OrderSubtuneNext",  "Order list: next subtune" },
+    { Action::OrderPlayRangeStart,"OrderPlayRangeStart","Order list: play range start" },
+    { Action::OrderPlayRangeEnd, "OrderPlayRangeEnd", "Order list: play range end" },
     { Action::PatternRowUp,      "PatternRowUp",      "Pattern: previous row" },
     { Action::PatternRowDown,    "PatternRowDown",    "Pattern: next row" },
     { Action::PatternColLeft,    "PatternColLeft",    "Pattern: previous column" },
@@ -175,7 +189,7 @@ const Binding kBindings[] = {
     { Action::SongRewind,  Ctx::Global, make_chord(KEY_LEFT, Ctrl) },
     { Action::SongPosNext, Ctx::Global, make_chord(KEY_RIGHT, Ctrl) },
 
-    // Order list — vertical ImGui layout (only when legacy horizontal nav is active)
+    // Order list — ImGui vertical layout
     { Action::OrderRowUp,    Ctx::Order, make_chord(KEY_UP) },
     { Action::OrderRowDown,  Ctx::Order, make_chord(KEY_DOWN) },
     { Action::OrderColLeft,  Ctx::Order, make_chord(KEY_LEFT) },
@@ -184,6 +198,28 @@ const Binding kBindings[] = {
     { Action::OrderPageDown, Ctx::Order, make_chord(KEY_PGDN) },
     { Action::OrderHome,     Ctx::Order, make_chord(KEY_HOME) },
     { Action::OrderEnd,      Ctx::Order, make_chord(KEY_END) },
+    { Action::OrderInsert,   Ctx::Order, make_chord(KEY_INS) },
+    { Action::OrderInsert,   Ctx::Order, make_chord(KEY_DEL, Shift) },
+    { Action::OrderDelete,   Ctx::Order, make_chord(KEY_DEL) },
+    { Action::OrderGoPattern,Ctx::Order, make_chord(KEY_ENTER) },
+    { Action::OrderCopy,     Ctx::Order, make_chord(KEY_C, Shift) },
+    { Action::OrderCut,      Ctx::Order, make_chord(KEY_X, Shift) },
+    { Action::OrderPaste,    Ctx::Order, make_chord(KEY_V, Shift) },
+    { Action::OrderMarkToggle, Ctx::Order, make_chord(KEY_L, Shift) },
+    { Action::OrderTransposeUp,   Ctx::Order, make_chord('+') },
+    { Action::OrderTransposeDown, Ctx::Order, make_chord('-') },
+    { Action::OrderInsertRepeat,  Ctx::Order, make_chord('R') },
+    { Action::OrderInsertRepeat,  Ctx::Order, make_chord('r') },
+    { Action::OrderSubtunePrev, Ctx::Order, make_chord('<') },
+    { Action::OrderSubtunePrev, Ctx::Order, make_chord('[') },
+    { Action::OrderSubtunePrev, Ctx::Order, make_chord('(') },
+    { Action::OrderSubtuneNext, Ctx::Order, make_chord('>') },
+    { Action::OrderSubtuneNext, Ctx::Order, make_chord(']') },
+    { Action::OrderSubtuneNext, Ctx::Order, make_chord(')') },
+    { Action::OrderPlayRangeStart, Ctx::Order, make_chord(KEY_SPACE) },
+    { Action::OrderPlayRangeStart, Ctx::Order, make_chord(KEY_SPACE, Shift) },
+    { Action::OrderPlayRangeEnd,   Ctx::Order, make_chord(KEY_BACKSPACE) },
+    { Action::OrderPlayRangeEnd,   Ctx::Order, make_chord(KEY_BACKSPACE, Shift) },
 
     // Pattern editor — unmodified arrow keys
     { Action::PatternRowUp,    Ctx::Pattern, make_chord(KEY_UP) },
@@ -915,6 +951,56 @@ bool handle_order_action(Action act) {
     case Action::OrderPageDown: order_page_down(gt); return true;
     case Action::OrderHome: order_nav_home(gt); return true;
     case Action::OrderEnd: order_nav_end(gt); return true;
+    case Action::OrderInsert:
+        order_list_insert(gt);
+        return true;
+    case Action::OrderDelete:
+        order_list_delete(gt);
+        return true;
+    case Action::OrderGoPattern:
+        order_go_pattern(gt);
+        return true;
+    case Action::OrderCopy:
+        if (editorInfo.expandOrderListView == 0)
+            orderListCopyMarkedArea();
+        else
+            orderListCopyMarkedArea_Expanded();
+        return true;
+    case Action::OrderCut:
+        order_list_cut(gt);
+        return true;
+    case Action::OrderPaste:
+        if (editorInfo.expandOrderListView == 0)
+            orderListPasteToCursor(gt);
+        else {
+            int transposeOnly = editorInfo.escolumn > 2 ? 1 : 0;
+            orderListPasteToCursor_External(gt, 0, transposeOnly);
+        }
+        return true;
+    case Action::OrderMarkToggle:
+        order_list_mark_toggle();
+        return true;
+    case Action::OrderTransposeUp:
+        order_list_transpose_up();
+        return true;
+    case Action::OrderTransposeDown:
+        order_list_transpose_down();
+        return true;
+    case Action::OrderInsertRepeat:
+        order_list_insert_repeat();
+        return true;
+    case Action::OrderSubtunePrev:
+        prevsong(gt);
+        return true;
+    case Action::OrderSubtuneNext:
+        nextsong(gt);
+        return true;
+    case Action::OrderPlayRangeStart:
+        order_play_range_start(gt);
+        return true;
+    case Action::OrderPlayRangeEnd:
+        order_play_range_end(gt);
+        return true;
     default: return false;
     }
 }
@@ -1002,8 +1088,14 @@ const char* action_label(Action a) {
 bool dispatch_order_navigation() {
     if (editorInfo.editmode != EDIT_ORDERLIST) return false;
 
-    // Vertical arrow remapping only applies to the ImGui order panel.
+    // Vertical layout and editing actions apply to the ImGui order panel.
     if (!gimgui_new_ui_active()) return false;
+
+    if (shiftpressed && !ctrlpressed && rawkey >= KEY_1 && rawkey <= KEY_6) {
+        order_list_swap_channel(&gtObject, rawkey - KEY_1);
+        clear_input();
+        return true;
+    }
 
     const Chord  chord = chord_from_input(rawkey, key, shiftpressed, ctrlpressed);
     const Action act   = resolve(Ctx::Order, chord);
@@ -1155,7 +1247,21 @@ bool perform(Action act) {
     case Action::OrderPageUp:
     case Action::OrderPageDown:
     case Action::OrderHome:
-    case Action::OrderEnd: return handle_order_action(act);
+    case Action::OrderEnd:
+    case Action::OrderInsert:
+    case Action::OrderDelete:
+    case Action::OrderGoPattern:
+    case Action::OrderCopy:
+    case Action::OrderCut:
+    case Action::OrderPaste:
+    case Action::OrderMarkToggle:
+    case Action::OrderTransposeUp:
+    case Action::OrderTransposeDown:
+    case Action::OrderInsertRepeat:
+    case Action::OrderSubtunePrev:
+    case Action::OrderSubtuneNext:
+    case Action::OrderPlayRangeStart:
+    case Action::OrderPlayRangeEnd: return handle_order_action(act);
     case Action::PatternRowUp:
     case Action::PatternRowDown:
     case Action::PatternColLeft:

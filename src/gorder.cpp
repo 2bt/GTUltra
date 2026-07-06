@@ -2245,3 +2245,285 @@ void orderListDelete_External()
 	editorInfo.esmarkchn = -1;
 	editorInfo.esmarkchnend = -1;
 }
+
+void order_list_insert(GTOBJECT *gt)
+{
+	if (editorInfo.expandOrderListView != 0)
+		return;
+	editorInfo.esmarkchn = -1;
+	editorInfo.esmarkchnend = -1;
+	insertorder(0, gt);
+	playUntilEnd(editorInfo.esnum);
+	(void)gt;
+}
+
+void order_list_delete(GTOBJECT *gt)
+{
+	if (editorInfo.expandOrderListView != 0)
+		return;
+	editorInfo.esmarkchn = -1;
+	editorInfo.esmarkchnend = -1;
+	deleteorder(gt);
+	playUntilEnd(editorInfo.esnum);
+}
+
+void order_list_cut(GTOBJECT *gt)
+{
+	int c;
+
+	if (editorInfo.expandOrderListView != 0)
+		return;
+
+	if (editorInfo.esmarkchn == -1)
+	{
+		editorInfo.esmarkchn = editorInfo.eschn;
+		editorInfo.esmarkstart = editorInfo.eseditpos;
+		editorInfo.esmarkend = editorInfo.esmarkstart;
+	}
+
+	if (editorInfo.esmarkchn == -1)
+		return;
+
+	int d = 0;
+	editorInfo.eschn = editorInfo.esmarkchn;
+	if (editorInfo.esmarkstart <= editorInfo.esmarkend)
+	{
+		editorInfo.eseditpos = editorInfo.esmarkstart;
+		for (c = editorInfo.esmarkstart; c <= editorInfo.esmarkend; c++)
+			trackcopybuffer[d++] = songorder[editorInfo.esnum][editorInfo.eschn][c];
+		trackcopyrows = d;
+	}
+	else
+	{
+		editorInfo.eseditpos = editorInfo.esmarkend;
+		for (c = editorInfo.esmarkend; c <= editorInfo.esmarkstart; c++)
+			trackcopybuffer[d++] = songorder[editorInfo.esnum][editorInfo.eschn][c];
+		trackcopyrows = d;
+	}
+	if (trackcopyrows == songlen[editorInfo.esnum][editorInfo.eschn])
+	{
+		trackcopywhole = 1;
+		trackcopyrpos = songorder[editorInfo.esnum][editorInfo.eschn][songlen[editorInfo.esnum][editorInfo.eschn] + 1];
+	}
+	else
+		trackcopywhole = 0;
+	for (c = 0; c < trackcopyrows; c++)
+		deleteorder(gt);
+	editorInfo.esmarkchn = -1;
+	editorInfo.esmarkchnend = -1;
+}
+
+void order_list_mark_toggle(void)
+{
+	if (editorInfo.expandOrderListView != 0)
+		return;
+
+	if (editorInfo.esmarkchn == -1)
+	{
+		editorInfo.esmarkend = songlen[editorInfo.esnum][editorInfo.eschn] - 1;
+		editorInfo.esmarkchn = editorInfo.eschn;
+		editorInfo.esmarkchnend = editorInfo.esmarkchn;
+		editorInfo.esmarkstart = 0;
+	}
+	else
+	{
+		editorInfo.esmarkchn = -1;
+		editorInfo.esmarkchnend = -1;
+	}
+}
+
+void order_list_transpose_up(void)
+{
+	if (editorInfo.expandOrderListView != 0)
+		return;
+	if (editorInfo.eseditpos < songlen[editorInfo.esnum][editorInfo.eschn])
+	{
+		songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] = TRANSUP;
+		editorInfo.escolumn = 1;
+	}
+}
+
+void order_list_transpose_down(void)
+{
+	if (editorInfo.expandOrderListView != 0)
+		return;
+	if (editorInfo.eseditpos < songlen[editorInfo.esnum][editorInfo.eschn])
+	{
+		songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] = TRANSDOWN + 0x0F;
+		editorInfo.escolumn = 1;
+	}
+}
+
+void order_list_insert_repeat(void)
+{
+	if (editorInfo.expandOrderListView != 0)
+		return;
+	if (editorInfo.eseditpos < songlen[editorInfo.esnum][editorInfo.eschn])
+	{
+		songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] = REPEAT + 0x01;
+		editorInfo.escolumn = 1;
+	}
+}
+
+void order_list_swap_channel(GTOBJECT *gt, int tchn)
+{
+	int c;
+	const int schn = editorInfo.eschn;
+
+	if (tchn < 0 || tchn > 5 || schn == tchn)
+		return;
+
+	editorInfo.esmarkchn = -1;
+	editorInfo.esmarkchnend = -1;
+
+	int lentemp = songlen[editorInfo.esnum][schn];
+	songlen[editorInfo.esnum][schn] = songlen[editorInfo.esnum][tchn];
+	songlen[editorInfo.esnum][tchn] = lentemp;
+
+	for (c = 0; c < MAX_SONGLEN + 2; c++)
+	{
+		unsigned char temp = songorder[editorInfo.esnum][schn][c];
+		songorder[editorInfo.esnum][schn][c] = songorder[editorInfo.esnum][tchn][c];
+		songorder[editorInfo.esnum][tchn][c] = temp;
+	}
+
+	lentemp = songOrderLength[editorInfo.esnum][schn];
+	songOrderLength[editorInfo.esnum][schn] = songOrderLength[editorInfo.esnum][tchn];
+	songOrderLength[editorInfo.esnum][tchn] = lentemp;
+
+	for (c = 0; c < MAX_SONGLEN_EXPANDED; c++)
+	{
+		unsigned char temp = songOrderPatterns[editorInfo.esnum][schn][c];
+		songOrderPatterns[editorInfo.esnum][schn][c] = songOrderPatterns[editorInfo.esnum][tchn][c];
+		songOrderPatterns[editorInfo.esnum][tchn][c] = temp;
+
+		short stemp = songOrderTranspose[editorInfo.esnum][schn][c];
+		songOrderTranspose[editorInfo.esnum][schn][c] = songOrderTranspose[editorInfo.esnum][tchn][c];
+		songOrderTranspose[editorInfo.esnum][tchn][c] = stemp;
+	}
+
+	(void)gt;
+}
+
+int order_go_pattern(GTOBJECT *gt)
+{
+	int ret;
+
+	if (editorInfo.expandOrderListView == 0)
+		ret = handleEnterInCompressedView(gt);
+	else
+		ret = handleEnterInExpandedView(gt);
+
+	if (ret)
+	{
+		editorInfo.epmarkchn = -1;
+		editorInfo.epchn = editorInfo.eschn;
+		editorInfo.epcolumn = 0;
+		editorInfo.eppos = 0;
+		editorInfo.epview = -VISIBLEPATTROWS / 2;
+		editorInfo.editmode = EDIT_PATTERN;
+		if (editorInfo.epchn == editorInfo.epmarkchn)
+			editorInfo.epmarkchn = -1;
+	}
+	return ret;
+}
+
+void order_play_range_start(GTOBJECT *gt)
+{
+	if (!shiftOrCtrlPressed)
+	{
+		int c2 = getActualChannel(editorInfo.esnum, editorInfo.eschn);
+
+		if (editorInfo.expandOrderListView == 0)
+		{
+			if (editorInfo.eseditpos < songlen[editorInfo.esnum][editorInfo.eschn])
+				gt->editorUndoInfo.editorInfo[c2].espos = editorInfo.eseditpos;
+		}
+		else
+		{
+			if (editorInfo.eseditpos < songOrderLength[editorInfo.esnum][editorInfo.eschn])
+				gt->editorUndoInfo.editorInfo[c2].espos = editorInfo.eseditpos;
+		}
+		if (gt->editorUndoInfo.editorInfo[c2].esend < gt->editorUndoInfo.editorInfo[c2].espos)
+			gt->editorUndoInfo.editorInfo[c2].esend = 0;
+	}
+	else
+	{
+		for (int c = 0; c < editorInfo.maxSIDChannels; c++)
+		{
+			int c2 = getActualChannel(editorInfo.esnum, c);
+			int songNum = getActualSongNumber(editorInfo.esnum, c2);
+			int c3 = c2 % 6;
+
+			if (editorInfo.expandOrderListView == 0)
+			{
+				if (editorInfo.eseditpos < songlen[songNum][c3])
+					gt->editorUndoInfo.editorInfo[c2].espos = editorInfo.eseditpos;
+			}
+			else
+			{
+				if (editorInfo.eseditpos < songOrderLength[songNum][c3])
+					gt->editorUndoInfo.editorInfo[c2].espos = editorInfo.eseditpos;
+			}
+			if (gt->editorUndoInfo.editorInfo[c2].esend < gt->editorUndoInfo.editorInfo[c2].espos)
+				gt->editorUndoInfo.editorInfo[c2].esend = 0;
+		}
+	}
+}
+
+void order_play_range_end(GTOBJECT *gt)
+{
+	if (!shiftOrCtrlPressed)
+	{
+		int c2 = getActualChannel(editorInfo.esnum, editorInfo.eschn);
+
+		if ((gt->editorUndoInfo.editorInfo[c2].esend != editorInfo.eseditpos) &&
+		    (editorInfo.eseditpos > gt->editorUndoInfo.editorInfo[c2].espos))
+		{
+			if (editorInfo.expandOrderListView == 0)
+			{
+				if (editorInfo.eseditpos < songlen[editorInfo.esnum][editorInfo.eschn])
+					gt->editorUndoInfo.editorInfo[c2].esend = editorInfo.eseditpos;
+			}
+			else
+			{
+				if (editorInfo.eseditpos < songOrderLength[editorInfo.esnum][editorInfo.eschn])
+					gt->editorUndoInfo.editorInfo[c2].esend = editorInfo.eseditpos;
+			}
+		}
+		else
+			gt->editorUndoInfo.editorInfo[c2].esend = 0;
+	}
+	else
+	{
+		int c2 = getActualChannel(editorInfo.esnum, editorInfo.eschn);
+
+		if ((gt->editorUndoInfo.editorInfo[c2].esend != editorInfo.eseditpos) &&
+		    (editorInfo.eseditpos > gt->editorUndoInfo.editorInfo[c2].espos))
+		{
+			for (int c = 0; c < editorInfo.maxSIDChannels; c++)
+			{
+				int c3 = c % 6;
+				int playingSong = getActualSongNumber(editorInfo.esnum, c);
+				c2 = getActualChannel(editorInfo.esnum, c);
+
+				if (editorInfo.expandOrderListView == 0)
+				{
+					if (editorInfo.eseditpos < songlen[playingSong][c3])
+						gt->editorUndoInfo.editorInfo[c2].esend = editorInfo.eseditpos;
+				}
+				else
+				{
+					if (editorInfo.eseditpos < songOrderLength[playingSong][c3])
+						gt->editorUndoInfo.editorInfo[c2].esend = editorInfo.eseditpos;
+				}
+			}
+		}
+		else
+		{
+			for (int c = 0; c < editorInfo.maxSIDChannels; c++)
+				gt->editorUndoInfo.editorInfo[c].esend = 0;
+		}
+	}
+}
+
