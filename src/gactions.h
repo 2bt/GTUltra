@@ -116,8 +116,7 @@ enum Mod : uint32_t {
     Alt   = 1u << 18,
 };
 
-constexpr Chord make_chord(int scancode, uint32_t mods = 0)
-{
+constexpr Chord make_chord(int scancode, uint32_t mods = 0) {
     return static_cast<Chord>(static_cast<uint32_t>(scancode & 0xffff) | mods);
 }
 
@@ -125,7 +124,7 @@ constexpr Chord kNoChord = 0;
 
 Ctx context_from_editmode(int editmode);
 
-Chord chord_from_input(int rawkey, int ascii_key, int shift, int ctrl);
+Chord  chord_from_input(int rawkey, int ascii_key, int shift, int ctrl);
 Action resolve(Ctx ctx, Chord chord);
 
 // Default or overridden chord for an action in a context (kNoChord if unbound).

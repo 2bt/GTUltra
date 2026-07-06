@@ -35,44 +35,35 @@ bool g_show_demo   = false; // toggleable ImGui reference/demo window
 bool g_show_new_ui = true;  // false = legacy chargen UI visible for comparison
 
 // Instrument-name overlay editor (InputText while active).
-int  g_instr_name_edit       = -1; // instrument index 1..3F, or -1
-int  g_instr_name_want_focus = -1; // request keyboard focus once when opening
+int  g_instr_name_edit        = -1;    // instrument index 1..3F, or -1
+int  g_instr_name_want_focus  = -1;    // request keyboard focus once when opening
 bool g_instr_name_item_active = false; // InputText had focus last frame
 bool g_instr_name_had_focus   = false; // InputText had focus on a prior frame
 char g_instr_name_buf[gtui::INSTR_NAME_MAX + 1];
 
-void gimgui_instr_name_commit()
-{
-    if (g_instr_name_edit < gtui::INSTR_FIRST)
-        return;
+static void gimgui_instr_name_commit() {
+    if (g_instr_name_edit < gtui::INSTR_FIRST) return;
     gtui::instr_set_name(g_instr_name_edit, g_instr_name_buf);
-    g_instr_name_edit         = -1;
-    g_instr_name_want_focus   = -1;
-    g_instr_name_item_active  = false;
-    g_instr_name_had_focus    = false;
+    g_instr_name_edit        = -1;
+    g_instr_name_want_focus  = -1;
+    g_instr_name_item_active = false;
+    g_instr_name_had_focus   = false;
 }
 
-void gimgui_instr_name_begin(int inst)
-{
-    if (inst < gtui::INSTR_FIRST)
-        return;
+void gimgui_instr_name_begin(int inst) {
+    if (inst < gtui::INSTR_FIRST) return;
     gimgui_instr_name_commit();
     g_instr_name_edit       = inst;
     g_instr_name_want_focus = inst;
-    snprintf(g_instr_name_buf, sizeof g_instr_name_buf, "%.*s",
-             gtui::INSTR_NAME_MAX, gtui::instr_name(inst));
+    snprintf(g_instr_name_buf, sizeof g_instr_name_buf, "%.*s", gtui::INSTR_NAME_MAX, gtui::instr_name(inst));
 }
 
 // Commit when the name field had focus and the user left it (not on the first
 // idle frame before InputText attaches — that was clearing the edit immediately).
-static void gimgui_instr_name_sync_focus()
-{
-    if (g_instr_name_edit < gtui::INSTR_FIRST)
-        return;
-    if (g_instr_name_want_focus >= gtui::INSTR_FIRST)
-        return;
-    if (g_instr_name_had_focus && !g_instr_name_item_active)
-        gimgui_instr_name_commit();
+static void gimgui_instr_name_sync_focus() {
+    if (g_instr_name_edit < gtui::INSTR_FIRST) return;
+    if (g_instr_name_want_focus >= gtui::INSTR_FIRST) return;
+    if (g_instr_name_had_focus && !g_instr_name_item_active) gimgui_instr_name_commit();
 }
 
 namespace {
@@ -80,14 +71,14 @@ namespace {
 constexpr ImGuiWindowFlags kNoNavWindowFlags =
     ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
 
-constexpr ImGuiWindowFlags kPanelWindowFlags =
-    ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize |
-    ImGuiWindowFlags_NoCollapse | kNoNavWindowFlags;
+constexpr ImGuiWindowFlags kPanelWindowFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove |
+                                               ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse |
+                                               kNoNavWindowFlags;
 
-constexpr ImGuiWindowFlags kChromeWindowFlags =
-    ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize |
-    ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoScrollbar |
-    ImGuiWindowFlags_NoScrollWithMouse | kNoNavWindowFlags;
+constexpr ImGuiWindowFlags kChromeWindowFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoMove |
+                                                ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse |
+                                                ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse |
+                                                kNoNavWindowFlags;
 
 // Left/top inset for panel body content (must match gimgui_begin_panel).
 constexpr float kPanelBodyPad = 6.0f;
@@ -99,11 +90,9 @@ void gimgui_snap_body_pad_x() { ImGui::SetCursorPosX(kPanelBodyPad); }
 // the rendered bbox and drifts when multiplied across columns. For a single
 // glyph CalcTextSizeA() is usually close to GetCharAdvance(), but layout math
 // should use advance (cursor step), not measured ink width.
-float gimgui_mono_advance()
-{
+float gimgui_mono_advance() {
     ImFontBaked* baked = ImGui::GetFontBaked();
-    if (!baked)
-        return ImGui::GetFontSize();
+    if (!baked) return ImGui::GetFontSize();
     return baked->GetCharAdvance('0');
 }
 
@@ -148,8 +137,7 @@ bool gimgui_grid_body(const char* id,
         ImGui::Separator();
     }
 
-    ImGui::BeginChild("##scroll", ImVec2(0, 0), false,
-                      ImGuiWindowFlags_HorizontalScrollbar | kNoNavWindowFlags);
+    ImGui::BeginChild("##scroll", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar | kNoNavWindowFlags);
     ImDrawList*  dl     = ImGui::GetWindowDrawList();
     const ImVec2 origin = ImGui::GetCursorScreenPos();
     const float  totalH = rows * lineH;
@@ -213,11 +201,7 @@ bool gimgui_grid_body(const char* id,
                       int         followRow,
                       DrawRow     drawRow,
                       OnClick     onClick) {
-    return gimgui_grid_body(id, rows, rowW, lineH, followRow,
-                            [](ImDrawList*, float, float) {},
-                            0.0f, -1,
-                            [](float, float) {},
-                            drawRow, onClick);
+    return gimgui_grid_body(id, rows, rowW, lineH, followRow, [](ImDrawList*, float, float) {}, 0.0f, -1, [](float, float) {}, drawRow, onClick);
 }
 
 template <class HeaderDraw, class DrawRow, class OnClick>
@@ -230,8 +214,7 @@ bool gimgui_grid_body(const char* id,
                       float       headerBandH,
                       DrawRow     drawRow,
                       OnClick     onClick) {
-    return gimgui_grid_body(id, rows, rowW, lineH, followRow, headerDraw, headerBandH, -1,
-                            [](float, float) {}, drawRow, onClick);
+    return gimgui_grid_body(id, rows, rowW, lineH, followRow, headerDraw, headerBandH, -1, [](float, float) {}, drawRow, onClick);
 }
 
 // Draw one SID table as an independently-scrolling column: a fixed header over
@@ -341,8 +324,7 @@ bool gimgui_begin_panel(const char* title, ImVec2 pos, ImVec2 size, bool active)
     const float  hpad = kPanelBodyPad;
     const float  hh   = ImGui::GetTextLineHeight() + hpad * 2.0f;
     dl->AddRectFilled(wp, ImVec2(wp.x + ww, wp.y + hh), active ? kHeaderBgActive : kHeaderBg);
-    if (active)
-        dl->AddRectFilled(ImVec2(wp.x, wp.y + hh - 2.0f), ImVec2(wp.x + ww, wp.y + hh), kHeaderAccent);
+    if (active) dl->AddRectFilled(ImVec2(wp.x, wp.y + hh - 2.0f), ImVec2(wp.x + ww, wp.y + hh), kHeaderAccent);
     dl->AddText(ImVec2(wp.x + hpad, wp.y + hpad), active ? kHeaderTxActive : kHeaderTx, title);
 
     // Inset the body below the header, with a small left/top gutter.
@@ -425,12 +407,12 @@ void gimgui_draw_pattern(ImVec2 pos, ImVec2 size) {
     int playRow[8];
     for (int c = 0; c < chans && c < 8; c++) playRow[c] = gtui::pattern_play_row(c);
 
-    const float charW   = gimgui_mono_advance();
-    const float lineH   = ImGui::GetTextLineHeight();
-    const float rowNumW = gimgui_mono_width(4);
-    const float chanW   = gimgui_mono_width(9);
+    const float charW     = gimgui_mono_advance();
+    const float lineH     = ImGui::GetTextLineHeight();
+    const float rowNumW   = gimgui_mono_width(4);
+    const float chanW     = gimgui_mono_width(9);
     const float chanCellW = gimgui_mono_width(8);
-    const float noteW   = gimgui_mono_width(3);
+    const float noteW     = gimgui_mono_width(3);
 
     // Column headers (fixed, above the scrolling body).
     {
@@ -472,8 +454,7 @@ void gimgui_draw_pattern(ImVec2 pos, ImVec2 size) {
                 const float cx = x + rowNumW + c * chanW;
 
                 // Playing-row highlight (per channel; follows playback).
-                if (r == playRow[c])
-                    dl->AddRectFilled(ImVec2(cx, y), ImVec2(cx + chanCellW, y + lineH), cPlayRow);
+                if (r == playRow[c]) dl->AddRectFilled(ImVec2(cx, y), ImVec2(cx + chanCellW, y + lineH), cPlayRow);
 
                 // Selection background for the marked channel + row range.
                 if (markChn >= 0 && gtui::pattern_actual_channel(c) == markChn && r >= markLo && r <= markHi)
@@ -629,16 +610,15 @@ void gimgui_draw_orderlist(ImVec2 pos, ImVec2 size) {
 // Instrument list (01..3F): custom grid like pattern/order. Hex fields use the
 // legacy nibble editor; the name column uses an on-demand InputText in the grid.
 void gimgui_draw_instruments(ImVec2 pos, ImVec2 size) {
-    if (!gimgui_begin_panel("Instruments", pos, size,
-                            gtui::edit_panel() == gtui::EditPanelInstrument)) {
+    if (!gimgui_begin_panel("Instruments", pos, size, gtui::edit_panel() == gtui::EditPanelInstrument)) {
         gimgui_end_panel();
         return;
     }
 
     gtui::instr_clamp_selection();
 
-    static const char* fieldLabel[gtui::INSTR_FIELDS] = { "AD", "SR", "WA", "PU", "FI",
-                                                          "VB", "VD", "GT", "FW", "PN" };
+    static const char* fieldLabel[gtui::INSTR_FIELDS] = { "AD", "SR", "WP", "PP", "FP",
+                                                          "VP", "VD", "GT", "1W", "PN" };
 
     const ImU32 cCursorRow  = IM_COL32(255, 255, 255, 20);
     const ImU32 cCursorFill = IM_COL32(235, 225, 120, 70);
@@ -647,25 +627,24 @@ void gimgui_draw_instruments(ImVec2 pos, ImVec2 size) {
     const ImU32 cText       = IM_COL32(224, 230, 238, 255);
     const ImU32 cHeader     = IM_COL32(180, 200, 220, 255);
 
-    const int   rows      = gtui::instr_rows();
-    const int   curRow    = gtui::instr_grid_row();
-    const int   curField  = gtui::instr_cursor_field();
-    const int   curNibble = gtui::instr_cursor_nibble();
+    const int rows      = gtui::instr_rows();
+    const int curRow    = gtui::instr_grid_row();
+    const int curField  = gtui::instr_cursor_field();
+    const int curNibble = gtui::instr_cursor_nibble();
 
-    const float charW   = gimgui_mono_advance();
-    const float lineH   = ImGui::GetTextLineHeight();
-    const float idxW    = gimgui_mono_width(3);
-    const float nameW   = gimgui_mono_width(gtui::INSTR_NAME_MAX);
-    const float hexW    = gimgui_mono_width(3);
-    const float totalW  = idxW + nameW + gtui::INSTR_FIELDS * hexW;
+    const float charW  = gimgui_mono_advance();
+    const float lineH  = ImGui::GetTextLineHeight();
+    const float idxW   = gimgui_mono_width(3);
+    const float nameW  = gimgui_mono_width(gtui::INSTR_NAME_MAX);
+    const float hexW   = gimgui_mono_width(3);
+    const float totalW = idxW + nameW + gtui::INSTR_FIELDS * hexW;
 
     // Cumulative column edges (shared by header + rows — no repeated multiply).
     float colX[3 + gtui::INSTR_FIELDS];
     colX[0] = 0.0f;
     colX[1] = idxW;
     colX[2] = idxW + nameW;
-    for (int f = 0; f < gtui::INSTR_FIELDS; f++)
-        colX[3 + f] = colX[2] + (float)f * hexW;
+    for (int f = 0; f < gtui::INSTR_FIELDS; f++) colX[3 + f] = colX[2] + (float)f * hexW;
 
     const int nameEditRow =
         (g_instr_name_edit >= gtui::INSTR_FIRST) ? (g_instr_name_edit - gtui::INSTR_FIRST) : -1;
@@ -689,19 +668,15 @@ void gimgui_draw_instruments(ImVec2 pos, ImVec2 size) {
             const int inst = g_instr_name_edit;
             ImGui::SetCursorScreenPos(ImVec2(gridX + colX[1], rowY));
             ImGui::PushID(inst);
-            ImGui::PushItemWidth(nameW);
+            ImGui::PushItemWidth(-1);
             ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0.0f, 0.0f));
             ImGui::PushItemFlag(ImGuiItemFlags_NoTabStop, true);
-            if (g_instr_name_want_focus == inst)
-                ImGui::SetKeyboardFocusHere();
+            if (g_instr_name_want_focus == inst) ImGui::SetKeyboardFocusHere();
             ImGui::InputText("##iname", g_instr_name_buf, sizeof g_instr_name_buf);
-            if (ImGui::IsItemDeactivatedAfterEdit())
-                gimgui_instr_name_commit();
+            if (ImGui::IsItemDeactivatedAfterEdit()) gimgui_instr_name_commit();
             g_instr_name_item_active = ImGui::IsItemActive();
-            if (g_instr_name_item_active)
-                g_instr_name_had_focus = true;
-            if (g_instr_name_want_focus == inst && g_instr_name_item_active)
-                g_instr_name_want_focus = -1;
+            if (g_instr_name_item_active) g_instr_name_had_focus = true;
+            if (g_instr_name_want_focus == inst && g_instr_name_item_active) g_instr_name_want_focus = -1;
             ImGui::PopItemFlag();
             ImGui::PopStyleVar();
             ImGui::PopItemWidth();
@@ -711,8 +686,7 @@ void gimgui_draw_instruments(ImVec2 pos, ImVec2 size) {
             const int inst = r + gtui::INSTR_FIRST;
             char      buf[32];
 
-            if (r == curRow)
-                dl->AddRectFilled(ImVec2(x, y), ImVec2(x + totalW, y + lineH), cCursorRow);
+            if (r == curRow) dl->AddRectFilled(ImVec2(x, y), ImVec2(x + totalW, y + lineH), cCursorRow);
 
             snprintf(buf, sizeof buf, "%02X", inst);
             dl->AddText(ImVec2(x + colX[0], y), cRowNum, buf);
@@ -762,9 +736,9 @@ void gimgui_draw_instruments(ImVec2 pos, ImVec2 size) {
         });
 
     if (g_instr_name_edit >= gtui::INSTR_FIRST) {
-        if (!nameEditVisible)
-            gimgui_instr_name_commit();
-    } else {
+        if (!nameEditVisible) gimgui_instr_name_commit();
+    }
+    else {
         g_instr_name_item_active = false;
     }
 
@@ -792,8 +766,7 @@ void gimgui_draw_song(ImVec2 pos, ImVec2 size) {
         { "Copyright", gtui::song_copyright, gtui::song_set_copyright },
     };
 
-    float input_width =
-        gimgui_mono_width(gtui::SONG_STR_MAX) + ImGui::GetStyle().FramePadding.x * 2.0f;
+    float input_width = gimgui_mono_width(gtui::SONG_STR_MAX) + ImGui::GetStyle().FramePadding.x * 2.0f;
 
     ImGui::PushItemFlag(ImGuiItemFlags_NoTabStop, true);
     for (int f = 0; f < 3; f++) {
@@ -1051,8 +1024,7 @@ extern "C" void gimgui_event_process(void* sdl_event) {
     const SDL_Event* e = static_cast<const SDL_Event*>(sdl_event);
     // Tab is reserved for edit-mode cycling (action layer / future keymap).
     if (e->type == SDL_KEYDOWN || e->type == SDL_KEYUP) {
-        if (e->key.keysym.scancode == SDL_SCANCODE_TAB)
-            return;
+        if (e->key.keysym.scancode == SDL_SCANCODE_TAB) return;
     }
     ImGui_ImplSDL2_ProcessEvent(e);
 }
@@ -1067,8 +1039,7 @@ extern "C" int gimgui_input_capture(void) {
     if (io.WantCaptureKeyboard) {
         // Let Tab / Shift+Tab through to the action layer even when a text field
         // is focused (NoTabStop on widgets; Tab events are not fed to ImGui).
-        if (!ImGui::IsKeyDown(ImGuiKey_Tab))
-            flags |= 2;
+        if (!ImGui::IsKeyDown(ImGuiKey_Tab)) flags |= 2;
     }
     return flags;
 }
