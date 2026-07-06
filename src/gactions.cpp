@@ -515,36 +515,51 @@ void order_nav_end(GTOBJECT* gt) {
     (void)gt;
 }
 
-void table_col_left(GTOBJECT* gt) {
-    disableEnterToReturnToLastPos = 1;
+static void table_use_raw_hex_mode() {
+    if (gimgui_new_ui_active()) editorInfo.editTableMode = EDIT_TABLE_NONE;
+}
 
-    editorInfo.etcolumn--;
-    if (editorInfo.etcolumn < 0) {
-        editorInfo.etpos -= editorInfo.etview[editorInfo.etnum];
+// Preserve the on-screen row when stepping across table columns (legacy
+// etview[] tracks each column's scroll offset).
+static void table_step_adjacent(int dir) {
+    const int old_t    = editorInfo.etnum;
+    const int vis_row  = editorInfo.etpos - editorInfo.etview[old_t];
+
+    if (dir < 0) {
         editorInfo.etcolumn = 3;
         editorInfo.etnum--;
         if (editorInfo.etnum < 0) editorInfo.etnum = MAX_TABLES - 1;
-        editorInfo.etpos += editorInfo.etview[editorInfo.etnum];
+    }
+    else {
+        editorInfo.etcolumn = 0;
+        editorInfo.etnum++;
+        if (editorInfo.etnum >= MAX_TABLES) editorInfo.etnum = 0;
     }
 
-    editorInfo.editTableMode = editorInfo.etnum + 1;
+    editorInfo.etpos = vis_row + editorInfo.etview[editorInfo.etnum];
+    if (editorInfo.etpos < 0) editorInfo.etpos = 0;
+    if (editorInfo.etpos >= MAX_TABLELEN) editorInfo.etpos = MAX_TABLELEN - 1;
+    validatetableview();
+}
+
+void table_col_left(GTOBJECT* gt) {
+    disableEnterToReturnToLastPos = 1;
+    table_use_raw_hex_mode();
+
+    editorInfo.etcolumn--;
+    if (editorInfo.etcolumn < 0) table_step_adjacent(-1);
+
     if (shiftpressed) editorInfo.etmarknum = -1;
     (void)gt;
 }
 
 void table_col_right(GTOBJECT* gt) {
     disableEnterToReturnToLastPos = 1;
+    table_use_raw_hex_mode();
 
     editorInfo.etcolumn++;
-    if (editorInfo.etcolumn > 3) {
-        editorInfo.etpos -= editorInfo.etview[editorInfo.etnum];
-        editorInfo.etcolumn = 0;
-        editorInfo.etnum++;
-        if (editorInfo.etnum >= MAX_TABLES) editorInfo.etnum = 0;
-        editorInfo.etpos += editorInfo.etview[editorInfo.etnum];
-    }
+    if (editorInfo.etcolumn > 3) table_step_adjacent(+1);
 
-    editorInfo.editTableMode = editorInfo.etnum + 1;
     if (shiftpressed) editorInfo.etmarknum = -1;
     (void)gt;
 }
@@ -855,7 +870,10 @@ bool handle_global_action(Action act) {
 
     case Action::EditModeInstrument:
         if (!shiftOrCtrlPressed) {
-            if (editorInfo.editmode == EDIT_INSTRUMENT) editorInfo.editmode = EDIT_TABLES;
+            if (editorInfo.editmode == EDIT_INSTRUMENT) {
+                editorInfo.editmode = EDIT_TABLES;
+                table_use_raw_hex_mode();
+            }
             else
                 editorInfo.editmode = EDIT_INSTRUMENT;
             disableEnterToReturnToLastPos = 1;
@@ -865,6 +883,7 @@ bool handle_global_action(Action act) {
     case Action::EditModeTables:
         if (!shiftOrCtrlPressed) {
             editorInfo.editmode           = EDIT_TABLES;
+            table_use_raw_hex_mode();
             disableEnterToReturnToLastPos = 1;
         }
         return true;
@@ -1445,6 +1464,8 @@ bool dispatch_table_navigation() {
     if (editorInfo.editmode != EDIT_TABLES) return false;
 
     if (!gimgui_new_ui_active()) return false;
+
+    table_use_raw_hex_mode();
 
     // Ctrl+arrow is global song transport; leave to dispatch_global.
     if (ctrlpressed) return false;

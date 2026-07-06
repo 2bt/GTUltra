@@ -52,6 +52,10 @@ void        table_set(int t, int row, int col, unsigned value);
 // table editor.
 void        table_set_cursor(int t, int row, int col);
 
+// Mirror ImGui scroll offset for table @p t (first visible row). Used so
+// horizontal table switches preserve the on-screen row across columns.
+void        table_set_view(int t, int view_row);
+
 // Recompute tableBackgroundColors for the selected instrument (legacy
 // setTableBackgroundColours). Call once per tables-panel frame before drawing.
 void table_refresh_instr_highlights();

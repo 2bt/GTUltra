@@ -44,11 +44,19 @@ void table_set_cursor(int t, int row, int col)
     if (col < 0) col = 0;
     if (col > 3) col = 3;
 
-    editorInfo.editmode = EDIT_TABLES;
-    editorInfo.editTableMode = t + 1; // EDIT_TABLE_WAVE..SPEED
-    editorInfo.etnum = t;
+    editorInfo.editmode      = EDIT_TABLES;
+    editorInfo.editTableMode = EDIT_TABLE_NONE; // raw II:LL RR hex (not detailed view)
+    editorInfo.etnum         = t;
     editorInfo.etpos = row;
     editorInfo.etcolumn = col;
+}
+
+void table_set_view(int t, int view_row)
+{
+    if (t < 0 || t >= MAX_TABLES) return;
+    if (view_row < 0) view_row = 0;
+    if (view_row >= MAX_TABLELEN) view_row = MAX_TABLELEN - 1;
+    editorInfo.etview[t] = view_row;
 }
 
 unsigned table_left(int t, int row)

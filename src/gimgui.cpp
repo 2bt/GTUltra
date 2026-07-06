@@ -184,7 +184,8 @@ bool gimgui_grid_body(const char* id,
                       PlaceWidget placeWidget,
                       DrawRow     drawRow,
                       OnClick     onClick,
-                      bool        h_scroll = true) {
+                      bool        h_scroll = true,
+                      int*        out_view_row = nullptr) {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
     ImGui::BeginChild(id, ImVec2(0, 0), false, kNoNavWindowFlags);
 
@@ -238,6 +239,7 @@ bool gimgui_grid_body(const char* id,
     int lastRow  = (int)((drawScroll + winH) / lineH) + 1;
     if (firstRow < 0) firstRow = 0;
     if (lastRow > rows) lastRow = rows;
+    if (out_view_row) *out_view_row = firstRow;
     bool widgetPlaced = false;
     for (int r = firstRow; r < lastRow; r++) {
         const float rowY = drawTop + r * lineH;
@@ -262,8 +264,9 @@ bool gimgui_grid_body(const char* id,
                       int         followRow,
                       DrawRow     drawRow,
                       OnClick     onClick,
-                      bool        h_scroll = true) {
-    return gimgui_grid_body(id, rows, rowW, lineH, followRow, [](ImDrawList*, float, float) {}, 0.0f, -1, [](float, float) {}, drawRow, onClick, h_scroll);
+                      bool        h_scroll = true,
+                      int*        out_view_row = nullptr) {
+    return gimgui_grid_body(id, rows, rowW, lineH, followRow, [](ImDrawList*, float, float) {}, 0.0f, -1, [](float, float) {}, drawRow, onClick, h_scroll, out_view_row);
 }
 
 template <class HeaderDraw, class DrawRow, class OnClick>
@@ -276,8 +279,9 @@ bool gimgui_grid_body(const char* id,
                       float       headerBandH,
                       DrawRow     drawRow,
                       OnClick     onClick,
-                      bool        h_scroll = true) {
-    return gimgui_grid_body(id, rows, rowW, lineH, followRow, headerDraw, headerBandH, -1, [](float, float) {}, drawRow, onClick, h_scroll);
+                      bool        h_scroll = true,
+                      int*        out_view_row = nullptr) {
+    return gimgui_grid_body(id, rows, rowW, lineH, followRow, headerDraw, headerBandH, -1, [](float, float) {}, drawRow, onClick, h_scroll, out_view_row);
 }
 
 // Draw one SID table as an independently-scrolling column: a fixed header over
@@ -319,6 +323,7 @@ void gimgui_draw_one_table(int t, float colW, float charW, float lineH) {
     ImGui::Separator();
 
     const float cellW8 = gimgui_mono_width(8);
+    int         viewRow = 0;
     gimgui_grid_body(
         "body",
         tlen,
@@ -343,11 +348,21 @@ void gimgui_draw_one_table(int t, float colW, float charW, float lineH) {
             dl->AddText(ImVec2(x + gimgui_mono_width(3), y), cVal, buf);
         },
         [&](int r, float localX) {
-            int off = (int)(localX / charW);
-            int col = (off <= 3) ? 0 : (off == 4) ? 1 : (off <= 6) ? 2 : 3;
+            const int off = (int)(localX / charW);
+            int       col;
+            if (off <= 3)
+                col = 0; // index area → left high nibble
+            else if (off == 4)
+                col = 1;
+            else if (off <= 6)
+                col = 2;
+            else
+                col = 3;
             gtui::table_set_cursor(t, r, col);
         },
-        false);
+        false,
+        &viewRow);
+    gtui::table_set_view(t, viewRow);
 
     ImGui::EndChild();
 }
