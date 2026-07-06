@@ -276,7 +276,8 @@ into `sdlTexture` inside `gfx_flip`.
 > - Hex input: `consume_legacy_hex_input()` prevents trailing global dispatch
 >   from stealing digit keys after legacy editors consume a nybble.
 > - Legacy `*commands()` key switches gated when ImGui is active (order/table/
->   instrument panels delegate navigation to actions; hex entry only).
+>   instrument/pattern panels delegate navigation to actions; note/hex entry only
+>   in pattern).
 >
 > **Still open:** mouse → actions, `generalcommands()` shrink, refactor
 > `*commands()` off `key`/`rawkey` globals, expanded order list, names panel.

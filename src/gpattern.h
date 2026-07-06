@@ -99,6 +99,8 @@ int patternup(GTOBJECT *gt);
 int patterndown(GTOBJECT *gt);
 void pattern_col_left(GTOBJECT *gt);
 void pattern_col_right(GTOBJECT *gt);
+void pattern_chn_next(GTOBJECT *gt);
+void pattern_chn_prev(GTOBJECT *gt);
 void pattern_nav_up(GTOBJECT *gt);
 void pattern_nav_down(GTOBJECT *gt);
 void pattern_nav_home(GTOBJECT *gt);

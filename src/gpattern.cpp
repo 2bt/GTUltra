@@ -5,6 +5,7 @@
 #define GPATTERN_C
 
 #include "goattrk2.h"
+#include "gimgui.h"
 
 
 unsigned char notekeytbl1[] = { KEY_Z, KEY_S, KEY_X, KEY_D, KEY_C, KEY_V,
@@ -54,19 +55,22 @@ void patterncommands(GTOBJECT *gt, int midiNote)
 //	int songNum = getActualSongNumber(editorInfo.esnum, c2);
 	int c3 = c2 % 6;
 
-	switch (jkey)
+	if (!gimgui_new_ui_active())
 	{
-	case '<':
-	case '(':
-	case '[':
-		prevpattern(gt);
-		break;
+		switch (jkey)
+		{
+		case '<':
+		case '(':
+		case '[':
+			prevpattern(gt);
+			break;
 
-	case '>':
-	case ')':
-	case ']':
-		nextpattern(gt);
-		break;
+		case '>':
+		case ')':
+		case ']':
+			nextpattern(gt);
+			break;
+		}
 	}
 	{
 
@@ -419,6 +423,10 @@ void patterncommands(GTOBJECT *gt, int midiNote)
 
 		}
 	}
+
+	// ImGui pattern panel: navigation/edits via actions; legacy path is note/hex entry.
+	if (gimgui_new_ui_active())
+		goto pattern_tail;
 
 	switch (jrawkey)
 	{
@@ -1118,29 +1126,10 @@ void patterncommands(GTOBJECT *gt, int midiNote)
 		break;
 
 	case KEY_APOST2:
-
-
 		if (!shiftOrCtrlPressed)
-		{
-			editorInfo.epchn++;
-			int maxCh = 6;
-			if (editorInfo.maxSIDChannels == 3 || (editorInfo.maxSIDChannels == 9 && (editorInfo.esnum & 1)))
-				maxCh = 3;
-
-			if (editorInfo.epchn >= maxCh) editorInfo.epchn = 0;
-			if (editorInfo.eppos > pattlen[gt->editorUndoInfo.editorInfo[c2].epnum]) editorInfo.eppos = pattlen[gt->editorUndoInfo.editorInfo[c2].epnum];
-		}
+			pattern_chn_next(gt);
 		else
-		{
-			editorInfo.epchn--;
-			int maxCh = 6;
-			if (editorInfo.maxSIDChannels == 3 || (editorInfo.maxSIDChannels == 9 && (editorInfo.esnum & 1)))
-				maxCh = 3;
-
-			if (editorInfo.epchn < 0) editorInfo.epchn = maxCh - 1;
-			if (editorInfo.eppos > pattlen[gt->editorUndoInfo.editorInfo[c2].epnum]) editorInfo.eppos = pattlen[gt->editorUndoInfo.editorInfo[c2].epnum];
-		}
-
+			pattern_chn_prev(gt);
 		break;
 
 	case KEY_1:
@@ -1153,6 +1142,8 @@ void patterncommands(GTOBJECT *gt, int midiNote)
 			mutechannel(jrawkey - KEY_1, gt);
 		break;
 	}
+
+pattern_tail:
 	if ((keypreset == KEY_DMC) && (hexnybble >= 0) && (hexnybble <= 7) && (!editorInfo.epcolumn))
 	{
 		int oldbyte = pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4];
@@ -1334,6 +1325,28 @@ void pattern_col_right(GTOBJECT *gt)
 	}
 }
 
+
+void pattern_chn_next(GTOBJECT *gt)
+{
+	int c2 = getActualChannel(editorInfo.esnum, editorInfo.epchn);
+	const int maxCh = pattern_max_channels();
+
+	editorInfo.epchn++;
+	if (editorInfo.epchn >= maxCh) editorInfo.epchn = 0;
+	if (editorInfo.eppos > pattlen[gt->editorUndoInfo.editorInfo[c2].epnum])
+		editorInfo.eppos = pattlen[gt->editorUndoInfo.editorInfo[c2].epnum];
+}
+
+void pattern_chn_prev(GTOBJECT *gt)
+{
+	int c2 = getActualChannel(editorInfo.esnum, editorInfo.epchn);
+	const int maxCh = pattern_max_channels();
+
+	editorInfo.epchn--;
+	if (editorInfo.epchn < 0) editorInfo.epchn = maxCh - 1;
+	if (editorInfo.eppos > pattlen[gt->editorUndoInfo.editorInfo[c2].epnum])
+		editorInfo.eppos = pattlen[gt->editorUndoInfo.editorInfo[c2].epnum];
+}
 
 void pattern_col_left(GTOBJECT *gt)
 {

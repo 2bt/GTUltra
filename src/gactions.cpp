@@ -107,6 +107,8 @@ const ActionMeta kActionMeta[] = {
     { Action::PatternSplit,           "PatternSplit",           "Pattern: split" },
     { Action::PatternToggleJam,       "PatternToggleJam",       "Pattern: toggle jam mode" },
     { Action::PatternPlayFromCursor,  "PatternPlayFromCursor",  "Pattern: play from cursor" },
+    { Action::PatternChnNext,         "PatternChnNext",         "Pattern: next channel" },
+    { Action::PatternChnPrev,         "PatternChnPrev",         "Pattern: previous channel" },
     { Action::TableRowUp,             "TableRowUp",             "Table: previous row" },
     { Action::TableRowDown,           "TableRowDown",           "Table: next row" },
     { Action::TableColLeft,           "TableColLeft",           "Table: previous nibble" },
@@ -258,6 +260,12 @@ const Binding kBindings[] = {
     { Action::PatternEnd,            Ctx::Pattern, make_scancode_chord(KEY_END) },
     { Action::PatternPrev,           Ctx::Pattern, make_scancode_chord(KEY_LEFT, Shift) },
     { Action::PatternNext,           Ctx::Pattern, make_scancode_chord(KEY_RIGHT, Shift) },
+    { Action::PatternPrev,           Ctx::Pattern, make_chord('<') },
+    { Action::PatternPrev,           Ctx::Pattern, make_chord('[') },
+    { Action::PatternPrev,           Ctx::Pattern, make_chord('(') },
+    { Action::PatternNext,           Ctx::Pattern, make_chord('>') },
+    { Action::PatternNext,           Ctx::Pattern, make_chord(']') },
+    { Action::PatternNext,           Ctx::Pattern, make_chord(')') },
     { Action::PatternInsert,         Ctx::Pattern, make_scancode_chord(KEY_INS) },
     { Action::PatternInsert,         Ctx::Pattern, make_scancode_chord(KEY_DEL, Shift) },
     { Action::PatternDelete,         Ctx::Pattern, make_scancode_chord(KEY_DEL) },
@@ -273,6 +281,8 @@ const Binding kBindings[] = {
     { Action::PatternSplit,          Ctx::Pattern, make_scancode_chord(KEY_K, Shift) },
     { Action::PatternToggleJam,      Ctx::Pattern, make_scancode_chord(KEY_SPACE) },
     { Action::PatternPlayFromCursor, Ctx::Pattern, make_scancode_chord(KEY_SPACE, Shift) },
+    { Action::PatternChnNext,        Ctx::Pattern, make_scancode_chord(KEY_APOST2) },
+    { Action::PatternChnPrev,        Ctx::Pattern, make_scancode_chord(KEY_APOST2, Shift) },
 
     // SID tables — ImGui four-column layout
     { Action::TableRowUp,       Ctx::Tables, make_scancode_chord(KEY_UP) },
@@ -1060,6 +1070,12 @@ bool handle_pattern_action(Action act) {
     case Action::PatternPlayFromCursor:
         pattern_play_from_cursor(gt);
         return true;
+    case Action::PatternChnNext:
+        pattern_chn_next(gt);
+        return true;
+    case Action::PatternChnPrev:
+        pattern_chn_prev(gt);
+        return true;
     default: return false;
     }
 }
@@ -1594,6 +1610,8 @@ bool perform(Action act) {
     case Action::PatternSplit:
     case Action::PatternToggleJam:
     case Action::PatternPlayFromCursor:
+    case Action::PatternChnNext:
+    case Action::PatternChnPrev:
         ok = handle_pattern_action(act);
         break;
     case Action::TableRowUp:

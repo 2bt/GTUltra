@@ -105,6 +105,8 @@ enum class Action : uint16_t {
     PatternSplit,
     PatternToggleJam,
     PatternPlayFromCursor,
+    PatternChnNext,
+    PatternChnPrev,
 
     TableRowUp,
     TableRowDown,
