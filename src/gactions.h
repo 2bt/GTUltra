@@ -37,6 +37,7 @@ enum class Action : uint16_t {
     EditModeOrder,
     EditModeInstrument,
     EditModeTables,
+    EditModeNames,
 
     PlaySongStart,
     PlayPatternStart,
@@ -89,6 +90,8 @@ enum class Action : uint16_t {
 
     InstrRowUp,
     InstrRowDown,
+    InstrColLeft,
+    InstrColRight,
     InstrPageUp,
     InstrPageDown,
     InstrHome,

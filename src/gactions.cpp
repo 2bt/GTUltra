@@ -8,6 +8,7 @@
 #include "gorder.h"
 #include "ginfo.h"
 #include "gimgui.h"
+#include "guimodel.h"
 #include "gpattern.h"
 #include "gtable.h"
 #include "gdisplay.h"
@@ -43,6 +44,7 @@ const ActionMeta kActionMeta[] = {
     { Action::EditModeOrder,     "EditModeOrder",     "Order list" },
     { Action::EditModeInstrument,"EditModeInstrument","Instrument editor" },
     { Action::EditModeTables,    "EditModeTables",    "Table editor" },
+    { Action::EditModeNames,     "EditModeNames",     "Song metadata" },
     { Action::PlaySongStart,     "PlaySongStart",     "Play from song start" },
     { Action::PlayPatternStart,  "PlayPatternStart",  "Play from pattern start" },
     { Action::PlayCurrent,       "PlayCurrent",       "Play from cursor" },
@@ -88,6 +90,8 @@ const ActionMeta kActionMeta[] = {
     { Action::TableEnd,          "TableEnd",          "Table: last row" },
     { Action::InstrRowUp,        "InstrRowUp",        "Instrument: previous" },
     { Action::InstrRowDown,      "InstrRowDown",      "Instrument: next" },
+    { Action::InstrColLeft,      "InstrColLeft",      "Instrument: previous field" },
+    { Action::InstrColRight,     "InstrColRight",     "Instrument: next field" },
     { Action::InstrPageUp,       "InstrPageUp",       "Instrument: page up" },
     { Action::InstrPageDown,     "InstrPageDown",     "Instrument: page down" },
     { Action::InstrHome,         "InstrHome",         "Instrument: first" },
@@ -114,13 +118,13 @@ const Binding kBindings[] = {
     { Action::ToggleSIDTracker64, Ctx::Global, make_chord(KEY_F12, Shift) },
     { Action::ToggleSIDTracker64, Ctx::Global, make_chord(KEY_F12, Ctrl) },
 
-    // Edit mode
+    // Edit mode (Tab cycle — rebindable via set_binding() / M7 keymap)
     { Action::EditModeNext, Ctx::Global, make_chord(KEY_TAB) },
     { Action::EditModePrev, Ctx::Global, make_chord(KEY_TAB, Shift) },
     { Action::EditModePattern,    Ctx::Global, make_chord(KEY_F5) },
     { Action::EditModeOrder,      Ctx::Global, make_chord(KEY_F6) },
     { Action::EditModeInstrument, Ctx::Global, make_chord(KEY_F7) },
-    { Action::EditModeTables,     Ctx::Global, make_chord(KEY_F8) },
+    { Action::EditModeNames,      Ctx::Global, make_chord(KEY_F8) },
     { Action::PrevMultiplier, Ctx::Global, make_chord(KEY_F5, Shift) },
     { Action::NextMultiplier, Ctx::Global, make_chord(KEY_F6, Shift) },
     { Action::ToggleAdsrOrPan, Ctx::Global, make_chord(KEY_F7, Shift) },
@@ -203,9 +207,11 @@ const Binding kBindings[] = {
     { Action::TableHome,     Ctx::Tables, make_chord(KEY_HOME) },
     { Action::TableEnd,      Ctx::Tables, make_chord(KEY_END) },
 
-    // Instrument list — ImGui table layout
+    // Instrument list — ImGui grid layout
     { Action::InstrRowUp,    Ctx::Instrument, make_chord(KEY_UP) },
     { Action::InstrRowDown,  Ctx::Instrument, make_chord(KEY_DOWN) },
+    { Action::InstrColLeft,  Ctx::Instrument, make_chord(KEY_LEFT) },
+    { Action::InstrColRight, Ctx::Instrument, make_chord(KEY_RIGHT) },
     { Action::InstrPageUp,   Ctx::Instrument, make_chord(KEY_PGUP) },
     { Action::InstrPageDown, Ctx::Instrument, make_chord(KEY_PGDN) },
     { Action::InstrHome,     Ctx::Instrument, make_chord(KEY_HOME) },
@@ -484,7 +490,7 @@ void table_nav_end(GTOBJECT* gt)
 
 void instr_row_up(GTOBJECT* gt)
 {
-    if (editorInfo.einum > 0)
+    if (editorInfo.einum > gtui::INSTR_FIRST)
         editorInfo.einum--;
     else
         editorInfo.einum = MAX_INSTR - 1;
@@ -496,17 +502,17 @@ void instr_row_down(GTOBJECT* gt)
     if (editorInfo.einum < MAX_INSTR - 1)
         editorInfo.einum++;
     else
-        editorInfo.einum = 0;
+        editorInfo.einum = gtui::INSTR_FIRST;
     (void)gt;
 }
 
 void instr_page_up(GTOBJECT* gt)
 {
     int step = VISIBLETABLEROWS;
-    if (editorInfo.einum > step)
+    if (editorInfo.einum > step + gtui::INSTR_FIRST - 1)
         editorInfo.einum -= step;
     else
-        editorInfo.einum = 0;
+        editorInfo.einum = gtui::INSTR_FIRST;
     (void)gt;
 }
 
@@ -521,13 +527,74 @@ void instr_page_down(GTOBJECT* gt)
 
 void instr_nav_home(GTOBJECT* gt)
 {
-    editorInfo.einum = 0;
+    editorInfo.einum = gtui::INSTR_FIRST;
     (void)gt;
 }
 
 void instr_nav_end(GTOBJECT* gt)
 {
     editorInfo.einum = MAX_INSTR - 1;
+    (void)gt;
+}
+
+// Column order matches the grid: Name, AD, SR, …, PN.
+static int instr_vis_field(int vis)
+{
+    return (vis == 0) ? gtui::INSTR_FIELD_NAME : vis - 1;
+}
+
+static int instr_field_vis(int field)
+{
+    return (field == gtui::INSTR_FIELD_NAME) ? 0 : field + 1;
+}
+
+void instr_col_right(GTOBJECT* gt)
+{
+    const int field = (editorInfo.eipos >= LAST_INST) ? gtui::INSTR_FIELD_NAME : editorInfo.eipos;
+    if (field == gtui::INSTR_FIELD_NAME) {
+        editorInfo.eipos    = 0;
+        editorInfo.eicolumn = 0;
+        (void)gt;
+        return;
+    }
+    if (editorInfo.eicolumn < 1) {
+        editorInfo.eicolumn = 1;
+        (void)gt;
+        return;
+    }
+    editorInfo.eicolumn = 0;
+    const int vis = instr_field_vis(field) + 1;
+    if (vis > gtui::INSTR_FIELDS) {
+        editorInfo.eipos    = LAST_INST;
+        editorInfo.eicolumn = 0;
+    } else {
+        editorInfo.eipos = instr_vis_field(vis);
+    }
+    (void)gt;
+}
+
+void instr_col_left(GTOBJECT* gt)
+{
+    const int field = (editorInfo.eipos >= LAST_INST) ? gtui::INSTR_FIELD_NAME : editorInfo.eipos;
+    if (field == gtui::INSTR_FIELD_NAME) {
+        editorInfo.eipos    = gtui::INSTR_FIELDS - 1;
+        editorInfo.eicolumn = 1;
+        (void)gt;
+        return;
+    }
+    if (editorInfo.eicolumn > 0) {
+        editorInfo.eicolumn = 0;
+        (void)gt;
+        return;
+    }
+    const int vis = instr_field_vis(field) - 1;
+    if (vis <= 0) {
+        editorInfo.eipos    = LAST_INST;
+        editorInfo.eicolumn = 0;
+    } else {
+        editorInfo.eipos    = instr_vis_field(vis);
+        editorInfo.eicolumn = 1;
+    }
     (void)gt;
 }
 
@@ -634,16 +701,27 @@ void edit_octave_down()
         editorInfo.epoctave--;
 }
 
+static void instr_clamp_after_global_step()
+{
+    if (!gimgui_new_ui_active())
+        return;
+    if (editorInfo.editmode != EDIT_INSTRUMENT)
+        return;
+    gtui::instr_clamp_selection();
+}
+
 void edit_prev_instr()
 {
     if ((editorInfo.editmode == EDIT_INSTRUMENT && editorInfo.eipos != 9) ||
         editorInfo.editmode == EDIT_TABLES) {
         previnstr();
+        instr_clamp_after_global_step();
         return;
     }
     if (editorInfo.editmode != EDIT_NAMES && editorInfo.editmode != EDIT_ORDERLIST) {
         if (!(editorInfo.editmode == EDIT_INSTRUMENT && editorInfo.eipos == 9))
             previnstr();
+        instr_clamp_after_global_step();
     }
 }
 
@@ -652,11 +730,13 @@ void edit_next_instr()
     if ((editorInfo.editmode == EDIT_INSTRUMENT && editorInfo.eipos != 9) ||
         editorInfo.editmode == EDIT_TABLES) {
         nextinstr();
+        instr_clamp_after_global_step();
         return;
     }
     if (editorInfo.editmode != EDIT_NAMES && editorInfo.editmode != EDIT_ORDERLIST) {
         if (!(editorInfo.editmode == EDIT_INSTRUMENT && editorInfo.eipos >= 9))
             nextinstr();
+        instr_clamp_after_global_step();
     }
 }
 
@@ -745,6 +825,11 @@ bool handle_global_action(Action act)
             editorInfo.editmode = EDIT_TABLES;
             disableEnterToReturnToLastPos = 1;
         }
+        return true;
+
+    case Action::EditModeNames:
+        if (!shiftOrCtrlPressed)
+            editorInfo.editmode = EDIT_NAMES;
         return true;
 
     case Action::SongPosNext:
@@ -979,6 +1064,12 @@ bool handle_instrument_action(Action act)
         return true;
     case Action::InstrRowDown:
         instr_row_down(gt);
+        return true;
+    case Action::InstrColLeft:
+        instr_col_left(gt);
+        return true;
+    case Action::InstrColRight:
+        instr_col_right(gt);
         return true;
     case Action::InstrPageUp:
         instr_page_up(gt);
@@ -1251,8 +1342,19 @@ bool dispatch_instrument_navigation()
     if (!gimgui_new_ui_active())
         return false;
 
+    if (gimgui_instr_name_editing())
+        return false;
+
     if (ctrlpressed)
         return false;
+
+    // Enter on the name field opens the ImGui editor (replaces legacy editstring).
+    if (rawkey == KEY_ENTER && editorInfo.einum >= gtui::INSTR_FIRST &&
+        editorInfo.eipos >= LAST_INST) {
+        gimgui_instr_name_begin(editorInfo.einum);
+        clear_input();
+        return true;
+    }
 
     const Chord chord = chord_from_input(rawkey, key, shiftpressed, ctrlpressed);
     const Action act  = resolve(Ctx::Instrument, chord);
@@ -1262,6 +1364,8 @@ bool dispatch_instrument_navigation()
     switch (rawkey) {
     case KEY_UP:
     case KEY_DOWN:
+    case KEY_LEFT:
+    case KEY_RIGHT:
     case KEY_PGUP:
     case KEY_PGDN:
         win_enableKeyRepeat();
@@ -1355,6 +1459,8 @@ bool perform(Action act)
         return handle_table_action(act);
     case Action::InstrRowUp:
     case Action::InstrRowDown:
+    case Action::InstrColLeft:
+    case Action::InstrColRight:
     case Action::InstrPageUp:
     case Action::InstrPageDown:
     case Action::InstrHome:

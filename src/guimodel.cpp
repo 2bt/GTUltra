@@ -12,6 +12,8 @@ static const char *kTableNames[MAX_TABLES] = {
     "WAVE TBL", "PULSETBL", "FILT.TBL", "SPEEDTBL"
 };
 
+EditPanel edit_panel() { return static_cast<EditPanel>(editorInfo.editmode); }
+
 int table_count() { return MAX_TABLES; }
 int table_len() { return MAX_TABLELEN; }
 int table_visible_rows() { return VISIBLETABLEROWS; }
@@ -259,9 +261,72 @@ void order_set_cursor(int ch, int row, int col)
 // ---- instruments ----
 
 static bool instr_ok(int i) { return i >= 0 && i < MAX_INSTR; }
+static bool instr_editable(int i) { return i >= INSTR_FIRST && i < MAX_INSTR; }
 
 int instr_count() { return MAX_INSTR; }
+int instr_rows() { return INSTR_GRID_ROWS; }
+
+int instr_grid_row()
+{
+    int i = editorInfo.einum;
+    if (i < INSTR_FIRST)
+        i = INSTR_FIRST;
+    if (i >= MAX_INSTR)
+        i = MAX_INSTR - 1;
+    return i - INSTR_FIRST;
+}
+
 int instr_current() { return editorInfo.einum; }
+
+int instr_cursor_field()
+{
+    if (editorInfo.eipos >= LAST_INST)
+        return INSTR_FIELD_NAME;
+    if (editorInfo.eipos >= 0 && editorInfo.eipos < INSTR_FIELDS)
+        return editorInfo.eipos;
+    return 0;
+}
+
+int instr_cursor_nibble()
+{
+    if (editorInfo.eicolumn < 0)
+        return 0;
+    if (editorInfo.eicolumn > 1)
+        return 1;
+    return editorInfo.eicolumn;
+}
+
+bool instr_cursor_on_name() { return editorInfo.eipos >= LAST_INST; }
+
+void instr_clamp_selection()
+{
+    if (editorInfo.einum < INSTR_FIRST)
+        editorInfo.einum = INSTR_FIRST;
+    if (editorInfo.einum >= MAX_INSTR)
+        editorInfo.einum = MAX_INSTR - 1;
+}
+
+void instr_set_cursor(int inst, int field, int nibble)
+{
+    if (!instr_editable(inst))
+        return;
+    editorInfo.editmode = EDIT_INSTRUMENT;
+    editorInfo.einum    = inst;
+    if (field == INSTR_FIELD_NAME) {
+        editorInfo.eipos    = LAST_INST;
+        editorInfo.eicolumn = 0;
+        return;
+    }
+    if (field < 0 || field >= INSTR_FIELDS)
+        return;
+    editorInfo.eipos = field;
+    if (nibble < 0)
+        nibble = 0;
+    if (nibble > 1)
+        nibble = 1;
+    editorInfo.eicolumn = nibble;
+}
+
 const char *instr_name(int i) { return instr_ok(i) ? instr[i].name : ""; }
 int instr_ad(int i) { return instr_ok(i) ? instr[i].ad : 0; }
 int instr_sr(int i) { return instr_ok(i) ? instr[i].sr : 0; }
@@ -277,9 +342,10 @@ int instr_pan(int i) { return instr_ok(i) ? instr[i].pan : 0; }
 
 void instr_select(int i)
 {
-    if (!instr_ok(i)) return;
+    if (!instr_editable(i))
+        return;
     editorInfo.editmode = EDIT_INSTRUMENT;
-    editorInfo.einum = i;
+    editorInfo.einum    = i;
 }
 
 static unsigned char *instr_field_ptr(int i, int field)

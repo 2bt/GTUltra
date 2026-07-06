@@ -1353,7 +1353,8 @@ void docommand(void)
 		break;
 
 	case EDIT_NAMES:
-		namecommands(gt);
+		if (!gimgui_new_ui_active())
+			namecommands(gt);
 		break;
 	}
 

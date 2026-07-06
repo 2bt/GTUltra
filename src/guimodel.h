@@ -14,6 +14,16 @@
 
 namespace gtui {
 
+// Legacy editorInfo.editmode values (SDL-free mirror of goattrk2.h).
+enum EditPanel : int {
+    EditPanelPattern    = 0,
+    EditPanelOrder      = 1,
+    EditPanelInstrument = 2,
+    EditPanelTables     = 3,
+    EditPanelNames      = 4,
+};
+EditPanel edit_panel(); // current keyboard-focus edit mode
+
 // ---- SID tables (wave / pulse / filter / speed) ----
 int         table_count();          // number of tables
 int         table_len();            // rows per table
@@ -114,6 +124,19 @@ int         instr_gatetimer(int i);
 int         instr_firstwave(int i);
 int         instr_pan(int i);
 void        instr_select(int i);    // click -> select instrument (EDIT_INSTRUMENT)
+
+// Editable instruments are 01..3F; instrument 00 is hidden and not selectable.
+enum { INSTR_FIRST = 1 };
+enum { INSTR_GRID_ROWS = 63 }; // MAX_INSTR (64) minus instrument 00
+enum { INSTR_FIELD_NAME = 10 }; // maps to legacy eipos == LAST_INST
+
+int         instr_rows();           // visible row count (63)
+int         instr_grid_row();       // 0-based row for cursor instrument (einum - 1)
+int         instr_cursor_field();   // 0..9 hex field, or INSTR_FIELD_NAME
+int         instr_cursor_nibble();  // 0 high / 1 low nibble (hex fields only)
+bool        instr_cursor_on_name();
+void        instr_set_cursor(int inst, int field, int nibble);
+void        instr_clamp_selection(); // coerce einum to 1..3F
 
 // Edits routed through the legacy undo system (Ctrl-Z works). field indices:
 // 0 AD, 1 SR, 2..5 wave/pulse/filter/vibrato pointers, 6 vib delay, 7 gate
