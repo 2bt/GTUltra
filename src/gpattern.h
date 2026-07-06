@@ -110,6 +110,15 @@ void expandpattern(GTOBJECT *gt);
 void splitpattern(GTOBJECT *gt);
 void joinpattern(GTOBJECT *gt);
 
+void pattern_list_insert(GTOBJECT *gt);
+void pattern_list_delete(GTOBJECT *gt);
+void pattern_copy_or_cut(GTOBJECT *gt, int cut);
+void pattern_paste(GTOBJECT *gt);
+void pattern_mark_toggle(void);
+void pattern_toggle_jam(void);
+void pattern_play_from_cursor(GTOBJECT *gt);
+void pattern_mute_channel(GTOBJECT *gt, int ch);
+
 void displayPatternInfo(GTOBJECT *gt);
 void handleShiftSpace(GTOBJECT *gt, int playChannel, int startPatternPos, int follow, int enableLoop);
 int handlePolyphonicKeyboard(GTOBJECT *gt);

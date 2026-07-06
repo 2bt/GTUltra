@@ -33,92 +33,104 @@ struct Binding {
 };
 
 const ActionMeta kActionMeta[] = {
-    { Action::Save,              "Save",              "Save song" },
-    { Action::Undo,              "Undo",              "Undo" },
-    { Action::Quit,              "Quit",              "Quit" },
-    { Action::Clear,             "Clear",             "Clear song" },
-    { Action::Help,              "Help",              "Help" },
-    { Action::EditModeNext,      "EditModeNext",      "Next edit mode" },
-    { Action::EditModePrev,      "EditModePrev",      "Previous edit mode" },
-    { Action::EditModePattern,   "EditModePattern",   "Pattern editor" },
-    { Action::EditModeOrder,     "EditModeOrder",     "Order list" },
-    { Action::EditModeInstrument,"EditModeInstrument","Instrument editor" },
-    { Action::EditModeTables,    "EditModeTables",    "Table editor" },
-    { Action::EditModeNames,     "EditModeNames",     "Song metadata" },
-    { Action::PlaySongStart,     "PlaySongStart",     "Play from song start" },
-    { Action::PlayPatternStart,  "PlayPatternStart",  "Play from pattern start" },
-    { Action::PlayCurrent,       "PlayCurrent",       "Play from cursor" },
-    { Action::Stop,              "Stop",              "Stop playback" },
-    { Action::PlayFromBeginning, "PlayFromBeginning", "Play from beginning" },
-    { Action::PlayPatternMode,   "PlayPatternMode",   "Play pattern" },
-    { Action::ToggleFollow,      "ToggleFollow",      "Toggle follow mode" },
-    { Action::ToggleLoop,        "ToggleLoop",        "Toggle pattern loop" },
-    { Action::SongPosNext,       "SongPosNext",       "Next song position" },
-    { Action::SongPosPrev,       "SongPosPrev",       "Previous song position" },
-    { Action::Relocate,          "Relocate",          "Open relocator" },
-    { Action::LoadSong,          "LoadSong",          "Load song" },
-    { Action::SaveSong,          "SaveSong",          "Save song" },
-    { Action::OctaveUp,          "OctaveUp",          "Octave up" },
-    { Action::OctaveDown,        "OctaveDown",        "Octave down" },
-    { Action::PrevInstr,         "PrevInstr",         "Previous instrument" },
-    { Action::NextInstr,         "NextInstr",         "Next instrument" },
-    { Action::OrderRowUp,        "OrderRowUp",        "Order list: previous row" },
-    { Action::OrderRowDown,      "OrderRowDown",      "Order list: next row" },
-    { Action::OrderColLeft,      "OrderColLeft",      "Order list: previous channel" },
-    { Action::OrderColRight,     "OrderColRight",     "Order list: next channel" },
-    { Action::OrderPageUp,       "OrderPageUp",       "Order list: page up" },
-    { Action::OrderPageDown,     "OrderPageDown",     "Order list: page down" },
-    { Action::OrderHome,         "OrderHome",         "Order list: first row" },
-    { Action::OrderEnd,          "OrderEnd",          "Order list: last row" },
-    { Action::OrderInsert,       "OrderInsert",       "Order list: insert row" },
-    { Action::OrderDelete,       "OrderDelete",       "Order list: delete row" },
-    { Action::OrderGoPattern,    "OrderGoPattern",    "Order list: go to pattern" },
-    { Action::OrderCopy,         "OrderCopy",         "Order list: copy" },
-    { Action::OrderCut,          "OrderCut",          "Order list: cut" },
-    { Action::OrderPaste,        "OrderPaste",        "Order list: paste" },
-    { Action::OrderMarkToggle,   "OrderMarkToggle",   "Order list: mark all/none" },
-    { Action::OrderTransposeUp,  "OrderTransposeUp",  "Order list: transpose up" },
-    { Action::OrderTransposeDown,"OrderTransposeDown","Order list: transpose down" },
-    { Action::OrderInsertRepeat, "OrderInsertRepeat", "Order list: insert repeat" },
-    { Action::OrderSubtunePrev,  "OrderSubtunePrev",  "Order list: previous subtune" },
-    { Action::OrderSubtuneNext,  "OrderSubtuneNext",  "Order list: next subtune" },
-    { Action::OrderPlayRangeStart,"OrderPlayRangeStart","Order list: play range start" },
-    { Action::OrderPlayRangeEnd, "OrderPlayRangeEnd", "Order list: play range end" },
-    { Action::PatternRowUp,      "PatternRowUp",      "Pattern: previous row" },
-    { Action::PatternRowDown,    "PatternRowDown",    "Pattern: next row" },
-    { Action::PatternColLeft,    "PatternColLeft",    "Pattern: previous column" },
-    { Action::PatternColRight,   "PatternColRight",   "Pattern: next column" },
-    { Action::PatternPageUp,     "PatternPageUp",     "Pattern: page up" },
-    { Action::PatternPageDown,   "PatternPageDown",   "Pattern: page down" },
-    { Action::PatternHome,       "PatternHome",       "Pattern: first row" },
-    { Action::PatternEnd,        "PatternEnd",        "Pattern: last row" },
-    { Action::PatternPrev,       "PatternPrev",       "Pattern: previous pattern" },
-    { Action::PatternNext,       "PatternNext",       "Pattern: next pattern" },
-    { Action::TableRowUp,        "TableRowUp",        "Table: previous row" },
-    { Action::TableRowDown,      "TableRowDown",      "Table: next row" },
-    { Action::TableColLeft,      "TableColLeft",      "Table: previous table" },
-    { Action::TableColRight,     "TableColRight",     "Table: next table" },
-    { Action::TablePageUp,       "TablePageUp",       "Table: page up" },
-    { Action::TablePageDown,     "TablePageDown",     "Table: page down" },
-    { Action::TableHome,         "TableHome",         "Table: first row" },
-    { Action::TableEnd,          "TableEnd",          "Table: last row" },
-    { Action::InstrRowUp,        "InstrRowUp",        "Instrument: previous" },
-    { Action::InstrRowDown,      "InstrRowDown",      "Instrument: next" },
-    { Action::InstrColLeft,      "InstrColLeft",      "Instrument: previous field" },
-    { Action::InstrColRight,     "InstrColRight",     "Instrument: next field" },
-    { Action::InstrPageUp,       "InstrPageUp",       "Instrument: page up" },
-    { Action::InstrPageDown,     "InstrPageDown",     "Instrument: page down" },
-    { Action::InstrHome,         "InstrHome",         "Instrument: first" },
-    { Action::InstrEnd,          "InstrEnd",          "Instrument: last" },
-    { Action::ToggleSIDTracker64,"ToggleSIDTracker64","Toggle SIDTracker64 mode" },
-    { Action::PrevMultiplier,    "PrevMultiplier",    "Previous speed multiplier" },
-    { Action::NextMultiplier,    "NextMultiplier",    "Next speed multiplier" },
-    { Action::ToggleAdsrOrPan,   "ToggleAdsrOrPan",   "Toggle ADSR / pan edit" },
-    { Action::ToggleSidModel,    "ToggleSidModel",    "Toggle SID model" },
-    { Action::CycleStereoMode,   "CycleStereoMode",   "Cycle stereo mode" },
-    { Action::FastRelocate,      "FastRelocate",      "Fast relocate export" },
-    { Action::SaveWav,           "SaveWav",           "Save WAV" },
-    { Action::SongRewind,        "SongRewind",        "Rewind song position" },
+    { Action::Save,                   "Save",                   "Save song" },
+    { Action::Undo,                   "Undo",                   "Undo" },
+    { Action::Quit,                   "Quit",                   "Quit" },
+    { Action::Clear,                  "Clear",                  "Clear song" },
+    { Action::Help,                   "Help",                   "Help" },
+    { Action::EditModeNext,           "EditModeNext",           "Next edit mode" },
+    { Action::EditModePrev,           "EditModePrev",           "Previous edit mode" },
+    { Action::EditModePattern,        "EditModePattern",        "Pattern editor" },
+    { Action::EditModeOrder,          "EditModeOrder",          "Order list" },
+    { Action::EditModeInstrument,     "EditModeInstrument",     "Instrument editor" },
+    { Action::EditModeTables,         "EditModeTables",         "Table editor" },
+    { Action::EditModeNames,          "EditModeNames",          "Song metadata" },
+    { Action::PlaySongStart,          "PlaySongStart",          "Play from song start" },
+    { Action::PlayPatternStart,       "PlayPatternStart",       "Play from pattern start" },
+    { Action::PlayCurrent,            "PlayCurrent",            "Play from cursor" },
+    { Action::Stop,                   "Stop",                   "Stop playback" },
+    { Action::PlayFromBeginning,      "PlayFromBeginning",      "Play from beginning" },
+    { Action::PlayPatternMode,        "PlayPatternMode",        "Play pattern" },
+    { Action::ToggleFollow,           "ToggleFollow",           "Toggle follow mode" },
+    { Action::ToggleLoop,             "ToggleLoop",             "Toggle pattern loop" },
+    { Action::SongPosNext,            "SongPosNext",            "Next song position" },
+    { Action::SongPosPrev,            "SongPosPrev",            "Previous song position" },
+    { Action::Relocate,               "Relocate",               "Open relocator" },
+    { Action::LoadSong,               "LoadSong",               "Load song" },
+    { Action::SaveSong,               "SaveSong",               "Save song" },
+    { Action::OctaveUp,               "OctaveUp",               "Octave up" },
+    { Action::OctaveDown,             "OctaveDown",             "Octave down" },
+    { Action::PrevInstr,              "PrevInstr",              "Previous instrument" },
+    { Action::NextInstr,              "NextInstr",              "Next instrument" },
+    { Action::OrderRowUp,             "OrderRowUp",             "Order list: previous row" },
+    { Action::OrderRowDown,           "OrderRowDown",           "Order list: next row" },
+    { Action::OrderColLeft,           "OrderColLeft",           "Order list: previous channel" },
+    { Action::OrderColRight,          "OrderColRight",          "Order list: next channel" },
+    { Action::OrderPageUp,            "OrderPageUp",            "Order list: page up" },
+    { Action::OrderPageDown,          "OrderPageDown",          "Order list: page down" },
+    { Action::OrderHome,              "OrderHome",              "Order list: first row" },
+    { Action::OrderEnd,               "OrderEnd",               "Order list: last row" },
+    { Action::OrderInsert,            "OrderInsert",            "Order list: insert row" },
+    { Action::OrderDelete,            "OrderDelete",            "Order list: delete row" },
+    { Action::OrderGoPattern,         "OrderGoPattern",         "Order list: go to pattern" },
+    { Action::OrderCopy,              "OrderCopy",              "Order list: copy" },
+    { Action::OrderCut,               "OrderCut",               "Order list: cut" },
+    { Action::OrderPaste,             "OrderPaste",             "Order list: paste" },
+    { Action::OrderMarkToggle,        "OrderMarkToggle",        "Order list: mark all/none" },
+    { Action::OrderTransposeUp,       "OrderTransposeUp",       "Order list: transpose up" },
+    { Action::OrderTransposeDown,     "OrderTransposeDown",     "Order list: transpose down" },
+    { Action::OrderInsertRepeat,      "OrderInsertRepeat",      "Order list: insert repeat" },
+    { Action::OrderSubtunePrev,       "OrderSubtunePrev",       "Order list: previous subtune" },
+    { Action::OrderSubtuneNext,       "OrderSubtuneNext",       "Order list: next subtune" },
+    { Action::OrderPlayRangeStart,    "OrderPlayRangeStart",    "Order list: play range start" },
+    { Action::OrderPlayRangeEnd,      "OrderPlayRangeEnd",      "Order list: play range end" },
+    { Action::PatternRowUp,           "PatternRowUp",           "Pattern: previous row" },
+    { Action::PatternRowDown,         "PatternRowDown",         "Pattern: next row" },
+    { Action::PatternColLeft,         "PatternColLeft",         "Pattern: previous column" },
+    { Action::PatternColRight,        "PatternColRight",        "Pattern: next column" },
+    { Action::PatternPageUp,          "PatternPageUp",          "Pattern: page up" },
+    { Action::PatternPageDown,        "PatternPageDown",        "Pattern: page down" },
+    { Action::PatternHome,            "PatternHome",            "Pattern: first row" },
+    { Action::PatternEnd,             "PatternEnd",             "Pattern: last row" },
+    { Action::PatternPrev,            "PatternPrev",            "Pattern: previous pattern" },
+    { Action::PatternNext,            "PatternNext",            "Pattern: next pattern" },
+    { Action::PatternInsert,          "PatternInsert",          "Pattern: insert row" },
+    { Action::PatternDelete,          "PatternDelete",          "Pattern: delete row" },
+    { Action::PatternCopy,            "PatternCopy",            "Pattern: copy" },
+    { Action::PatternCut,             "PatternCut",             "Pattern: cut" },
+    { Action::PatternPaste,           "PatternPaste",           "Pattern: paste" },
+    { Action::PatternMarkToggle,      "PatternMarkToggle",      "Pattern: mark all/none" },
+    { Action::PatternShrink,          "PatternShrink",          "Pattern: shrink" },
+    { Action::PatternExpand,          "PatternExpand",          "Pattern: expand" },
+    { Action::PatternJoin,            "PatternJoin",            "Pattern: join" },
+    { Action::PatternSplit,           "PatternSplit",           "Pattern: split" },
+    { Action::PatternToggleJam,       "PatternToggleJam",       "Pattern: toggle jam mode" },
+    { Action::PatternPlayFromCursor,  "PatternPlayFromCursor",  "Pattern: play from cursor" },
+    { Action::TableRowUp,             "TableRowUp",             "Table: previous row" },
+    { Action::TableRowDown,           "TableRowDown",           "Table: next row" },
+    { Action::TableColLeft,           "TableColLeft",           "Table: previous table" },
+    { Action::TableColRight,          "TableColRight",          "Table: next table" },
+    { Action::TablePageUp,            "TablePageUp",            "Table: page up" },
+    { Action::TablePageDown,          "TablePageDown",          "Table: page down" },
+    { Action::TableHome,              "TableHome",              "Table: first row" },
+    { Action::TableEnd,               "TableEnd",               "Table: last row" },
+    { Action::InstrRowUp,             "InstrRowUp",             "Instrument: previous" },
+    { Action::InstrRowDown,           "InstrRowDown",           "Instrument: next" },
+    { Action::InstrColLeft,           "InstrColLeft",           "Instrument: previous field" },
+    { Action::InstrColRight,          "InstrColRight",          "Instrument: next field" },
+    { Action::InstrPageUp,            "InstrPageUp",            "Instrument: page up" },
+    { Action::InstrPageDown,          "InstrPageDown",          "Instrument: page down" },
+    { Action::InstrHome,              "InstrHome",              "Instrument: first" },
+    { Action::InstrEnd,               "InstrEnd",               "Instrument: last" },
+    { Action::ToggleSIDTracker64,     "ToggleSIDTracker64",     "Toggle SIDTracker64 mode" },
+    { Action::PrevMultiplier,         "PrevMultiplier",         "Previous speed multiplier" },
+    { Action::NextMultiplier,         "NextMultiplier",         "Next speed multiplier" },
+    { Action::ToggleAdsrOrPan,        "ToggleAdsrOrPan",        "Toggle ADSR / pan edit" },
+    { Action::ToggleSidModel,         "ToggleSidModel",         "Toggle SID model" },
+    { Action::CycleStereoMode,        "CycleStereoMode",        "Cycle stereo mode" },
+    { Action::FastRelocate,           "FastRelocate",           "Fast relocate export" },
+    { Action::SaveWav,                "SaveWav",                "Save WAV" },
+    { Action::SongRewind,             "SongRewind",             "Rewind song position" },
 };
 
 // Default keymap. Context-specific entries override Global for the same chord.
@@ -190,48 +202,63 @@ const Binding kBindings[] = {
     { Action::SongPosNext, Ctx::Global, make_chord(KEY_RIGHT, Ctrl) },
 
     // Order list — ImGui vertical layout
-    { Action::OrderRowUp,    Ctx::Order, make_chord(KEY_UP) },
-    { Action::OrderRowDown,  Ctx::Order, make_chord(KEY_DOWN) },
-    { Action::OrderColLeft,  Ctx::Order, make_chord(KEY_LEFT) },
-    { Action::OrderColRight, Ctx::Order, make_chord(KEY_RIGHT) },
-    { Action::OrderPageUp,   Ctx::Order, make_chord(KEY_PGUP) },
-    { Action::OrderPageDown, Ctx::Order, make_chord(KEY_PGDN) },
-    { Action::OrderHome,     Ctx::Order, make_chord(KEY_HOME) },
-    { Action::OrderEnd,      Ctx::Order, make_chord(KEY_END) },
-    { Action::OrderInsert,   Ctx::Order, make_chord(KEY_INS) },
-    { Action::OrderInsert,   Ctx::Order, make_chord(KEY_DEL, Shift) },
-    { Action::OrderDelete,   Ctx::Order, make_chord(KEY_DEL) },
-    { Action::OrderGoPattern,Ctx::Order, make_chord(KEY_ENTER) },
-    { Action::OrderCopy,     Ctx::Order, make_chord(KEY_C, Shift) },
-    { Action::OrderCut,      Ctx::Order, make_chord(KEY_X, Shift) },
-    { Action::OrderPaste,    Ctx::Order, make_chord(KEY_V, Shift) },
-    { Action::OrderMarkToggle, Ctx::Order, make_chord(KEY_L, Shift) },
-    { Action::OrderTransposeUp,   Ctx::Order, make_chord('+') },
-    { Action::OrderTransposeDown, Ctx::Order, make_chord('-') },
-    { Action::OrderInsertRepeat,  Ctx::Order, make_chord('R') },
-    { Action::OrderInsertRepeat,  Ctx::Order, make_chord('r') },
-    { Action::OrderSubtunePrev, Ctx::Order, make_chord('<') },
-    { Action::OrderSubtunePrev, Ctx::Order, make_chord('[') },
-    { Action::OrderSubtunePrev, Ctx::Order, make_chord('(') },
-    { Action::OrderSubtuneNext, Ctx::Order, make_chord('>') },
-    { Action::OrderSubtuneNext, Ctx::Order, make_chord(']') },
-    { Action::OrderSubtuneNext, Ctx::Order, make_chord(')') },
+    { Action::OrderRowUp,          Ctx::Order, make_chord(KEY_UP) },
+    { Action::OrderRowDown,        Ctx::Order, make_chord(KEY_DOWN) },
+    { Action::OrderColLeft,        Ctx::Order, make_chord(KEY_LEFT) },
+    { Action::OrderColRight,       Ctx::Order, make_chord(KEY_RIGHT) },
+    { Action::OrderPageUp,         Ctx::Order, make_chord(KEY_PGUP) },
+    { Action::OrderPageDown,       Ctx::Order, make_chord(KEY_PGDN) },
+    { Action::OrderHome,           Ctx::Order, make_chord(KEY_HOME) },
+    { Action::OrderEnd,            Ctx::Order, make_chord(KEY_END) },
+    { Action::OrderInsert,         Ctx::Order, make_chord(KEY_INS) },
+    { Action::OrderInsert,         Ctx::Order, make_chord(KEY_DEL, Shift) },
+    { Action::OrderDelete,         Ctx::Order, make_chord(KEY_DEL) },
+    { Action::OrderGoPattern,      Ctx::Order, make_chord(KEY_ENTER) },
+    { Action::OrderCopy,           Ctx::Order, make_chord(KEY_C, Shift) },
+    { Action::OrderCut,            Ctx::Order, make_chord(KEY_X, Shift) },
+    { Action::OrderPaste,          Ctx::Order, make_chord(KEY_V, Shift) },
+    { Action::OrderMarkToggle,     Ctx::Order, make_chord(KEY_L, Shift) },
+    { Action::OrderTransposeUp,    Ctx::Order, make_chord('+') },
+    { Action::OrderTransposeDown,  Ctx::Order, make_chord('-') },
+    { Action::OrderInsertRepeat,   Ctx::Order, make_chord('R') },
+    { Action::OrderInsertRepeat,   Ctx::Order, make_chord('r') },
+    { Action::OrderSubtunePrev,    Ctx::Order, make_chord('<') },
+    { Action::OrderSubtunePrev,    Ctx::Order, make_chord('[') },
+    { Action::OrderSubtunePrev,    Ctx::Order, make_chord('(') },
+    { Action::OrderSubtuneNext,    Ctx::Order, make_chord('>') },
+    { Action::OrderSubtuneNext,    Ctx::Order, make_chord(']') },
+    { Action::OrderSubtuneNext,    Ctx::Order, make_chord(')') },
     { Action::OrderPlayRangeStart, Ctx::Order, make_chord(KEY_SPACE) },
     { Action::OrderPlayRangeStart, Ctx::Order, make_chord(KEY_SPACE, Shift) },
     { Action::OrderPlayRangeEnd,   Ctx::Order, make_chord(KEY_BACKSPACE) },
     { Action::OrderPlayRangeEnd,   Ctx::Order, make_chord(KEY_BACKSPACE, Shift) },
 
     // Pattern editor — unmodified arrow keys
-    { Action::PatternRowUp,    Ctx::Pattern, make_chord(KEY_UP) },
-    { Action::PatternRowDown,  Ctx::Pattern, make_chord(KEY_DOWN) },
-    { Action::PatternColLeft,  Ctx::Pattern, make_chord(KEY_LEFT) },
-    { Action::PatternColRight, Ctx::Pattern, make_chord(KEY_RIGHT) },
-    { Action::PatternPageUp,   Ctx::Pattern, make_chord(KEY_PGUP) },
-    { Action::PatternPageDown, Ctx::Pattern, make_chord(KEY_PGDN) },
-    { Action::PatternHome,     Ctx::Pattern, make_chord(KEY_HOME) },
-    { Action::PatternEnd,      Ctx::Pattern, make_chord(KEY_END) },
-    { Action::PatternPrev,     Ctx::Pattern, make_chord(KEY_LEFT, Shift) },
-    { Action::PatternNext,     Ctx::Pattern, make_chord(KEY_RIGHT, Shift) },
+    { Action::PatternRowUp,          Ctx::Pattern, make_chord(KEY_UP) },
+    { Action::PatternRowDown,        Ctx::Pattern, make_chord(KEY_DOWN) },
+    { Action::PatternColLeft,        Ctx::Pattern, make_chord(KEY_LEFT) },
+    { Action::PatternColRight,       Ctx::Pattern, make_chord(KEY_RIGHT) },
+    { Action::PatternPageUp,         Ctx::Pattern, make_chord(KEY_PGUP) },
+    { Action::PatternPageDown,       Ctx::Pattern, make_chord(KEY_PGDN) },
+    { Action::PatternHome,           Ctx::Pattern, make_chord(KEY_HOME) },
+    { Action::PatternEnd,            Ctx::Pattern, make_chord(KEY_END) },
+    { Action::PatternPrev,           Ctx::Pattern, make_chord(KEY_LEFT, Shift) },
+    { Action::PatternNext,           Ctx::Pattern, make_chord(KEY_RIGHT, Shift) },
+    { Action::PatternInsert,         Ctx::Pattern, make_chord(KEY_INS) },
+    { Action::PatternInsert,         Ctx::Pattern, make_chord(KEY_DEL, Shift) },
+    { Action::PatternDelete,         Ctx::Pattern, make_chord(KEY_DEL) },
+    { Action::PatternCopy,           Ctx::Pattern, make_chord(KEY_C, Shift) },
+    { Action::PatternCopy,           Ctx::Pattern, make_chord(KEY_C, Ctrl) },
+    { Action::PatternCut,            Ctx::Pattern, make_chord(KEY_X, Shift) },
+    { Action::PatternCut,            Ctx::Pattern, make_chord(KEY_X, Ctrl) },
+    { Action::PatternPaste,          Ctx::Pattern, make_chord(KEY_V, Shift) },
+    { Action::PatternMarkToggle,     Ctx::Pattern, make_chord(KEY_L, Shift) },
+    { Action::PatternShrink,         Ctx::Pattern, make_chord(KEY_O, Shift) },
+    { Action::PatternExpand,         Ctx::Pattern, make_chord(KEY_P, Shift) },
+    { Action::PatternJoin,           Ctx::Pattern, make_chord(KEY_J, Shift) },
+    { Action::PatternSplit,          Ctx::Pattern, make_chord(KEY_K, Shift) },
+    { Action::PatternToggleJam,      Ctx::Pattern, make_chord(KEY_SPACE) },
+    { Action::PatternPlayFromCursor, Ctx::Pattern, make_chord(KEY_SPACE, Shift) },
 
     // SID tables — ImGui four-column layout
     { Action::TableRowUp,    Ctx::Tables, make_chord(KEY_UP) },
@@ -900,6 +927,60 @@ bool handle_pattern_action(Action act) {
     case Action::PatternEnd: pattern_nav_end(gt); return true;
     case Action::PatternPrev: prevpattern(gt); return true;
     case Action::PatternNext: nextpattern(gt); return true;
+    case Action::PatternInsert:
+        pattern_list_insert(gt);
+        return true;
+    case Action::PatternDelete:
+        pattern_list_delete(gt);
+        return true;
+    case Action::PatternCopy:
+        pattern_copy_or_cut(gt, 0);
+        return true;
+    case Action::PatternCut:
+        pattern_copy_or_cut(gt, 1);
+        return true;
+    case Action::PatternPaste:
+        pattern_paste(gt);
+        return true;
+    case Action::PatternMarkToggle:
+        pattern_mark_toggle();
+        return true;
+    case Action::PatternShrink:
+        if (shiftOrCtrlPressed) shrinkpattern(gt);
+        return true;
+    case Action::PatternExpand:
+        if (shiftOrCtrlPressed) expandpattern(gt);
+        return true;
+    case Action::PatternJoin:
+        if (shiftOrCtrlPressed) joinpattern(gt);
+        return true;
+    case Action::PatternSplit:
+        if (shiftOrCtrlPressed) splitpattern(gt);
+        return true;
+    case Action::PatternToggleJam:
+        pattern_toggle_jam();
+        return true;
+    case Action::PatternPlayFromCursor:
+        pattern_play_from_cursor(gt);
+        return true;
+    default: return false;
+    }
+}
+
+bool pattern_action_needs_imgui(Action act) {
+    switch (act) {
+    case Action::PatternInsert:
+    case Action::PatternDelete:
+    case Action::PatternCopy:
+    case Action::PatternCut:
+    case Action::PatternPaste:
+    case Action::PatternMarkToggle:
+    case Action::PatternShrink:
+    case Action::PatternExpand:
+    case Action::PatternJoin:
+    case Action::PatternSplit:
+    case Action::PatternToggleJam:
+    case Action::PatternPlayFromCursor: return true;
     default: return false;
     }
 }
@@ -1121,11 +1202,23 @@ bool dispatch_pattern_navigation() {
     if (editorInfo.editmode != EDIT_PATTERN) return false;
 
     // Ctrl+arrow is global song transport.
-    if (ctrlpressed) return false;
+    if (ctrlpressed) {
+        const Chord chord = chord_from_input(rawkey, key, shiftpressed, ctrlpressed);
+        const Action act  = resolve(Ctx::Pattern, chord);
+        if (act != Action::PatternCopy && act != Action::PatternCut) return false;
+    }
+
+    if (gimgui_new_ui_active() && shiftpressed && !ctrlpressed && rawkey >= KEY_1 && rawkey <= KEY_6) {
+        pattern_mute_channel(&gtObject, rawkey - KEY_1);
+        clear_input();
+        return true;
+    }
 
     const Chord  chord = chord_from_input(rawkey, key, shiftpressed, ctrlpressed);
     const Action act   = resolve(Ctx::Pattern, chord);
     if (act == Action::None) return false;
+
+    if (pattern_action_needs_imgui(act) && !gimgui_new_ui_active()) return false;
 
     switch (rawkey) {
     case KEY_UP:
@@ -1133,7 +1226,9 @@ bool dispatch_pattern_navigation() {
     case KEY_LEFT:
     case KEY_RIGHT:
     case KEY_PGUP:
-    case KEY_PGDN: win_enableKeyRepeat(); break;
+    case KEY_PGDN:
+    case KEY_INS:
+    case KEY_DEL: win_enableKeyRepeat(); break;
     default: break;
     }
 
@@ -1271,7 +1366,19 @@ bool perform(Action act) {
     case Action::PatternHome:
     case Action::PatternEnd:
     case Action::PatternPrev:
-    case Action::PatternNext: return handle_pattern_action(act);
+    case Action::PatternNext:
+    case Action::PatternInsert:
+    case Action::PatternDelete:
+    case Action::PatternCopy:
+    case Action::PatternCut:
+    case Action::PatternPaste:
+    case Action::PatternMarkToggle:
+    case Action::PatternShrink:
+    case Action::PatternExpand:
+    case Action::PatternJoin:
+    case Action::PatternSplit:
+    case Action::PatternToggleJam:
+    case Action::PatternPlayFromCursor: return handle_pattern_action(act);
     case Action::TableRowUp:
     case Action::TableRowDown:
     case Action::TableColLeft:
