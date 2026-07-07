@@ -17,6 +17,7 @@
 
 #include <SDL.h>
 #include <cstdio>
+#include <cstdlib>
 
 // bme globals/hooks we bind to. Declared here (with C linkage) instead of
 // including bme's headers, so we pull the *system* SDL2 headers that the ImGui
@@ -33,6 +34,11 @@ extern int (*bme_input_capture_hook)(void);
 bool g_imgui_ready = false;
 bool g_show_demo   = false; // toggleable ImGui reference/demo window
 extern bool g_show_new_ui;   // defined in guiflags.cpp (gtcore)
+
+constexpr float kBaseUIFontPx = 18.0f;
+constexpr float kMinUIFontPx  = 10.0f;
+constexpr float kMaxUIFontPx  = 48.0f;
+float           g_font_size_px = kBaseUIFontPx;
 
 // Instrument-name overlay editor (InputText while active).
 int  g_instr_name_edit        = -1;    // instrument index 1..3F, or -1
@@ -115,6 +121,10 @@ float gimgui_mono_advance() {
 }
 
 float gimgui_mono_width(int cols) { return gimgui_mono_advance() * (float)cols; }
+
+float gimgui_scalar_w(int hex_digits) {
+    return gimgui_mono_width(hex_digits) + ImGui::GetStyle().FramePadding.x * 2.0f;
+}
 
 // Fixed left-column width shared by Song + Order List (content-driven, not % of window).
 float gimgui_order_grid_width() {
@@ -385,16 +395,209 @@ const ImU32 kHeaderBgActive = IM_COL32(52, 98, 158, 255);
 const ImU32 kHeaderTx       = IM_COL32(150, 168, 186, 255);
 const ImU32 kHeaderTxActive = IM_COL32(244, 250, 255, 255);
 
+constexpr ImVec2 kChromeWindowPadBase(8.0f, 4.0f);
+
+ImVec2 gimgui_chrome_window_pad() {
+    const float s = g_font_size_px / kBaseUIFontPx;
+    return ImVec2(kChromeWindowPadBase.x * s, kChromeWindowPadBase.y * s);
+}
+
+float gimgui_chrome_row_h() {
+    return ImGui::GetFrameHeight() + gimgui_chrome_window_pad().y * 2.0f;
+}
+
+
+bool gimgui_chrome_btn(const char* label, int max_chars = 0) {
+    if (max_chars <= 0) return ImGui::Button(label);
+    return ImGui::Button(label, ImVec2(gimgui_scalar_w(max_chars), 0.0f));
+}
+
+bool gimgui_begin_chrome_bar(const char* id, ImVec2 pos, ImVec2 size) {
+    const ImVec2 pad = gimgui_chrome_window_pad();
+    ImGui::SetNextWindowPos(pos);
+    ImGui::SetNextWindowSize(size);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, pad);
+    if (!ImGui::Begin(id, nullptr, kChromeWindowFlags)) {
+        ImGui::End();
+        ImGui::PopStyleVar();
+        return false;
+    }
+    ImGui::PopStyleVar();
+    ImGui::AlignTextToFramePadding();
+    return true;
+}
+
+// Monospace label in a fixed column width (pairs with chrome buttons on the same row).
+void gimgui_chrome_mono_label(const char* text, int cols) {
+    const float colW = gimgui_mono_width(cols);
+    const ImVec2  p  = ImGui::GetCursorScreenPos();
+    ImGui::Dummy(ImVec2(colW, ImGui::GetFrameHeight()));
+    ImGui::GetWindowDrawList()->AddText(
+        ImVec2(p.x, p.y + ImGui::GetStyle().FramePadding.y),
+        ImGui::GetColorU32(ImGuiCol_Text),
+        text ? text : "");
+}
+
+// Same column width, text centered
+void gimgui_chrome_mono_label_centered(const char* text, int cols) {
+    const float colW = gimgui_mono_width(cols);
+    const float rowH = ImGui::GetFrameHeight();
+    const ImVec2  p  = ImGui::GetCursorScreenPos();
+    ImGui::Dummy(ImVec2(colW, rowH));
+    const ImVec2 ts = ImGui::CalcTextSize(text);
+    ImGui::GetWindowDrawList()->AddText(
+        ImVec2(p.x + (colW - ts.x) * 0.5f, p.y + (rowH - ts.y) * 0.5f),
+        ImGui::GetColorU32(ImGuiCol_Text),
+        text);
+}
+
+void gimgui_chrome_same_line_right(float item_w) {
+    const float rightX = ImGui::GetWindowContentRegionMax().x - item_w;
+    if (rightX > ImGui::GetCursorPosX()) ImGui::SameLine(rightX);
+    else
+        ImGui::SameLine(0.0f, 12.0f);
+}
+
+void gimgui_chrome_same_line_right_cols(int cols) {
+    gimgui_chrome_same_line_right(gimgui_scalar_w(cols));
+}
+
 // A button that renders in its "active" colour while toggled on (Follow, Loop).
-bool gimgui_toggle_button(const char* label, bool active) {
+bool gimgui_toggle_button(const char* label, bool active, int max_chars = 0) {
     if (active) {
         const ImVec4 on = ImGui::GetStyleColorVec4(ImGuiCol_ButtonActive);
         ImGui::PushStyleColor(ImGuiCol_Button, on);
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, on);
     }
-    bool clicked = ImGui::Button(label);
+    bool clicked = gimgui_chrome_btn(label, max_chars);
     if (active) ImGui::PopStyleColor(2);
     return clicked;
+}
+
+bool gimgui_stepper(const char* id_str, int& value, int min_val, int max_val, const char* format = "%d", int max_chars = 0) {
+    const int old_value = value;
+
+    ImGui::PushID(id_str);
+    ImGui::BeginGroup();
+
+    ImGui::BeginDisabled(value <= min_val);
+    if (ImGui::SmallButton("-")) value--;
+    ImGui::EndDisabled();
+    ImGui::SameLine();
+
+    char buf[16];
+    snprintf(buf, sizeof buf, format, value);
+    gimgui_chrome_mono_label_centered(buf, max_chars > 0 ? max_chars : (int)strlen(buf));
+
+    ImGui::SameLine();
+    ImGui::BeginDisabled(value >= max_val);
+    if (ImGui::SmallButton("+")) value++;
+    ImGui::EndDisabled();
+
+    ImGui::EndGroup();
+    ImGui::PopID();
+
+    return value != old_value;
+}
+
+void gimgui_vertical_separator() {
+    ImGui::SameLine();
+    ImGui::TextColored(ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled), "|");
+    ImGui::SameLine();
+}
+
+// Player / chip settings (legacy top bar): SID model, timing, export flags, HR.
+void gimgui_draw_player_status(ImVec2 pos, ImVec2 size) {
+    if (!gimgui_begin_chrome_bar("##player", pos, size)) return;
+
+    {
+        float vol = gtui::transport_volume();
+        ImGui::SetNextItemWidth(gimgui_mono_width(16));
+        if (ImGui::SliderFloat("##vol", &vol, 0.0f, gtui::kMasterVolumeMax, "Volume %.1f"))
+            gtui::transport_set_volume(vol);
+    }
+    ImGui::SameLine();
+    if (gimgui_chrome_btn(gtui::player_ntsc() ? "NTSC" : "PAL", 4))
+        gtui::player_toggle_ntsc();
+    ImGui::SameLine();
+
+    if (gimgui_chrome_btn(gtui::player_sid_model_8580() ? "8580" : "6581"))
+        gtui::player_toggle_sid_model();
+
+    gimgui_vertical_separator();
+    ImGui::Text("SID x%d", gtui::player_sid_chips());
+    ImGui::SameLine();
+    if (gimgui_chrome_btn(gtui::transport_stereo_label(), 3)) gtui::transport_cycle_stereo();
+
+    {
+        const int chips = gtui::player_sid_chips();
+        for (int c = 0; c < chips; c++) {
+            ImGui::SameLine();
+            int pan = gtui::player_sid_pan(c);
+            ImGui::PushID(c);
+            ImGui::SetNextItemWidth(gimgui_mono_width(5));
+            if (ImGui::SliderInt("##pan", &pan, 0, 15, "%X"))
+                gtui::player_set_sid_pan(c, pan);
+            ImGui::PopID();
+        }
+    }
+
+    gimgui_vertical_separator();
+    if (gimgui_toggle_button("SID64", gtui::player_sidtracker64()))
+        gtui::player_toggle_sidtracker64();
+
+    gimgui_vertical_separator();
+    ImGui::TextUnformatted("Speed");
+    ImGui::SameLine();
+    if (ImGui::SmallButton("-")) gtui::player_multiplier_prev();
+    ImGui::SameLine();
+    gimgui_chrome_mono_label_centered(gtui::player_speed_label(), 3);
+    ImGui::SameLine();
+    if (ImGui::SmallButton("+")) gtui::player_multiplier_next();
+
+    gimgui_vertical_separator();
+
+    if (gimgui_toggle_button("FV", gtui::player_fine_vibrato())) gtui::player_toggle_fine_vibrato();
+    ImGui::SameLine();
+    if (gimgui_toggle_button("PO", gtui::player_optimize_pulse())) gtui::player_toggle_optimize_pulse();
+    ImGui::SameLine();
+    if (gimgui_toggle_button("RO", gtui::player_optimize_realtime())) gtui::player_toggle_optimize_realtime();
+
+    gimgui_vertical_separator();
+
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextUnformatted("HR");
+    ImGui::SameLine(0.0f, 2.0f);
+    {
+        unsigned hr = (unsigned)gtui::player_hr_adparam();
+        ImGui::PushItemWidth(gimgui_scalar_w(4));
+        if (ImGui::InputScalar("##hr", ImGuiDataType_U32, &hr, nullptr, nullptr, "%04X",
+                               ImGuiInputTextFlags_CharsHexadecimal))
+            gtui::player_set_hr_adparam((int)hr);
+        ImGui::PopItemWidth();
+    }
+
+    {
+        const char* fname  = gtui::player_loaded_filename();
+        const float fnameW = ImGui::CalcTextSize(fname).x + ImGui::GetStyle().FramePadding.x * 2.0f;
+        gimgui_chrome_same_line_right(fnameW);
+        ImGui::TextUnformatted(fname);
+    }
+
+    ImGui::End();
+}
+
+// Context-sensitive decode of the cell under the cursor (legacy infoTextBuffer).
+// Same chrome row height as player/transport bars; room for context buttons later.
+void gimgui_draw_context_help(ImVec2 pos, ImVec2 size) {
+    gtui::context_help_refresh();
+    if (!gimgui_begin_chrome_bar("##context_help", pos, size)) return;
+
+    ImGui::TextDisabled("Info:");
+    ImGui::SameLine(0.0f, 8.0f);
+    ImGui::TextUnformatted(gtui::context_help());
+
+    ImGui::End();
 }
 
 // Fixed, non-floating panel. Positioned/sized every frame to tile the app
@@ -453,8 +656,6 @@ void gimgui_draw_tables(ImVec2 pos, ImVec2 size) {
     const float lineH = ImGui::GetTextLineHeight();
     const float colW  = gimgui_table_column_width();
 
-    gtui::table_refresh_instr_highlights();
-
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(2, 2));
     for (int t = 0; t < gtui::table_count(); t++) {
         if (t) ImGui::SameLine();
@@ -471,17 +672,44 @@ void gimgui_draw_tables(ImVec2 pos, ImVec2 size) {
 // Furnace's approach - fixed monospace metrics, virtualized to the visible rows,
 // per-field coloring. Reads live model state via guimodel; editing comes later.
 void gimgui_draw_pattern(ImVec2 pos, ImVec2 size) {
-    const bool jam = gtui::pattern_jam_mode();
-    char       hdr[24];
-    snprintf(hdr, sizeof hdr, "OCT %d  %s", gtui::pattern_octave(), jam ? "JAM " : "EDIT");
     if (!gimgui_begin_panel("Pattern",
                             pos,
                             size,
-                            gtui::edit_panel() == gtui::EditPanelPattern,
-                            hdr)) {
+                            gtui::edit_panel() == gtui::EditPanelPattern)) {
         gimgui_end_panel();
         return;
     }
+
+    if (gimgui_toggle_button("REC", gtui::pattern_record_mode()))
+        gtui::pattern_toggle_record_mode();
+
+    gimgui_vertical_separator();
+    ImGui::TextUnformatted("OCT");
+    ImGui::SameLine();
+    {
+        int oct = gtui::pattern_octave();
+        if (gimgui_stepper("##oct", oct, gtui::kPatternOctaveMin, gtui::kPatternOctaveMax, "%d", 1))
+            gtui::pattern_set_octave(oct);
+    }
+
+    gimgui_vertical_separator();
+    ImGui::TextUnformatted("STEP");
+    ImGui::SameLine();
+    // ImGui::SameLine(0.0f, 4.0f);
+    {
+        int step = gtui::pattern_step();
+        if (gimgui_stepper("##step", step, gtui::kPatternStepMin, gtui::kPatternStepMax, "%02d", 2))
+            gtui::pattern_set_step(step);
+    }
+
+    gimgui_vertical_separator();
+    ImGui::TextUnformatted("ADV");
+    ImGui::SameLine(0.0f, 4.0f);
+    if (gimgui_chrome_btn(gtui::pattern_autoadvance_label(), 4))
+        gtui::pattern_cycle_autoadvance();
+
+    // new line
+    ImGui::Separator();
 
     // Colors (hardcoded for now; the theme system is M7).
     const ImU32 cBeat       = IM_COL32(255, 255, 255, 10);
@@ -542,7 +770,6 @@ void gimgui_draw_pattern(ImVec2 pos, ImVec2 size) {
         }
         gimgui_snap_body_pad_x();
         ImGui::Dummy(ImVec2(rowNumW + chans * chanW, lineH));
-        gimgui_snap_body_pad_x();
         ImGui::Separator();
     }
 
@@ -636,16 +863,33 @@ void gimgui_draw_pattern(ImVec2 pos, ImVec2 size) {
 // marker row shows "==". Keyboard editing flows through the legacy order editor; clicking places the
 // cursor (gtui::order_set_cursor).
 void gimgui_draw_orderlist(ImVec2 pos, ImVec2 size) {
-    char hdr[16];
-    snprintf(hdr, sizeof hdr, "SUB %02X", gtui::order_subtune());
     if (!gimgui_begin_panel("Order List",
                             pos,
                             size,
-                            gtui::edit_panel() == gtui::EditPanelOrder,
-                            hdr)) {
+                            gtui::edit_panel() == gtui::EditPanelOrder)) {
         gimgui_end_panel();
         return;
     }
+
+    gimgui_snap_body_pad_x();
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextUnformatted("SUB");
+    ImGui::SameLine(0.0f, 4.0f);
+    {
+        int sub = gtui::order_subtune();
+        if (gimgui_stepper("##sub", sub, gtui::kOrderSubtuneMin, gtui::kOrderSubtuneMax, "%02X", 2))
+            gtui::order_set_subtune(sub);
+    }
+    ImGui::SameLine(0.0f, 12.0f);
+    ImGui::TextUnformatted("BNK");
+    ImGui::SameLine(0.0f, 4.0f);
+    {
+        int bnk = gtui::order_song_bank() + 1;
+        if (gimgui_stepper("##bnk", bnk, 1, gtui::order_song_bank_count(), "%d", 2))
+            gtui::order_set_song_bank(bnk - 1);
+    }
+    gimgui_snap_body_pad_x();
+    ImGui::Separator();
 
     const ImU32 cCursorRow  = IM_COL32(255, 255, 255, 20);
     const ImU32 cSelect     = IM_COL32(48, 96, 200, 110);
@@ -761,7 +1005,9 @@ void gimgui_draw_orderlist(ImVec2 pos, ImVec2 size) {
 // Instrument list (01..3F): custom grid like pattern/order. Hex fields use the
 // legacy nibble editor; the name column uses an on-demand InputText in the grid.
 void gimgui_draw_instruments(ImVec2 pos, ImVec2 size) {
-    if (!gimgui_begin_panel("Instruments", pos, size, gtui::edit_panel() == gtui::EditPanelInstrument)) {
+    char hdr[16];
+    snprintf(hdr, sizeof hdr, "INS %02X", gtui::instr_current());
+    if (!gimgui_begin_panel("Instruments", pos, size, gtui::edit_panel() == gtui::EditPanelInstrument, hdr)) {
         gimgui_end_panel();
         return;
     }
@@ -810,7 +1056,6 @@ void gimgui_draw_instruments(ImVec2 pos, ImVec2 size) {
         lineH,
         curRow,
         [&](ImDrawList* dl, float x, float y) {
-            dl->AddText(ImVec2(x + colX[0], y), cHeader, "##");
             dl->AddText(ImVec2(x + colX[1], y), cHeader, "Name");
             for (int f = 0; f < gtui::INSTR_FIELDS; f++)
                 dl->AddText(ImVec2(x + colX[3 + f], y), cHeader, fieldLabel[f]);
@@ -973,46 +1218,41 @@ void gimgui_draw_song(ImVec2 pos, ImVec2 size) {
 // fast-forward / stop, then the Follow and Loop toggles, then a play indicator
 // and elapsed time. Sits at the top of the window, below the menu bar.
 void gimgui_draw_transport(ImVec2 pos, ImVec2 size) {
-    ImGui::SetNextWindowPos(pos);
-    ImGui::SetNextWindowSize(size);
-    const ImGuiWindowFlags flags = kChromeWindowFlags;
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8, 6));
-    bool open = ImGui::Begin("##transport", nullptr, flags);
-    ImGui::PopStyleVar();
-    if (!open) {
-        ImGui::End();
-        return;
+    if (!gimgui_begin_chrome_bar("##transport", pos, size)) return;
+
+
+    if (gimgui_chrome_btn("<<")) gtui::transport_rewind();
+    ImGui::SameLine();
+    if (gimgui_chrome_btn(">")) gtui::transport_play_start();
+    ImGui::SameLine();
+    if (gimgui_chrome_btn("Pat")) gtui::transport_play_pattern();
+    ImGui::SameLine();
+    if (gimgui_chrome_btn(">>")) gtui::transport_ff();
+    ImGui::SameLine();
+    if (gimgui_chrome_btn("Stop")) gtui::transport_stop();
+
+    ImGui::SameLine(0.0f, 8.0f);
+    if (gimgui_toggle_button("Follow", gtui::transport_follow(), 6)) gtui::transport_toggle_follow();
+    ImGui::SameLine();
+    if (gimgui_toggle_button("Loop", gtui::transport_loop(), 6)) gtui::transport_toggle_loop();
+
+    ImGui::SameLine(0.0f, 16.0f);
+    {
+        char tbuf[32];
+        snprintf(tbuf,
+                 sizeof tbuf,
+                 "%s %02d:%02d / %02d:%02d",
+                 gtui::transport_playing() ? "|>" : "||",
+                 gtui::transport_time_min(),
+                 gtui::transport_time_sec(),
+                 gtui::transport_total_min(),
+                 gtui::transport_total_sec());
+        gimgui_chrome_mono_label(tbuf, 20);
     }
 
-    if (ImGui::Button("Legacy")) g_show_new_ui = false;
-    ImGui::SameLine(0.0f, 16.0f);
 
-
-    if (ImGui::Button("<<")) // fast-backward: previous song position
-        gtui::transport_rewind();
-    ImGui::SameLine();
-    if (ImGui::Button(">")) // play from start of song
-        gtui::transport_play_start();
-    ImGui::SameLine();
-    if (ImGui::Button("Pat")) // play current pattern
-        gtui::transport_play_pattern();
-    ImGui::SameLine();
-    if (ImGui::Button(">>")) // fast-forward: next song position
-        gtui::transport_ff();
-    ImGui::SameLine();
-    if (ImGui::Button("Stop")) gtui::transport_stop();
-
-    ImGui::SameLine(0.0f, 16.0f);
-    if (gimgui_toggle_button("Follow", gtui::transport_follow())) gtui::transport_toggle_follow();
-    ImGui::SameLine();
-    if (gimgui_toggle_button("Loop", gtui::transport_loop())) gtui::transport_toggle_loop();
-
-    ImGui::SameLine(0.0f, 16.0f);
-    ImGui::AlignTextToFramePadding();
-    ImGui::Text("%s %02d:%02d",
-                gtui::transport_playing() ? "|>" : "[]",
-                gtui::transport_time_min(),
-                gtui::transport_time_sec());
+    gimgui_chrome_same_line_right_cols(6);
+    if (gimgui_chrome_btn("Legacy", 6)) g_show_new_ui = false;
 
     ImGui::End();
 }
@@ -1034,13 +1274,13 @@ void gimgui_draw_legacy_mode_bar() {
     ImGui::PopStyleVar();
 }
 
-// Load the bundled monospace font at a legible size so the UI doesn't use the
-// tiny default ImGui bitmap font. Searches a few locations (next to the binary,
-// the build-time source assets dir, then the cwd); falls back to the default
-// font if none are found.
-void gimgui_load_font() {
+} // namespace
+
+// Load the bundled monospace font at @p sizePx. Searches a few locations (next to
+// the binary, the build-time source assets dir, then the cwd); falls back to the
+// default font if none are found.
+void gimgui_load_font_at(float sizePx) {
     ImGuiIO&    io     = ImGui::GetIO();
-    const float sizePx = 18.0f;
     const char* fname  = "IBMPlexMono-Regular.otf";
 
     const char* dirs[3];
@@ -1063,16 +1303,23 @@ void gimgui_load_font() {
         FILE* f = fopen(path, "rb");
         if (!f) continue;
         fclose(f);
-        if (io.Fonts->AddFontFromFileTTF(path, sizePx)) return; // loaded
+        if (io.Fonts->AddFontFromFileTTF(path, sizePx)) {
+            io.FontDefault = io.Fonts->Fonts.back();
+            return;
+        }
     }
-    io.Fonts->AddFontDefault(); // last resort
+    io.Fonts->AddFontDefault();
+    io.FontDefault = io.Fonts->Fonts.back();
 }
 
 // Flat, professional dark theme: square windows, minimal borders, a blue accent.
-// Deliberately unlike StyleColorsDark so the UI doesn't read as a default ImGui
-// app. A full theme/config system arrives with M7.
+// Spacing scales with UI font size so chrome bars stay proportional.
 void gimgui_apply_style() {
     ImGuiStyle& s       = ImGui::GetStyle();
+    const float scale   = g_font_size_px / kBaseUIFontPx;
+    // ImGui 1.92+ rasterizes glyphs at FontSizeBase, not AddFontFromFileTTF()'s size.
+    s.FontSizeBase            = g_font_size_px;
+    s._NextFrameFontSizeBase  = g_font_size_px;
     s.WindowRounding    = 0.0f;
     s.ChildRounding     = 0.0f;
     s.FrameRounding     = 2.0f;
@@ -1083,11 +1330,11 @@ void gimgui_apply_style() {
     s.WindowBorderSize  = 0.0f;
     s.ChildBorderSize   = 0.0f;
     s.FrameBorderSize   = 0.0f;
-    s.WindowPadding     = ImVec2(8, 6);
-    s.FramePadding      = ImVec2(6, 3);
-    s.ItemSpacing       = ImVec2(6, 4);
-    s.ItemInnerSpacing  = ImVec2(4, 4);
-    s.ScrollbarSize     = 12.0f;
+    s.WindowPadding     = ImVec2(8.0f * scale, 6.0f * scale);
+    s.FramePadding      = ImVec2(6.0f * scale, 3.0f * scale);
+    s.ItemSpacing       = ImVec2(6.0f * scale, 4.0f * scale);
+    s.ItemInnerSpacing  = ImVec2(4.0f * scale, 4.0f * scale);
+    s.ScrollbarSize     = 12.0f * scale;
 
     ImVec4* c                        = s.Colors;
     c[ImGuiCol_Text]                 = ImVec4(0.86f, 0.89f, 0.93f, 1.00f);
@@ -1119,7 +1366,13 @@ void gimgui_apply_style() {
     c[ImGuiCol_TableBorderStrong]    = ImVec4(0.28f, 0.30f, 0.35f, 1.00f);
 }
 
-} // namespace
+void gimgui_reload_font() {
+    if (!g_imgui_ready) return;
+    ImGuiIO& io = ImGui::GetIO();
+    io.Fonts->ClearFonts();
+    gimgui_load_font_at(g_font_size_px);
+    gimgui_apply_style();
+}
 
 // Called by bme (via bme_overlay_render_hook) between its RenderCopy and its
 // RenderPresent, i.e. on top of the freshly-drawn legacy frame.
@@ -1138,13 +1391,20 @@ extern "C" void gimgui_overlay_render(void) {
         return;
     }
 
-    // if (ImGui::BeginMainMenuBar()) {
-    //     if (ImGui::BeginMenu("View")) {
-    //         ImGui::MenuItem("ImGui Demo", nullptr, &g_show_demo);
-    //         ImGui::EndMenu();
-    //     }
-    //     ImGui::EndMainMenuBar();
-    // }
+    if (ImGui::BeginMainMenuBar()) {
+        if (ImGui::BeginMenu("View")) {
+            if (ImGui::MenuItem("Smaller font", nullptr, false, g_font_size_px > kMinUIFontPx))
+                gimgui_adjust_font_size(-2);
+            if (ImGui::MenuItem("Larger font", nullptr, false, g_font_size_px < kMaxUIFontPx))
+                gimgui_adjust_font_size(+2);
+            ImGui::Separator();
+            char szbuf[32];
+            snprintf(szbuf, sizeof szbuf, "Font size: %.0f px", g_font_size_px);
+            ImGui::MenuItem(szbuf, nullptr, false, false);
+            ImGui::EndMenu();
+        }
+        ImGui::EndMainMenuBar();
+    }
 
 
     // Fixed tiled layout filling the whole window. Panels are opaque and cover the legacy screen; a full-window
@@ -1161,12 +1421,13 @@ extern "C" void gimgui_overlay_render(void) {
     const ImVec2 vs = vp->WorkSize; // area excluding the menu bar
     const float  g  = 3.0f;         // gutter between panels
 
-    // Full-width transport toolbar across the top; the two columns fill below it.
-    const float transportH = ImGui::GetFrameHeight() + 12.0f;
-    gimgui_draw_transport(vo, ImVec2(vs.x, transportH));
+    const float chromeH = gimgui_chrome_row_h();
 
-    const ImVec2 o = ImVec2(vo.x, vo.y + transportH + g);
-    const ImVec2 s = ImVec2(vs.x, vs.y - transportH - g);
+    gimgui_draw_player_status(vo, ImVec2(vs.x, chromeH));
+    gimgui_draw_transport(ImVec2(vo.x, vo.y + chromeH + g), ImVec2(vs.x, chromeH));
+
+    const ImVec2 o = ImVec2(vo.x, vo.y + chromeH * 2.0f + 2 * g);
+    const ImVec2 s = ImVec2(vs.x, vs.y - chromeH * 3.0f - 3 * g);
 
     const float leftW  = gimgui_left_column_width();
     const float songH  = gimgui_song_panel_height();
@@ -1183,6 +1444,8 @@ extern "C" void gimgui_overlay_render(void) {
     gimgui_draw_pattern(ImVec2(patX, o.y), ImVec2(patW, s.y));
     gimgui_draw_instruments(ImVec2(insX, o.y), ImVec2(insW, s.y));
     gimgui_draw_tables(ImVec2(tblX, o.y), ImVec2(tblW, s.y));
+
+    gimgui_draw_context_help(ImVec2(vo.x, vo.y + vs.y - chromeH), ImVec2(vs.x, chromeH));
 
     if (g_show_demo) ImGui::ShowDemoWindow(&g_show_demo);
 
@@ -1228,6 +1491,11 @@ void gimgui_init() {
     // gfx_renderer can be null under headless/unsupported video drivers.
     if (!win_window || !gfx_renderer) return;
 
+    if (const char* env = std::getenv("GTULTRA_UI_FONT_SIZE")) {
+        float px = (float)std::atof(env);
+        if (px >= kMinUIFontPx && px <= kMaxUIFontPx) g_font_size_px = px;
+    }
+
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGui::StyleColorsDark();
@@ -1235,7 +1503,7 @@ void gimgui_init() {
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags &= ~(ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_NavEnableGamepad);
 
-    gimgui_load_font();
+    gimgui_load_font_at(g_font_size_px);
     gimgui_apply_style();
 
     ImGui_ImplSDL2_InitForSDLRenderer(win_window, gfx_renderer);
@@ -1261,3 +1529,15 @@ void gimgui_shutdown() {
 
     g_imgui_ready = false;
 }
+
+float gimgui_font_size() { return g_font_size_px; }
+
+void gimgui_set_font_size(float px) {
+    if (px < kMinUIFontPx) px = kMinUIFontPx;
+    if (px > kMaxUIFontPx) px = kMaxUIFontPx;
+    if (px == g_font_size_px) return;
+    g_font_size_px = px;
+    gimgui_reload_font();
+}
+
+void gimgui_adjust_font_size(int delta_px) { gimgui_set_font_size(g_font_size_px + (float)delta_px); }

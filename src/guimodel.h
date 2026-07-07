@@ -59,9 +59,6 @@ void        table_set_cursor(int t, int row, int col);
 // horizontal table switches preserve the on-screen row across columns.
 void        table_set_view(int t, int view_row);
 
-// Recompute tableBackgroundColors for the selected instrument (legacy
-// setTableBackgroundColours). Call once per tables-panel frame before drawing.
-void table_refresh_instr_highlights();
 // True when row is part of the selected instrument's table chain (green in legacy).
 bool table_row_uses_selected_instrument(int t, int row);
 
@@ -80,7 +77,10 @@ struct PatCell {
 
 int  pattern_channels();       // visible channel count (3 or 6)
 int  pattern_rows();           // rows to render (max pattern length across channels)
-int  pattern_step();           // beat-highlight step
+int  pattern_step();           // beat-highlight step (stepsize)
+void pattern_set_step(int v);  // clamped to [kPatternStepMin, kPatternStepMax]
+constexpr int kPatternStepMin = 2;
+constexpr int kPatternStepMax = 32;
 int  pattern_cursor_row();     // edit cursor row (eppos)
 int  pattern_cursor_chn();     // edit cursor channel (display index, epchn)
 int  pattern_cursor_col();     // edit cursor column within the cell (epcolumn)
@@ -95,8 +95,16 @@ PatCell pattern_cell(int ch, int row);
 int  pattern_mark_channel();
 int  pattern_mark_start();
 int  pattern_mark_end();
-int  pattern_octave();           // note input octave (epoctave, 0..6)
+int  pattern_octave();           // note input octave (epoctave)
+void pattern_set_octave(int v);  // clamped to [kPatternOctaveMin, kPatternOctaveMax]
+constexpr int kPatternOctaveMin = 0;
+constexpr int kPatternOctaveMax = 6;
 bool pattern_jam_mode();         // true = jam (live keys), false = edit/record-to-pattern
+bool pattern_record_mode();    // true = record notes into pattern
+int  pattern_autoadvance();    // 0 = all, 1 = notes only, 2 = off
+const char* pattern_autoadvance_label();
+void pattern_cycle_autoadvance();
+void pattern_toggle_record_mode();
 
 // Move the edit cursor (e.g. from a mouse click in the ImGui grid): switches to
 // pattern-edit mode and positions the cursor. col follows the legacy epcolumn
@@ -115,6 +123,8 @@ struct OrderCell {
 
 int  order_channels();          // visible channel count (3 or 6)
 int  order_subtune();           // current subtune index (esnum)
+constexpr int kOrderSubtuneMin = 0;
+constexpr int kOrderSubtuneMax = 31; // MAX_SONGS (32) - 1
 int  order_rows();              // rows to render (max order length across channels)
 int  order_cursor_row();        // edit cursor position (eseditpos)
 int  order_cursor_chn();        // edit cursor channel (display index, eschn)
@@ -129,6 +139,12 @@ int  order_range_end_row(int ch); // F2 range end (esend), -1 if unset
 int  order_play_row(int ch);       // playback position in order list, -1 if none
 OrderCell order_cell(int ch, int row);
 void order_set_cursor(int ch, int row, int col); // click -> place cursor (EDIT_ORDERLIST)
+int  order_song_bank();          // 0-based multi-song buffer index
+int  order_song_bank_count();    // number of song slots (1..)
+void order_set_subtune(int v);   // esnum, clamped to [0, MAX_SONGS)
+void order_set_song_bank(int bank); // 0-based, clamped to valid range
+void order_song_bank_next();
+void order_song_bank_prev();
 
 // ---- instruments (table view: one instrument per row) ----
 int         instr_count();          // number of instruments
@@ -180,6 +196,14 @@ void        transport_stop();
 bool        transport_playing();
 int         transport_time_min();
 int         transport_time_sec();
+int         transport_total_min();
+int         transport_total_sec();
+constexpr float kMasterVolumeMax = 6.0f; // matches legacy transport-bar mouse drag
+
+float       transport_volume();
+void        transport_set_volume(float v);
+const char* transport_stereo_label(); // "MON", "STE", or "PAN"
+void        transport_cycle_stereo();
 
 bool        transport_follow();        // follow playback (auto-scroll) on?
 void        transport_toggle_follow();
@@ -187,6 +211,35 @@ bool        transport_loop();          // loop the current pattern on play?
 void        transport_toggle_loop();
 void        transport_ff();            // step to next song position
 void        transport_rewind();        // step to previous song position
+
+// ---- player / chip settings (legacy top bar) ----
+const char* player_loaded_filename();  // basename or "(unsaved)"
+int         player_sid_chips();        // maxSIDChannels / 3 (1..4)
+bool        player_sid_model_8580();   // false = 6581, true = 8580
+bool        player_ntsc();             // false = PAL, true = NTSC
+const char* player_speed_label();      // "25Hz" or "1X".."16X"
+int         player_hr_adparam();       // hard-restart ADSR ($0000..$FFFF)
+void        player_set_hr_adparam(int v);
+int         player_sid_pan(int chip);  // chip index 0..(sid_chips-1), nybble 0..15
+void        player_set_sid_pan(int chip, int pan);
+const char* player_pan_summary();      // combined encoding (read-only fallback)
+bool        player_fine_vibrato();
+bool        player_optimize_pulse();
+bool        player_optimize_realtime();
+bool        player_sidtracker64();
+
+void player_toggle_fine_vibrato();
+void player_toggle_optimize_pulse();
+void player_toggle_optimize_realtime();
+void player_toggle_ntsc();
+void player_toggle_sid_model();
+void player_toggle_sidtracker64();
+void player_multiplier_prev();
+void player_multiplier_next();
+
+// ---- contextual help (legacy infoTextBuffer) ----
+void        context_help_refresh();    // update from cursor / edit mode
+const char* context_help();
 
 } // namespace gtui
 

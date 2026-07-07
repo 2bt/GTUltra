@@ -5,6 +5,10 @@
 #include "guimodel.h"
 #include "goattrk2.h"
 #include "gactions.h"
+#include "ginfo.h"
+
+#include <cstdio>
+#include <cstring>
 
 namespace gtui {
 
@@ -36,12 +40,33 @@ int table_mark_table() { return editorInfo.etmarknum; }
 int table_mark_start() { return editorInfo.etmarkstart; }
 int table_mark_end() { return editorInfo.etmarkend; }
 
-void table_refresh_instr_highlights() { setTableBackgroundColours(editorInfo.einum); }
+static bool table_row_in_instrument_chain(int t, int row, int ptr)
+{
+    if (t < 0 || t >= MAX_TABLES || row < 0 || row >= MAX_TABLELEN || ptr < 0) return false;
+
+    if (t == 3) return row == ptr;
+
+    unsigned char visited[MAX_TABLELEN] = {};
+    for (int guard = 0; guard < MAX_TABLELEN; guard++) {
+        if (ptr < 0 || ptr >= MAX_TABLELEN) break;
+        if (visited[ptr]) break;
+        visited[ptr] = 1;
+        if (ptr == row) return true;
+        if (ltable[t][ptr] == 0xff) {
+            if (rtable[t][ptr] == 0) break;
+            ptr = (int)rtable[t][ptr] - 1;
+        } else
+            ptr++;
+    }
+    return false;
+}
 
 bool table_row_uses_selected_instrument(int t, int row)
 {
     if (t < 0 || t >= MAX_TABLES || row < 0 || row >= MAX_TABLELEN) return false;
-    return (tableBackgroundColors[t][row] & 0xff) == CTABLE_SELECTED_INSTRUMENT_FOREGROUND;
+    const int inst = editorInfo.einum;
+    if (inst <= 0) return false;
+    return table_row_in_instrument_chain(t, row, instr[inst].ptr[t] - 1);
 }
 
 void table_set_cursor(int t, int row, int col)
@@ -199,7 +224,44 @@ int pattern_mark_end() { return editorInfo.epmarkend; }
 
 int pattern_octave() { return editorInfo.epoctave; }
 
+void pattern_set_octave(int v)
+{
+    if (v < kPatternOctaveMin) v = kPatternOctaveMin;
+    if (v > kPatternOctaveMax) v = kPatternOctaveMax;
+    editorInfo.epoctave = v;
+}
+
 bool pattern_jam_mode() { return recordmode == 0; }
+
+bool pattern_record_mode() { return recordmode != 0; }
+
+int pattern_autoadvance() { return autoadvance; }
+
+const char* pattern_autoadvance_label()
+{
+    switch (autoadvance) {
+    case 0:  return "all";
+    case 1:  return "note";
+    default: return "off";
+    }
+}
+
+void pattern_cycle_autoadvance()
+{
+    autoadvance = (autoadvance + 1) % 3;
+}
+
+void pattern_set_step(int v)
+{
+    if (v < kPatternStepMin) v = kPatternStepMin;
+    if (v > kPatternStepMax) v = kPatternStepMax;
+    stepsize = v;
+}
+
+void pattern_toggle_record_mode()
+{
+    recordmode = 1 - recordmode;
+}
 
 // ---- order list ----
 
@@ -309,6 +371,52 @@ void order_set_cursor(int ch, int row, int col)
     editorInfo.eschn = ch;
     editorInfo.eseditpos = row;
     editorInfo.escolumn = col;
+}
+
+int order_song_bank() { return currentSongFile; }
+
+int order_song_bank_count() { return lastValidSongFileIndex + 1; }
+
+static void order_song_bank_switch(int next)
+{
+    GTOBJECT* gt = &gtObject;
+    stopsong(gt);
+    undoCreateEditorInfoBackup();
+    copyCurrentToSngBuffer(gt, currentSongFile);
+    currentSongFile = next;
+    copySngBufferToCurrent(gt, currentSongFile);
+    undoInvalidateUndoAreas();
+    editorInfo.currentSongFile = currentSongFile;
+    undoAddEditorSettingsToList();
+}
+
+void order_song_bank_next()
+{
+    if (currentSongFile >= lastValidSongFileIndex) return;
+    order_song_bank_switch(currentSongFile + 1);
+}
+
+void order_song_bank_prev()
+{
+    if (currentSongFile <= 0) return;
+    order_song_bank_switch(currentSongFile - 1);
+}
+
+void order_set_subtune(int v)
+{
+    if (v < kOrderSubtuneMin) v = kOrderSubtuneMin;
+    if (v > kOrderSubtuneMax) v = kOrderSubtuneMax;
+    if (editorInfo.esnum == v) return;
+    editorInfo.esnum = v;
+    songchange(&gtObject, 1);
+}
+
+void order_set_song_bank(int bank)
+{
+    if (bank < 0) bank = 0;
+    if (bank > lastValidSongFileIndex) bank = lastValidSongFileIndex;
+    if (bank == currentSongFile) return;
+    order_song_bank_switch(bank);
 }
 
 // ---- instruments ----
@@ -484,6 +592,30 @@ void transport_stop() { gtaction::perform(gtaction::Action::Stop); }
 bool transport_playing() { return isplaying(&gtObject) != 0; }
 int transport_time_min() { return gtObject.timemin; }
 int transport_time_sec() { return gtObject.timesec; }
+int transport_total_min() { return gtEditorObject.totalMin; }
+int transport_total_sec() { return gtEditorObject.totalSec; }
+
+float transport_volume() { return masterVolume; }
+
+void transport_set_volume(float v)
+{
+    if (v < 0.0f) v = 0.0f;
+    if (v > kMasterVolumeMax) v = kMasterVolumeMax;
+    masterVolume = v;
+}
+
+const char* transport_stereo_label()
+{
+    if (monomode || (editorInfo.maxSIDChannels == 3 && stereoMode == 1))
+        return "MON";
+    if (stereoMode == 1) return "STE";
+    return "PAN";
+}
+
+void transport_cycle_stereo()
+{
+    gtaction::perform(gtaction::Action::CycleStereoMode);
+}
 
 bool transport_follow() { return followplay != 0; }
 void transport_toggle_follow() { gtaction::perform(gtaction::Action::ToggleFollow); }
@@ -491,6 +623,156 @@ bool transport_loop() { return transportLoopPattern != 0; }
 void transport_toggle_loop() { gtaction::perform(gtaction::Action::ToggleLoop); }
 void transport_ff() { gtaction::perform(gtaction::Action::SongPosNext); }
 void transport_rewind() { gtaction::perform(gtaction::Action::SongPosPrev); }
+
+// ---- player / chip settings ----
+
+template <class Apply>
+static void player_settings_edit(Apply apply)
+{
+    undoCreateEditorInfoBackup();
+    apply();
+    undoAddEditorSettingsToList();
+}
+
+const char* player_loaded_filename()
+{
+    if (!loadedsongfilename[0]) return "(unsaved)";
+    const char* base = strrchr(loadedsongfilename, '/');
+    if (!base) base = strrchr(loadedsongfilename, '\\');
+    return base ? base + 1 : loadedsongfilename;
+}
+
+int  player_sid_chips() { return editorInfo.maxSIDChannels / 3; }
+bool player_sid_model_8580() { return editorInfo.sidmodel != 0; }
+bool player_ntsc() { return editorInfo.ntsc != 0; }
+
+const char* player_speed_label()
+{
+    static char buf[8];
+    if (editorInfo.multiplier == 0)
+        snprintf(buf, sizeof buf, "25Hz");
+    else
+        snprintf(buf, sizeof buf, "%dX", (int)editorInfo.multiplier);
+    return buf;
+}
+
+int  player_hr_adparam() { return (int)editorInfo.adparam; }
+
+void player_set_hr_adparam(int v)
+{
+    v &= 0xffff;
+    if ((int)editorInfo.adparam == v) return;
+    player_settings_edit([v] { editorInfo.adparam = (unsigned)v; });
+}
+
+int player_sid_pan(int chip)
+{
+    int sidChips = editorInfo.maxSIDChannels / 3;
+    if (chip < 0 || chip >= sidChips) return 0;
+    return SID_StereoPanPositions[sidChips - 1][chip];
+}
+
+void player_set_sid_pan(int chip, int pan)
+{
+    int sidChips = editorInfo.maxSIDChannels / 3;
+    if (chip < 0 || chip >= sidChips) return;
+    pan &= 0xf;
+    if (SID_StereoPanPositions[sidChips - 1][chip] == pan) return;
+    player_settings_edit([sidChips, chip, pan] {
+        SID_StereoPanPositions[sidChips - 1][chip] = pan;
+        convertPansToInts(sidChips);
+    });
+}
+
+const char* player_pan_summary()
+{
+    static char buf[16];
+    unsigned v = 0;
+    int sidChips = editorInfo.maxSIDChannels / 3;
+    for (int i = 0; i < sidChips; i++) {
+        v <<= 4;
+        v |= SID_StereoPanPositions[sidChips - 1][i];
+    }
+    if (sidChips == 1)
+        snprintf(buf, sizeof buf, "P1:%01X", v);
+    else if (sidChips == 2)
+        snprintf(buf, sizeof buf, "P2:%02X", v);
+    else if (sidChips == 3)
+        snprintf(buf, sizeof buf, "P3:%03X", v);
+    else
+        snprintf(buf, sizeof buf, "P4:%04X", v);
+    return buf;
+}
+
+bool player_fine_vibrato() { return editorInfo.finevibrato != 0; }
+bool player_optimize_pulse() { return editorInfo.optimizepulse != 0; }
+bool player_optimize_realtime() { return editorInfo.optimizerealtime != 0; }
+bool player_sidtracker64() { return SIDTracker64ForIPadIsAmazing != 0; }
+
+void player_toggle_fine_vibrato()
+{
+    player_settings_edit([] {
+        editorInfo.finevibrato = 1 - editorInfo.finevibrato;
+        if ((editorInfo.finevibrato == 1) && (editorInfo.multiplier < 2))
+            editorInfo.usefinevib = 1;
+        if (editorInfo.finevibrato > 1) editorInfo.usefinevib = 1;
+    });
+}
+
+void player_toggle_optimize_pulse()
+{
+    player_settings_edit([] { editorInfo.optimizepulse ^= 1; });
+}
+
+void player_toggle_optimize_realtime()
+{
+    player_settings_edit([] { editorInfo.optimizerealtime ^= 1; });
+}
+
+void player_toggle_ntsc()
+{
+    player_settings_edit([] {
+        editorInfo.ntsc ^= 1;
+        reInitSID();
+    });
+}
+
+void player_toggle_sid_model()
+{
+    gtaction::perform(gtaction::Action::ToggleSidModel);
+}
+
+void player_toggle_sidtracker64()
+{
+    gtaction::perform(gtaction::Action::ToggleSIDTracker64);
+}
+
+void player_multiplier_prev()
+{
+    player_settings_edit([] { prevmultiplier(); });
+}
+
+void player_multiplier_next()
+{
+    player_settings_edit([] { nextmultiplier(); });
+}
+
+void context_help_refresh()
+{
+    if (editPaletteMode) return;
+    switch (editorInfo.editmode) {
+    case EDIT_PATTERN:    displayPatternInfo(&gtObject); break;
+    case EDIT_INSTRUMENT: displayInstrumentInfo(&gtObject); break;
+    case EDIT_TABLES:     displayTableInfo(&gtObject); break;
+    case EDIT_ORDERLIST:  displayOrderTableInfo(&gtObject); break;
+    case EDIT_NAMES:
+        snprintf(infoTextBuffer, sizeof infoTextBuffer, "Song metadata (name, author, copyright)");
+        break;
+    default: break;
+    }
+}
+
+const char* context_help() { return infoTextBuffer; }
 
 void pattern_set_cursor(int ch, int row, int col)
 {

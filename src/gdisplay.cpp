@@ -5,6 +5,7 @@
 #define GDISPLAY_C
 
 #include "goattrk2.h"
+#include "gimgui.h"
 
 char *notename[] =
 { "C-0", "C#0", "D-0", "D#0", "E-0", "F-0", "F#0", "G-0", "G#0", "A-0", "A#0", "B-0",
@@ -78,6 +79,27 @@ int doDisplay(void *gt)
 		//{
 		//	if (!displayingPanel)
 		//	{
+
+	// ImGui panels replace the legacy chargen UI; skip redrawing it underneath.
+	if (gimgui_new_ui_active())
+	{
+		updateDisplayWhenFollowingAndPlaying(gto);
+		if (transportShowKeyboard)
+		{
+			resetKeyboardDisplay();
+			displayNotes(&gtObject);
+			displayKeyboard();
+			fliptoscreen();
+		}
+		else
+		{
+			// No legacy pixels changed — present the cached frame + ImGui overlay only.
+			gfx_setdirtyrows(0, 0);
+			gfx_flip();
+		}
+		return 0;
+	}
+
 	printstatus(gto);
 
 	if (transportShowKeyboard)
