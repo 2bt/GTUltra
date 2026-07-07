@@ -105,7 +105,6 @@ constexpr float kPanelBodyPad = 6.0f;
 // Extra inset for the Song metadata form (beyond kPanelBodyPad).
 constexpr float kSongFormPadY    = 6.0f;
 constexpr float kSongLabelGap    = 10.0f;
-constexpr const char* kSongLabelWidest = "Copyright";
 
 // ImGui resets CursorPos.x to the window edge on newline (Dummy, Separator, …).
 void gimgui_snap_body_pad_x() { ImGui::SetCursorPosX(kPanelBodyPad); }
@@ -122,7 +121,7 @@ float gimgui_mono_advance() {
 
 float gimgui_mono_width(int cols) { return gimgui_mono_advance() * (float)cols; }
 
-float gimgui_scalar_w(int hex_digits) {
+float gimgui_button_width(int hex_digits) {
     return gimgui_mono_width(hex_digits) + ImGui::GetStyle().FramePadding.x * 2.0f;
 }
 
@@ -134,7 +133,7 @@ float gimgui_order_grid_width() {
 }
 
 float gimgui_song_content_width() {
-    const float labelW = ImGui::CalcTextSize(kSongLabelWidest).x;
+    const float labelW = gimgui_mono_width(9);
     const float inputW = gimgui_mono_width(gtui::SONG_STR_MAX) + ImGui::GetStyle().FramePadding.x * 2.0f;
     return labelW + kSongLabelGap + inputW;
 }
@@ -407,9 +406,9 @@ float gimgui_chrome_row_h() {
 }
 
 
-bool gimgui_chrome_btn(const char* label, int max_chars = 0) {
+bool gimgui_button(const char* label, int max_chars = 0) {
     if (max_chars <= 0) return ImGui::Button(label);
-    return ImGui::Button(label, ImVec2(gimgui_scalar_w(max_chars), 0.0f));
+    return ImGui::Button(label, ImVec2(gimgui_button_width(max_chars), 0.0f));
 }
 
 bool gimgui_begin_chrome_bar(const char* id, ImVec2 pos, ImVec2 size) {
@@ -452,14 +451,7 @@ void gimgui_chrome_mono_label_centered(const char* text, int cols) {
 }
 
 void gimgui_chrome_same_line_right(float item_w) {
-    const float rightX = ImGui::GetWindowContentRegionMax().x - item_w;
-    if (rightX > ImGui::GetCursorPosX()) ImGui::SameLine(rightX);
-    else
-        ImGui::SameLine(0.0f, 12.0f);
-}
-
-void gimgui_chrome_same_line_right_cols(int cols) {
-    gimgui_chrome_same_line_right(gimgui_scalar_w(cols));
+    ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - item_w);
 }
 
 // A button that renders in its "active" colour while toggled on (Follow, Loop).
@@ -469,7 +461,7 @@ bool gimgui_toggle_button(const char* label, bool active, int max_chars = 0) {
         ImGui::PushStyleColor(ImGuiCol_Button, on);
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, on);
     }
-    bool clicked = gimgui_chrome_btn(label, max_chars);
+    bool clicked = gimgui_button(label, max_chars);
     if (active) ImGui::PopStyleColor(2);
     return clicked;
 }
@@ -506,7 +498,6 @@ void gimgui_vertical_separator() {
     ImGui::SameLine();
 }
 
-// Player / chip settings (legacy top bar): SID model, timing, export flags, HR.
 void gimgui_draw_player_status(ImVec2 pos, ImVec2 size) {
     if (!gimgui_begin_chrome_bar("##player", pos, size)) return;
 
@@ -517,17 +508,17 @@ void gimgui_draw_player_status(ImVec2 pos, ImVec2 size) {
             gtui::transport_set_volume(vol);
     }
     ImGui::SameLine();
-    if (gimgui_chrome_btn(gtui::player_ntsc() ? "NTSC" : "PAL", 4))
+    if (gimgui_button(gtui::player_ntsc() ? "NTSC" : "PAL", 4))
         gtui::player_toggle_ntsc();
     ImGui::SameLine();
 
-    if (gimgui_chrome_btn(gtui::player_sid_model_8580() ? "8580" : "6581"))
+    if (gimgui_button(gtui::player_sid_model_8580() ? "8580" : "6581"))
         gtui::player_toggle_sid_model();
 
     gimgui_vertical_separator();
     ImGui::Text("SID x%d", gtui::player_sid_chips());
     ImGui::SameLine();
-    if (gimgui_chrome_btn(gtui::transport_stereo_label(), 3)) gtui::transport_cycle_stereo();
+    if (gimgui_button(gtui::transport_stereo_label(), 3)) gtui::transport_cycle_stereo();
 
     {
         const int chips = gtui::player_sid_chips();
@@ -567,10 +558,10 @@ void gimgui_draw_player_status(ImVec2 pos, ImVec2 size) {
 
     ImGui::AlignTextToFramePadding();
     ImGui::TextUnformatted("HR");
-    ImGui::SameLine(0.0f, 2.0f);
+    ImGui::SameLine();
     {
         unsigned hr = (unsigned)gtui::player_hr_adparam();
-        ImGui::PushItemWidth(gimgui_scalar_w(4));
+        ImGui::PushItemWidth(gimgui_button_width(4));
         if (ImGui::InputScalar("##hr", ImGuiDataType_U32, &hr, nullptr, nullptr, "%04X",
                                ImGuiInputTextFlags_CharsHexadecimal))
             gtui::player_set_hr_adparam((int)hr);
@@ -578,9 +569,8 @@ void gimgui_draw_player_status(ImVec2 pos, ImVec2 size) {
     }
 
     {
-        const char* fname  = gtui::player_loaded_filename();
-        const float fnameW = ImGui::CalcTextSize(fname).x + ImGui::GetStyle().FramePadding.x * 2.0f;
-        gimgui_chrome_same_line_right(fnameW);
+        const char* fname = gtui::player_loaded_filename();
+        gimgui_chrome_same_line_right(gimgui_mono_width(strlen(fname)));
         ImGui::TextUnformatted(fname);
     }
 
@@ -593,8 +583,8 @@ void gimgui_draw_context_help(ImVec2 pos, ImVec2 size) {
     gtui::context_help_refresh();
     if (!gimgui_begin_chrome_bar("##context_help", pos, size)) return;
 
-    ImGui::TextDisabled("Info:");
-    ImGui::SameLine(0.0f, 8.0f);
+    // ImGui::TextDisabled("Info:");
+    // ImGui::SameLine();
     ImGui::TextUnformatted(gtui::context_help());
 
     ImGui::End();
@@ -684,6 +674,12 @@ void gimgui_draw_pattern(ImVec2 pos, ImVec2 size) {
         gtui::pattern_toggle_record_mode();
 
     gimgui_vertical_separator();
+    ImGui::TextUnformatted("ADV");
+    ImGui::SameLine();
+    if (gimgui_button(gtui::pattern_autoadvance_label(), 4))
+        gtui::pattern_cycle_autoadvance();
+
+    gimgui_vertical_separator();
     ImGui::TextUnformatted("OCT");
     ImGui::SameLine();
     {
@@ -695,18 +691,12 @@ void gimgui_draw_pattern(ImVec2 pos, ImVec2 size) {
     gimgui_vertical_separator();
     ImGui::TextUnformatted("STEP");
     ImGui::SameLine();
-    // ImGui::SameLine(0.0f, 4.0f);
     {
         int step = gtui::pattern_step();
         if (gimgui_stepper("##step", step, gtui::kPatternStepMin, gtui::kPatternStepMax, "%02d", 2))
             gtui::pattern_set_step(step);
     }
 
-    gimgui_vertical_separator();
-    ImGui::TextUnformatted("ADV");
-    ImGui::SameLine(0.0f, 4.0f);
-    if (gimgui_chrome_btn(gtui::pattern_autoadvance_label(), 4))
-        gtui::pattern_cycle_autoadvance();
 
     // new line
     ImGui::Separator();
@@ -768,7 +758,6 @@ void gimgui_draw_pattern(ImVec2 pos, ImVec2 size) {
             // snprintf(hbuf, sizeof hbuf, "%02X", gtui::pattern_number(c));
             hdl->AddText(ImVec2(hp.x + rowNumW + c * chanW, hp.y), cHeader, hbuf);
         }
-        gimgui_snap_body_pad_x();
         ImGui::Dummy(ImVec2(rowNumW + chans * chanW, lineH));
         ImGui::Separator();
     }
@@ -870,25 +859,22 @@ void gimgui_draw_orderlist(ImVec2 pos, ImVec2 size) {
         gimgui_end_panel();
         return;
     }
-
-    gimgui_snap_body_pad_x();
     ImGui::AlignTextToFramePadding();
+
     ImGui::TextUnformatted("SUB");
-    ImGui::SameLine(0.0f, 4.0f);
-    {
-        int sub = gtui::order_subtune();
-        if (gimgui_stepper("##sub", sub, gtui::kOrderSubtuneMin, gtui::kOrderSubtuneMax, "%02X", 2))
-            gtui::order_set_subtune(sub);
-    }
-    ImGui::SameLine(0.0f, 12.0f);
+    ImGui::SameLine();
+    int sub = gtui::order_subtune();
+    if (gimgui_stepper("##sub", sub, gtui::kOrderSubtuneMin, gtui::kOrderSubtuneMax, "%02X", 2))
+        gtui::order_set_subtune(sub);
+
+    gimgui_vertical_separator();
     ImGui::TextUnformatted("BNK");
-    ImGui::SameLine(0.0f, 4.0f);
-    {
+    ImGui::SameLine();
         int bnk = gtui::order_song_bank() + 1;
         if (gimgui_stepper("##bnk", bnk, 1, gtui::order_song_bank_count(), "%d", 2))
             gtui::order_set_song_bank(bnk - 1);
-    }
-    gimgui_snap_body_pad_x();
+
+    // new line
     ImGui::Separator();
 
     const ImU32 cCursorRow  = IM_COL32(255, 255, 255, 20);
@@ -941,9 +927,7 @@ void gimgui_draw_orderlist(ImVec2 pos, ImVec2 size) {
             snprintf(hbuf, sizeof hbuf, "%X", gtui::order_actual_channel(c));
             hdl->AddText(ImVec2(hp.x + rowNumW + (float)c * colPitch, hp.y), cHeader, hbuf);
         }
-        gimgui_snap_body_pad_x();
         ImGui::Dummy(ImVec2(totalW, lineH));
-        gimgui_snap_body_pad_x();
         ImGui::Separator();
     }
 
@@ -1171,11 +1155,7 @@ void gimgui_draw_song(ImVec2 pos, ImVec2 size) {
         { "Copyright", gtui::song_copyright, gtui::song_set_copyright },
     };
 
-    const float formX    = ImGui::GetCursorPosX();
-    const float formY    = ImGui::GetCursorPosY() + kSongFormPadY;
-    const float labelCol = ImGui::CalcTextSize(kSongLabelWidest).x;
-    const float inputX   = formX + labelCol + kSongLabelGap;
-    const float inputW   = gimgui_mono_width(gtui::SONG_STR_MAX) + ImGui::GetStyle().FramePadding.x * 2.0f;
+    const float inputW    = gimgui_mono_width(gtui::SONG_STR_MAX) + ImGui::GetStyle().FramePadding.x * 2.0f;
     const bool  namesMode = (gtui::edit_panel() == gtui::EditPanelNames);
 
     g_song_field_item_active = false;
@@ -1184,28 +1164,19 @@ void gimgui_draw_song(ImVec2 pos, ImVec2 size) {
         char buf[gtui::SONG_STR_MAX + 1];
         snprintf(buf, sizeof buf, "%.*s", (int)gtui::SONG_STR_MAX, fields[f].get());
 
-        const float rowY = (f == 0) ? formY : ImGui::GetCursorPosY();
-        ImGui::SetCursorPos(ImVec2(formX, rowY));
-        ImGui::AlignTextToFramePadding();
-        ImGui::TextUnformatted(fields[f].label);
+        gimgui_snap_body_pad_x();
+        gimgui_chrome_mono_label(fields[f].label, 9);
+        ImGui::SameLine();
 
-        ImGui::SetCursorPos(ImVec2(inputX, rowY));
         ImGui::PushID(f);
         ImGui::PushItemWidth(inputW);
-        if (namesMode && f == gtui::names_field())
-            ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f);
-        if (g_song_field_want_focus == f)
-            ImGui::SetKeyboardFocusHere();
-        if (ImGui::InputText("##v", buf, sizeof buf))
-            fields[f].set(buf); // metadata: commit as typed (no undo, like legacy)
-        if (ImGui::IsItemActive())
-            g_song_field_item_active = true;
-        if (ImGui::IsItemActivated())
-            gtui::names_set_field(f);
-        if (g_song_field_want_focus == f && ImGui::IsItemActive())
-            g_song_field_want_focus = -1;
-        if (namesMode && f == gtui::names_field())
-            ImGui::PopStyleVar();
+        if (namesMode && f == gtui::names_field()) ImGui::PushStyleVar(ImGuiStyleVar_FrameBorderSize, 1.0f);
+        if (g_song_field_want_focus == f) ImGui::SetKeyboardFocusHere();
+        if (ImGui::InputText("##v", buf, sizeof buf)) fields[f].set(buf); // metadata: commit as typed (no undo, like legacy)
+        if (ImGui::IsItemActive()) g_song_field_item_active = true;
+        if (ImGui::IsItemActivated()) gtui::names_set_field(f);
+        if (g_song_field_want_focus == f && ImGui::IsItemActive()) g_song_field_want_focus = -1;
+        if (namesMode && f == gtui::names_field()) ImGui::PopStyleVar();
         ImGui::PopItemWidth();
         ImGui::PopID();
     }
@@ -1221,22 +1192,22 @@ void gimgui_draw_transport(ImVec2 pos, ImVec2 size) {
     if (!gimgui_begin_chrome_bar("##transport", pos, size)) return;
 
 
-    if (gimgui_chrome_btn("<<")) gtui::transport_rewind();
+    if (gimgui_button("<<")) gtui::transport_rewind();
     ImGui::SameLine();
-    if (gimgui_chrome_btn(">")) gtui::transport_play_start();
+    if (gimgui_button(">")) gtui::transport_play_start();
     ImGui::SameLine();
-    if (gimgui_chrome_btn("Pat")) gtui::transport_play_pattern();
+    if (gimgui_button("Pat")) gtui::transport_play_pattern();
     ImGui::SameLine();
-    if (gimgui_chrome_btn(">>")) gtui::transport_ff();
+    if (gimgui_button(">>")) gtui::transport_ff();
     ImGui::SameLine();
-    if (gimgui_chrome_btn("Stop")) gtui::transport_stop();
+    if (gimgui_button("Stop")) gtui::transport_stop();
 
-    ImGui::SameLine(0.0f, 8.0f);
+    ImGui::SameLine();
     if (gimgui_toggle_button("Follow", gtui::transport_follow(), 6)) gtui::transport_toggle_follow();
     ImGui::SameLine();
     if (gimgui_toggle_button("Loop", gtui::transport_loop(), 6)) gtui::transport_toggle_loop();
 
-    ImGui::SameLine(0.0f, 16.0f);
+    ImGui::SameLine();
     {
         char tbuf[32];
         snprintf(tbuf,
@@ -1251,8 +1222,8 @@ void gimgui_draw_transport(ImVec2 pos, ImVec2 size) {
     }
 
 
-    gimgui_chrome_same_line_right_cols(6);
-    if (gimgui_chrome_btn("Legacy", 6)) g_show_new_ui = false;
+    gimgui_chrome_same_line_right(gimgui_button_width(6));
+    if (gimgui_button("Legacy")) g_show_new_ui = false;
 
     ImGui::End();
 }
