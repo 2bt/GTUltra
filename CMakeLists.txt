@@ -212,6 +212,7 @@ target_sources(gtultra PRIVATE
 target_include_directories(gtultra PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/extern/portable-file-dialogs")
 target_link_libraries(gtultra PRIVATE imgui)
+set_target_properties(gtultra PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)
 # guimodel.cpp needs the legacy headers (model globals) + bme/asm include dirs
 target_include_directories(gtultra PRIVATE "${SRC}/bme" "${SRC}/asm" ${SDL2_INCLUDE_DIRS})
 # Absolute path to bundled assets (fonts, ...) for runtime loading. A proper

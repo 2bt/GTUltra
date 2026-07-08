@@ -16,6 +16,7 @@
 #include "gtable.h"
 #include "gdisplay.h"
 #include "gsound.h"
+#include "log.h"
 
 #include <vector>
 
@@ -992,16 +993,28 @@ bool handle_global_action(Action act) {
                 compressAllSongs();
         }
         if (ok) {
-            stopScreenDisplay();
-            relocator(gt, 0, 0);
-            restartScreenDisplay();
-            printmainscreen(gt);
-            sprintf(infoTextBuffer, " ");
+            if (gimgui_new_ui_active()) {
+                LOG_DEBUG("Relocate: new UI export");
+                char path[MAX_PATHNAME];
+                if (gtfile::save_relocated(path, sizeof path)) {
+                    relocator(gt, 0, 1);
+                    sprintf(infoTextBuffer, "Song Exported:%s", packedsongname);
+                    LOG_INFO("exported to {}", packedsongname);
+                }
+            } else {
+                stopScreenDisplay();
+                relocator(gt, 0, 0);
+                restartScreenDisplay();
+                printmainscreen(gt);
+                sprintf(infoTextBuffer, " ");
+            }
         }
         return true;
     }
 
     case Action::LoadSong:
+        LOG_DEBUG("LoadSong new_ui={} instrument_ctx={}", gimgui_new_ui_active(),
+                  instrument_file_context());
         if (gimgui_new_ui_active()) {
             char path[MAX_PATHNAME];
             if (instrument_file_context()) {
@@ -1083,12 +1096,15 @@ bool handle_global_action(Action act) {
 
     case Action::FastRelocate:
         if (songExported) {
+            LOG_DEBUG("FastRelocate to {}", packedsongname);
             relocator(gt, 0, 1);
             sprintf(infoTextBuffer, "Song Exported:%s", packedsongname);
+            LOG_INFO("re-exported to {}", packedsongname);
         }
         return true;
 
     case Action::SaveWav:
+        LOG_DEBUG("SaveWav new_ui={}", gimgui_new_ui_active());
         if (gimgui_new_ui_active()) {
             char path[MAX_PATHNAME];
             if (gtfile::export_wav(path, sizeof path)) {
@@ -1421,7 +1437,7 @@ bool handle_order_action(Action act) {
 } // namespace
 
 void log_legacy_fallback(const char* handler) {
-    (void)handler;
+    LOG_DEBUG("legacy input fallback: {}", handler ? handler : "(null)");
 }
 
 Ctx context_from_editmode(int editmode) {

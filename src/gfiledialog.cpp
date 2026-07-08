@@ -8,14 +8,18 @@
 #include "gimgui.h"
 #include "goattrk2.h"
 #include "gpattern.h"
+#include "greloc.h"
 #include "gsong.h"
+#include "log.h"
 
 #include <cstring>
+#include <strings.h>
 #include <string>
 #include <utility>
 #include <vector>
 
 #ifndef _WIN32
+#include <stdlib.h>
 #include <unistd.h>
 #endif
 
@@ -41,6 +45,13 @@ static const std::vector<std::string> kWavFilters = {
     "All Files", "*",
 };
 
+static const std::vector<std::string> kRelocFilters = {
+    "SID Music",   "*.sid",
+    "C64 Program", "*.prg",
+    "Raw Binary",  "*.bin",
+    "All Files",   "*",
+};
+
 template <typename Fn>
 static auto run_modal(Fn&& fn) -> decltype(fn())
 {
@@ -64,6 +75,105 @@ static char* path_slash(char* path)
     if (!slash) slash = strrchr(path, '\\');
 #endif
     return slash;
+}
+
+static std::string path_basename(const std::string& path)
+{
+    const size_t p = path.find_last_of("/\\");
+    return p == std::string::npos ? path : path.substr(p + 1);
+}
+
+static std::string path_stem(const std::string& path)
+{
+    std::string base = path_basename(path);
+    const size_t dot = base.rfind('.');
+    if (dot != std::string::npos) base.resize(dot);
+    return base;
+}
+
+static std::string path_parent(const std::string& path)
+{
+    const size_t p = path.find_last_of("/\\");
+    if (p == std::string::npos) return "";
+    return path.substr(0, p);
+}
+
+static std::string join_dir_file(const std::string& dir, const std::string& file)
+{
+    if (dir.empty() || dir == ".") return file;
+    if (dir.back() == '/' || dir.back() == '\\') return dir + file;
+    return dir + "/" + file;
+}
+
+static void log_save_context(const char* kind, const std::string& default_path)
+{
+    LOG_DEBUG("{} default_path={}", kind, default_path);
+    LOG_DEBUG("{} loadedsongfilename={}", kind, loadedsongfilename);
+    LOG_DEBUG("{} songfilename={} songpath={}", kind, songfilename, songpath);
+    LOG_DEBUG("{} packedpath={} packedsongname={} fileformat={}", kind, packedpath, packedsongname,
+              fileformat);
+}
+
+static std::string run_save_dialog(const char* kind,
+                                   const char* title,
+                                   const std::string& default_path,
+                                   const std::vector<std::string>& filters)
+{
+    log_save_context(kind, default_path);
+
+    if (log_debug_enabled()) pfd::settings::verbose(true);
+
+    const std::string picked = run_modal([&] {
+        return pfd::save_file(title, default_path, filters).result();
+    });
+
+    if (!picked.empty())
+        LOG_DEBUG("{} picked {}", kind, picked);
+    else
+        LOG_DEBUG("{} cancelled", kind);
+
+    return picked;
+}
+
+// zenity/kdialog pre-fill works best with a full path to a (possibly new) file.
+static std::string absolute_path(std::string path)
+{
+    if (path.empty()) return path;
+
+    const std::string file = path_basename(path);
+    std::string       dir  = path_parent(path);
+    if (dir.empty()) {
+        char cwd[MAX_PATHNAME];
+        if (getcwd(cwd, sizeof cwd)) dir = cwd;
+        else return path;
+    }
+
+#ifndef _WIN32
+    char* resolved = realpath(dir.c_str(), nullptr);
+    if (resolved) {
+        path = join_dir_file(resolved, file);
+        free(resolved);
+        return path;
+    }
+#endif
+    return join_dir_file(dir, file);
+}
+
+static std::string proposed_save_path(const char* source_path,
+                                      const char* fallback_dir,
+                                      const char* default_stem,
+                                      const char* extension)
+{
+    std::string stem = default_stem;
+    std::string dir;
+    if (source_path && source_path[0]) {
+        stem = path_stem(source_path);
+        dir  = path_parent(source_path);
+    }
+    if (dir.empty() && fallback_dir && fallback_dir[0]) dir = fallback_dir;
+    if (dir.empty()) dir = ".";
+
+    return absolute_path(join_dir_file(dir, stem + extension));
 }
 
 static void sync_song_paths_from_full_path(const char* full_path)
@@ -99,6 +209,44 @@ static void sync_instr_paths_from_full_path(const char* full_path)
     }
 }
 
+static const char* extension_for_format(int fmt)
+{
+    switch (fmt) {
+    case FORMAT_PRG: return ".prg";
+    case FORMAT_BIN: return ".bin";
+    default:         return ".sid";
+    }
+}
+
+static void set_fileformat_from_path(const char* path)
+{
+    if (!path) return;
+    if (const char* dot = strrchr(path, '.')) {
+        if (strcasecmp(dot, ".prg") == 0) fileformat = FORMAT_PRG;
+        else if (strcasecmp(dot, ".bin") == 0) fileformat = FORMAT_BIN;
+        else if (strcasecmp(dot, ".sid") == 0) fileformat = FORMAT_SID;
+    }
+}
+
+static void sync_packed_paths_from_full_path(const char* full_path)
+{
+    if (!full_path || !full_path[0]) return;
+
+    char dirbuf[MAX_PATHNAME];
+    snprintf(dirbuf, sizeof dirbuf, "%s", full_path);
+    char* slash = path_slash(dirbuf);
+    if (slash) {
+        snprintf(packedsongname, MAX_FILENAME, "%s", slash + 1);
+        *slash = '\0';
+        snprintf(packedpath, MAX_PATHNAME, "%s", dirbuf);
+        chdir(packedpath);
+    } else {
+        snprintf(packedsongname, MAX_FILENAME, "%s", full_path);
+    }
+
+    set_fileformat_from_path(packedsongname);
+}
+
 static std::string initial_open_dir()
 {
     if (songpath[0]) return songpath;
@@ -114,38 +262,49 @@ static std::string initial_instr_open_dir()
 
 static std::string initial_save_path()
 {
-    if (loadedsongfilename[0]) return loadedsongfilename;
-    if (songfilename[0]) return songfilename;
-    if (songpath[0]) return std::string(songpath) + "/untitled.sng";
-    return "untitled.sng";
+    if (loadedsongfilename[0]) return absolute_path(loadedsongfilename);
+    if (songfilename[0]) return absolute_path(songfilename);
+    return absolute_path(join_dir_file(songpath[0] ? songpath : ".", "untitled.sng"));
 }
 
 static std::string initial_instr_save_path()
 {
     if (instrfilename[0]) {
-        if (instrpath[0]) return std::string(instrpath) + "/" + instrfilename;
-        return instrfilename;
+        if (instrpath[0]) return absolute_path(join_dir_file(instrpath, instrfilename));
+        return absolute_path(instrfilename);
     }
     if (editorInfo.einum && instr[editorInfo.einum].name[0]) {
-        std::string name = instr[editorInfo.einum].name;
-        if (instrpath[0]) return instrpath + ("/" + name + ".ins");
-        return name + ".ins";
+        const std::string name = std::string(instr[editorInfo.einum].name) + ".ins";
+        if (instrpath[0]) return absolute_path(join_dir_file(instrpath, name));
+        return absolute_path(name);
     }
-    if (instrpath[0]) return std::string(instrpath) + "/instrument.ins";
-    return "instrument.ins";
+    return absolute_path(join_dir_file(instrpath[0] ? instrpath : ".", "instrument.ins"));
 }
 
 static std::string initial_wav_path()
 {
-    if (wavfilename[0]) return wavfilename;
-    if (loadedsongfilename[0]) {
-        std::string p = loadedsongfilename;
+    if (wavfilename[0]) return absolute_path(wavfilename);
+
+    const char* src = loadedsongfilename[0] ? loadedsongfilename : songfilename;
+    if (src && src[0]) {
+        std::string p = src;
         const size_t dot = p.rfind('.');
         if (dot != std::string::npos) p.resize(dot);
-        return p + ".wav";
+        return absolute_path(p + ".wav");
     }
-    if (songpath[0]) return std::string(songpath) + "/export.wav";
-    return "export.wav";
+    return absolute_path(join_dir_file(songpath[0] ? songpath : ".", "export.wav"));
+}
+
+static std::string initial_packed_save_path()
+{
+    if (packedsongname[0]) {
+        const char* dir = packedpath[0] ? packedpath : songpath;
+        return absolute_path(join_dir_file(dir ? dir : ".", packedsongname));
+    }
+
+    const char* src = loadedsongfilename[0] ? loadedsongfilename : songfilename;
+    const char* dir = packedpath[0] ? packedpath : songpath;
+    return proposed_save_path(src, dir, "export", extension_for_format(fileformat));
 }
 
 } // namespace
@@ -155,10 +314,16 @@ namespace gtfile {
 bool open_song(char* out_path, size_t out_size, bool merge)
 {
     const char* title = merge ? "Merge Song" : "Load Song";
-    auto          picked = run_modal([&] {
+    LOG_DEBUG("open_song merge={}", merge);
+    auto picked = run_modal([&] {
         return pfd::open_file(title, initial_open_dir(), kSngFilters).result();
     });
-    if (picked.empty()) return false;
+    if (picked.empty()) {
+        LOG_DEBUG("open_song cancelled");
+        return false;
+    }
+
+    LOG_DEBUG("open_song picked {}", picked.front());
 
     sync_song_paths_from_full_path(picked.front().c_str());
     copy_path(picked.front(), out_path, out_size);
@@ -167,9 +332,8 @@ bool open_song(char* out_path, size_t out_size, bool merge)
 
 bool save_song(char* out_path, size_t out_size)
 {
-    auto picked = run_modal([&] {
-        return pfd::save_file("Save Song", initial_save_path(), kSngFilters).result();
-    });
+    const std::string picked =
+        run_save_dialog("save_song", "Save Song", initial_save_path(), kSngFilters);
     if (picked.empty()) return false;
 
     sync_song_paths_from_full_path(picked.c_str());
@@ -191,9 +355,8 @@ bool open_instrument(char* out_path, size_t out_size)
 
 bool save_instrument(char* out_path, size_t out_size)
 {
-    auto picked = run_modal([&] {
-        return pfd::save_file("Save Instrument", initial_instr_save_path(), kInsFilters).result();
-    });
+    const std::string picked = run_save_dialog("save_instrument", "Save Instrument",
+                                               initial_instr_save_path(), kInsFilters);
     if (picked.empty()) return false;
 
     sync_instr_paths_from_full_path(picked.c_str());
@@ -203,12 +366,22 @@ bool save_instrument(char* out_path, size_t out_size)
 
 bool export_wav(char* out_path, size_t out_size)
 {
-    auto picked = run_modal([&] {
-        return pfd::save_file("Export as WAV", initial_wav_path(), kWavFilters).result();
-    });
+    const std::string picked =
+        run_save_dialog("export_wav", "Export as WAV", initial_wav_path(), kWavFilters);
     if (picked.empty()) return false;
 
     snprintf(wavfilename, MAX_PATHNAME, "%s", picked.c_str());
+    copy_path(picked, out_path, out_size);
+    return true;
+}
+
+bool save_relocated(char* out_path, size_t out_size)
+{
+    const std::string picked = run_save_dialog("save_relocated", "Save Music+Playroutine",
+                                               initial_packed_save_path(), kRelocFilters);
+    if (picked.empty()) return false;
+
+    sync_packed_paths_from_full_path(picked.c_str());
     copy_path(picked, out_path, out_size);
     return true;
 }

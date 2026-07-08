@@ -22,5 +22,8 @@ bool save_instrument(char* out_path, size_t out_size);
 // WAV export path (SaveWav action).
 bool export_wav(char* out_path, size_t out_size);
 
+// Pack/relocate export (F9): SID, PRG, or BIN. Sets packedsongname/fileformat globals.
+bool save_relocated(char* out_path, size_t out_size);
+
 } // namespace gtfile
 #endif
