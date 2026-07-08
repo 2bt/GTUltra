@@ -9,6 +9,11 @@ void win_setmousemode(int mode);
 void win_enableKeyRepeat(void);
 void win_disableKeyRepeat(void);
 
+// Block SDL input to the main window while a native modal dialog is open
+// (e.g. zenity/kdialog). Call begin before blocking, end after it returns.
+void win_native_modal_begin(void);
+void win_native_modal_end(void);
+
 extern float xmouseScale;
 extern float ymouseScale;
 

@@ -363,3 +363,49 @@ void win_setmousemode(int mode)
 	}
 }
 
+static float win_modal_saved_opacity = 1.0f;
+
+static int native_modal_event_filter(void *userdata, SDL_Event *event)
+{
+	(void)userdata;
+	if (event->type == SDL_QUIT)
+		return 1;
+	return 0;
+}
+
+static void win_clear_transient_input(void)
+{
+	win_mousebuttons = 0;
+	win_mousexrel = 0;
+	win_mouseyrel = 0;
+	win_mousewheel = 0;
+	memset(win_keytable, 0, sizeof win_keytable);
+	win_asciikey = 0;
+	win_virtualkey = 0;
+}
+
+void win_native_modal_begin(void)
+{
+	SDL_SetEventFilter(native_modal_event_filter, NULL);
+	if (win_window) {
+		float opacity = 1.0f;
+		if (SDL_GetWindowOpacity(win_window, &opacity) == 0)
+			win_modal_saved_opacity = opacity;
+		SDL_SetWindowOpacity(win_window, 0.35f);
+	}
+}
+
+void win_native_modal_end(void)
+{
+	SDL_SetEventFilter(NULL, NULL);
+	if (win_window)
+		SDL_SetWindowOpacity(win_window, win_modal_saved_opacity);
+
+	SDL_Event event;
+	while (SDL_PollEvent(&event)) {
+		if (event.type == SDL_QUIT)
+			win_quitted = 1;
+	}
+	win_clear_transient_input();
+}
+

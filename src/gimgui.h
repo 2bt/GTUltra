@@ -24,3 +24,6 @@ void gimgui_song_field_begin(int field);
 float gimgui_font_size();
 void  gimgui_set_font_size(float px);
 void  gimgui_adjust_font_size(int delta_px); // e.g. +/-2 from View menu
+
+// Drop stale mouse/keyboard state after a blocking native file dialog.
+void gimgui_reset_input_after_modal();

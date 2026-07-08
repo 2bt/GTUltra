@@ -342,7 +342,7 @@ Port the other views to ImGui, retiring their legacy `display*` counterparts:
 - Instrument editor, the 4 tables (wave/pulse/filter/speed), song info,
   transport bar, top bar. **Done** (fixed tiled layout in `gimgui.cpp`).
 - Modal dialogs → ImGui popups/windows:
-  - **File load/save** — still legacy text prompts.
+  - **File load/save** — **done (new UI):** [portable-file-dialogs](https://github.com/samhocevar/portable-file-dialogs) via `gfiledialog.{h,cpp}` — songs (F10/F11/Ctrl+S/WAV) and instruments/tables (F10/F11 when that panel has focus). `win_native_modal_*` dims the window and discards queued input while zenity/kdialog is open. Legacy `fileselector()` unchanged until M6.
   - ~~**MIDI device select**~~ — **done:** transport-bar combo (`gimgui_draw_transport`),
     live `setMidiPort()` (no restart). Legacy modal kept until M6.
   - ~~Char editor~~ — **dropped** (chargen/font editing not needed in the new UI).
@@ -431,5 +431,6 @@ a consumer. Instead:
      of `gpaletteeditor.cpp`.
 
 ## 5. Suggested first step
-M5 next concrete work: **file load/save** and **MIDI select** as ImGui modals.
-(Char/palette editors are out of scope — delete with M6.)
+M6: remove the legacy renderer bridge and delete dropped subsystems
+(`gchareditor`, `gpaletteeditor`, legacy `fileselector` path). M5 modals are
+complete for the new UI.

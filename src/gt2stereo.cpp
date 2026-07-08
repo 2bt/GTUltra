@@ -4816,3 +4816,79 @@ void handleLoad(GTOBJECT* gt, char* dragdropfile)
 
 
 }
+
+void handleLoadPath(GTOBJECT* gt, const char* path, int merge)
+{
+	if (!path || !path[0])
+		return;
+
+	stopScreenDisplay();
+	win_enableKeyRepeat();
+
+	snprintf(songfilename, MAX_PATHNAME, "%s", path);
+	{
+		char dirbuf[MAX_PATHNAME];
+		snprintf(dirbuf, sizeof dirbuf, "%s", path);
+		char* slash = strrchr(dirbuf, '/');
+#ifdef _WIN32
+		if (!slash) slash = strrchr(dirbuf, '\\');
+#endif
+		if (slash) {
+			*slash = '\0';
+			snprintf(songpath, MAX_PATHNAME, "%s", dirbuf);
+			chdir(songpath);
+		}
+	}
+
+	int ok = 0;
+	if ((editorInfo.editmode != EDIT_INSTRUMENT) && (editorInfo.editmode != EDIT_TABLES))
+		ok = merge ? mergesong(gt) : loadsong(gt, 0);
+
+	if (ok)
+	{
+		loadedSongFlag = 1;
+		undoInitAllAreas(&gtObject);
+		countInstruments();
+		setTableBackgroundColours(editorInfo.einum);
+		expandAllSongs();
+
+		songExported = 0;
+		forceSave3ChannelSng = 0;
+
+		editorInfo.esnum = 1;
+		songchange(gt, 1);
+		editorInfo.esnum = 0;
+		songchange(gt, 1);
+
+		playUntilEnd(editorInfo.esnum);
+		copyCurrentToSngBuffer(gt, currentSongFile);
+	}
+
+	key   = 0;
+	rawkey = 0;
+	restartScreenDisplay();
+}
+
+int saveSongAtPath(GTOBJECT* gt, const char* path)
+{
+	(void)gt;
+	if (!path || !path[0])
+		return 0;
+
+	snprintf(songfilename, MAX_PATHNAME, "%s", path);
+	{
+		char dirbuf[MAX_PATHNAME];
+		snprintf(dirbuf, sizeof dirbuf, "%s", path);
+		char* slash = strrchr(dirbuf, '/');
+#ifdef _WIN32
+		if (!slash) slash = strrchr(dirbuf, '\\');
+#endif
+		if (slash) {
+			*slash = '\0';
+			snprintf(songpath, MAX_PATHNAME, "%s", dirbuf);
+			chdir(songpath);
+		}
+	}
+
+	return savesong();
+}

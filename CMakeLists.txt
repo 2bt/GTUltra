@@ -204,7 +204,13 @@ target_link_libraries(imgui PUBLIC ${SDL2_LIBRARIES})
 # The main editor
 add_executable(gtultra "${SRC}/gt2stereo.cpp" "${SRC}/greloc.cpp")
 target_link_libraries(gtultra PRIVATE gtcore)
-target_sources(gtultra PRIVATE "${SRC}/gimgui.cpp" "${SRC}/guimodel.cpp" "${SRC}/gactions.cpp")
+target_sources(gtultra PRIVATE
+    "${SRC}/gimgui.cpp"
+    "${SRC}/guimodel.cpp"
+    "${SRC}/gactions.cpp"
+    "${SRC}/gfiledialog.cpp")
+target_include_directories(gtultra PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/extern/portable-file-dialogs")
 target_link_libraries(gtultra PRIVATE imgui)
 # guimodel.cpp needs the legacy headers (model globals) + bme/asm include dirs
 target_include_directories(gtultra PRIVATE "${SRC}/bme" "${SRC}/asm" ${SDL2_INCLUDE_DIRS})

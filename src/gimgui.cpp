@@ -1539,3 +1539,21 @@ void gimgui_set_font_size(float px) {
 }
 
 void gimgui_adjust_font_size(int delta_px) { gimgui_set_font_size(g_font_size_px + (float)delta_px); }
+
+void gimgui_reset_input_after_modal() {
+    if (!g_imgui_ready) return;
+
+    ImGuiIO& io = ImGui::GetIO();
+    io.ClearInputMouse();
+    io.ClearInputKeys();
+    io.KeyCtrl = io.KeyShift = io.KeyAlt = io.KeySuper = false;
+
+    if (win_window) {
+        int mx = 0, my = 0;
+        Uint32 buttons = SDL_GetMouseState(&mx, &my);
+        io.MousePos = ImVec2((float)mx, (float)my);
+        io.MouseDown[0] = (buttons & SDL_BUTTON(SDL_BUTTON_LEFT)) != 0;
+        io.MouseDown[1] = (buttons & SDL_BUTTON(SDL_BUTTON_RIGHT)) != 0;
+        io.MouseDown[2] = (buttons & SDL_BUTTON(SDL_BUTTON_MIDDLE)) != 0;
+    }
+}

@@ -9,8 +9,10 @@
 #include "ginfo.h"
 #include "gimgui.h"
 #include "ginput.h"
+#include "gfiledialog.h"
 #include "guimodel.h"
 #include "gpattern.h"
+#include "gsong.h"
 #include "gtable.h"
 #include "gdisplay.h"
 #include "gsound.h"
@@ -20,6 +22,12 @@
 namespace gtaction {
 
 namespace {
+
+static bool instrument_file_context()
+{
+    return editorInfo.einum &&
+           (editorInfo.editmode == EDIT_INSTRUMENT || editorInfo.editmode == EDIT_TABLES);
+}
 
 struct ActionMeta {
     Action      action;
@@ -863,10 +871,18 @@ bool handle_global_action(Action act) {
             if (maxSize > 0xff) validSize = 0;
         }
         if (validSize) {
-            int s = quickSave();
-            if (s) sprintf(infoTextBuffer, "quick save: %d", s);
-            else
-                save(gt, 0);
+            if (gimgui_new_ui_active() && instrument_file_context()) {
+                char path[MAX_PATHNAME];
+                if (gtfile::save_instrument(path, sizeof path)) saveinstrument();
+            } else {
+                int s = quickSave();
+                if (s) sprintf(infoTextBuffer, "quick save: %d", s);
+                else if (gimgui_new_ui_active()) {
+                    char path[MAX_PATHNAME];
+                    if (gtfile::save_song(path, sizeof path)) saveSongAtPath(gt, path);
+                } else
+                    save(gt, 0);
+            }
         }
         return true;
     }
@@ -985,7 +1001,18 @@ bool handle_global_action(Action act) {
         return true;
     }
 
-    case Action::LoadSong: handleLoad(gt, NULL); return true;
+    case Action::LoadSong:
+        if (gimgui_new_ui_active()) {
+            char path[MAX_PATHNAME];
+            if (instrument_file_context()) {
+                if (gtfile::open_instrument(path, sizeof path)) loadinstrument(gt);
+            } else {
+                const bool merge = shiftOrCtrlPressed != 0;
+                if (gtfile::open_song(path, sizeof path, merge)) handleLoadPath(gt, path, merge);
+            }
+        } else
+            handleLoad(gt, NULL);
+        return true;
 
     case Action::SaveSong: {
         int ok = 1;
@@ -993,7 +1020,17 @@ bool handle_global_action(Action act) {
             int maxSize = validateAllSongs();
             if (maxSize > 0xff) ok = 0;
         }
-        if (ok) save(gt, 0);
+        if (ok) {
+            if (gimgui_new_ui_active()) {
+                char path[MAX_PATHNAME];
+                if (instrument_file_context()) {
+                    if (gtfile::save_instrument(path, sizeof path)) saveinstrument();
+                } else if (gtfile::save_song(path, sizeof path)) {
+                    saveSongAtPath(gt, path);
+                }
+            } else
+                save(gt, 0);
+        }
         return true;
     }
 
@@ -1051,7 +1088,15 @@ bool handle_global_action(Action act) {
         }
         return true;
 
-    case Action::SaveWav: save(gt, 1); return true;
+    case Action::SaveWav:
+        if (gimgui_new_ui_active()) {
+            char path[MAX_PATHNAME];
+            if (gtfile::export_wav(path, sizeof path)) {
+                doExportToWAV = 1;
+            }
+        } else
+            save(gt, 1);
+        return true;
 
     case Action::SongRewind: {
         leftKeyTicksDelta = SDL_GetTicks() - leftKeyTicks;
