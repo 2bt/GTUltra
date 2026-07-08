@@ -528,7 +528,7 @@ void gimgui_draw_player_status(ImVec2 pos, ImVec2 size) {
             int pan = gtui::player_sid_pan(c);
             ImGui::PushID(c);
             ImGui::SetNextItemWidth(gimgui_text_width(5));
-            if (ImGui::SliderInt("##pan", &pan, 0, 15, "%X"))
+            if (ImGui::SliderInt("##pan", &pan, 0, 14, "%X"))
                 gtui::player_set_sid_pan(c, pan);
             ImGui::PopID();
         }

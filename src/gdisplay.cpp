@@ -41,7 +41,7 @@ void setSIDTracker64KeyOnStyle()
 {
 	if (SIDTracker64ForIPadIsAmazing != 0)
 	{
-		notename[(12 * 8) - 1] = "|  ";	// Makes it look more like ST64 view instead of +++
+		notename[(12 * 8) - 1] = " | ";	// Makes it look more like ST64 view instead of +++
 	}
 	else
 	{

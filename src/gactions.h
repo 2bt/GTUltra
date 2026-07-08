@@ -189,53 +189,23 @@ constexpr Chord kNoChord = 0;
 
 Ctx context_from_editmode(int editmode);
 
-Chord  chord_from_input(int rawkey, int ascii_key, int shift, int ctrl);
-Action resolve(Ctx ctx, Chord chord);       // ctx bindings, then Global
-Action resolve_ctx(Ctx ctx, Chord chord);   // ctx bindings only
-Action resolve_input(Ctx ctx, int raw_scancode, int ascii_key, int shift, int ctrl);
-
-// Default or overridden chord for an action in a context (kNoChord if unbound).
-Chord binding_for(Action action, Ctx ctx);
-
 const char* action_name(Action a);
 const char* action_label(Action a);
 
 // Run an action programmatically (ImGui toolbar, scripts, …).
 bool perform(Action act);
 
-// Mode-specific navigation (order list, pattern cursor). Uses gtObject.
+// Per-frame input dispatch (gt2stereo.cpp).
 bool dispatch_mode_navigation();
-
-// Vertical ImGui order-list navigation. Uses the global gtObject.
-bool dispatch_order_navigation();
-
-// Pattern cursor navigation (unmodified keys). Uses gtObject.
-bool dispatch_pattern_navigation();
-
-// Pattern note/hex cell editing (ImGui new UI). Uses gtObject.
+bool dispatch_global(Ctx ctx);
 bool dispatch_pattern_cell_input(int midiNote, const EditorInput *input = nullptr);
-
-// Table / instrument cursor navigation (ImGui panels). Uses gtObject.
-bool dispatch_table_navigation();
-bool dispatch_instrument_navigation();
 bool dispatch_instrument_cell_input(const EditorInput *input = nullptr);
 bool dispatch_table_cell_input(const EditorInput *input = nullptr);
-bool dispatch_names_navigation();
+bool consume_legacy_hex_input(int hex_at_frame_start);
 
-// Global actions (save, undo, quit, edit-mode tab, …). Uses gtObject.
-bool dispatch_global(Ctx ctx);
-
-// Debug: log when legacy *commands() handles a key the action layer did not.
-void log_legacy_fallback(const char* handler);
-
-// Runtime keymap overrides (M7 TOML will call these).
+// Runtime keymap overrides (M7 TOML / rebind UI).
 bool set_binding(Action action, Ctx ctx, Chord chord);
 bool clear_binding(Action action, Ctx ctx);
 void reset_bindings();
-
-void clear_input();
-
-// After legacy *commands() handled a hex nybble, suppress trailing global dispatch.
-bool consume_legacy_hex_input(int hex_at_frame_start);
 
 } // namespace gtaction
