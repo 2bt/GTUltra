@@ -66,7 +66,7 @@ GTUltra is better-layered than a typical tracker, which makes this tractable:
    |  SDL_Renderer backend  (add GL/etc later)  |                                    |
    +--------------------------------------------+                                    |
             |                                                                        |
-   ImGui frame loop (draw every frame + vsync)                                      |
+   ImGui frame loop (draw every frame + vsync)                                       |
             |                                                                        |
    Panels (draw*)  ── read/write ──>  editorInfo + model (gsong) + GTOBJECT  <── audio/player
             |                                    ^
@@ -309,29 +309,14 @@ foundation the config keymap needs later).
 
 ### M4 — Pattern grid (the crux)
 
-> **Status: read-only grid landed.** Custom `ImDrawList` "Pattern" window:
-> monospace metrics (`CalcTextSize`), row virtualization, per-field coloring
-> (note/instr/cmd, dimmed REST + dots for empty fields), beat-row + cursor-row +
-> cursor-channel highlighting, `===` for ENDPATT, auto-follows the edit cursor.
-> Reads live model via new `guimodel` pattern accessors (`pattern_cell`,
-> channel/cursor/step queries; note-name decode via the legacy `notename`
-> table). Verified against the legacy view (headers `CH0 0A/CH1 0C/CH2 0B`,
-> row 0 `C-2 01 F07` / `C-3 0F 105`).
->
-> **Interactive (transition approach): reuse the legacy edit engine.** Keyboard
-> editing already works — the legacy `patterncommands` handles note/hex entry,
-> cursor moves, and undo, and the grid mirrors it live (verified: Shift+Down
-> drove the selection). So the ImGui grid adds only **mouse**: clicking a cell
-> calls `gtui::pattern_set_cursor` (sets `EDIT_PATTERN` + `epchn/eppos/epcolumn`
-> + `masterLoopChannel`), using the legacy click→column mapping; keyboard then
-> flows to the legacy editor untouched. Cursor is a per-sub-field cell box;
-> Shift+Up/Down selection drawn as a blue background. (Model-write verified in
-> process; the click itself needs a real display — ImGui gets no mouse focus
-> under headless Xvfb.)
->
-> Still to do toward full M4: keyboard-driven editing owned by the ImGui layer
-> (for the eventual legacy removal, M6), then re-skin the SID Tables with this
-> same grid widget.
+> **Status: interactive grid complete for the new UI path.** Read-only draw +
+> mouse hit-testing landed earlier; navigation and structural edits route through
+> the M3 action layer; note/hex entry and Enter-driven jumps (instrument/table)
+> route through `dispatch_pattern_cell_input()` → `pattern_cell_input()` /
+> `pattern_note_input()` / `pattern_hex_input()` (extracted from legacy
+> `patterncommands`, still calling `gotoinstr` / `gototable` for cross-panel
+> navigation). Legacy `patterncommands()` is no longer called when the new UI is
+> active.
 
 Goal: a real ImGui pattern editor replacing the legacy pattern panel.
 Follow Furnace's `drawPattern()` recipe (`src/gui/pattern.cpp`):
@@ -353,12 +338,16 @@ Follow Furnace's `drawPattern()` recipe (`src/gui/pattern.cpp`):
 
 ### M5 — Remaining panels
 Port the other views to ImGui, retiring their legacy `display*` counterparts:
-- Order list → ImGui tables *(furnace `orders.cpp`)*.
+- Order list → ImGui tables *(furnace `orders.cpp`)*. **Done.**
 - Instrument editor, the 4 tables (wave/pulse/filter/speed), song info,
-  transport bar, top bar. (`displayTable` is only ~40 lines — a good *first*
-  panel to prototype before M4 if we want an easy win.)
-- Modal dialogs (file load/save, char editor, palette editor, MIDI select)
-  → ImGui popups/windows.
+  transport bar, top bar. **Done** (fixed tiled layout in `gimgui.cpp`).
+- Modal dialogs → ImGui popups/windows:
+  - **File load/save** — still legacy text prompts.
+  - ~~**MIDI device select**~~ — **done:** transport-bar combo (`gimgui_draw_transport`),
+    live `setMidiPort()` (no restart). Legacy modal kept until M6.
+  - ~~Char editor~~ — **dropped** (chargen/font editing not needed in the new UI).
+  - ~~Palette editor~~ — **dropped** (replaced by M7 theme/color roles in
+    `config.toml`, not a port of `gpaletteeditor.cpp`).
 - Remove each panel from the legacy bridge as it is ported.
 
 ### M6 — Remove the legacy renderer + bme gfx/win
@@ -366,6 +355,9 @@ Goal: delete dead code once every panel is ImGui.
 - Remove the legacy bridge, `gdisplay.cpp`/`ginfo.cpp` drawing, the
   `fliptoscreen`/chargen renderer in `gconsole.cpp`, `mousecommands` and the
   old input loop.
+- Delete dropped legacy-only subsystems: `gchareditor.*`, `gpaletteeditor.*`,
+  `editPaletteMode` and related palette-preset editing UI (keep only what M7
+  needs for runtime theme application).
 - Drop bme `gfx`/`win`/`kbd`/`mou` from the build (keep `snd`/`io`/`end` until
   their own replacement milestone). Flip `GTULTRA_IMGUI` to the default/only
   path.
@@ -433,20 +425,11 @@ a consumer. Instead:
 - **Two targeted early exceptions that pay off:**
   1. **Consolidate `editorInfo` + the split `GTOBJECT.editorUndoInfo` state**
      (already M3) — both the UI and config bind to it.
-  2. **Rework the palette/preset subsystem into clean C++** — small, isolated,
-     currently C-with-globals (`char *paletteNames[16]`, `char* paletteText[]`,
-     raw `malloc`/`sprintf` in [gpaletteeditor.cpp](../src/gpaletteeditor.cpp)),
-     and it becomes the **color-theme system in M7**. A `std::vector<Palette>`
-     with `std::string` names + load/save methods is a low-risk warm-up that
-     produces reusable design. Good candidate for the *first* concrete task.
+  2. ~~**Rework the palette/preset subsystem**~~ — **superseded.** The legacy
+     palette editor is dropped; M7 themes are a fresh color-role system in
+     `config.toml` (`gimgui_apply_style` + M3 action scaffolding), not a port
+     of `gpaletteeditor.cpp`.
 
 ## 5. Suggested first step
-Either:
-- **(a) M2 scaffold** — layer ImGui over the running app (`-DGTULTRA_IMGUI=ON`):
-  reuse bme's window/renderer + `sdlTexture`, draw it as the base layer, draw a
-  menu bar + demo window on top. Yields a running, ImGui-hosted GTUltra with the
-  old editor fully usable inside it — the safe platform to iterate from — and a
-  natural place to prototype `displayTable` (~40 lines) as the first native
-  panel. Best for momentum.
-- **(b) Palette/preset C++ rework** — small, self-contained, de-risks M7. Best
-  as a low-risk warm-up that yields reusable design.
+M5 next concrete work: **file load/save** and **MIDI select** as ImGui modals.
+(Char/palette editors are out of scope — delete with M6.)

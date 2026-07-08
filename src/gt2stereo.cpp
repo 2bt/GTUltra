@@ -1355,7 +1355,10 @@ void docommand(void)
 		// Also, if this is the case, set key and rawkey=0 so that only note input is recognised - just in case..
 		if (!gtaction::dispatch_mode_navigation()) {
 			const EditorInput in = editor_input_snapshot();
-			patterncommands(gt, gMIDINote, &in);
+			if (gimgui_new_ui_active())
+				gtaction::dispatch_pattern_cell_input(gMIDINote, &in);
+			else
+				patterncommands(gt, gMIDINote, &in);
 		}
 
 		displayPatternInfo(gt);

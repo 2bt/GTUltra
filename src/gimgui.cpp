@@ -1221,9 +1221,36 @@ void gimgui_draw_transport(ImVec2 pos, ImVec2 size) {
         gimgui_chrome_mono_label(tbuf, 20);
     }
 
+    {
+        const float legacyW    = gimgui_button_width(6);
+        const float midiComboW = gimgui_mono_width(30) + ImGui::GetStyle().FramePadding.x * 2.0f;
+        const float midiLabelW = gimgui_mono_width(4);
+        const float midiBlockW =
+            midiLabelW + ImGui::GetStyle().ItemSpacing.x + midiComboW + ImGui::GetStyle().ItemSpacing.x + legacyW;
+        gimgui_chrome_same_line_right(midiBlockW);
 
-    gimgui_chrome_same_line_right(gimgui_button_width(6));
-    if (gimgui_button("Legacy")) g_show_new_ui = false;
+        ImGui::TextUnformatted("MIDI");
+        ImGui::SameLine();
+        ImGui::SetNextItemWidth(midiComboW);
+
+        char preview[128];
+        gtui::midi_combo_label(gtui::midi_combo_index(), preview, sizeof preview);
+
+        if (ImGui::BeginCombo("##midi_port", preview)) {
+            const int items = gtui::midi_combo_items();
+            for (int i = 0; i < items; i++) {
+                char label[128];
+                gtui::midi_combo_label(i, label, sizeof label);
+                const bool selected = (i == gtui::midi_combo_index());
+                if (ImGui::Selectable(label, selected)) gtui::midi_set_combo_index(i);
+                if (selected) ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+
+        ImGui::SameLine();
+        if (gimgui_button("Legacy")) g_show_new_ui = false;
+    }
 
     ImGui::End();
 }

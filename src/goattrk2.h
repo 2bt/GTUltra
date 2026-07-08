@@ -202,6 +202,7 @@ extern char paletteChanged;
 extern WAVEFORM_INFO waveformDisplayInfo;
 
 extern int selectedMIDIPort;
+extern int midiEnabled;
 extern unsigned int enableAntiAlias;
 
 extern int useOriginalGTFunctionKeys;

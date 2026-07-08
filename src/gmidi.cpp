@@ -6,6 +6,7 @@
 
 #include <iostream>
 #include <cstdlib>
+#include <cstring>
 #include <signal.h>
 
 #ifdef _WIN32
@@ -17,34 +18,58 @@
 #include "gmidi.h"
 #include "gmidiselect.h"
 
-
 bool done;
-//static void finish(int ignore) { done = true; }
-RtMidiIn *midiin;
+RtMidiIn *midiin = nullptr;
 
 bool portOpen = false;
 
-int initMidi(int midiPort)
+static int applyMidiPort(int midiPort)
 {
-	midiin = new RtMidiIn();
-	portOpen = false;
+	if (!midiin)
+		midiin = new RtMidiIn();
 
-	// Check available ports.
+	if (midiPort == MIDI_PORT_DISABLED)
+	{
+		if (portOpen)
+		{
+			midiin->closePort();
+			portOpen = false;
+		}
+		return MIDI_PORT_DISABLED;
+	}
+
 	unsigned int nPorts = midiin->getPortCount();
 	if (nPorts == 0)
-		return 0;
+	{
+		if (portOpen)
+		{
+			midiin->closePort();
+			portOpen = false;
+		}
+		return MIDI_PORT_DISABLED;
+	}
 
-	if (nPorts <= (unsigned int)midiPort)
+	if (midiPort < 0 || (unsigned int)midiPort >= nPorts)
 		midiPort = 0;
 
-	midiin->openPort(midiPort);
-	// Don't ignore sysex, timing, or active sensing messages.
+	if (portOpen)
+		midiin->closePort();
+
+	midiin->openPort((unsigned int)midiPort);
 	midiin->ignoreTypes(false, false, false);
 	portOpen = true;
 
-
 	return midiPort;
+}
 
+int initMidi(int midiPort)
+{
+	return applyMidiPort(midiPort);
+}
+
+int setMidiPort(int midiPort)
+{
+	return applyMidiPort(midiPort);
 }
 
 char unsigned msg[4096];
@@ -81,14 +106,15 @@ int checkForMidiInput(MIDI_MESSAGE *m,int midiPort)
 	}
 	else
 	{
-		midiin = new RtMidiIn();
+		if (!midiin)
+			midiin = new RtMidiIn();
 
 		unsigned int nPorts = midiin->getPortCount();
 		if (nPorts > 0)
 		{
 			midiin->openPort(midiPort);
-			// Don't ignore sysex, timing, or active sensing messages.
 			midiin->ignoreTypes(false, false, false);
+			portOpen = true;
 			return 1;
 		}
 		return test;
@@ -99,13 +125,17 @@ int checkForMidiInput(MIDI_MESSAGE *m,int midiPort)
 
 unsigned int getPortCount()
 {
-	return  midiin->getPortCount();
+	if (!midiin)
+		midiin = new RtMidiIn();
+	return midiin->getPortCount();
 }
 
 char* getPortName(int portNumber)
 {
 	std::string str;
 	try {
+		if (!midiin)
+			midiin = new RtMidiIn();
 		str = midiin->getPortName(portNumber);
 	}
 	catch (RtMidiError &error) {
@@ -118,4 +148,22 @@ char* getPortName(int portNumber)
 	return writable;
 }
 
+int getMidiPortNameInto(int portNumber, char* buf, int bufSize)
+{
+	if (!buf || bufSize <= 0)
+		return 0;
+
+	buf[0] = '\0';
+	if (!midiin)
+		midiin = new RtMidiIn();
+
+	try {
+		std::string str = midiin->getPortName(portNumber);
+		snprintf(buf, (size_t)bufSize, "%s", str.c_str());
+		return 1;
+	}
+	catch (RtMidiError &error) {
+		return 0;
+	}
+}
 

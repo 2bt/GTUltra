@@ -11,6 +11,8 @@
 
 #include <stdint.h>
 
+struct EditorInput;
+
 namespace gtaction {
 
 enum class Ctx : uint8_t {
@@ -209,6 +211,9 @@ bool dispatch_order_navigation();
 
 // Pattern cursor navigation (unmodified keys). Uses gtObject.
 bool dispatch_pattern_navigation();
+
+// Pattern note/hex cell editing (ImGui new UI). Uses gtObject.
+bool dispatch_pattern_cell_input(int midiNote, const EditorInput *input = nullptr);
 
 // Table / instrument cursor navigation (ImGui panels). Uses gtObject.
 bool dispatch_table_navigation();

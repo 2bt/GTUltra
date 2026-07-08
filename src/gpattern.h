@@ -93,6 +93,8 @@ extern int disableEnterToReturnToLastPos;	// if true, pressing enter wont return
 
 
 void patterncommands(GTOBJECT *gt, int midiNote, const EditorInput *input = nullptr);
+// M4: note/hex cell editing (ImGui action layer + legacy patterncommands).
+bool pattern_cell_input(GTOBJECT *gt, int midiNote, const EditorInput *input = nullptr);
 void nextpattern(GTOBJECT *gt);
 void prevpattern(GTOBJECT *gt);
 int patternup(GTOBJECT *gt);

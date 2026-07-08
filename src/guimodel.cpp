@@ -6,6 +6,7 @@
 #include "goattrk2.h"
 #include "gactions.h"
 #include "ginfo.h"
+#include "gmidi.h"
 
 #include <cstdio>
 #include <cstring>
@@ -794,6 +795,71 @@ void pattern_set_cursor(int ch, int row, int col)
     // Keep the master-loop / mark channel in sync, as the legacy click does, so
     // play-from-here and Shift-select act on the clicked channel.
     setMasterLoopChannel(&gtObject, (char *)"imgui");
+}
+
+// ---- MIDI input ----
+
+int midi_port_count() { return (int)getPortCount(); }
+
+bool midi_input_enabled() { return midiEnabled != 0; }
+
+int midi_combo_items()
+{
+    const int ports = midi_port_count();
+    return 1 + (ports > 0 ? ports : 0);
+}
+
+int midi_combo_index()
+{
+    if (!midi_input_enabled() || selectedMIDIPort == MIDI_PORT_DISABLED)
+        return 0;
+    return selectedMIDIPort + 1;
+}
+
+void midi_combo_label(int index, char* buf, int bufSize)
+{
+    if (!buf || bufSize <= 0)
+        return;
+
+    if (index <= 0)
+    {
+        if (midi_port_count() == 0)
+            snprintf(buf, (size_t)bufSize, "Off (no ports)");
+        else
+            snprintf(buf, (size_t)bufSize, "Off");
+        return;
+    }
+
+    const int port = index - 1;
+    char      name[96];
+    if (getMidiPortNameInto(port, name, (int)sizeof name))
+        snprintf(buf, (size_t)bufSize, "%d: %s", port, name);
+    else
+        snprintf(buf, (size_t)bufSize, "%d", port);
+}
+
+bool midi_set_combo_index(int index)
+{
+    if (index <= 0)
+    {
+        setMidiPort(MIDI_PORT_DISABLED);
+        selectedMIDIPort = MIDI_PORT_DISABLED;
+        midiEnabled      = 0;
+        return true;
+    }
+
+    const int port   = index - 1;
+    const int opened = setMidiPort(port);
+    if (opened == MIDI_PORT_DISABLED)
+    {
+        selectedMIDIPort = MIDI_PORT_DISABLED;
+        midiEnabled      = 0;
+        return false;
+    }
+
+    selectedMIDIPort = opened;
+    midiEnabled      = 1;
+    return true;
 }
 
 } // namespace gtui

@@ -8,6 +8,7 @@
 #include "gorder.h"
 #include "ginfo.h"
 #include "gimgui.h"
+#include "ginput.h"
 #include "guimodel.h"
 #include "gpattern.h"
 #include "gtable.h"
@@ -1560,6 +1561,17 @@ bool dispatch_pattern_navigation() {
     }
 
     if (!handle_pattern_action(act)) return false;
+
+    clear_input();
+    return true;
+}
+
+bool dispatch_pattern_cell_input(int midiNote, const EditorInput *input) {
+    if (editorInfo.editmode != EDIT_PATTERN) return false;
+    if (!gimgui_new_ui_active()) return false;
+
+    const EditorInput in = input ? *input : editor_input_snapshot();
+    if (!pattern_cell_input(&gtObject, midiNote, &in)) return false;
 
     clear_input();
     return true;

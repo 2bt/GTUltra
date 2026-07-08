@@ -241,6 +241,15 @@ void player_multiplier_next();
 void        context_help_refresh();    // update from cursor / edit mode
 const char* context_help();
 
+// ---- MIDI input (transport-bar combo) ----
+enum { MIDI_PORT_DISABLED = 9999 };
+int  midi_port_count();                // RtMidi input devices
+bool midi_input_enabled();             // false when disabled or no hardware
+int  midi_combo_items();               // 1 ("Off") + midi_port_count()
+int  midi_combo_index();               // current combo selection
+void midi_combo_label(int index, char* buf, int bufSize);
+bool midi_set_combo_index(int index);  // live switch + updates selectedMIDIPort
+
 } // namespace gtui
 
 #endif
