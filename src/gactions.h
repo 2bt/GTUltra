@@ -218,6 +218,8 @@ bool dispatch_pattern_cell_input(int midiNote, const EditorInput *input = nullpt
 // Table / instrument cursor navigation (ImGui panels). Uses gtObject.
 bool dispatch_table_navigation();
 bool dispatch_instrument_navigation();
+bool dispatch_instrument_cell_input(const EditorInput *input = nullptr);
+bool dispatch_table_cell_input(const EditorInput *input = nullptr);
 bool dispatch_names_navigation();
 
 // Global actions (save, undo, quit, edit-mode tab, …). Uses gtObject.

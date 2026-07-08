@@ -11,6 +11,112 @@ unsigned char ltablecopybuffer[MAX_TABLELEN];
 unsigned char rtablecopybuffer[MAX_TABLELEN];
 int tablecopyrows = 0;
 
+bool table_enter_input(GTOBJECT *gt, const EditorInput *input)
+{
+	(void)gt;
+	const EditorInput in = input ? *input : editor_input_snapshot();
+	if (in.rawkey != KEY_ENTER) return false;
+
+	if (editorInfo.etnum == WTBL)
+	{
+		int table = -1;
+		int mstmode = MST_PORTAMENTO;
+
+		switch (ltable[editorInfo.etnum][editorInfo.etpos])
+		{
+		case WAVECMD + CMD_PORTAUP:
+		case WAVECMD + CMD_PORTADOWN:
+		case WAVECMD + CMD_TONEPORTA:
+			table = STBL;
+			break;
+
+		case WAVECMD + CMD_VIBRATO:
+			table = STBL;
+			mstmode = editorInfo.finevibrato;
+			break;
+
+		case WAVECMD + CMD_FUNKTEMPO:
+			table = STBL;
+			mstmode = MST_FUNKTEMPO;
+			break;
+
+		case WAVECMD + CMD_SETPULSEPTR:
+			table = PTBL;
+			break;
+
+		case WAVECMD + CMD_SETFILTERPTR:
+			table = FTBL;
+			break;
+		}
+		switch (table)
+		{
+		default:
+			editorInfo.editmode = EDIT_INSTRUMENT;
+			editorInfo.eipos    = editorInfo.etnum + 2;
+			return true;
+
+		case STBL:
+			if (rtable[editorInfo.etnum][editorInfo.etpos])
+			{
+				if (!in.shift_or_ctrl)
+				{
+					allowEnterToReturnToPosition();
+					gototable(STBL, rtable[editorInfo.etnum][editorInfo.etpos] - 1);
+					return true;
+				}
+				{
+					int oldeditpos    = editorInfo.etpos;
+					int oldeditcolumn = editorInfo.etcolumn;
+					int pos           = makespeedtable(rtable[editorInfo.etnum][editorInfo.etpos], mstmode, 1);
+					allowEnterToReturnToPosition();
+					gototable(WTBL, oldeditpos);
+					editorInfo.etcolumn = oldeditcolumn;
+
+					rtable[editorInfo.etnum][editorInfo.etpos] = pos + 1;
+					return true;
+				}
+			}
+			{
+				int pos = findfreespeedtable();
+				if (pos >= 0)
+				{
+					rtable[editorInfo.etnum][editorInfo.etpos] = pos + 1;
+					allowEnterToReturnToPosition();
+					gototable(STBL, pos);
+					return true;
+				}
+			}
+			break;
+
+		case PTBL:
+		case FTBL:
+			if (rtable[editorInfo.etnum][editorInfo.etpos])
+			{
+				allowEnterToReturnToPosition();
+				gototable(table, rtable[editorInfo.etnum][editorInfo.etpos] - 1);
+				return true;
+			}
+			if (in.shift_or_ctrl)
+			{
+				int pos = gettablelen(table);
+				if (pos >= MAX_TABLELEN - 1) pos = MAX_TABLELEN - 1;
+				rtable[editorInfo.etnum][editorInfo.etpos] = pos + 1;
+				allowEnterToReturnToPosition();
+				gototable(table, pos);
+				return true;
+			}
+			break;
+		}
+	}
+	else
+	{
+		if (!disableEnterToReturnToLastPos)
+			memcpy((char*)&editorInfo, (char*)&editorInfoBackup, sizeof(EDITOR_INFO));
+		return true;
+	}
+
+	return false;
+}
 
 void tablecommands(GTOBJECT *gt, const EditorInput *input)
 {
@@ -530,111 +636,7 @@ void tablecommands(GTOBJECT *gt, const EditorInput *input)
 		break;
 
 	case KEY_ENTER:
-
-
-		if (editorInfo.etnum == WTBL)
-		{
-			int table = -1;
-			int mstmode = MST_PORTAMENTO;
-
-			switch (ltable[editorInfo.etnum][editorInfo.etpos])
-			{
-			case WAVECMD + CMD_PORTAUP:
-			case WAVECMD + CMD_PORTADOWN:
-			case WAVECMD + CMD_TONEPORTA:
-				table = STBL;
-				break;
-
-			case WAVECMD + CMD_VIBRATO:
-				table = STBL;
-				mstmode = editorInfo.finevibrato;
-				break;
-
-			case WAVECMD + CMD_FUNKTEMPO:
-				table = STBL;
-				mstmode = MST_FUNKTEMPO;
-				break;
-
-			case WAVECMD + CMD_SETPULSEPTR:
-				table = PTBL;
-				break;
-
-			case WAVECMD + CMD_SETFILTERPTR:
-				table = FTBL;
-				break;
-			}
-			switch (table)
-			{
-			default:
-
-				editorInfo.editmode = EDIT_INSTRUMENT;	// move back to instrument view if there's no other table to jump to
-				editorInfo.eipos = editorInfo.etnum + 2;
-				return;
-
-			case STBL:
-				if (rtable[editorInfo.etnum][editorInfo.etpos])
-				{
-					if (!shiftOrCtrlPressed)
-					{
-
-						allowEnterToReturnToPosition();
-						gototable(STBL, rtable[editorInfo.etnum][editorInfo.etpos] - 1);
-						return;
-					}
-					else
-					{
-						int oldeditpos = editorInfo.etpos;
-						int oldeditcolumn = editorInfo.etcolumn;
-						int pos = makespeedtable(rtable[editorInfo.etnum][editorInfo.etpos], mstmode, 1);
-						allowEnterToReturnToPosition();
-						gototable(WTBL, oldeditpos);
-						editorInfo.etcolumn = oldeditcolumn;
-
-						rtable[editorInfo.etnum][editorInfo.etpos] = pos + 1;
-						return;
-					}
-				}
-				else
-				{
-					int pos = findfreespeedtable();
-					if (pos >= 0)
-					{
-						rtable[editorInfo.etnum][editorInfo.etpos] = pos + 1;
-						allowEnterToReturnToPosition();
-						gototable(STBL, pos);
-						return;
-					}
-				}
-				break;
-
-			case PTBL:
-			case FTBL:
-				if (rtable[editorInfo.etnum][editorInfo.etpos])
-				{
-					allowEnterToReturnToPosition();
-					gototable(table, rtable[editorInfo.etnum][editorInfo.etpos] - 1);
-					return;
-				}
-				else
-				{
-					if (shiftOrCtrlPressed)
-					{
-						int pos = gettablelen(table);
-						if (pos >= MAX_TABLELEN - 1) pos = MAX_TABLELEN - 1;
-						rtable[editorInfo.etnum][editorInfo.etpos] = pos + 1;
-						allowEnterToReturnToPosition();
-						gototable(table, pos);
-						return;
-					}
-				}
-			}
-		}
-		else
-		{
-			if (!disableEnterToReturnToLastPos)
-				memcpy((char*)&editorInfo, (char*)&editorInfoBackup, sizeof(EDITOR_INFO));
-			return;
-		}
+		if (table_enter_input(gt, &in)) return;
 		break;
 
 	case KEY_APOST2:

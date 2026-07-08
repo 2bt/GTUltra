@@ -16,6 +16,7 @@
 #include "gtable.h"
 #include "gdisplay.h"
 #include "gsound.h"
+#include "ginstr.h"
 #include "log.h"
 
 #include <vector>
@@ -1633,6 +1634,29 @@ bool dispatch_pattern_cell_input(int midiNote, const EditorInput *input) {
 
     const EditorInput in = input ? *input : editor_input_snapshot();
     if (!pattern_cell_input(&gtObject, midiNote, &in)) return false;
+
+    clear_input();
+    return true;
+}
+
+bool dispatch_instrument_cell_input(const EditorInput *input) {
+    if (!gimgui_new_ui_active()) return false;
+    if (editorInfo.editmode != EDIT_INSTRUMENT) return false;
+    if (gimgui_instr_name_editing()) return false;
+
+    const EditorInput in = input ? *input : editor_input_snapshot();
+    if (!instrument_cell_input(&gtObject, &in)) return false;
+
+    clear_input();
+    return true;
+}
+
+bool dispatch_table_cell_input(const EditorInput *input) {
+    if (!gimgui_new_ui_active()) return false;
+    if (editorInfo.editmode != EDIT_TABLES) return false;
+
+    const EditorInput in = input ? *input : editor_input_snapshot();
+    if (!table_enter_input(&gtObject, &in)) return false;
 
     clear_input();
     return true;

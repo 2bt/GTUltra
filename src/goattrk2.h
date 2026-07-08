@@ -53,7 +53,7 @@ extern "C" {
 #define EDIT_TABLES 3
 #define EDIT_NAMES 4
 
-//For EDITOR_INFO.editTableMode 
+//For EDITOR_INFO.editTableMode
 #define EDIT_TABLE_NONE 0
 #define EDIT_TABLE_WAVE 1
 #define EDIT_TABLE_PULSE 2
@@ -62,7 +62,7 @@ extern "C" {
 
 #define KEY_TRACKER 0
 #define KEY_DMC 1
-#define KEY_JANKO 2				   
+#define KEY_JANKO 2
 
 #define VISIBLEPATTROWS 29	//31
 #define VISIBLEORDERLIST 11	// 11
@@ -138,8 +138,8 @@ extern char instrfilter[MAX_FILENAME];
 extern char instrpath[MAX_PATHNAME];
 extern char packedpath[MAX_PATHNAME];
 extern char *programname;
-extern char *notename[];
-extern char *notenameTableView[];
+extern const char *notename[];
+extern const char *notenameTableView[];
 extern char textbuffer[MAX_PATHNAME];
 extern char debugTextbuffer[MAX_PATHNAME];
 extern unsigned char hexkeytbl[16];

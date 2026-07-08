@@ -1303,7 +1303,11 @@ void docommand(void)
 		}
 		if (!gtaction::dispatch_mode_navigation()) {
 			const EditorInput in = editor_input_snapshot();
-			instrumentcommands(gt, &in);
+			if (gimgui_new_ui_active()) {
+				if (!gtaction::dispatch_instrument_cell_input(&in))
+					instrumentcommands(gt, &in);
+			} else
+				instrumentcommands(gt, &in);
 		}
 		displayInstrumentInfo(gt);
 		break;
@@ -1319,7 +1323,11 @@ void docommand(void)
 
 		if (!gtaction::dispatch_mode_navigation()) {
 			const EditorInput in = editor_input_snapshot();
-			tablecommands(gt, &in);
+			if (gimgui_new_ui_active()) {
+				if (!gtaction::dispatch_table_cell_input(&in))
+					tablecommands(gt, &in);
+			} else
+				tablecommands(gt, &in);
 		}
 		displayTableInfo(gt);
 		break;

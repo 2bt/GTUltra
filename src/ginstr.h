@@ -8,6 +8,7 @@ extern INSTR instrcopybuffer;
 #endif
 
 void instrumentcommands(GTOBJECT *gt, const EditorInput *input = nullptr);
+bool instrument_cell_input(GTOBJECT *gt, const EditorInput *input = nullptr);
 void nextinstr(void);
 void previnstr(void);
 void clearinstr(int num);

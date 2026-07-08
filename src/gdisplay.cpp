@@ -7,30 +7,26 @@
 #include "goattrk2.h"
 #include "gimgui.h"
 
-char *notename[] =
-{ "C-0", "C#0", "D-0", "D#0", "E-0", "F-0", "F#0", "G-0", "G#0", "A-0", "A#0", "B-0",
- "C-1", "C#1", "D-1", "D#1", "E-1", "F-1", "F#1", "G-1", "G#1", "A-1", "A#1", "B-1",
- "C-2", "C#2", "D-2", "D#2", "E-2", "F-2", "F#2", "G-2", "G#2", "A-2", "A#2", "B-2",
- "C-3", "C#3", "D-3", "D#3", "E-3", "F-3", "F#3", "G-3", "G#3", "A-3", "A#3", "B-3",
- "C-4", "C#4", "D-4", "D#4", "E-4", "F-4", "F#4", "G-4", "G#4", "A-4", "A#4", "B-4",
- "C-5", "C#5", "D-5", "D#5", "E-5", "F-5", "F#5", "G-5", "G#5", "A-5", "A#5", "B-5",
- "C-6", "C#6", "D-6", "D#6", "E-6", "F-6", "F#6", "G-6", "G#6", "A-6", "A#6", "B-6",
- "C-7", "C#7", "D-7", "D#7", "E-7", "F-7", "F#7", "G-7", "G#7", "...", "---", "+++" };
+const char* notename[] = {
+    "C-0", "C#0", "D-0", "D#0", "E-0", "F-0", "F#0", "G-0", "G#0", "A-0", "A#0", "B-0", "C-1", "C#1", "D-1", "D#1",
+    "E-1", "F-1", "F#1", "G-1", "G#1", "A-1", "A#1", "B-1", "C-2", "C#2", "D-2", "D#2", "E-2", "F-2", "F#2", "G-2",
+    "G#2", "A-2", "A#2", "B-2", "C-3", "C#3", "D-3", "D#3", "E-3", "F-3", "F#3", "G-3", "G#3", "A-3", "A#3", "B-3",
+    "C-4", "C#4", "D-4", "D#4", "E-4", "F-4", "F#4", "G-4", "G#4", "A-4", "A#4", "B-4", "C-5", "C#5", "D-5", "D#5",
+    "E-5", "F-5", "F#5", "G-5", "G#5", "A-5", "A#5", "B-5", "C-6", "C#6", "D-6", "D#6", "E-6", "F-6", "F#6", "G-6",
+    "G#6", "A-6", "A#6", "B-6", "C-7", "C#7", "D-7", "D#7", "E-7", "F-7", "F#7", "G-7", "G#7", "...", "---", "+++",
+};
 
 
-char *notenameTableView[] =
-{ "C-0", "C#0", "D-0", "D#0", "E-0", "F-0", "F#0", "G-0", "G#0", "A-0", "A#0", "B-0",
- "C-1", "C#1", "D-1", "D#1", "E-1", "F-1", "F#1", "G-1", "G#1", "A-1", "A#1", "B-1",
- "C-2", "C#2", "D-2", "D#2", "E-2", "F-2", "F#2", "G-2", "G#2", "A-2", "A#2", "B-2",
- "C-3", "C#3", "D-3", "D#3", "E-3", "F-3", "F#3", "G-3", "G#3", "A-3", "A#3", "B-3",
- "C-4", "C#4", "D-4", "D#4", "E-4", "F-4", "F#4", "G-4", "G#4", "A-4", "A#4", "B-4",
- "C-5", "C#5", "D-5", "D#5", "E-5", "F-5", "F#5", "G-5", "G#5", "A-5", "A#5", "B-5",
- "C-6", "C#6", "D-6", "D#6", "E-6", "F-6", "F#6", "G-6", "G#6", "A-6", "A#6", "B-6",
- "C-7", "C#7", "D-7", "D#7", "E-7", "F-7", "F#7", "G-7", "G#7", "A-7", "A#7", "B-7",
- "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???",
- "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???",
- "???", "???", "???", "???", "???", "???", "???", "???" };
-
+const char* notenameTableView[] = {
+    "C-0", "C#0", "D-0", "D#0", "E-0", "F-0", "F#0", "G-0", "G#0", "A-0", "A#0", "B-0", "C-1", "C#1", "D-1", "D#1",
+    "E-1", "F-1", "F#1", "G-1", "G#1", "A-1", "A#1", "B-1", "C-2", "C#2", "D-2", "D#2", "E-2", "F-2", "F#2", "G-2",
+    "G#2", "A-2", "A#2", "B-2", "C-3", "C#3", "D-3", "D#3", "E-3", "F-3", "F#3", "G-3", "G#3", "A-3", "A#3", "B-3",
+    "C-4", "C#4", "D-4", "D#4", "E-4", "F-4", "F#4", "G-4", "G#4", "A-4", "A#4", "B-4", "C-5", "C#5", "D-5", "D#5",
+    "E-5", "F-5", "F#5", "G-5", "G#5", "A-5", "A#5", "B-5", "C-6", "C#6", "D-6", "D#6", "E-6", "F-6", "F#6", "G-6",
+    "G#6", "A-6", "A#6", "B-6", "C-7", "C#7", "D-7", "D#7", "E-7", "F-7", "F#7", "G-7", "G#7", "A-7", "A#7", "B-7",
+    "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???",
+    "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???", "???",
+};
 
 
 char timechar[] = { ':', ' ' };
@@ -45,7 +41,7 @@ void setSIDTracker64KeyOnStyle()
 {
 	if (SIDTracker64ForIPadIsAmazing != 0)
 	{
-		notename[(12 * 8) - 1] = " | ";	// Makes it look more like ST64 view instead of +++
+		notename[(12 * 8) - 1] = "|  ";	// Makes it look more like ST64 view instead of +++
 	}
 	else
 	{
@@ -579,7 +575,7 @@ void displayPattern6Chn(GTOBJECT *gt)
 		{
 			color = CPATTERN_DIVIDER_LINE | (CUNUSED_MUTED_BACKGROUND << 8);
 			//		printbyte(PATTERN_X, PATTERN_Y, color, 0xff);
-			//		printbyte(PATTERN_X + (9 * (MAX_CHN)) + 4, PATTERN_Y, color, 0xff);	// header sepearator 
+			//		printbyte(PATTERN_X + (9 * (MAX_CHN)) + 4, PATTERN_Y, color, 0xff);	// header sepearator
 		}
 	}
 
@@ -1013,7 +1009,7 @@ void displayPattern3Chn(GTOBJECT *gt)
 		{
 			color = CPATTERN_DIVIDER_LINE | (CUNUSED_MUTED_BACKGROUND << 8);
 			//		printbyte(PATTERN_X, PATTERN_Y, color, 0xff);
-			//		printbyte(PATTERN_X + (9 * (MAX_CHN)) + 4, PATTERN_Y, color, 0xff);	// header sepearator 
+			//		printbyte(PATTERN_X + (9 * (MAX_CHN)) + 4, PATTERN_Y, color, 0xff);	// header sepearator
 		}
 	}
 
@@ -2430,7 +2426,7 @@ void displayDetailedWaveTable(int cc, int OX, int OY)
 			if (v >= 0xe0)
 				v2 -= 0xe0;	// waveforms 0-0xf
 
-			// Will need to check ltable[p] to know how to set final value 
+			// Will need to check ltable[p] to know how to set final value
 			detailedTableLValue[p] = v2;			// current L value. Modify this with HexInput
 			detailedTableMaxLValue[p] = 0xdf;		// maximum possible value (min is always 0)
 			detailedTableMinLValue[p] = 0;
@@ -2701,7 +2697,7 @@ void displayDetailedFilterTable(int cc, int OX, int OY)
 
 			v2 = filterResonance;
 
-			// Will need to check ltable[p] to know how to set final value 
+			// Will need to check ltable[p] to know how to set final value
 			detailedTableLValue[p] = v2;			// current L value. Modify this with HexInput
 			detailedTableMaxLValue[p] = 0xf;		// maximum possible value (min is always 0)
 			detailedTableMinLValue[p] = 0;
@@ -2733,7 +2729,7 @@ void displayDetailedFilterTable(int cc, int OX, int OY)
 		}
 		else if (v >= 0xf1 && v <= 0xfe)
 		{
-			printtext(xpos, ypos + d, color, "??? ???");	// invalid command range. 
+			printtext(xpos, ypos + d, color, "??? ???");	// invalid command range.
 			detailedTableBaseLValue[p] = -1;
 			detailedTableBaseRValue[p] = -1;
 			displayRightTable = 0;
@@ -2928,7 +2924,7 @@ void displayDetailedPulseTable(int cc, int OX, int OY)
 			v = -1;	// don't display anything else for left column
 
 
-			// Will need to check ltable[p] to know how to set final value 
+			// Will need to check ltable[p] to know how to set final value
 			detailedTableLValue[p] = v2;			// current L value. Modify this with HexInput
 			detailedTableMaxLValue[p] = 0xff;		// 0x3ff -- ignored anyway. maximum possible value (min is always 0)
 			detailedTableMinLValue[p] = 0;
@@ -2957,7 +2953,7 @@ void displayDetailedPulseTable(int cc, int OX, int OY)
 		}
 		else
 		{
-			printtext(xpos, ypos + d, color, "??? ???");	// invalid command range. 
+			printtext(xpos, ypos + d, color, "??? ???");	// invalid command range.
 			detailedTableBaseLValue[p] = -1;
 			detailedTableBaseRValue[p] = -1;
 			displayRightTable = 0;
@@ -3346,11 +3342,3 @@ void displayExpandedOrderList(GTOBJECT *gt, int cc, int OX, int OY)
 		}
 	}
 }
-
-
-
-
-
-
-
-

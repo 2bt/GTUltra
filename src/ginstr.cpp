@@ -10,140 +10,76 @@
 INSTR instrcopybuffer;
 int cutinstr = -1;
 
-void instrumentcommands(GTOBJECT *gt, const EditorInput *input)
+bool instrument_cell_input(GTOBJECT *gt, const EditorInput *input)
 {
 	const EditorInput in = input ? *input : editor_input_snapshot();
 	const int jrawkey = in.rawkey;
-
-	// ImGui instrument panel: navigation/edits via actions; legacy path is hex only.
-	if (gimgui_new_ui_active())
-		goto instr_hex_input;
-
-	switch (jrawkey)
-	{
-	case KEY_UP:
-	case KEY_DOWN:
-	case KEY_LEFT:
-	case KEY_RIGHT:
-		win_enableKeyRepeat();
-		break;
-	default:
-		if (enablekeyrepeat)
-			win_disableKeyRepeat();
-	}
 
 	switch (jrawkey)
 	{
 	case 0x8:
 	case KEY_DEL:
-		if ((editorInfo.einum) && (shiftOrCtrlPressed) && (editorInfo.eipos < LAST_INST))
+		if ((editorInfo.einum) && (in.shift_or_ctrl) && (editorInfo.eipos < LAST_INST))
 		{
 			deleteinstrtable(editorInfo.einum);
 			clearinstr(editorInfo.einum);
+			return true;
 		}
 		break;
 
 	case KEY_X:
-		if ((editorInfo.einum) && (ctrlpressed) && (editorInfo.eipos <= LAST_INST))
+		if ((editorInfo.einum) && (in.ctrl) && (editorInfo.eipos <= LAST_INST))
 		{
 			cutinstr = editorInfo.einum;
 			memcpy(&instrcopybuffer, &instr[editorInfo.einum], sizeof(INSTR));
 			clearinstr(editorInfo.einum);
+			return true;
 		}
 		break;
 
 	case KEY_C:
-		if ((editorInfo.einum) && (ctrlpressed) && (editorInfo.eipos <= LAST_INST))
+		if ((editorInfo.einum) && (in.ctrl) && (editorInfo.eipos <= LAST_INST))
 		{
 			cutinstr = -1;
 			memcpy(&instrcopybuffer, &instr[editorInfo.einum], sizeof(INSTR));
+			return true;
 		}
 		break;
 
 	case KEY_S:
-		if ((editorInfo.einum) && (shiftpressed) && (editorInfo.eipos < LAST_INST))
+		if ((editorInfo.einum) && (in.shift) && (editorInfo.eipos < LAST_INST))
 		{
 			memcpy(&instr[editorInfo.einum], &instrcopybuffer, sizeof(INSTR));
 			if (cutinstr != -1)
 			{
-				int c, d;
-				for (c = 0; c < MAX_PATT; c++)
+				for (int c = 0; c < MAX_PATT; c++)
 				{
-					for (d = 0; d < pattlen[c]; d++)
+					for (int d = 0; d < pattlen[c]; d++)
 						if (pattern[c][d * 4 + 1] == cutinstr) pattern[c][d * 4 + 1] = editorInfo.einum;
 				}
-
 			}
+			return true;
 		}
 		break;
 
 	case KEY_V:
-		if ((editorInfo.einum) && (ctrlpressed) && (editorInfo.eipos <= LAST_INST))
+		if ((editorInfo.einum) && (in.ctrl) && (editorInfo.eipos <= LAST_INST))
 		{
 			memcpy(&instr[editorInfo.einum], &instrcopybuffer, sizeof(INSTR));
-		}
-		break;
-
-	case KEY_RIGHT:
-		if (!ctrlpressed)
-		{
-			if (editorInfo.eipos < LAST_INST)
-			{
-				editorInfo.eicolumn++;
-				if (editorInfo.eicolumn > 1)
-				{
-					editorInfo.eicolumn = 0;
-					editorInfo.eipos += 5;
-					if (editorInfo.eipos >= LAST_INST) editorInfo.eipos -= (LAST_INST);	//+1);
-					if (editorInfo.eipos < 0) editorInfo.eipos = LAST_INST - 1;
-				}
-			}
-		}
-		break;
-
-	case KEY_LEFT:
-		if (!ctrlpressed)
-		{
-			if (editorInfo.eipos < LAST_INST)
-			{
-				editorInfo.eicolumn--;
-				if (editorInfo.eicolumn < 0)
-				{
-					editorInfo.eicolumn = 1;
-					editorInfo.eipos -= 5;
-					if (editorInfo.eipos < 0) editorInfo.eipos += (LAST_INST);	//+1);
-					if (editorInfo.eipos >= LAST_INST) editorInfo.eipos = LAST_INST - 1;
-				}
-			}
-		}
-		break;
-
-	case KEY_DOWN:
-		if (editorInfo.eipos < LAST_INST)
-		{
-			editorInfo.eipos++;
-			if (editorInfo.eipos > (LAST_INST - 1)) editorInfo.eipos = 0;
-		}
-		break;
-
-	case KEY_UP:
-		if (editorInfo.eipos < LAST_INST)
-		{
-			editorInfo.eipos--;
-			if (editorInfo.eipos < 0) editorInfo.eipos = LAST_INST - 1;
+			return true;
 		}
 		break;
 
 	case KEY_N:
-		if ((editorInfo.eipos != LAST_INST) && (shiftOrCtrlPressed))
+		if ((editorInfo.eipos != LAST_INST) && (in.shift_or_ctrl))
 		{
 			editorInfo.eipos = LAST_INST;
-			return;
+			return true;
 		}
 		break;
 
 	case KEY_U:
-		if (shiftOrCtrlPressed)
+		if (in.shift_or_ctrl)
 		{
 			editorInfo.etlock ^= 1;
 			validatetableview();
@@ -153,16 +89,18 @@ void instrumentcommands(GTOBJECT *gt, const EditorInput *input)
 			else
 				sprintf(infoTextBuffer, "Table Lock: Disabled");
 			forceInfoLine = 1;
+			return true;
 		}
 		break;
 
 	case KEY_SPACE:
 		if (editorInfo.eipos != LAST_INST)
 		{
-			if (!shiftOrCtrlPressed)
+			if (!in.shift_or_ctrl)
 				playtestnote(FIRSTNOTE + editorInfo.epoctave * 12, editorInfo.einum, editorInfo.epchn, gt);
 			else
 				releasenote(editorInfo.epchn, gt);
+			return true;
 		}
 		break;
 
@@ -179,47 +117,125 @@ void instrumentcommands(GTOBJECT *gt, const EditorInput *input)
 
 			if (instr[editorInfo.einum].ptr[editorInfo.eipos - 2])
 			{
-				if ((editorInfo.eipos == 5) && (shiftOrCtrlPressed))
+				if ((editorInfo.eipos == 5) && (in.shift_or_ctrl))
 				{
 					instr[editorInfo.einum].ptr[STBL] = makespeedtable(instr[editorInfo.einum].ptr[STBL], editorInfo.finevibrato, 1) + 1;
-					break;
+					return true;
 				}
 				pos = instr[editorInfo.einum].ptr[editorInfo.eipos - 2] - 1;
-
 			}
 			else
 			{
 				pos = gettablelen(editorInfo.eipos - 2);
 
 				if (pos >= MAX_TABLELEN - 1) pos = MAX_TABLELEN - 1;
-				if (shiftOrCtrlPressed) instr[editorInfo.einum].ptr[editorInfo.eipos - 2] = pos + 1;
+				if (in.shift_or_ctrl) instr[editorInfo.einum].ptr[editorInfo.eipos - 2] = pos + 1;
 			}
 			allowEnterToReturnToPosition();
 			gototable(editorInfo.eipos - 2, pos);
-			int e = editorInfo.etpos;
-			for (int i = 0;i < (VISIBLETABLEROWS - (VISIBLETABLEROWS / 4));i++)
 			{
-				tabledown();
-				validatetableview();
-
+				int e = editorInfo.etpos;
+				for (int i = 0; i < (VISIBLETABLEROWS - (VISIBLETABLEROWS / 4)); i++)
+				{
+					tabledown();
+					validatetableview();
+				}
+				editorInfo.etpos = e;
 			}
-			editorInfo.etpos = e;
-
-
+			return true;
 		}
-		return;
 
 		case LAST_INST:
 			editorInfo.eipos = 0;
-			break;
+			return true;
 		}
 		break;
 	}
 
-	if ((editorInfo.eipos == LAST_INST) && (editorInfo.einum))
+	return false;
+}
+
+void instrumentcommands(GTOBJECT *gt, const EditorInput *input)
+{
+	const EditorInput in = input ? *input : editor_input_snapshot();
+	const int jrawkey = in.rawkey;
+
+	if (!gimgui_new_ui_active())
 	{
-		editstring(instr[editorInfo.einum].name, MAX_INSTRNAMELEN);
+		switch (jrawkey)
+		{
+		case KEY_UP:
+		case KEY_DOWN:
+		case KEY_LEFT:
+		case KEY_RIGHT:
+			win_enableKeyRepeat();
+			break;
+		default:
+			if (enablekeyrepeat)
+				win_disableKeyRepeat();
+		}
+
+		switch (jrawkey)
+		{
+		case KEY_RIGHT:
+			if (!ctrlpressed)
+			{
+				if (editorInfo.eipos < LAST_INST)
+				{
+					editorInfo.eicolumn++;
+					if (editorInfo.eicolumn > 1)
+					{
+						editorInfo.eicolumn = 0;
+						editorInfo.eipos += 5;
+						if (editorInfo.eipos >= LAST_INST) editorInfo.eipos -= (LAST_INST);
+						if (editorInfo.eipos < 0) editorInfo.eipos = LAST_INST - 1;
+					}
+				}
+			}
+			break;
+
+		case KEY_LEFT:
+			if (!ctrlpressed)
+			{
+				if (editorInfo.eipos < LAST_INST)
+				{
+					editorInfo.eicolumn--;
+					if (editorInfo.eicolumn < 0)
+					{
+						editorInfo.eicolumn = 1;
+						editorInfo.eipos -= 5;
+						if (editorInfo.eipos < 0) editorInfo.eipos += (LAST_INST);
+						if (editorInfo.eipos >= LAST_INST) editorInfo.eipos = LAST_INST - 1;
+					}
+				}
+			}
+			break;
+
+		case KEY_DOWN:
+			if (editorInfo.eipos < LAST_INST)
+			{
+				editorInfo.eipos++;
+				if (editorInfo.eipos > (LAST_INST - 1)) editorInfo.eipos = 0;
+			}
+			break;
+
+		case KEY_UP:
+			if (editorInfo.eipos < LAST_INST)
+			{
+				editorInfo.eipos--;
+				if (editorInfo.eipos < 0) editorInfo.eipos = LAST_INST - 1;
+			}
+			break;
+		}
+
+		if (instrument_cell_input(gt, &in))
+			goto instr_validate;
+
+		if ((editorInfo.eipos == LAST_INST) && (editorInfo.einum))
+			editstring(instr[editorInfo.einum].name, MAX_INSTRNAMELEN);
 	}
+	else
+		goto instr_hex_input;
 
 instr_hex_input:
 	if ((hexnybble >= 0) && (editorInfo.eipos < LAST_INST) && (editorInfo.einum))
@@ -250,6 +266,7 @@ instr_hex_input:
 		lastEditWindow = -1;	// force redraw of Info bar with updated info
 		setTableBackgroundColours(editorInfo.einum);
 	}
+instr_validate:
 	// Validate instrument parameters
 	if (editorInfo.einum)
 	{
