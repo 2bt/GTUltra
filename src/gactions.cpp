@@ -1656,7 +1656,7 @@ bool dispatch_table_cell_input(const EditorInput *input) {
     if (editorInfo.editmode != EDIT_TABLES) return false;
 
     const EditorInput in = input ? *input : editor_input_snapshot();
-    if (!table_enter_input(&gtObject, &in)) return false;
+    if (!table_cell_input(&gtObject, &in)) return false;
 
     clear_input();
     return true;

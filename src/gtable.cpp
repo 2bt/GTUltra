@@ -118,6 +118,106 @@ bool table_enter_input(GTOBJECT *gt, const EditorInput *input)
 	return false;
 }
 
+static void table_cycle_type(int direction)
+{
+	editorInfo.etpos -= editorInfo.etview[editorInfo.etnum];
+	editorInfo.etnum += direction;
+	if (editorInfo.etnum < 0) editorInfo.etnum = MAX_TABLES - 1;
+	if (editorInfo.etnum >= MAX_TABLES) editorInfo.etnum = 0;
+	editorInfo.etpos += editorInfo.etview[editorInfo.etnum];
+}
+
+bool table_cell_input(GTOBJECT *gt, const EditorInput *input)
+{
+	const EditorInput in = input ? *input : editor_input_snapshot();
+
+	if (table_enter_input(gt, &in)) return true;
+
+	switch (in.rawkey)
+	{
+	case KEY_Q:
+		if (in.shift_or_ctrl && editorInfo.etnum == STBL)
+		{
+			int speed = (ltable[editorInfo.etnum][editorInfo.etpos] << 8) | rtable[editorInfo.etnum][editorInfo.etpos];
+			speed *= 34716;
+			speed /= 32768;
+			if (speed > 65535) speed = 65535;
+
+			ltable[editorInfo.etnum][editorInfo.etpos] = speed >> 8;
+			rtable[editorInfo.etnum][editorInfo.etpos] = speed & 0xff;
+			return true;
+		}
+		break;
+
+	case KEY_A:
+		if (in.shift_or_ctrl && editorInfo.etnum == STBL)
+		{
+			int speed = (ltable[editorInfo.etnum][editorInfo.etpos] << 8) | rtable[editorInfo.etnum][editorInfo.etpos];
+			speed *= 30929;
+			speed /= 32768;
+
+			ltable[editorInfo.etnum][editorInfo.etpos] = speed >> 8;
+			rtable[editorInfo.etnum][editorInfo.etpos] = speed & 0xff;
+			return true;
+		}
+		break;
+
+	case KEY_W:
+		if (in.shift_or_ctrl && editorInfo.etnum == STBL)
+		{
+			int speed = (ltable[editorInfo.etnum][editorInfo.etpos] << 8) | rtable[editorInfo.etnum][editorInfo.etpos];
+			speed *= 2;
+			if (speed > 65535) speed = 65535;
+
+			ltable[editorInfo.etnum][editorInfo.etpos] = speed >> 8;
+			rtable[editorInfo.etnum][editorInfo.etpos] = speed & 0xff;
+			return true;
+		}
+		if (in.shift_or_ctrl && ((editorInfo.etnum == PTBL) || (editorInfo.etnum == FTBL)) &&
+		    (ltable[editorInfo.etnum][editorInfo.etpos] < 0x80))
+		{
+			int speed = (signed char)(rtable[editorInfo.etnum][editorInfo.etpos]);
+			speed *= 2;
+
+			if (speed > 127) speed = 127;
+			if (speed < -128) speed = -128;
+			rtable[editorInfo.etnum][editorInfo.etpos] = speed;
+			return true;
+		}
+		break;
+
+	case KEY_S:
+		if (!in.ctrl)
+		{
+			if (in.shift_or_ctrl && editorInfo.etnum == STBL)
+			{
+				int speed = (ltable[editorInfo.etnum][editorInfo.etpos] << 8) | rtable[editorInfo.etnum][editorInfo.etpos];
+				speed /= 2;
+
+				ltable[editorInfo.etnum][editorInfo.etpos] = speed >> 8;
+				rtable[editorInfo.etnum][editorInfo.etpos] = speed & 0xff;
+				return true;
+			}
+			if (in.shift_or_ctrl && ((editorInfo.etnum == PTBL) || (editorInfo.etnum == FTBL)) &&
+			    (ltable[editorInfo.etnum][editorInfo.etpos] < 0x80))
+			{
+				int speed = (signed char)(rtable[editorInfo.etnum][editorInfo.etpos]);
+				speed /= 2;
+
+				rtable[editorInfo.etnum][editorInfo.etpos] = speed;
+				return true;
+			}
+		}
+		break;
+
+	case KEY_APOST2:
+		table_cycle_type(in.shift_or_ctrl ? -1 : 1);
+		return true;
+	}
+
+	return false;
+}
+
 void tablecommands(GTOBJECT *gt, const EditorInput *input)
 {
 	const EditorInput in = input ? *input : editor_input_snapshot();
@@ -142,75 +242,11 @@ void tablecommands(GTOBJECT *gt, const EditorInput *input)
 	}
 
 
+	if (table_cell_input(gt, &in))
+		return;
+
 	switch (jrawkey)
 	{
-	case KEY_Q:
-		if ((shiftOrCtrlPressed) && (editorInfo.etnum == STBL))
-		{
-			int speed = (ltable[editorInfo.etnum][editorInfo.etpos] << 8) | rtable[editorInfo.etnum][editorInfo.etpos];
-			speed *= 34716;
-			speed /= 32768;
-			if (speed > 65535) speed = 65535;
-
-			ltable[editorInfo.etnum][editorInfo.etpos] = speed >> 8;
-			rtable[editorInfo.etnum][editorInfo.etpos] = speed & 0xff;
-		}
-		break;
-
-	case KEY_A:
-		if ((shiftOrCtrlPressed) && (editorInfo.etnum == STBL))
-		{
-			int speed = (ltable[editorInfo.etnum][editorInfo.etpos] << 8) | rtable[editorInfo.etnum][editorInfo.etpos];
-			speed *= 30929;
-			speed /= 32768;
-
-			ltable[editorInfo.etnum][editorInfo.etpos] = speed >> 8;
-			rtable[editorInfo.etnum][editorInfo.etpos] = speed & 0xff;
-		}
-		break;
-
-	case KEY_W:
-		if ((shiftOrCtrlPressed) && (editorInfo.etnum == STBL))
-		{
-			int speed = (ltable[editorInfo.etnum][editorInfo.etpos] << 8) | rtable[editorInfo.etnum][editorInfo.etpos];
-			speed *= 2;
-			if (speed > 65535) speed = 65535;
-
-			ltable[editorInfo.etnum][editorInfo.etpos] = speed >> 8;
-			rtable[editorInfo.etnum][editorInfo.etpos] = speed & 0xff;
-		}
-		if ((shiftOrCtrlPressed) && ((editorInfo.etnum == PTBL) || (editorInfo.etnum == FTBL)) && (ltable[editorInfo.etnum][editorInfo.etpos] < 0x80))
-		{
-			int speed = (signed char)(rtable[editorInfo.etnum][editorInfo.etpos]);
-			speed *= 2;
-
-			if (speed > 127) speed = 127;
-			if (speed < -128) speed = -128;
-			rtable[editorInfo.etnum][editorInfo.etpos] = speed;
-		}
-		break;
-
-	case KEY_S:
-		if (!ctrlpressed)
-		{
-			if ((shiftOrCtrlPressed) && (editorInfo.etnum == STBL))
-			{
-				int speed = (ltable[editorInfo.etnum][editorInfo.etpos] << 8) | rtable[editorInfo.etnum][editorInfo.etpos];
-				speed /= 2;
-
-				ltable[editorInfo.etnum][editorInfo.etpos] = speed >> 8;
-				rtable[editorInfo.etnum][editorInfo.etpos] = speed & 0xff;
-			}
-			if ((shiftOrCtrlPressed) && ((editorInfo.etnum == PTBL) || (editorInfo.etnum == FTBL)) && (ltable[editorInfo.etnum][editorInfo.etpos] < 0x80))
-			{
-				int speed = (signed char)(rtable[editorInfo.etnum][editorInfo.etpos]);
-				speed /= 2;
-
-				rtable[editorInfo.etnum][editorInfo.etpos] = speed;
-			}
-		}
-		break;
-
 	case KEY_SPACE:
 		if (!shiftOrCtrlPressed)
 			playtestnote(FIRSTNOTE + editorInfo.epoctave * 12, editorInfo.einum, editorInfo.epchn, gt);
@@ -634,28 +670,6 @@ void tablecommands(GTOBJECT *gt, const EditorInput *input)
 		}
 		inserttable(editorInfo.etnum, editorInfo.etpos, shiftOrCtrlPressed);
 		break;
-
-	case KEY_ENTER:
-		if (table_enter_input(gt, &in)) return;
-		break;
-
-	case KEY_APOST2:
-		if (shiftOrCtrlPressed)
-		{
-			editorInfo.etpos -= editorInfo.etview[editorInfo.etnum];
-			editorInfo.etnum--;
-			if (editorInfo.etnum < 0) editorInfo.etnum = MAX_TABLES - 1;
-			editorInfo.etpos += editorInfo.etview[editorInfo.etnum];
-		}
-		else
-		{
-			editorInfo.etpos -= editorInfo.etview[editorInfo.etnum];
-			editorInfo.etnum++;
-			if (editorInfo.etnum >= MAX_TABLES)
-				editorInfo.etnum = 0;
-
-			editorInfo.etpos += editorInfo.etview[editorInfo.etnum];
-		}
 	}
 
 table_hex_input:

@@ -8,7 +8,7 @@
 #define MST_RAW 4
 
 void tablecommands(GTOBJECT *gt, const EditorInput *input = nullptr);
-bool table_enter_input(GTOBJECT *gt, const EditorInput *input = nullptr);
+bool table_cell_input(GTOBJECT *gt, const EditorInput *input = nullptr);
 void tableup(void);
 void tabledown(void);
 void inserttable(int num, int pos, int mode);
