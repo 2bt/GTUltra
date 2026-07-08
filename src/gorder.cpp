@@ -2275,10 +2275,20 @@ void order_list_cut(GTOBJECT *gt)
 
 void order_list_mark_toggle(void)
 {
-	if (editorInfo.expandOrderListView != 0)
-		return;
+    if (editorInfo.expandOrderListView) {
+        if (editorInfo.esmarkchn == -1) {
+            editorInfo.esmarkend    = (int)songOrderLength[editorInfo.esnum][editorInfo.eschn] - 1;
+            editorInfo.esmarkchn    = editorInfo.eschn;
+            editorInfo.esmarkchnend = editorInfo.eschn;
+            editorInfo.esmarkstart  = 0;
+        } else {
+            editorInfo.esmarkchn    = -1;
+            editorInfo.esmarkchnend = -1;
+        }
+        return;
+    }
 
-	if (editorInfo.esmarkchn == -1)
+    if (editorInfo.esmarkchn == -1)
 	{
 		editorInfo.esmarkend = songlen[editorInfo.esnum][editorInfo.eschn] - 1;
 		editorInfo.esmarkchn = editorInfo.eschn;

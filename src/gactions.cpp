@@ -454,6 +454,7 @@ void order_row_up(GTOBJECT* gt) {
             editorInfo.eseditpos--;
             if (shiftOrCtrlPressed) editorInfo.esmarkend = editorInfo.eseditpos;
         }
+        order_sync_view();
         return;
     }
 
@@ -476,6 +477,7 @@ void order_row_down(GTOBJECT* gt) {
             editorInfo.eseditpos++;
             if (shiftOrCtrlPressed) editorInfo.esmarkend = editorInfo.eseditpos;
         }
+        order_sync_view();
         return;
     }
 
@@ -553,11 +555,19 @@ void order_col_right(GTOBJECT* gt) {
     order_sync_view();
 }
 
-int order_max_row() { return songlen[editorInfo.esnum][editorInfo.eschn] + 1; }
+int order_max_row() {
+    if (editorInfo.expandOrderListView)
+        return (int)songOrderLength[editorInfo.esnum][editorInfo.eschn];
+    return songlen[editorInfo.esnum][editorInfo.eschn] + 1;
+}
 
 void order_page_up(GTOBJECT* gt) {
-    if (editorInfo.eseditpos > VISIBLEORDERLIST) editorInfo.eseditpos -= VISIBLEORDERLIST;
-    else
+    if (editorInfo.expandOrderListView) {
+        editorInfo.eseditpos -= EXTENDEDVISIBLEORDERLIST;
+        if (editorInfo.eseditpos < 0) editorInfo.eseditpos = 0;
+    } else if (editorInfo.eseditpos > VISIBLEORDERLIST) {
+        editorInfo.eseditpos -= VISIBLEORDERLIST;
+    } else
         editorInfo.eseditpos = 0;
 
     if (shiftOrCtrlPressed) editorInfo.esmarkend = editorInfo.eseditpos;
@@ -567,10 +577,14 @@ void order_page_up(GTOBJECT* gt) {
 }
 
 void order_page_down(GTOBJECT* gt) {
-    const int maxRow = order_max_row();
-
-    editorInfo.eseditpos += VISIBLEORDERLIST;
-    if (editorInfo.eseditpos > maxRow) editorInfo.eseditpos = maxRow;
+    if (editorInfo.expandOrderListView) {
+        editorInfo.eseditpos += EXTENDEDVISIBLEORDERLIST;
+        if (editorInfo.eseditpos > 0x7ff) editorInfo.eseditpos = 0x7ff;
+    } else {
+        const int maxRow = order_max_row();
+        editorInfo.eseditpos += VISIBLEORDERLIST;
+        if (editorInfo.eseditpos > maxRow) editorInfo.eseditpos = maxRow;
+    }
 
     if (shiftOrCtrlPressed) editorInfo.esmarkend = editorInfo.eseditpos;
 
@@ -586,7 +600,10 @@ void order_nav_home(GTOBJECT* gt) {
 }
 
 void order_nav_end(GTOBJECT* gt) {
-    editorInfo.eseditpos = order_max_row();
+    if (editorInfo.expandOrderListView)
+        editorInfo.eseditpos = (int)songOrderLength[editorInfo.esnum][editorInfo.eschn];
+    else
+        editorInfo.eseditpos = order_max_row();
     if (shiftOrCtrlPressed) editorInfo.esmarkend = editorInfo.eseditpos;
     order_sync_view();
     (void)gt;
@@ -1400,10 +1417,18 @@ bool handle_order_action(Action act) {
     case Action::OrderHome: order_nav_home(gt); return true;
     case Action::OrderEnd: order_nav_end(gt); return true;
     case Action::OrderInsert:
-        order_list_insert(gt);
+        if (editorInfo.expandOrderListView) {
+            orderListInsert_External(gt);
+            playUntilEnd(editorInfo.esnum);
+        } else
+            order_list_insert(gt);
         return true;
     case Action::OrderDelete:
-        order_list_delete(gt);
+        if (editorInfo.expandOrderListView) {
+            orderListDelete_External();
+            playUntilEnd(editorInfo.esnum);
+        } else
+            order_list_delete(gt);
         return true;
     case Action::OrderGoPattern:
         order_go_pattern(gt);
@@ -1418,7 +1443,12 @@ bool handle_order_action(Action act) {
             orderListCopyMarkedArea_Expanded();
         return true;
     case Action::OrderCut:
-        order_list_cut(gt);
+        if (editorInfo.expandOrderListView) {
+            orderListCopyMarkedArea_Expanded();
+            orderListDelete_External();
+            playUntilEnd(editorInfo.esnum);
+        } else
+            order_list_cut(gt);
         return true;
     case Action::OrderPaste:
         if (editorInfo.expandOrderListView == 0)

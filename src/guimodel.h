@@ -116,9 +116,11 @@ void pattern_set_cursor(int ch, int row, int col);
 
 // One decoded order entry.
 struct OrderCell {
-    char text[4];  // up to 2 visible chars + NUL: "0A", "+2", "-3", "R4", "=="
-    int  kind;     // 0 empty, 1 pattern, 2 command (transpose/repeat), 3 loop marker (==)
-    bool valid;    // within this channel's order length (+ loop row)
+    char text[4];  // classic: "0A", "+2", "=="; expanded: pattern "02" or "FF"
+    char trans[4]; // expanded only: "+0", "-F", or "123" loop position for FF rows
+    int  kind;     // classic: 1 pattern, 2 command, 3 loop (==); expanded: 1 row, 4 FF end
+    bool valid;
+    bool muted;    // expanded: row past this channel's active length
 };
 
 int  order_channels();          // visible channel count (3 or 6)
@@ -132,8 +134,13 @@ int  order_cursor_col();        // cursor column within the cell (escolumn)
 int  order_actual_channel(int ch);
 int  order_length(int ch);      // order length of display channel ch
 int  order_mark_chn();          // selection channel (display index), -1 if none
+int  order_mark_chn_end();    // selection end channel (esmarkchnend)
 int  order_mark_start();
 int  order_mark_end();
+bool order_expanded_view();     // true when editing songOrderPatterns[]
+bool order_toggle_expanded_view(); // classic <-> expanded; false if compress blocked
+int  order_compressed_size(int ch); // compressed byte size, or >0xff when invalid
+bool order_is_master_channel(int displayCh);
 int  order_selected_row(int ch);   // synced pattern position (espos), -1 if none
 int  order_range_end_row(int ch); // F2 range end (esend), -1 if unset
 int  order_play_row(int ch);       // playback position in order list, -1 if none

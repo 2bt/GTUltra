@@ -129,8 +129,9 @@ float gimgui_button_width(int hex_digits) {
 // Fixed left-column width shared by Song + Order List (content-driven, not % of window).
 float gimgui_order_grid_width() {
     constexpr int kMaxChans = 6;
-    return gimgui_text_width(4) + (float)kMaxChans * gimgui_text_width(2) +
-           (float)(kMaxChans - 1) * gimgui_mono_advance(); // 2-char cells + 1-char gaps
+    constexpr int kCellChars = 5;
+    return gimgui_text_width(4) + (float)kMaxChans * gimgui_text_width(kCellChars) +
+           (float)(kMaxChans - 1) * gimgui_mono_advance();
 }
 
 float gimgui_song_content_width() {
@@ -715,7 +716,9 @@ void gimgui_draw_pattern(ImVec2 pos, ImVec2 size) {
     const ImU32 cInstr      = IM_COL32(120, 205, 120, 255);
     const ImU32 cCmd        = IM_COL32(235, 180, 90, 255);
     const ImU32 cDots       = IM_COL32(85, 95, 108, 255);
+    const ImU32 cMuted      = IM_COL32(110, 120, 135, 255);
     const ImU32 cHeader     = IM_COL32(180, 200, 220, 255);
+    const ImU32 cMaster     = IM_COL32(255, 220, 80, 255);
     const ImU32 cEnd        = IM_COL32(150, 160, 175, 255);
 
     const int chans  = gtui::pattern_channels();
@@ -747,23 +750,8 @@ void gimgui_draw_pattern(ImVec2 pos, ImVec2 size) {
     const float chanW     = gimgui_text_width(9);
     const float chanCellW = gimgui_text_width(8);
     const float noteW     = gimgui_text_width(3);
-
-    // Column headers (fixed, above the scrolling body).
-    {
-        gimgui_snap_body_pad_x();
-        ImDrawList* hdl = ImGui::GetWindowDrawList();
-        ImVec2      hp  = ImGui::GetCursorScreenPos();
-        char        hbuf[32];
-        for (int c = 0; c < chans; c++) {
-            snprintf(hbuf, sizeof hbuf, "%X:%02X", gtui::pattern_actual_channel(c), gtui::pattern_number(c));
-            // snprintf(hbuf, sizeof hbuf, "%02X", gtui::pattern_number(c));
-            hdl->AddText(ImVec2(hp.x + rowNumW + c * chanW, hp.y), cHeader, hbuf);
-        }
-        ImGui::Dummy(ImVec2(rowNumW + chans * chanW, lineH));
-        ImGui::Separator();
-    }
-
-    const float totalW = rowNumW + chans * chanW;
+    const float headerH   = lineH * 2.f;
+    const float totalW    = rowNumW + chans * chanW;
 
     gimgui_snap_body_pad_x();
     gimgui_grid_body(
@@ -772,6 +760,18 @@ void gimgui_draw_pattern(ImVec2 pos, ImVec2 size) {
         totalW,
         lineH,
         curRow,
+        [&](ImDrawList* hdl, float x, float y) {
+            char hbuf[16];
+            for (int c = 0; c < chans; c++) {
+                const float cx    = x + rowNumW + c * chanW;
+                const bool  master = gtui::order_is_master_channel(c);
+                snprintf(hbuf, sizeof hbuf, "%X", gtui::pattern_actual_channel(c));
+                hdl->AddText(ImVec2(cx, y), master ? cMaster : cHeader, hbuf);
+                snprintf(hbuf, sizeof hbuf, "%02X", gtui::pattern_number(c));
+                hdl->AddText(ImVec2(cx, y + lineH), cMuted, hbuf);
+            }
+        },
+        headerH,
         [&](ImDrawList* dl, int r, float x, float y) {
             char buf[16];
 
@@ -849,9 +849,8 @@ void gimgui_draw_pattern(ImVec2 pos, ImVec2 size) {
 }
 
 // Order list, vertical layout (positions = rows, channels = columns) via the
-// shared grid scaffold. Cells are pattern numbers or commands (+/-/R); loop
-// marker row shows "==". Keyboard editing flows through the legacy order editor; clicking places the
-// cursor (gtui::order_set_cursor).
+// shared grid scaffold. Classic view decodes songorder[]; expanded view shows
+// songOrderPatterns[] + per-row transpose (GTUltra.pdf §42–47).
 void gimgui_draw_orderlist(ImVec2 pos, ImVec2 size) {
     if (!gimgui_begin_panel("Order List",
                             pos,
@@ -871,16 +870,20 @@ void gimgui_draw_orderlist(ImVec2 pos, ImVec2 size) {
     gimgui_vertical_separator();
     ImGui::TextUnformatted("BNK");
     ImGui::SameLine();
-        int bnk = gtui::order_song_bank() + 1;
-        if (gimgui_stepper("##bnk", bnk, 1, gtui::order_song_bank_count(), "%d", 2))
-            gtui::order_set_song_bank(bnk - 1);
+    int bnk = gtui::order_song_bank() + 1;
+    if (gimgui_stepper("##bnk", bnk, 1, gtui::order_song_bank_count(), "%d", 2))
+        gtui::order_set_song_bank(bnk - 1);
 
-    // new line
+    gimgui_vertical_separator();
+    const bool expanded = gtui::order_expanded_view();
+    if (gimgui_toggle_button(expanded ? "Expanded" : "Classic", expanded, 8))
+        gtui::order_toggle_expanded_view();
+
     ImGui::Separator();
 
     const ImU32 cCursorRow  = IM_COL32(255, 255, 255, 20);
     const ImU32 cSelect     = IM_COL32(48, 96, 200, 110);
-    const ImU32 cSynced     = IM_COL32(100, 210, 130, 110); // legacy CORDER_INST_TABLE_EDITING
+    const ImU32 cSynced     = IM_COL32(100, 210, 130, 110);
     const ImU32 cPlayRow    = IM_COL32(80, 190, 90, 80);
     const ImU32 cCursorFill = IM_COL32(235, 225, 120, 70);
     const ImU32 cCursorEdge = IM_COL32(235, 225, 120, 230);
@@ -888,7 +891,10 @@ void gimgui_draw_orderlist(ImVec2 pos, ImVec2 size) {
     const ImU32 cPat        = IM_COL32(224, 230, 238, 255);
     const ImU32 cCmd        = IM_COL32(235, 180, 90, 255);
     const ImU32 cEnd        = IM_COL32(150, 160, 175, 255);
+    const ImU32 cMuted      = IM_COL32(110, 120, 135, 255);
     const ImU32 cHeader     = IM_COL32(180, 200, 220, 255);
+    const ImU32 cMaster     = IM_COL32(255, 220, 80, 255);
+    const ImU32 cSizeBad    = IM_COL32(255, 90, 90, 255);
 
     const int chans   = gtui::order_channels();
     const int rows    = gtui::order_rows();
@@ -896,40 +902,36 @@ void gimgui_draw_orderlist(ImVec2 pos, ImVec2 size) {
     const int curChn  = gtui::order_cursor_chn();
     const int curCol  = gtui::order_cursor_col();
     const int markChn = gtui::order_mark_chn();
+    int       markChEnd = gtui::order_mark_chn_end();
     int       markLo = gtui::order_mark_start(), markHi = gtui::order_mark_end();
     if (markLo > markHi) {
         int tmp = markLo;
         markLo  = markHi;
         markHi  = tmp;
     }
+    if (markChn >= 0 && markChEnd < 0) markChEnd = markChn;
+    int markChLo = markChn, markChHi = markChEnd;
+    if (markChLo > markChHi) {
+        int tmp = markChLo;
+        markChLo  = markChHi;
+        markChHi  = tmp;
+    }
 
-    const float charW   = gimgui_mono_advance();
-    const float lineH   = ImGui::GetTextLineHeight();
-    const float rowNumW = gimgui_text_width(4); // "POS "
-    const float cellW   = gimgui_text_width(2); // two nibbles per channel
-    const float colGap  = charW;                // one char between columns
+    const float charW    = gimgui_mono_advance();
+    const float lineH    = ImGui::GetTextLineHeight();
+    const float rowNumW  = gimgui_text_width(4);
+    const int   cellChars = 5;
+    const float cellW    = gimgui_text_width(cellChars);
+    const float colGap   = charW;
     const float colPitch = cellW + colGap;
-    const float totalW  = rowNumW + (float)chans * cellW + (float)(chans - 1) * colGap;
+    const float totalW   = rowNumW + (float)chans * cellW + (float)(chans > 0 ? chans - 1 : 0) * colGap;
+    const float headerH  = lineH * 2.f;
 
     int selRow[8], endRow[8], playRow[8];
     for (int c = 0; c < chans && c < 8; c++) {
         selRow[c]  = gtui::order_selected_row(c);
         endRow[c]  = gtui::order_range_end_row(c);
         playRow[c] = gtui::order_play_row(c);
-    }
-
-    // Fixed header: empty column + channel numbers.
-    {
-        gimgui_snap_body_pad_x();
-        ImDrawList* hdl = ImGui::GetWindowDrawList();
-        ImVec2      hp  = ImGui::GetCursorScreenPos();
-        char        hbuf[16];
-        for (int c = 0; c < chans; c++) {
-            snprintf(hbuf, sizeof hbuf, "%X", gtui::order_actual_channel(c));
-            hdl->AddText(ImVec2(hp.x + rowNumW + (float)c * colPitch, hp.y), cHeader, hbuf);
-        }
-        ImGui::Dummy(ImVec2(totalW, lineH));
-        ImGui::Separator();
     }
 
     gimgui_snap_body_pad_x();
@@ -939,6 +941,27 @@ void gimgui_draw_orderlist(ImVec2 pos, ImVec2 size) {
         totalW,
         lineH,
         curRow,
+        [&](ImDrawList* hdl, float x, float y) {
+            char hbuf[16];
+            for (int c = 0; c < chans; c++) {
+                const float cx    = x + rowNumW + (float)c * colPitch;
+                const bool  master = gtui::order_is_master_channel(c);
+                snprintf(hbuf, sizeof hbuf, "%X", gtui::order_actual_channel(c));
+                hdl->AddText(ImVec2(cx, y), master ? cMaster : cHeader, hbuf);
+                if (expanded) {
+                    const int csz = gtui::order_compressed_size(c);
+                    if (csz > 0xff)
+                        snprintf(hbuf, sizeof hbuf, "**");
+                    else
+                        snprintf(hbuf, sizeof hbuf, "%02X", csz);
+                    hdl->AddText(ImVec2(cx, y + lineH), csz > 0xff ? cSizeBad : cMuted, hbuf);
+                } else {
+                    snprintf(hbuf, sizeof hbuf, "%02X", gtui::order_length(c));
+                    hdl->AddText(ImVec2(cx, y + lineH), cMuted, hbuf);
+                }
+            }
+        },
+        headerH,
         [&](ImDrawList* dl, int r, float x, float y) {
             char buf[8];
             if (r == curRow) dl->AddRectFilled(ImVec2(x, y), ImVec2(x + totalW, y + lineH), cCursorRow);
@@ -949,26 +972,53 @@ void gimgui_draw_orderlist(ImVec2 pos, ImVec2 size) {
                 const float cx = x + rowNumW + (float)c * colPitch;
 
                 gtui::OrderCell cell = gtui::order_cell(c, r);
-                const float cw = cellW;
+                if (!cell.valid) continue;
 
-                if (r == playRow[c]) dl->AddRectFilled(ImVec2(cx, y), ImVec2(cx + cw, y + lineH), cPlayRow);
+                if (r == playRow[c]) dl->AddRectFilled(ImVec2(cx, y), ImVec2(cx + cellW, y + lineH), cPlayRow);
                 if (r == selRow[c] || r == endRow[c])
-                    dl->AddRectFilled(ImVec2(cx, y), ImVec2(cx + cw, y + lineH), cSynced);
-                if (markChn == c && r >= markLo && r <= markHi)
-                    dl->AddRectFilled(ImVec2(cx, y), ImVec2(cx + cw, y + lineH), cSelect);
-                if (r == curRow && c == curChn && cell.kind != 3) {
-                    float cs = cx + (curCol < 0 ? 0 : (curCol > 1 ? 1 : curCol)) * charW;
-                    dl->AddRectFilled(ImVec2(cs, y), ImVec2(cs + charW, y + lineH), cCursorFill);
-                    dl->AddRect(ImVec2(cs, y), ImVec2(cs + charW, y + lineH), cCursorEdge);
+                    dl->AddRectFilled(ImVec2(cx, y), ImVec2(cx + cellW, y + lineH), cSynced);
+                if (markChn >= 0 && c >= markChLo && c <= markChHi && r >= markLo && r <= markHi)
+                    dl->AddRectFilled(ImVec2(cx, y), ImVec2(cx + cellW, y + lineH), cSelect);
+
+                if (r == curRow && c == curChn) {
+                    float cs;
+                    if (expanded) {
+                        if (curCol < 2)
+                            cs = cx + (float)curCol * charW;
+                        else
+                            cs = cx + (float)curCol * charW;
+                    } else if (cell.kind != 3) {
+                        cs = cx + (curCol < 0 ? 0 : (curCol > 1 ? 1 : curCol)) * charW;
+                    } else {
+                        cs = cx;
+                    }
+                    if (cell.kind != 3 || expanded) {
+                        dl->AddRectFilled(ImVec2(cs, y), ImVec2(cs + charW, y + lineH), cCursorFill);
+                        dl->AddRect(ImVec2(cs, y), ImVec2(cs + charW, y + lineH), cCursorEdge);
+                    }
                 }
 
-                if (!cell.valid) continue;
-                if (cell.kind == 3) {
-                    dl->AddText(ImVec2(cx, y), cEnd, "==");
+                if (!expanded) {
+                    if (cell.kind == 3) {
+                        dl->AddText(ImVec2(cx, y), cEnd, "==");
+                        continue;
+                    }
+                    ImU32 col = cell.kind == 2 ? cCmd : cPat;
+                    dl->AddText(ImVec2(cx, y), col, cell.text);
                     continue;
                 }
-                ImU32 col = cell.kind == 2 ? cCmd : cPat;
-                dl->AddText(ImVec2(cx, y), col, cell.text);
+
+                const ImU32 patCol = cell.muted ? cMuted : cPat;
+                if (cell.kind == 4) {
+                    dl->AddText(ImVec2(cx, y), cCmd, cell.text);
+                    dl->AddText(ImVec2(cx + 3.f * charW, y), cCmd, cell.trans);
+                    continue;
+                }
+                dl->AddText(ImVec2(cx, y), patCol, cell.text);
+                if (cell.trans[0]) {
+                    const bool nz = cell.trans[1] != '0' || (cell.trans[2] && cell.trans[2] != '0');
+                    dl->AddText(ImVec2(cx + 3.f * charW, y), nz ? cCmd : patCol, cell.trans);
+                }
             }
         },
         [&](int r, float localX) {
@@ -979,7 +1029,11 @@ void gimgui_draw_orderlist(ImVec2 pos, ImVec2 size) {
             float cx = rx - (float)c * colPitch;
             if (cx >= cellW) return;
             int off = (int)(cx / charW);
-            if (off > 1) off = 1;
+            if (expanded) {
+                if (off > 4) off = 4;
+            } else if (off > 1) {
+                off = 1;
+            }
             gtui::order_set_cursor(c, r, off);
         });
 

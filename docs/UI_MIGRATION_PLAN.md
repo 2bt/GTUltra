@@ -1,8 +1,12 @@
 # GTUltra UI Modernization Plan — Dear ImGui + Config System
 
-Status: **planning** (no code yet). This document is the agreed roadmap for
-replacing GTUltra's legacy text-mode UI with Dear ImGui, and for adding a
-proper configuration system (themes, fonts, keybindings).
+Status: **in progress** (M2–M5 largely landed on branch `2bt`; M6/M7 remain).
+This document is the agreed roadmap for replacing GTUltra's legacy text-mode UI
+with Dear ImGui, and for adding a proper configuration system (themes, fonts,
+keybindings).
+
+**Product reference:** `GTUltra.pdf` (v1.5.3) — the numbered feature list in
+§6 below tracks parity against that manual.
 
 It draws heavily on a study of the **Furnace** tracker
 (`/home/dlangner/Programming/c++/furnace`), which is a mature ImGui-based
@@ -178,7 +182,8 @@ editor yet — this is the platform to iterate from.
   removal, M6).
 - **Deferred: expanded order list.** A GTUltra-specific feature (not in original
   GoatTracker). Support it in the ImGui order panel later (relates to the
-  `expandOrderListView` / `songOrderPatterns[]` caveat below).
+  `expandOrderListView` / `songOrderPatterns[]` caveat below). Full checklist:
+  **§6 Order list** (PDF §42–47).
 - **Order list ported (vertical, modern).** Chosen over the legacy horizontal
   layout: positions are rows, channels are columns (Furnace-style), reusing
   `gimgui_grid_body`. Cells decode to pattern numbers or commands (`+X`/`-X`
@@ -199,7 +204,8 @@ editor yet — this is the platform to iterate from.
   Legacy code: `modifyWaveTableDetailed*` / `detailedTable*` /
   `checkForMouseInDetailed*Table` in `gtable.cpp`/`gdisplay.cpp`. Re-add an
   equivalent in the ImGui tables eventually (there's a `TODO` on the header in
-  `gimgui_draw_one_table`). Ignore for now.
+  `gimgui_draw_one_table`). Full checklist: **§6 Instruments & tables** (PDF
+  §33–36).
 - **Tables panel re-skinned (done).** The stock `InputScalar` stopgap was
   replaced with a custom `ImDrawList` grid matching the pattern editor:
   monospace `II:LL RR` cells, cursor cell box (per `etcolumn`), Shift-select
@@ -337,6 +343,11 @@ Follow Furnace's `drawPattern()` recipe (`src/gui/pattern.cpp`):
   `epchn`, `epview`, `epmark*`) and `GTOBJECT.editorUndoInfo.editorInfo[].epnum`.
 
 ### M5 — Remaining panels
+
+> **Remaining work vs `GTUltra.pdf`:** see **§6** for the full parity checklist.
+> Highest-impact gaps: expanded order list, detailed tables, info line, filter
+> HUD, transport bar controls, multi-song slots, drag-drop load.
+
 Port the other views to ImGui, retiring their legacy `display*` counterparts:
 - Order list → ImGui tables *(furnace `orders.cpp`)*. **Done.**
 - Instrument editor, the 4 tables (wave/pulse/filter/speed), song info,
@@ -430,7 +441,191 @@ a consumer. Instead:
      `config.toml` (`gimgui_apply_style` + M3 action scaffolding), not a port
      of `gpaletteeditor.cpp`.
 
-## 5. Suggested first step
-M6: remove the legacy renderer bridge and delete dropped subsystems
-(`gchareditor`, `gpaletteeditor`, legacy `fileselector` path). M5 modals are
-complete for the new UI.
+## 5. Suggested next steps
+
+Priority order (highest-impact gaps vs `GTUltra.pdf`):
+
+1. **Expanded order list** (PDF §42–47) — ImGui order panel reads classic
+   `songorder[]` only; expanded mode still edits `songOrderPatterns[]` in legacy.
+2. **Detailed table views + waveform editor** (PDF §33–36) — `TODO` on table
+   header in `gimgui_draw_one_table`.
+3. **Info line** (PDF §21) — context help was `ginfo.cpp`; no ImGui equivalent.
+4. **Filter info display** (PDF §24) — per-channel cutoff/resonance/type HUD.
+5. **Transport bar completeness** (PDF §5) — player strip exists; many controls
+   still missing (see §6).
+6. **M6** — remove legacy renderer bridge and dropped subsystems (`gchareditor`,
+   `gpaletteeditor`, legacy `fileselector` path). Verify every 🔧/❓ row in §6
+   before deleting legacy code.
+7. **M7** — TOML config (themes, keybinds, `gtultra.cfg` migration).
+
+---
+
+## 6. GTUltra feature parity (`GTUltra.pdf` v1.5.3)
+
+The PDF lists **57 numbered features** plus v1.5 changelog items. This section
+maps each to ImGui migration status. Numbers match the PDF table of contents.
+
+### Status legend
+
+| Symbol | Meaning |
+|--------|---------|
+| ✅ | Done in the new ImGui UI path |
+| 🔶 | Partial — some behaviour ported or action-layer only |
+| ⬜ | Not started in ImGui |
+| 🚫 | Dropped — replaced by M7 themes or not porting |
+| 🔧 | Legacy-only today — works via `*commands()` / action layer; verify before M6 |
+| ❓ | Needs explicit M6 regression check |
+
+### Display & skinning
+
+| PDF | Feature | Status | Milestone / notes |
+|-----|---------|--------|-------------------|
+| 1 | Updated display / skinning (16 palette presets) | 🚫 | M7 color-role themes replace `gtpalette/` presets |
+| 25 | Palette editor | 🚫 | M7 `[colors]` + theme presets, not `gpaletteeditor.cpp` |
+| 26 | Char editor | 🚫 | Chargen not used in new UI; delete in M6 |
+
+### Core editing (GoatTracker baseline)
+
+Most baseline editing semantics live in `*commands()` and are reached through
+the M3 action layer. Rows marked 🔧 need an explicit pass before M6 deletes
+legacy input/render paths.
+
+| PDF | Feature | Status | Milestone / notes |
+|-----|---------|--------|-------------------|
+| 2 | Undo (Ctrl-Z) | ✅ | Legacy undo system; all ImGui writes bracketed |
+| 8 | 3/6/9/12 channel playback (1–4 SID) | 🔧 | Player model; SID count UI partial in transport |
+| 9 | Song pattern selection (shift-click order) | 🔶 | `OrderSelectPatterns` in action layer; ImGui click TBD |
+| 10 | Song playback from anywhere | 🔧 | Double-click order; verify ImGui order panel |
+| 11 | F3 = Shift+Space (play from cursor) | 🔧 | `PatternPlayFromCursor`; verify all edit modes |
+| 12 | Jam mode polyphony (up to 12 ch) | 🔧 | QWERTY jam in `editor_frame_update` |
+| 13 | Note / arp chord offsets in jam mode | ⬜ | Transport HUD not ported |
+| 14 | MIDI note input | 🔶 | MIDI poll works; piano keyboard overlay missing |
+| 16 | Auto prev/next pattern on scroll | 🔶 | CFG option; Shift+click Follow toggle not in ImGui |
+| 18 | Auto-portamento (Shift-Y) | 🔧 | `PatternPortamentoHelper` in action layer |
+| 20 | Quick save (Ctrl-S) | ✅ | Native file dialog (M5) |
+| 23 | F8 → tables | 🔧 | `EditModeTables` action |
+| 27 | F2 remapped (non-classic F-keys) | 🔧 | Classic F1–F3 toggle not in ImGui transport |
+| 29 | Pattern looping (master-channel sync) | 🔧 | Loop toggle in transport; inter-pattern needs verify |
+| 30 | Copy changes (Ctrl-C semantics) | 🔧 | Pattern/order/table/instr copy in action layer |
+| 31 | Inter-pattern (marked-area) looping | 🔶 | Requires loop + area-loop both on; transport TBD |
+| 32 | ENTER → jump to table / return | 🔶 | Pattern/instr/table cell input wired; verify all paths |
+| 37 | MIDI port select | ✅ | Transport combo, live `setMidiPort()` (M5) |
+| 38 | Ctrl+Left/Right song position | 🔧 | `SongPosPrev`/`SongPosNext` global actions |
+| 53 | Auto-advance modes (Shift-Z) | 🔶 | `PatternToggleAutoAdvance`; no ImGui mode indicator |
+| 54 | Mouse wheel scrolls active panel | ⬜ | Legacy `mousecommands`; not in ImGui panels |
+| 55 | SIDTracker64 mode (Shift/Ctrl+F12) | 🔶 | Toggle in transport; Enter fill-keyons etc. verify |
+
+### Transport bar (PDF §5)
+
+Partial player strip in `gimgui_draw_transport` / `gimgui_draw_player_status`.
+Sub-controls from the PDF:
+
+| PDF §5 | Control | Status | Notes |
+|--------|---------|--------|-------|
+| a | Change skin (16 presets) | 🚫 | → M7 theme selector |
+| a.i | Ctrl+click → palette editor | 🚫 | |
+| a.ii | Ctrl+Shift+click → char editor | 🚫 | |
+| b | SID count 1–4 | 🔶 | Partial in player status |
+| c | Output volume | ⬜ | |
+| d | Octave 1–6 | 🔶 | Model state; UI TBD |
+| e | Follow on/off | 🔶 | Action exists; verify transport button |
+| f | Loop pattern on/off | 🔶 | Action exists |
+| g | Selected-area looping | ⬜ | Shift/Ctrl+click loop button; "P" indicator |
+| h | Rewind (click / hold / double) | 🔶 | `SongRewind`; hold-to-start-of-song TBD |
+| i | Record on/off | 🔶 | Jam/record toggle |
+| j | Classic F1–F3 keys | ⬜ | Shift/Ctrl+click record; "F" indicator |
+| k | Play / pause | 🔶 | Global play actions |
+| l | Fast forward | 🔶 | `SongPosNext` |
+| m | Jam-mode SID chip enable (1–4) | ⬜ | Per-chip mute for jam overlay |
+| n | Piano keyboard on/off | ⬜ | Note display overlay |
+| o | MIDI port (Shift/Ctrl+keyboard icon) | ✅ | Replaced by combo (M5) |
+| p | Detune (−100…+100 cents) | ⬜ | |
+| q | Mono / stereo / true stereo toggle | 🔶 | Stereo mode cycle action; full UI TBD |
+
+### Stereo & panning
+
+| PDF | Feature | Status | Milestone / notes |
+|-----|---------|--------|-------------------|
+| 4 | Instrument true stereo panning | 🔶 | Pan column in instr table; dual-range random pan UI TBD |
+| 6 | True stereo emulation | 🔶 | Player/model; `CycleStereoMode` action |
+| 7 | SID chip pan positions (P3/P4 layout) | 🔶 | Per-SID pan sliders in player status (partial) |
+
+### Instruments & tables
+
+| PDF | Feature | Status | Milestone / notes |
+|-----|---------|--------|-------------------|
+| 3 | Instrument use count (IC) | ⬜ | Not shown in ImGui instrument table |
+| 17 | Tables separated by colour | 🔶 | Section breaks / muted unused in grid colours |
+| 28 | Mouse drag to modify values | ⬜ | Legacy instrument/table panels only |
+| 33 | Detailed wave table editing | ⬜ | Deferred — `gimgui_draw_one_table` TODO |
+| 34 | Detailed pulse table editing | ⬜ | Deferred |
+| 35 | Detailed filter table editing | ⬜ | Deferred |
+| 36 | Waveform editor (TEST/RING/SYNC/GATE) | ⬜ | Tied to detailed table / instr editing |
+
+### Order list
+
+| PDF | Feature | Status | Milestone / notes |
+|-----|---------|--------|-------------------|
+| — | Vertical order list (ImGui) | ✅ | Classic `songorder[]` view |
+| 22 | Master channel (yellow arrow) | 🔶 | `>` prefix on master channel header |
+| 42 | Expanded order list toggle | ✅ | Classic/Expanded button; `expandAllSongs` / `compressAllSongs` |
+| 43 | Expanded — copy/cut/paste/insert | 🔶 | Copy/paste/cut/ins/del via action layer; Ctrl+I insert still legacy path |
+| 44 | Expanded — paste transpose only | 🔶 | `escolumn > 2` paste semantics in action layer |
+| 45 | Expanded — set transpose values | 🔶 | Hex/+/- via `orderlistcommands`; live audition in player |
+| 46 | Expanded — compressed size indicator | ✅ | Per-channel `XX` / `**` in order header |
+| 47 | Expanded — repeat / end markers (FF) | 🔶 | FF rows render; loop position as 3-digit value |
+
+CFG options for expanded order list (from PDF v1.5):
+
+- **Use repeats when compressing** — optional; disable for easier editing
+- **Auto prev/next pattern on cursor** — optional; Shift+click Follow
+
+### Info, filters & song metadata
+
+| PDF | Feature | Status | Milestone / notes |
+|-----|---------|--------|-------------------|
+| 19 | Song total time display | ⬜ | Auto-calculated; not in ImGui song panel |
+| 21 | Info line (cursor context help) | ⬜ | Was `ginfo.cpp` |
+| 24 | Filter information (per-channel) | ⬜ | Cutoff/resonance/type HUD above channels |
+
+### File I/O, export & multi-song
+
+| PDF | Feature | Status | Milestone / notes |
+|-----|---------|--------|-------------------|
+| 15 | Load / save screen (F10/F11) | ✅ | Native dialogs; green/red legacy screens dropped |
+| 39 | SID export | 🔶 | Native export path; zeropage option below |
+| 40 | Automatic `.sng` backup | 🔧 | `gtbackup/` timer in main loop; no ImGui config |
+| 41 | Editor settings saved in `.sng` | 🔧 | FV/PO/RO/NTSC/SID model/HR/speed/SID count/stereo |
+| 49 | Multiple `.sng` slots | ⬜ | FILE 1/2 toggle; copy between songs |
+| 50 | Export to WAV (Shift-F11) | 🔶 | Dialog wired; normalization panel TBD |
+| 51 | GT2Reloc standalone | ✅ | Separate tool; not a UI panel |
+| 52 | Pattern order on SID export | 🔧 | Export logic (playback order, not UI) |
+| 56 | Drag-and-drop `.sng` load | ⬜ | SDL drop events → load |
+| 57 | SID export zeropage playback option | ⬜ | 3-channel export dialog option |
+
+### Configuration & MIDI
+
+| PDF | Feature | Status | Milestone / notes |
+|-----|---------|--------|-------------------|
+| 48 | Disable all MIDI (port 9999) | 🔧 | `gtultra.cfg` / `-m`; migrate to M7 `[audio]` |
+| — | Debug memory-check mode | 🔧 | CFG flag; migrate to M7 |
+| — | Backup interval (`-b`) | 🔧 | CFG / CLI; migrate to M7 |
+
+### Help
+
+| PDF | Feature | Status | Milestone / notes |
+|-----|---------|--------|-------------------|
+| — | F12 help screen | ⬜ | Not in PDF TOC; expected from legacy `ghelp.cpp` |
+
+### Cross-reference to milestones
+
+| Milestone | PDF features primarily addressed |
+|-----------|----------------------------------|
+| M4 | 30–32, 53, 55 (pattern editing) |
+| M5 | 15, 37, 42 (classic order), instruments, tables, transport shell |
+| M6 | All 🔧/❓ rows — regression pass before legacy deletion |
+| M7 | 1, 25, 40, 41, 48, 54 (config), theme replaces skin cycling |
+| Post-M5 | 21, 24, 28, 33–36, 42–47, 49, 50, 56, 57, help |
+
+Update the status column in this section when a feature lands; it is the
+single parity checklist for the ImGui migration.
