@@ -13,6 +13,7 @@
 #include "backends/imgui_impl_sdl2.h"
 #include "backends/imgui_impl_sdlrenderer2.h"
 #include "guimodel.h" // SDL-free bridge to the legacy model
+#include "guicolors.h"
 #include "imgui.h"
 #include "log.h"
 
@@ -337,13 +338,6 @@ bool gimgui_grid_body(const char* id,
     return gimgui_grid_body(id, rows, rowW, lineH, followRow, headerDraw, headerBandH, -1, [](float, float) {}, drawRow, onClick, nullptr, h_scroll, out_view_row);
 }
 
-// Accent/section colours for the fixed tracker layout (theme system is M7).
-const ImU32 kAppBg          = IM_COL32(18, 20, 24, 255); // gutter/background
-const ImU32 kHeaderBg       = IM_COL32(30, 44, 60, 255);
-const ImU32 kHeaderBgActive = IM_COL32(52, 98, 158, 255);
-const ImU32 kHeaderTx       = IM_COL32(150, 168, 186, 255);
-const ImU32 kHeaderTxActive = IM_COL32(244, 250, 255, 255);
-
 constexpr ImVec2 kChromeWindowPadBase(8.0f, 4.0f);
 
 ImVec2 gimgui_chrome_window_pad() {
@@ -597,12 +591,18 @@ bool gimgui_begin_panel(const char* title,
     const float  ww   = ImGui::GetWindowSize().x;
     const float  hpad = kPanelBodyPad;
     const float  hh   = ImGui::GetTextLineHeight() + hpad * 2.0f;
-    dl->AddRectFilled(wp, ImVec2(wp.x + ww, wp.y + hh), active ? kHeaderBgActive : kHeaderBg);
-    dl->AddText(ImVec2(wp.x + hpad, wp.y + hpad), active ? kHeaderTxActive : kHeaderTx, title);
+    dl->AddRectFilled(wp, ImVec2(wp.x + ww, wp.y + hh),
+                      active ? gtui::color(gtui::GuiColorRole::PanelHeaderBgActive)
+                             : gtui::color(gtui::GuiColorRole::PanelHeaderBg));
+    dl->AddText(ImVec2(wp.x + hpad, wp.y + hpad),
+                active ? gtui::color(gtui::GuiColorRole::PanelHeaderTextActive)
+                       : gtui::color(gtui::GuiColorRole::PanelHeaderText),
+                title);
 
     if (header_right && header_right[0]) {
         const ImVec2 ts  = ImGui::CalcTextSize(header_right);
-        const ImU32  col = active ? kHeaderTxActive : kHeaderTx;
+        const ImU32  col = active ? gtui::color(gtui::GuiColorRole::PanelHeaderTextActive)
+                                  : gtui::color(gtui::GuiColorRole::PanelHeaderText);
         dl->AddText(ImVec2(wp.x + ww - hpad - ts.x, wp.y + hpad), col, header_right);
     }
 
@@ -623,13 +623,13 @@ void gimgui_draw_tables(ImVec2 pos, ImVec2 size) {
         return;
     }
 
-    const ImU32      cCursorRow  = IM_COL32(255, 255, 255, 20);
-    const ImU32      cSelect     = IM_COL32(48, 96, 200, 110);
-    const ImU32      cInstrSel   = IM_COL32(100, 210, 130, 110);
-    const ImU32      cCursorFill = IM_COL32(235, 225, 120, 70);
-    const ImU32      cCursorEdge = IM_COL32(235, 225, 120, 230);
-    const ImU32      cIdx        = IM_COL32(120, 140, 160, 255);
-    const ImU32      cVal        = IM_COL32(224, 230, 238, 255);
+    const ImU32 cCursorRow  = gtui::color(gtui::GuiColorRole::GridCursorRow);
+    const ImU32 cSelect     = gtui::color(gtui::GuiColorRole::Selection);
+    const ImU32 cInstrSel   = gtui::color(gtui::GuiColorRole::InstrumentHighlight);
+    const ImU32 cCursorFill = gtui::color_a(gtui::GuiColorRole::Cursor, 70);
+    const ImU32 cCursorEdge = gtui::color_a(gtui::GuiColorRole::Cursor, 230);
+    const ImU32 cIdx        = gtui::color(gtui::GuiColorRole::GridSecondaryText);
+    const ImU32 cVal        = gtui::color(gtui::GuiColorRole::GridPrimaryText);
     static const int colOff[4]   = { 3, 4, 6, 7 };
     static const char* kTableNames[] = { "Wave", "Pulse", "Filter", "Speed" };
 
@@ -751,22 +751,22 @@ void gimgui_draw_pattern(ImVec2 pos, ImVec2 size) {
     ImGui::Separator();
 
     // Colors (hardcoded for now; the theme system is M7).
-    const ImU32 cBeat       = IM_COL32(255, 255, 255, 10);
-    const ImU32 cCursorRow  = IM_COL32(255, 255, 100, 20);
-    const ImU32 cPlayRow    = IM_COL32(80, 190, 90, 80);   // per-channel playhead
-    const ImU32 cSelect     = IM_COL32(48, 96, 200, 110);  // Shift+Up/Down mark
-    const ImU32 cInstrSel   = IM_COL32(100, 210, 130, 110); // matches selected instrument
-    const ImU32 cCursorFill = IM_COL32(235, 225, 120, 70); // cursor cell
-    const ImU32 cCursorEdge = IM_COL32(235, 225, 120, 230);
-    const ImU32 cRowNum     = IM_COL32(120, 140, 160, 255);
-    const ImU32 cNote       = IM_COL32(224, 230, 238, 255);
-    const ImU32 cInstr      = IM_COL32(120, 205, 120, 255);
-    const ImU32 cCmd        = IM_COL32(235, 180, 90, 255);
-    const ImU32 cDots       = IM_COL32(85, 95, 108, 255);
-    const ImU32 cMuted      = IM_COL32(110, 120, 135, 255);
-    const ImU32 cHeader     = IM_COL32(180, 200, 220, 255);
-    const ImU32 cMaster     = IM_COL32(255, 220, 80, 255);
-    const ImU32 cEnd        = IM_COL32(150, 160, 175, 255);
+    const ImU32 cBeat       = gtui::color(gtui::GuiColorRole::BeatLine);
+    const ImU32 cCursorRow  = gtui::color(gtui::GuiColorRole::GridCursorRowWarm);
+    const ImU32 cPlayRow    = gtui::color(gtui::GuiColorRole::Playhead);
+    const ImU32 cSelect     = gtui::color(gtui::GuiColorRole::Selection);
+    const ImU32 cInstrSel   = gtui::color(gtui::GuiColorRole::InstrumentHighlight);
+    const ImU32 cCursorFill = gtui::color_a(gtui::GuiColorRole::Cursor, 70);
+    const ImU32 cCursorEdge = gtui::color_a(gtui::GuiColorRole::Cursor, 230);
+    const ImU32 cRowNum     = gtui::color(gtui::GuiColorRole::GridSecondaryText);
+    const ImU32 cNote       = gtui::color(gtui::GuiColorRole::GridPrimaryText);
+    const ImU32 cInstr      = gtui::color(gtui::GuiColorRole::GridInstrumentText);
+    const ImU32 cCmd        = gtui::color(gtui::GuiColorRole::GridCommandText);
+    const ImU32 cDots       = gtui::color(gtui::GuiColorRole::GridDots);
+    const ImU32 cMuted      = gtui::color(gtui::GuiColorRole::GridMuted);
+    const ImU32 cHeader     = gtui::color(gtui::GuiColorRole::GridHeaderText);
+    const ImU32 cMaster     = gtui::color(gtui::GuiColorRole::MasterChannel);
+    const ImU32 cEnd        = gtui::color(gtui::GuiColorRole::GridEndMarker);
 
     const int chans  = gtui::pattern_channels();
     const int rows   = gtui::pattern_rows();
@@ -928,20 +928,20 @@ void gimgui_draw_orderlist(ImVec2 pos, ImVec2 size) {
 
     ImGui::Separator();
 
-    const ImU32 cCursorRow  = IM_COL32(255, 255, 255, 20);
-    const ImU32 cSelect     = IM_COL32(48, 96, 200, 110);
-    const ImU32 cSynced     = IM_COL32(100, 210, 130, 110);
-    const ImU32 cPlayRow    = IM_COL32(80, 190, 90, 80);
-    const ImU32 cCursorFill = IM_COL32(235, 225, 120, 70);
-    const ImU32 cCursorEdge = IM_COL32(235, 225, 120, 230);
-    const ImU32 cRowNum     = IM_COL32(120, 140, 160, 255);
-    const ImU32 cPat        = IM_COL32(224, 230, 238, 255);
-    const ImU32 cCmd        = IM_COL32(235, 180, 90, 255);
-    const ImU32 cEnd        = IM_COL32(150, 160, 175, 255);
-    const ImU32 cMuted      = IM_COL32(110, 120, 135, 255);
-    const ImU32 cHeader     = IM_COL32(180, 200, 220, 255);
-    const ImU32 cMaster     = IM_COL32(255, 220, 80, 255);
-    const ImU32 cSizeBad    = IM_COL32(255, 90, 90, 255);
+    const ImU32 cCursorRow  = gtui::color(gtui::GuiColorRole::GridCursorRow);
+    const ImU32 cSelect     = gtui::color(gtui::GuiColorRole::Selection);
+    const ImU32 cSynced     = gtui::color(gtui::GuiColorRole::InstrumentHighlight);
+    const ImU32 cPlayRow    = gtui::color(gtui::GuiColorRole::Playhead);
+    const ImU32 cCursorFill = gtui::color_a(gtui::GuiColorRole::Cursor, 70);
+    const ImU32 cCursorEdge = gtui::color_a(gtui::GuiColorRole::Cursor, 230);
+    const ImU32 cRowNum     = gtui::color(gtui::GuiColorRole::GridSecondaryText);
+    const ImU32 cPat        = gtui::color(gtui::GuiColorRole::GridPrimaryText);
+    const ImU32 cCmd        = gtui::color(gtui::GuiColorRole::GridCommandText);
+    const ImU32 cEnd        = gtui::color(gtui::GuiColorRole::GridEndMarker);
+    const ImU32 cMuted      = gtui::color(gtui::GuiColorRole::GridMuted);
+    const ImU32 cHeader     = gtui::color(gtui::GuiColorRole::GridHeaderText);
+    const ImU32 cMaster     = gtui::color(gtui::GuiColorRole::MasterChannel);
+    const ImU32 cSizeBad    = gtui::color(gtui::GuiColorRole::Error);
 
     const int chans   = gtui::order_channels();
     const int rows    = gtui::order_rows();
@@ -1125,13 +1125,13 @@ void gimgui_draw_instruments(ImVec2 pos, ImVec2 size) {
     static const char* fieldLabel[gtui::INSTR_FIELDS] = { "AD", "SR", "WP", "PP", "FP",
                                                           "VP", "VD", "GT", "1W", "PN" };
 
-    const ImU32 cCursorRow  = IM_COL32(255, 255, 255, 20);
-    const ImU32 cInstrSel   = IM_COL32(100, 210, 130, 110); // selected instrument id
-    const ImU32 cCursorFill = IM_COL32(235, 225, 120, 70);
-    const ImU32 cCursorEdge = IM_COL32(235, 225, 120, 230);
-    const ImU32 cRowNum     = IM_COL32(120, 140, 160, 255);
-    const ImU32 cText       = IM_COL32(224, 230, 238, 255);
-    const ImU32 cHeader     = IM_COL32(180, 200, 220, 255);
+    const ImU32 cCursorRow  = gtui::color(gtui::GuiColorRole::GridCursorRow);
+    const ImU32 cInstrSel   = gtui::color(gtui::GuiColorRole::InstrumentHighlight);
+    const ImU32 cCursorFill = gtui::color_a(gtui::GuiColorRole::Cursor, 70);
+    const ImU32 cCursorEdge = gtui::color_a(gtui::GuiColorRole::Cursor, 230);
+    const ImU32 cRowNum     = gtui::color(gtui::GuiColorRole::GridSecondaryText);
+    const ImU32 cText       = gtui::color(gtui::GuiColorRole::GridPrimaryText);
+    const ImU32 cHeader     = gtui::color(gtui::GuiColorRole::GridHeaderText);
 
     const int rows      = gtui::instr_rows();
     const int curRow    = gtui::instr_grid_row();
@@ -1465,34 +1465,7 @@ void gimgui_apply_style() {
     s.ItemInnerSpacing  = ImVec2(4.0f * scale, 4.0f * scale);
     s.ScrollbarSize     = 12.0f * scale;
 
-    ImVec4* c                        = s.Colors;
-    c[ImGuiCol_Text]                 = ImVec4(0.86f, 0.89f, 0.93f, 1.00f);
-    c[ImGuiCol_TextDisabled]         = ImVec4(0.45f, 0.48f, 0.52f, 1.00f);
-    c[ImGuiCol_WindowBg]             = ImVec4(0.13f, 0.14f, 0.16f, 1.00f);
-    c[ImGuiCol_ChildBg]              = ImVec4(0.13f, 0.14f, 0.16f, 1.00f);
-    c[ImGuiCol_PopupBg]              = ImVec4(0.11f, 0.12f, 0.14f, 1.00f);
-    c[ImGuiCol_Border]               = ImVec4(0.24f, 0.26f, 0.30f, 1.00f);
-    c[ImGuiCol_FrameBg]              = ImVec4(0.20f, 0.22f, 0.26f, 1.00f);
-    c[ImGuiCol_FrameBgHovered]       = ImVec4(0.26f, 0.30f, 0.36f, 1.00f);
-    c[ImGuiCol_FrameBgActive]        = ImVec4(0.30f, 0.36f, 0.44f, 1.00f);
-    c[ImGuiCol_TitleBg]              = ImVec4(0.11f, 0.12f, 0.14f, 1.00f);
-    c[ImGuiCol_TitleBgActive]        = ImVec4(0.15f, 0.26f, 0.41f, 1.00f);
-    c[ImGuiCol_MenuBarBg]            = ImVec4(0.11f, 0.12f, 0.14f, 1.00f);
-    c[ImGuiCol_ScrollbarBg]          = ImVec4(0.11f, 0.12f, 0.14f, 1.00f);
-    c[ImGuiCol_ScrollbarGrab]        = ImVec4(0.28f, 0.31f, 0.36f, 1.00f);
-    c[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.36f, 0.40f, 0.46f, 1.00f);
-    c[ImGuiCol_Button]               = ImVec4(0.22f, 0.30f, 0.42f, 1.00f);
-    c[ImGuiCol_ButtonHovered]        = ImVec4(0.30f, 0.42f, 0.58f, 1.00f);
-    c[ImGuiCol_ButtonActive]         = ImVec4(0.36f, 0.52f, 0.72f, 1.00f);
-    c[ImGuiCol_Header]               = ImVec4(0.20f, 0.34f, 0.52f, 1.00f);
-    c[ImGuiCol_HeaderHovered]        = ImVec4(0.26f, 0.42f, 0.62f, 1.00f);
-    c[ImGuiCol_HeaderActive]         = ImVec4(0.30f, 0.48f, 0.70f, 1.00f);
-    c[ImGuiCol_Separator]            = ImVec4(0.24f, 0.26f, 0.30f, 1.00f);
-    c[ImGuiCol_TableHeaderBg]        = ImVec4(0.17f, 0.19f, 0.23f, 1.00f);
-    c[ImGuiCol_TableRowBg]           = ImVec4(0.14f, 0.15f, 0.18f, 1.00f);
-    c[ImGuiCol_TableRowBgAlt]        = ImVec4(0.16f, 0.17f, 0.21f, 1.00f);
-    c[ImGuiCol_TableBorderLight]     = ImVec4(0.22f, 0.24f, 0.28f, 1.00f);
-    c[ImGuiCol_TableBorderStrong]    = ImVec4(0.28f, 0.30f, 0.35f, 1.00f);
+    gtui::gui_colors_apply_imgui_style();
 }
 
 void gimgui_reload_font() {
@@ -1544,7 +1517,7 @@ extern "C" void gimgui_overlay_render(void) {
     const ImGuiViewport* vp = ImGui::GetMainViewport();
     ImGui::GetBackgroundDrawList()->AddRectFilled(vp->Pos,
                                                   ImVec2(vp->Pos.x + vp->Size.x, vp->Pos.y + vp->Size.y),
-                                                  kAppBg);
+                                                  gtui::color(gtui::GuiColorRole::AppBackground));
 
     const ImVec2 vo = vp->WorkPos;  // origin below the menu bar
     const ImVec2 vs = vp->WorkSize; // area excluding the menu bar
@@ -1627,6 +1600,7 @@ void gimgui_init() {
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
+    gtui::gui_colors_init();
     ImGui::StyleColorsDark();
 
     ImGuiIO& io = ImGui::GetIO();

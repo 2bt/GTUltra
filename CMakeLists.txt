@@ -206,6 +206,7 @@ add_executable(gtultra "${SRC}/gt2stereo.cpp" "${SRC}/greloc.cpp")
 target_link_libraries(gtultra PRIVATE gtcore)
 target_sources(gtultra PRIVATE
     "${SRC}/gimgui.cpp"
+    "${SRC}/guicolors.cpp"
     "${SRC}/guimodel.cpp"
     "${SRC}/gactions.cpp"
     "${SRC}/gfiledialog.cpp")
