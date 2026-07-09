@@ -19,6 +19,7 @@
 #include <SDL.h>
 #include <cstdio>
 #include <cstdlib>
+#include <functional>
 
 // bme globals/hooks we bind to. Declared here (with C linkage) instead of
 // including bme's headers, so we pull the *system* SDL2 headers that the ImGui
@@ -165,15 +166,14 @@ float gimgui_instruments_grid_width() {
 // One bordered table column: 8-char grid + vertical scrollbar + child chrome.
 float gimgui_table_column_width() {
     const ImGuiStyle& style = ImGui::GetStyle();
-    return gimgui_text_width(8) + style.ScrollbarSize + style.WindowPadding.x * 2.0f +
-           style.ChildBorderSize * 2.0f;
+    return gimgui_text_width(8) + style.ScrollbarSize + 1;
 }
 
 float gimgui_tables_row_width() {
-    const int         n    = gtui::table_count();
-    const float       colW = gimgui_table_column_width();
-    const float       gap  = ImGui::GetStyle().ItemSpacing.x;
-    return (float)n * colW + (float)(n - 1) * gap;
+    const int   n    = gtui::table_count();
+    const float colW = gimgui_table_column_width();
+    // const float gap = ImGui::GetStyle().ItemSpacing.x;
+    return n * colW;
 }
 
 float gimgui_instruments_panel_width() { return gimgui_instruments_grid_width() + kPanelBodyPad * 2.0f; }
@@ -196,6 +196,8 @@ float gimgui_tables_panel_width() { return gimgui_tables_row_width() + kPanelBod
 //   widgetRow / placeWidget (optional): when widgetRow >= 0 and the row is visible,
 //     placeWidget(screenX, screenY) runs inside the scroll child before drawRow so
 //     ImGui widgets (e.g. InputText) share the grid's coordinate space.
+using GridMouseFn = std::function<void(int row, float localX, ImGuiMouseButton button, bool double_click, bool dragging)>;
+
 template <class HeaderDraw, class DrawRow, class PlaceWidget, class OnClick>
 bool gimgui_grid_body(const char* id,
                       int         rows,
@@ -208,6 +210,7 @@ bool gimgui_grid_body(const char* id,
                       PlaceWidget placeWidget,
                       DrawRow     drawRow,
                       OnClick     onClick,
+                      GridMouseFn onGridMouse = nullptr,
                       bool        h_scroll = true,
                       int*        out_view_row = nullptr) {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
@@ -253,10 +256,36 @@ bool gimgui_grid_body(const char* id,
     }
     const float drawTop = contentTop - drawScroll;
 
-    if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
-        const ImVec2 m = ImGui::GetIO().MousePos;
-        int          r = (int)((m.y - drawTop) / lineH);
-        if (r >= 0 && r < rows) onClick(r, m.x - origin.x);
+    if (ImGui::IsWindowHovered()) {
+        const ImGuiIO& io = ImGui::GetIO();
+        const ImVec2   m  = io.MousePos;
+        const int      r  = (int)((m.y - drawTop) / lineH);
+        const float    localX = m.x - origin.x;
+        const bool     inRows = r >= 0 && r < rows;
+        constexpr float kHoldDelaySec = 24.f / 60.f; // legacy HOLDDELAY @ 60 Hz
+
+        if (onGridMouse) {
+            if (inRows) {
+                if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
+                    onGridMouse(r, localX, ImGuiMouseButton_Left, true, false);
+                else if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+                    onGridMouse(r, localX, ImGuiMouseButton_Left, false, false);
+                else if (ImGui::IsMouseDown(ImGuiMouseButton_Left) && io.MouseDownDuration[0] >= kHoldDelaySec)
+                    onGridMouse(r, localX, ImGuiMouseButton_Left, false, true);
+                else if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+                    onGridMouse(r, localX, ImGuiMouseButton_Right, false, false);
+                else if (ImGui::IsMouseDown(ImGuiMouseButton_Right) &&
+                         !ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+                    onGridMouse(r, localX, ImGuiMouseButton_Right, false, true);
+                else if (ImGui::IsMouseClicked(ImGuiMouseButton_Middle))
+                    onGridMouse(r, localX, ImGuiMouseButton_Middle, false, false);
+                else if (ImGui::IsMouseDown(ImGuiMouseButton_Middle) &&
+                         !ImGui::IsMouseClicked(ImGuiMouseButton_Middle))
+                    onGridMouse(r, localX, ImGuiMouseButton_Middle, false, true);
+            }
+        } else if (inRows && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
+            onClick(r, localX);
+        }
     }
 
     int firstRow = (int)(drawScroll / lineH);
@@ -290,7 +319,7 @@ bool gimgui_grid_body(const char* id,
                       OnClick     onClick,
                       bool        h_scroll = true,
                       int*        out_view_row = nullptr) {
-    return gimgui_grid_body(id, rows, rowW, lineH, followRow, [](ImDrawList*, float, float) {}, 0.0f, -1, [](float, float) {}, drawRow, onClick, h_scroll, out_view_row);
+    return gimgui_grid_body(id, rows, rowW, lineH, followRow, [](ImDrawList*, float, float) {}, 0.0f, -1, [](float, float) {}, drawRow, onClick, nullptr, h_scroll, out_view_row);
 }
 
 template <class HeaderDraw, class DrawRow, class OnClick>
@@ -305,88 +334,7 @@ bool gimgui_grid_body(const char* id,
                       OnClick     onClick,
                       bool        h_scroll = true,
                       int*        out_view_row = nullptr) {
-    return gimgui_grid_body(id, rows, rowW, lineH, followRow, headerDraw, headerBandH, -1, [](float, float) {}, drawRow, onClick, h_scroll, out_view_row);
-}
-
-// Draw one SID table as an independently-scrolling column: a fixed header over
-// a virtualized scrolling body (fills the available height). Only the active
-// table auto-follows its cursor; the others keep their own scroll, matching the
-// legacy's per-table independent scrolling.
-void gimgui_draw_one_table(int t, float colW, float charW, float lineH) {
-    const ImU32      cCursorRow  = IM_COL32(255, 255, 255, 20);
-    const ImU32      cSelect     = IM_COL32(48, 96, 200, 110);
-    const ImU32      cInstrSel   = IM_COL32(100, 210, 130, 110); // legacy instrument/table chain
-    const ImU32      cCursorFill = IM_COL32(235, 225, 120, 70);
-    const ImU32      cCursorEdge = IM_COL32(235, 225, 120, 230);
-    const ImU32      cIdx        = IM_COL32(120, 140, 160, 255);
-    const ImU32      cVal        = IM_COL32(224, 230, 238, 255);
-    static const int colOff[4]   = { 3, 4, 6, 7 }; // cursor char within "II:LL RR"
-
-    const int tlen    = gtui::table_len();
-    const int curTab  = gtui::table_cursor_table();
-    const int curPos  = gtui::table_cursor_pos();
-    const int curCol  = gtui::table_cursor_col();
-    const int markTab = gtui::table_mark_table();
-    int       markLo = gtui::table_mark_start(), markHi = gtui::table_mark_end();
-    if (markLo > markHi) {
-        int tmp = markLo;
-        markLo  = markHi;
-        markHi  = tmp;
-    }
-    const bool active = (curTab == t);
-
-    ImGui::BeginChild("col", ImVec2(colW, 0), true, kNoNavWindowFlags);
-
-    // TODO: clicking a table header should toggle an alternative "detailed"
-    // interpreted view (a GTUltra feature; not for the speed table). For now the
-    // header is plain text.
-    static const char* kTableNames[] = { "Wave", "Pulse", "Filter", "Speed" };
-    ImGui::TextUnformatted(kTableNames[t]);
-    ImGui::Separator();
-
-    const float cellW8 = gimgui_text_width(8);
-    int         viewRow = 0;
-    gimgui_grid_body(
-        "body",
-        tlen,
-        cellW8,
-        lineH,
-        active ? curPos : -1,
-        [&](ImDrawList* dl, int r, float x, float y) {
-            char buf[16];
-            if (gtui::table_row_uses_selected_instrument(t, r))
-                dl->AddRectFilled(ImVec2(x, y), ImVec2(x + cellW8, y + lineH), cInstrSel);
-            if (markTab == t && r >= markLo && r <= markHi)
-                dl->AddRectFilled(ImVec2(x, y), ImVec2(x + cellW8, y + lineH), cSelect);
-            if (active && curPos == r) {
-                dl->AddRectFilled(ImVec2(x, y), ImVec2(x + cellW8, y + lineH), cCursorRow);
-                float cs = x + colOff[curCol < 0 ? 0 : (curCol > 3 ? 3 : curCol)] * charW;
-                dl->AddRectFilled(ImVec2(cs, y), ImVec2(cs + charW, y + lineH), cCursorFill);
-                dl->AddRect(ImVec2(cs, y), ImVec2(cs + charW, y + lineH), cCursorEdge);
-            }
-            snprintf(buf, sizeof buf, "%02X:", r + 1);
-            dl->AddText(ImVec2(x, y), cIdx, buf);
-            snprintf(buf, sizeof buf, "%02X %02X", gtui::table_left(t, r), gtui::table_right(t, r));
-            dl->AddText(ImVec2(x + gimgui_text_width(3), y), cVal, buf);
-        },
-        [&](int r, float localX) {
-            const int off = (int)(localX / charW);
-            int       col;
-            if (off <= 3)
-                col = 0; // index area → left high nibble
-            else if (off == 4)
-                col = 1;
-            else if (off <= 6)
-                col = 2;
-            else
-                col = 3;
-            gtui::table_set_cursor(t, r, col);
-        },
-        false,
-        &viewRow);
-    gtui::table_set_view(t, viewRow);
-
-    ImGui::EndChild();
+    return gimgui_grid_body(id, rows, rowW, lineH, followRow, headerDraw, headerBandH, -1, [](float, float) {}, drawRow, onClick, nullptr, h_scroll, out_view_row);
 }
 
 // Accent/section colours for the fixed tracker layout (theme system is M7).
@@ -518,7 +466,26 @@ void gimgui_draw_player_status(ImVec2 pos, ImVec2 size) {
         gtui::player_toggle_sid_model();
 
     gimgui_vertical_separator();
-    ImGui::Text("SID x%d", gtui::player_sid_chips());
+
+    {
+        float sidComboW = gimgui_text_width(6) + ImGui::GetStyle().FramePadding.x * 2.0f;
+        sidComboW += ImGui::GetFrameHeight();
+
+        ImGui::SetNextItemWidth(sidComboW);
+        char preview[16];
+        gtui::player_sid_chip_combo_label(gtui::player_sid_chip_combo_index(), preview, sizeof preview);
+        if (ImGui::BeginCombo("##sid_chips", preview)) {
+            const int items = gtui::player_sid_chip_combo_items();
+            for (int i = 0; i < items; i++) {
+                char label[16];
+                gtui::player_sid_chip_combo_label(i, label, sizeof label);
+                const bool selected = (i == gtui::player_sid_chip_combo_index());
+                if (ImGui::Selectable(label, selected)) gtui::player_set_sid_chip_combo_index(i);
+                if (selected) ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+    }
     ImGui::SameLine();
     if (gimgui_button(gtui::transport_stereo_label(), 3)) gtui::transport_cycle_stereo();
 
@@ -535,18 +502,26 @@ void gimgui_draw_player_status(ImVec2 pos, ImVec2 size) {
         }
     }
 
-    gimgui_vertical_separator();
-    if (gimgui_toggle_button("SID64", gtui::player_sidtracker64()))
-        gtui::player_toggle_sidtracker64();
 
     gimgui_vertical_separator();
-    ImGui::TextUnformatted("Speed");
-    ImGui::SameLine();
-    if (ImGui::SmallButton("-")) gtui::player_multiplier_prev();
-    ImGui::SameLine();
-    gimgui_chrome_mono_label_centered(gtui::player_speed_label(), 3);
-    ImGui::SameLine();
-    if (ImGui::SmallButton("+")) gtui::player_multiplier_next();
+    {
+        float speedComboW = gimgui_text_width(4) + ImGui::GetStyle().FramePadding.x * 2.0f;
+        speedComboW += ImGui::GetFrameHeight();
+        ImGui::SetNextItemWidth(speedComboW);
+        char preview[8];
+        gtui::player_speed_combo_label(gtui::player_speed_combo_index(), preview, sizeof preview);
+        if (ImGui::BeginCombo("##speed", preview)) {
+            const int items = gtui::player_speed_combo_items();
+            for (int i = 0; i < items; i++) {
+                char label[8];
+                gtui::player_speed_combo_label(i, label, sizeof label);
+                const bool selected = (i == gtui::player_speed_combo_index());
+                if (ImGui::Selectable(label, selected)) gtui::player_set_speed_combo_index(i);
+                if (selected) ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+    }
 
     gimgui_vertical_separator();
 
@@ -558,7 +533,6 @@ void gimgui_draw_player_status(ImVec2 pos, ImVec2 size) {
 
     gimgui_vertical_separator();
 
-    ImGui::AlignTextToFramePadding();
     ImGui::TextUnformatted("HR");
     ImGui::SameLine();
     {
@@ -569,6 +543,11 @@ void gimgui_draw_player_status(ImVec2 pos, ImVec2 size) {
             gtui::player_set_hr_adparam((int)hr);
         ImGui::PopItemWidth();
     }
+
+    gimgui_vertical_separator();
+    if (gimgui_toggle_button("SID64", gtui::player_sidtracker64()))
+        gtui::player_toggle_sidtracker64();
+
 
     {
         const char* fname = gtui::player_loaded_filename();
@@ -644,15 +623,83 @@ void gimgui_draw_tables(ImVec2 pos, ImVec2 size) {
         return;
     }
 
-    const float charW = gimgui_mono_advance();
-    const float lineH = ImGui::GetTextLineHeight();
-    const float colW  = gimgui_table_column_width();
+    const ImU32      cCursorRow  = IM_COL32(255, 255, 255, 20);
+    const ImU32      cSelect     = IM_COL32(48, 96, 200, 110);
+    const ImU32      cInstrSel   = IM_COL32(100, 210, 130, 110);
+    const ImU32      cCursorFill = IM_COL32(235, 225, 120, 70);
+    const ImU32      cCursorEdge = IM_COL32(235, 225, 120, 230);
+    const ImU32      cIdx        = IM_COL32(120, 140, 160, 255);
+    const ImU32      cVal        = IM_COL32(224, 230, 238, 255);
+    static const int colOff[4]   = { 3, 4, 6, 7 };
+    static const char* kTableNames[] = { "Wave", "Pulse", "Filter", "Speed" };
+
+    const float charW  = gimgui_mono_advance();
+    const float lineH  = ImGui::GetTextLineHeight();
+    const float colW   = gimgui_table_column_width();
+    const float cellW8 = gimgui_text_width(8);
+    const int   tlen   = gtui::table_len();
+    const int   curTab = gtui::table_cursor_table();
+    const int   curPos = gtui::table_cursor_pos();
+    const int   curCol = gtui::table_cursor_col();
+    const int   markTab = gtui::table_mark_table();
+    int         markLo = gtui::table_mark_start(), markHi = gtui::table_mark_end();
+    if (markLo > markHi) {
+        int tmp = markLo;
+        markLo  = markHi;
+        markHi  = tmp;
+    }
 
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(2, 2));
     for (int t = 0; t < gtui::table_count(); t++) {
         if (t) ImGui::SameLine();
         ImGui::PushID(t);
-        gimgui_draw_one_table(t, colW, charW, lineH);
+
+        const bool active = (curTab == t);
+        ImGui::BeginChild("col", ImVec2(colW, 0), true, kNoNavWindowFlags);
+        ImGui::TextUnformatted(kTableNames[t]);
+        ImGui::Separator();
+
+        int viewRow = 0;
+        gimgui_grid_body(
+            "body",
+            tlen,
+            cellW8,
+            lineH,
+            active ? curPos : -1,
+            [&](ImDrawList* dl, int r, float x, float y) {
+                char buf[16];
+                if (gtui::table_row_uses_selected_instrument(t, r))
+                    dl->AddRectFilled(ImVec2(x, y), ImVec2(x + cellW8, y + lineH), cInstrSel);
+                if (markTab == t && r >= markLo && r <= markHi)
+                    dl->AddRectFilled(ImVec2(x, y), ImVec2(x + cellW8, y + lineH), cSelect);
+                if (active && curPos == r) {
+                    dl->AddRectFilled(ImVec2(x, y), ImVec2(x + cellW8, y + lineH), cCursorRow);
+                    float cs = x + colOff[curCol < 0 ? 0 : (curCol > 3 ? 3 : curCol)] * charW;
+                    dl->AddRectFilled(ImVec2(cs, y), ImVec2(cs + charW, y + lineH), cCursorFill);
+                    dl->AddRect(ImVec2(cs, y), ImVec2(cs + charW, y + lineH), cCursorEdge);
+                }
+                snprintf(buf, sizeof buf, "%02X:", r + 1);
+                dl->AddText(ImVec2(x, y), cIdx, buf);
+                snprintf(buf, sizeof buf, "%02X %02X", gtui::table_left(t, r), gtui::table_right(t, r));
+                dl->AddText(ImVec2(x + gimgui_text_width(3), y), cVal, buf);
+            },
+            [&](int r, float localX) {
+                const int off = (int)(localX / charW);
+                int       col;
+                if (off <= 3)
+                    col = 0;
+                else if (off == 4)
+                    col = 1;
+                else if (off <= 6)
+                    col = 2;
+                else
+                    col = 3;
+                gtui::table_set_cursor(t, r, col);
+            },
+            false,
+            &viewRow);
+        gtui::table_set_view(t, viewRow);
+        ImGui::EndChild();
         ImGui::PopID();
     }
     ImGui::PopStyleVar();
@@ -876,7 +923,7 @@ void gimgui_draw_orderlist(ImVec2 pos, ImVec2 size) {
 
     gimgui_vertical_separator();
     const bool expanded = gtui::order_expanded_view();
-    if (gimgui_toggle_button(expanded ? "Expanded" : "Classic", expanded, 8))
+    if (gimgui_toggle_button("Expanded", expanded))
         gtui::order_toggle_expanded_view();
 
     ImGui::Separator();
@@ -935,6 +982,39 @@ void gimgui_draw_orderlist(ImVec2 pos, ImVec2 size) {
     }
 
     gimgui_snap_body_pad_x();
+    const GridMouseFn orderMouse = [&](int r, float localX, ImGuiMouseButton btn, bool dbl, bool drag) {
+        const ImGuiIO& io = ImGui::GetIO();
+        if (io.MouseDown[ImGuiMouseButton_Left] &&
+            (io.MouseDown[ImGuiMouseButton_Right] || io.MouseDown[ImGuiMouseButton_Middle])) {
+            gtui::order_mouse_mark_cancel();
+            return;
+        }
+
+        float rx = localX - rowNumW;
+        if (rx < 0) return;
+        int c = (int)(rx / colPitch);
+        if (c < 0 || c >= chans) return;
+        float cx = rx - (float)c * colPitch;
+        if (cx >= cellW) return;
+        int off = (int)(cx / charW);
+        if (expanded) {
+            if (off > 4) off = 4;
+        } else if (off > 1) {
+            off = 1;
+        }
+
+        const bool mod = io.KeyShift || io.KeyCtrl;
+        if (btn == ImGuiMouseButton_Left && dbl)
+            gtui::order_mouse_double_click(c, r, off);
+        else if (btn == ImGuiMouseButton_Left)
+            gtui::order_mouse_left(c, r, off, mod, drag);
+        else if (btn == ImGuiMouseButton_Right || btn == ImGuiMouseButton_Middle) {
+            if (drag)
+                gtui::order_mouse_mark_drag(c, r);
+            else
+                gtui::order_mouse_mark_begin(c, r);
+        }
+    };
     gimgui_grid_body(
         "olgrid",
         rows,
@@ -962,6 +1042,8 @@ void gimgui_draw_orderlist(ImVec2 pos, ImVec2 size) {
             }
         },
         headerH,
+        -1,
+        [](float, float) {},
         [&](ImDrawList* dl, int r, float x, float y) {
             char buf[8];
             if (r == curRow) dl->AddRectFilled(ImVec2(x, y), ImVec2(x + totalW, y + lineH), cCursorRow);
@@ -1021,21 +1103,8 @@ void gimgui_draw_orderlist(ImVec2 pos, ImVec2 size) {
                 }
             }
         },
-        [&](int r, float localX) {
-            float rx = localX - rowNumW;
-            if (rx < 0) return;
-            int c = (int)(rx / colPitch);
-            if (c < 0 || c >= chans) return;
-            float cx = rx - (float)c * colPitch;
-            if (cx >= cellW) return;
-            int off = (int)(cx / charW);
-            if (expanded) {
-                if (off > 4) off = 4;
-            } else if (off > 1) {
-                off = 1;
-            }
-            gtui::order_set_cursor(c, r, off);
-        });
+        [](int, float) {},
+        orderMouse);
 
     gimgui_end_panel();
 }
@@ -1177,6 +1246,7 @@ void gimgui_draw_instruments(ImVec2 pos, ImVec2 size) {
                 }
             }
         },
+        nullptr,
         false);
 
     if (g_instr_name_edit >= gtui::INSTR_FIRST) {

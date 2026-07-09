@@ -146,6 +146,11 @@ int  order_range_end_row(int ch); // F2 range end (esend), -1 if unset
 int  order_play_row(int ch);       // playback position in order list, -1 if none
 OrderCell order_cell(int ch, int row);
 void order_set_cursor(int ch, int row, int col); // click -> place cursor (EDIT_ORDERLIST)
+void order_mouse_left(int ch, int row, int col, bool shift_or_ctrl, bool held_drag);
+void order_mouse_double_click(int ch, int row, int col);
+void order_mouse_mark_begin(int ch, int row);
+void order_mouse_mark_drag(int ch, int row);
+void order_mouse_mark_cancel();
 int  order_song_bank();          // 0-based multi-song buffer index
 int  order_song_bank_count();    // number of song slots (1..)
 void order_set_subtune(int v);   // esnum, clamped to [0, MAX_SONGS)
@@ -222,9 +227,17 @@ void        transport_rewind();        // step to previous song position
 // ---- player / chip settings (legacy top bar) ----
 const char* player_loaded_filename();  // basename or "(unsaved)"
 int         player_sid_chips();        // maxSIDChannels / 3 (1..4)
+int         player_sid_chip_combo_items();
+int         player_sid_chip_combo_index();
+void        player_sid_chip_combo_label(int index, char* buf, int bufSize);
+bool        player_set_sid_chip_combo_index(int index);
 bool        player_sid_model_8580();   // false = 6581, true = 8580
 bool        player_ntsc();             // false = PAL, true = NTSC
 const char* player_speed_label();      // "25Hz" or "1X".."16X"
+int         player_speed_combo_items();
+int         player_speed_combo_index();
+void        player_speed_combo_label(int index, char* buf, int bufSize);
+bool        player_set_speed_combo_index(int index);
 int         player_hr_adparam();       // hard-restart ADSR ($0000..$FFFF)
 void        player_set_hr_adparam(int v);
 int         player_sid_pan(int chip);  // chip index 0..(sid_chips-1), nybble 0..15

@@ -76,6 +76,7 @@ enum class Action : uint16_t {
     OrderCopy,
     OrderCut,
     OrderPaste,
+    OrderInsertPaste, // expanded: Ctrl+I insert-paste at cursor
     OrderMarkToggle,
     OrderTransposeUp,
     OrderTransposeDown,

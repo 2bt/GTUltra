@@ -92,6 +92,7 @@ const ActionMeta kActionMeta[] = {
     { Action::OrderCopy,              "OrderCopy",              "Order list: copy" },
     { Action::OrderCut,               "OrderCut",               "Order list: cut" },
     { Action::OrderPaste,             "OrderPaste",             "Order list: paste" },
+    { Action::OrderInsertPaste,       "OrderInsertPaste",       "Order list: insert-paste (expanded)" },
     { Action::OrderMarkToggle,        "OrderMarkToggle",        "Order list: mark all/none" },
     { Action::OrderTransposeUp,       "OrderTransposeUp",       "Order list: transpose up" },
     { Action::OrderTransposeDown,     "OrderTransposeDown",     "Order list: transpose down" },
@@ -263,6 +264,7 @@ const Binding kBindings[] = {
     { Action::OrderCopy,           Ctx::Order, make_scancode_chord(KEY_C, Shift) },
     { Action::OrderCut,            Ctx::Order, make_scancode_chord(KEY_X, Shift) },
     { Action::OrderPaste,          Ctx::Order, make_scancode_chord(KEY_V, Shift) },
+    { Action::OrderInsertPaste,    Ctx::Order, make_chord('i', Ctrl) },
     { Action::OrderMarkToggle,     Ctx::Order, make_scancode_chord(KEY_L, Shift) },
     { Action::OrderTransposeUp,    Ctx::Order, make_chord('+') },
     { Action::OrderTransposeDown,  Ctx::Order, make_chord('-') },
@@ -1458,6 +1460,10 @@ bool handle_order_action(Action act) {
             orderListPasteToCursor_External(gt, 0, transposeOnly);
         }
         return true;
+    case Action::OrderInsertPaste:
+        if (editorInfo.expandOrderListView)
+            orderListPasteToCursor_External(gt, 1, 0);
+        return true;
     case Action::OrderMarkToggle:
         order_list_mark_toggle();
         return true;
@@ -1876,6 +1882,7 @@ bool perform(Action act) {
     case Action::OrderCopy:
     case Action::OrderCut:
     case Action::OrderPaste:
+    case Action::OrderInsertPaste:
     case Action::OrderMarkToggle:
     case Action::OrderTransposeUp:
     case Action::OrderTransposeDown:

@@ -567,9 +567,10 @@ Sub-controls from the PDF:
 | PDF | Feature | Status | Milestone / notes |
 |-----|---------|--------|-------------------|
 | — | Vertical order list (ImGui) | ✅ | Classic `songorder[]` view |
-| 22 | Master channel (yellow arrow) | 🔶 | `>` prefix on master channel header |
+| 22 | Master channel (yellow arrow) | ✅ | Gold header on master channel (no `>` prefix) |
 | 42 | Expanded order list toggle | ✅ | Classic/Expanded button; `expandAllSongs` / `compressAllSongs` |
-| 43 | Expanded — copy/cut/paste/insert | 🔶 | Copy/paste/cut/ins/del via action layer; Ctrl+I insert still legacy path |
+| 43 | Expanded — copy/cut/paste/insert | 🔶 | Copy/paste/cut/ins/del + Ctrl+I insert-paste via action layer |
+| — | Order list mouse (select / play) | ✅ | Right/middle drag area select; double-click play; Shift+click pattern sync |
 | 44 | Expanded — paste transpose only | 🔶 | `escolumn > 2` paste semantics in action layer |
 | 45 | Expanded — set transpose values | 🔶 | Hex/+/- via `orderlistcommands`; live audition in player |
 | 46 | Expanded — compressed size indicator | ✅ | Per-channel `XX` / `**` in order header |

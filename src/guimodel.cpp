@@ -468,6 +468,90 @@ void order_set_cursor(int ch, int row, int col)
     editorInfo.escolumn  = col;
 }
 
+void order_mouse_left(int ch, int row, int col, bool shift_or_ctrl, bool held_drag)
+{
+    if (editPaletteMode) return;
+
+    if (order_expanded_view() && col == 2 &&
+        songOrderPatterns[editorInfo.esnum][ch][row] < 0xff)
+        return;
+
+    if (shift_or_ctrl || held_drag) {
+        if (order_expanded_view()) {
+            if (editorInfo.eseditpos == row) {
+                order_set_cursor(ch, row, col);
+                setMasterLoopChannel(&gtObject, "guimodel_order_drag_exp");
+                backupPatternDisplayInfo(&gtObject);
+                orderSelectPatternsFromSelected(&gtObject);
+                restorePatternDisplayInfo(&gtObject);
+            } else {
+                order_set_cursor(ch, row, col);
+            }
+        } else {
+            order_set_cursor(ch, row, col);
+            setMasterLoopChannel(&gtObject, "guimodel_order_drag");
+            backupPatternDisplayInfo(&gtObject);
+            orderSelectPatternsFromSelected(&gtObject);
+            restorePatternDisplayInfo(&gtObject);
+        }
+    } else {
+        order_set_cursor(ch, row, col);
+        if (!order_expanded_view())
+            setMasterLoopChannel(&gtObject, "guimodel_order_click");
+    }
+}
+
+void order_mouse_double_click(int ch, int row, int col)
+{
+    if (editPaletteMode) return;
+
+    if (order_expanded_view() && col == 2 &&
+        songOrderPatterns[editorInfo.esnum][ch][row] < 0xff)
+        return;
+
+    order_set_cursor(ch, row, col);
+    setMasterLoopChannel(&gtObject, "guimodel_order_dblclk");
+    orderPlayFromPosition(&gtObject, 0, editorInfo.eseditpos, editorInfo.eschn, 1);
+}
+
+void order_mouse_mark_begin(int ch, int row)
+{
+    editorInfo.editmode = EDIT_ORDERLIST;
+
+    if (order_expanded_view()) {
+        if (row >= MAX_SONGLEN_EXPANDED) return;
+    } else if (row >= order_length(ch)) {
+        return;
+    }
+
+    if (editorInfo.esmarkchn != ch || row != editorInfo.esmarkend) {
+        editorInfo.esmarkchn    = ch;
+        editorInfo.esmarkstart  = row;
+        editorInfo.esmarkend    = row;
+        editorInfo.esmarkchnend = order_expanded_view() ? ch : -1;
+    }
+}
+
+void order_mouse_mark_drag(int ch, int row)
+{
+    if (editorInfo.esmarkchn < 0) return;
+
+    if (order_expanded_view()) {
+        if (row >= MAX_SONGLEN_EXPANDED) return;
+        editorInfo.esmarkend    = row;
+        editorInfo.esmarkchnend = ch;
+    } else {
+        if (row >= order_length(editorInfo.esmarkchn)) return;
+        editorInfo.esmarkend = row;
+    }
+}
+
+void order_mouse_mark_cancel()
+{
+    editorInfo.esmarkchn    = -1;
+    editorInfo.esmarkchnend = -1;
+}
+
 int order_song_bank() { return currentSongFile; }
 
 int order_song_bank_count() { return lastValidSongFileIndex + 1; }
@@ -738,6 +822,41 @@ const char* player_loaded_filename()
 }
 
 int  player_sid_chips() { return editorInfo.maxSIDChannels / 3; }
+
+int player_sid_chip_combo_items() { return 4; }
+
+int player_sid_chip_combo_index()
+{
+    switch (editorInfo.maxSIDChannels) {
+    case 3:  return 0;
+    case 6:  return 1;
+    case 9:  return 2;
+    default: return 3; // 12
+    }
+}
+
+void player_sid_chip_combo_label(int index, char* buf, int bufSize)
+{
+    if (!buf || bufSize <= 0) return;
+    if (index < 0) index = 0;
+    if (index > 3) index = 3;
+    snprintf(buf, (size_t)bufSize, "SID x%d", index + 1);
+}
+
+bool player_set_sid_chip_combo_index(int index)
+{
+    if (index < 0) index = 0;
+    if (index > 3) index = 3;
+    static const int kChannels[] = { 3, 6, 9, 12 };
+    const int        newCh       = kChannels[index];
+    if (newCh == editorInfo.maxSIDChannels) return false;
+    undoCreateEditorInfoBackup();
+    editorInfo.maxSIDChannels = newCh;
+    undoAddEditorSettingsToList();
+    handleSIDChannelCountChange(&gtObject);
+    return true;
+}
+
 bool player_sid_model_8580() { return editorInfo.sidmodel != 0; }
 bool player_ntsc() { return editorInfo.ntsc != 0; }
 
@@ -749,6 +868,36 @@ const char* player_speed_label()
     else
         snprintf(buf, sizeof buf, "%dX", (int)editorInfo.multiplier);
     return buf;
+}
+
+int player_speed_combo_items() { return 17; } // 0 = 25Hz, 1..16 = 1X..16X
+
+int player_speed_combo_index() { return (int)editorInfo.multiplier; }
+
+void player_speed_combo_label(int index, char* buf, int bufSize)
+{
+    if (!buf || bufSize <= 0) return;
+    if (index < 0) index = 0;
+    if (index > 16) index = 16;
+    if (index == 0)
+        snprintf(buf, (size_t)bufSize, "25Hz");
+    else
+        snprintf(buf, (size_t)bufSize, "%dX", index);
+}
+
+bool player_set_speed_combo_index(int index)
+{
+    if (index < 0) index = 0;
+    if (index > 16) index = 16;
+    if ((int)editorInfo.multiplier == index) return false;
+    player_settings_edit([index] {
+        editorInfo.multiplier = (unsigned)index;
+        if ((editorInfo.finevibrato == 1) && (editorInfo.multiplier < 2))
+            editorInfo.usefinevib = 1;
+        reInitSID();
+        playUntilEnd(editorInfo.esnum);
+    });
+    return true;
 }
 
 int  player_hr_adparam() { return (int)editorInfo.adparam; }
