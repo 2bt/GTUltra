@@ -24,6 +24,7 @@ int names_field() { return editorInfo.enpos; }
 void names_set_field(int field) {
     if (field < 0) field = 0;
     if (field > 2) field = 2;
+    editorInfo.editmode  = EDIT_NAMES;
     editorInfo.enpos     = field;
     editorInfo.nameIndex = field;
 }

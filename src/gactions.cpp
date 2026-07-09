@@ -167,6 +167,7 @@ const ActionMeta kActionMeta[] = {
     { Action::InstrEnd,                 "InstrEnd",                 "Instrument: last" },
     { Action::NamesFieldNext,           "NamesFieldNext",           "Song info: next field" },
     { Action::NamesFieldPrev,           "NamesFieldPrev",           "Song info: previous field" },
+    { Action::NamesFieldEdit,           "NamesFieldEdit",           "Song info: edit field" },
     { Action::ToggleSIDTracker64,       "ToggleSIDTracker64",       "Toggle SIDTracker64 mode" },
     { Action::PrevMultiplier,           "PrevMultiplier",           "Previous speed multiplier" },
     { Action::NextMultiplier,           "NextMultiplier",           "Next speed multiplier" },
@@ -362,8 +363,8 @@ const Binding kBindings[] = {
 
     // Song metadata (names panel)
     { Action::NamesFieldNext,  Ctx::Names, make_scancode_chord(KEY_DOWN) },
-    { Action::NamesFieldNext,  Ctx::Names, make_scancode_chord(KEY_ENTER) },
     { Action::NamesFieldPrev,  Ctx::Names, make_scancode_chord(KEY_UP) },
+    { Action::NamesFieldEdit,  Ctx::Names, make_scancode_chord(KEY_ENTER) },
 };
 
 std::vector<Binding> g_overrides;
@@ -1001,7 +1002,7 @@ bool handle_global_action(Action act) {
     case Action::EditModeNames:
         if (!shiftOrCtrlPressed) {
             editorInfo.editmode = EDIT_NAMES;
-            if (gimgui_new_ui_active()) gimgui_song_field_begin(editorInfo.enpos);
+            if (gimgui_new_ui_active()) gimgui_song_field_end();
         }
         return true;
 
@@ -1383,12 +1384,12 @@ bool handle_instrument_action(Action act) {
 }
 
 static void names_field_step(int delta) {
+    if (gimgui_new_ui_active()) gimgui_song_field_end();
     int f = editorInfo.enpos + delta;
     if (f > 2) f = 0;
     if (f < 0) f = 2;
     editorInfo.enpos     = f;
     editorInfo.nameIndex = f;
-    if (gimgui_new_ui_active()) gimgui_song_field_begin(f);
 }
 
 bool handle_names_action(Action act) {
@@ -1398,6 +1399,9 @@ bool handle_names_action(Action act) {
         return true;
     case Action::NamesFieldPrev:
         names_field_step(-1);
+        return true;
+    case Action::NamesFieldEdit:
+        if (gimgui_new_ui_active()) gimgui_song_field_begin(editorInfo.enpos);
         return true;
     default: return false;
     }
@@ -1721,10 +1725,15 @@ bool dispatch_names_navigation() {
 
     if (!gimgui_new_ui_active()) return false;
 
-    if (gimgui_song_field_editing()) return false;
-
     const Action act = resolve_input_ctx(Ctx::Names, rawkey, key, shiftpressed, ctrlpressed);
     if (act == Action::None) return false;
+
+    if (gimgui_song_field_editing()) {
+        if (act == Action::NamesFieldNext || act == Action::NamesFieldPrev)
+            gimgui_song_field_end();
+        else
+            return false;
+    }
 
     if (!handle_names_action(act)) return false;
 
@@ -1965,6 +1974,7 @@ bool perform(Action act) {
         break;
     case Action::NamesFieldNext:
     case Action::NamesFieldPrev:
+    case Action::NamesFieldEdit:
         ok = handle_names_action(act);
         break;
     default:

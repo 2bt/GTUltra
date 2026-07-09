@@ -16,36 +16,38 @@ struct GuiColorDef {
 static ImU32 g_colors[(unsigned)GuiColorRole::Count];
 
 static const GuiColorDef kDefaultColors[] = {
-    { GuiColorRole::AppBackground,         "app_background",           "App background",             18, 20, 24, 255 },
-    { GuiColorRole::PanelHeaderBg,         "panel_header_bg",          "Panel header",               30, 44, 60, 255 },
-    { GuiColorRole::PanelHeaderBgActive,   "panel_header_bg_active",   "Panel header (active)",      52, 98, 158, 255 },
-    { GuiColorRole::PanelHeaderText,       "panel_header_text",        "Panel header text",          150, 168, 186, 255 },
-    { GuiColorRole::PanelHeaderTextActive, "panel_header_text_active", "Panel header text (active)", 244, 250, 255, 255 },
+    // Renoise-inspired: charcoal base, orange reserved for focus/playhead/notes.
+    { GuiColorRole::AppBackground,         "app_background",           "App background",             30, 30, 30, 255 },
+    { GuiColorRole::PanelHeaderBg,         "panel_header_bg",          "Panel header",               46, 46, 46, 255 },
+    { GuiColorRole::PanelHeaderBgActive,   "panel_header_bg_active",   "Panel header (active)",      58, 50, 44, 255 },
+    { GuiColorRole::PanelHeaderText,       "panel_header_text",        "Panel header text",          195, 200, 205, 255 },
+    { GuiColorRole::PanelHeaderTextActive, "panel_header_text_active", "Panel header text (active)", 255, 155, 60, 255 },
 
-    { GuiColorRole::WidgetSurface,         "widget_surface",           "Widget surface",             33, 36, 41, 255 },
-    { GuiColorRole::WidgetSurfaceDeep,     "widget_surface_deep",      "Widget surface (deep)",      28, 31, 36, 255 },
-    { GuiColorRole::WidgetFrameBg,         "widget_frame_bg",          "Widget frame",               51, 56, 66, 255 },
-    { GuiColorRole::WidgetBorder,          "widget_border",            "Widget border",              61, 66, 77, 255 },
-    { GuiColorRole::WidgetAccent,          "widget_accent",            "Widget accent",              56, 77, 107, 255 },
+    { GuiColorRole::WidgetSurface,         "widget_surface",           "Widget surface",             40, 40, 40, 255 },
+    { GuiColorRole::WidgetSurfaceDeep,     "widget_surface_deep",      "Widget surface (deep)",      32, 32, 32, 255 },
+    { GuiColorRole::WidgetFrameBg,         "widget_frame_bg",          "Widget frame",               54, 54, 54, 255 },
+    { GuiColorRole::WidgetBorder,          "widget_border",            "Widget border",              22, 22, 22, 255 },
+    { GuiColorRole::WidgetAccent,          "widget_accent",            "Widget accent",              220, 100, 25, 255 },
 
     { GuiColorRole::GridPrimaryText,       "grid_primary_text",        "Grid primary text",          224, 230, 238, 255 },
-    { GuiColorRole::GridSecondaryText,     "grid_secondary_text",      "Grid secondary text",        120, 140, 160, 255 },
-    { GuiColorRole::GridHeaderText,        "grid_header_text",         "Grid header text",           180, 200, 220, 255 },
-    { GuiColorRole::GridCommandText,       "grid_command_text",        "Grid command text",          235, 180, 90, 255 },
-    { GuiColorRole::GridInstrumentText,    "grid_instrument_text",     "Grid instrument text",       120, 205, 120, 255 },
-    { GuiColorRole::GridMuted,             "grid_muted",               "Grid muted text",            110, 120, 135, 255 },
-    { GuiColorRole::GridDots,              "grid_dots",                "Grid dots",                  85, 95, 108, 255 },
-    { GuiColorRole::GridEndMarker,         "grid_end_marker",          "Grid end marker",            150, 160, 175, 255 },
+    { GuiColorRole::GridNoteText,          "grid_note_text",           "Grid note text",             255, 255, 255, 255 },
+    { GuiColorRole::GridSecondaryText,     "grid_secondary_text",      "Grid secondary text",        130, 145, 160, 255 },
+    { GuiColorRole::GridHeaderText,        "grid_header_text",         "Grid header text",           200, 210, 220, 255 },
+    { GuiColorRole::GridCommandText,       "grid_command_text",        "Grid command text",          235, 195, 110, 255 },
+    { GuiColorRole::GridInstrumentText,    "grid_instrument_text",     "Grid instrument text",       155, 205, 135, 255 },
+    { GuiColorRole::GridMuted,             "grid_muted",               "Grid muted text",            115, 125, 140, 255 },
+    { GuiColorRole::GridDots,              "grid_dots",                "Grid dots",                  70, 78, 88, 255 },
+    { GuiColorRole::GridEndMarker,         "grid_end_marker",          "Grid end marker",            155, 165, 180, 255 },
 
-    { GuiColorRole::GridCursorRow,         "grid_cursor_row",          "Grid cursor row",            255, 255, 255, 20 },
-    { GuiColorRole::GridCursorRowWarm,     "grid_cursor_row_warm",     "Grid cursor row (warm)",     255, 255, 100, 20 },
-    { GuiColorRole::Cursor,                "cursor",                   "Cursor",                     235, 225, 120, 255 },
-    { GuiColorRole::Selection,             "selection",                "Selection",                  48, 96, 200, 110 },
-    { GuiColorRole::InstrumentHighlight,   "instrument_highlight",     "Instrument highlight",       100, 210, 130, 110 },
-    { GuiColorRole::Playhead,              "playhead",                 "Playhead",                   80, 190, 90, 80 },
-    { GuiColorRole::BeatLine,              "beat_line",                "Beat line",                  255, 255, 255, 10 },
-    { GuiColorRole::MasterChannel,         "master_channel",           "Master channel",             255, 220, 80, 255 },
-    { GuiColorRole::Error,                 "error",                    "Error",                      255, 90, 90, 255 },
+    { GuiColorRole::GridCursorRow,         "grid_cursor_row",          "Grid cursor row",            220, 100, 25, 22 },
+    { GuiColorRole::GridCursorRowWarm,     "grid_cursor_row_warm",     "Grid cursor row (warm)",     220, 100, 25, 32 },
+    { GuiColorRole::Cursor,                "cursor",                   "Cursor",                     255, 145, 50, 255 },
+    { GuiColorRole::Selection,             "selection",                "Selection",                  220, 100, 25, 85 },
+    { GuiColorRole::InstrumentHighlight,   "instrument_highlight",     "Instrument highlight",       220, 100, 25, 32 },
+    { GuiColorRole::Playhead,              "playhead",                 "Playhead",                   220, 100, 25, 70 },
+    { GuiColorRole::BeatLine,              "beat_line",                "Beat line",                  68, 68, 68, 55 },
+    { GuiColorRole::MasterChannel,         "master_channel",           "Master channel",             225, 155, 75, 255 },
+    { GuiColorRole::Error,                 "error",                    "Error",                      215, 85, 85, 255 },
 };
 
 static ImVec4 to_vec4(GuiColorRole role) {
@@ -105,14 +107,15 @@ void gui_colors_apply_imgui_style() {
     const ImVec4 accent  = to_vec4(GuiColorRole::WidgetAccent);
     const ImVec4 white   = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
 
-    const ImVec4 frameHover  = lerp_rgb(frame, white, 0.14f);
-    const ImVec4 frameActive = lerp_rgb(frame, white, 0.24f);
-    const ImVec4 accentHover = lerp_rgb(accent, white, 0.22f);
-    const ImVec4 accentPress = lerp_rgb(accent, white, 0.38f);
-    const ImVec4 scrollGrab  = lerp_rgb(deep, white, 0.18f);
-    const ImVec4 scrollHover = lerp_rgb(deep, white, 0.28f);
-    const ImVec4 rowAlt      = lerp_rgb(surface, white, 0.04f);
-    const ImVec4 tableHdr    = lerp_rgb(surface, white, 0.08f);
+    const ImVec4 frameHover  = lerp_rgb(frame, white, 0.10f);
+    const ImVec4 frameActive = lerp_rgb(frame, white, 0.16f);
+    const ImVec4 btnIdle     = lerp_rgb(frame, deep, 0.35f);
+    const ImVec4 btnHover    = lerp_rgb(btnIdle, accent, 0.22f);
+    const ImVec4 btnActive   = lerp_rgb(btnIdle, accent, 0.42f);
+    const ImVec4 scrollGrab  = lerp_rgb(deep, white, 0.14f);
+    const ImVec4 scrollHover = lerp_rgb(deep, white, 0.22f);
+    const ImVec4 rowAlt      = lerp_rgb(surface, white, 0.03f);
+    const ImVec4 tableHdr    = lerp_rgb(surface, white, 0.06f);
 
     c[ImGuiCol_Text]                 = text;
     c[ImGuiCol_TextDisabled]         = textDim;
@@ -124,19 +127,24 @@ void gui_colors_apply_imgui_style() {
     c[ImGuiCol_FrameBgHovered]       = frameHover;
     c[ImGuiCol_FrameBgActive]        = frameActive;
     c[ImGuiCol_TitleBg]              = deep;
-    c[ImGuiCol_TitleBgActive]        = lerp_rgb(accent, deep, 0.35f);
+    c[ImGuiCol_TitleBgActive]        = lerp_rgb(surface, accent, 0.18f);
     c[ImGuiCol_MenuBarBg]            = deep;
     c[ImGuiCol_ScrollbarBg]          = deep;
     c[ImGuiCol_ScrollbarGrab]        = scrollGrab;
     c[ImGuiCol_ScrollbarGrabHovered] = scrollHover;
-    c[ImGuiCol_ScrollbarGrabActive]  = lerp_rgb(scrollGrab, white, 0.12f);
-    c[ImGuiCol_Button]               = accent;
-    c[ImGuiCol_ButtonHovered]        = accentHover;
-    c[ImGuiCol_ButtonActive]         = accentPress;
-    c[ImGuiCol_Header]               = lerp_rgb(accent, deep, 0.25f);
-    c[ImGuiCol_HeaderHovered]        = lerp_rgb(accentHover, deep, 0.20f);
-    c[ImGuiCol_HeaderActive]         = lerp_rgb(accentPress, deep, 0.15f);
+    c[ImGuiCol_ScrollbarGrabActive]  = lerp_rgb(scrollGrab, accent, 0.20f);
+    c[ImGuiCol_Button]               = btnIdle;
+    c[ImGuiCol_ButtonHovered]        = btnHover;
+    c[ImGuiCol_ButtonActive]         = btnActive;
+    c[ImGuiCol_Header]               = lerp_rgb(btnIdle, accent, 0.12f);
+    c[ImGuiCol_HeaderHovered]        = lerp_rgb(btnHover, accent, 0.18f);
+    c[ImGuiCol_HeaderActive]         = lerp_rgb(btnActive, accent, 0.22f);
     c[ImGuiCol_Separator]            = border;
+
+    c[ImGuiCol_SliderGrab]           = btnActive;
+    c[ImGuiCol_SliderGrabActive]     = btnActive;
+
+    c[ImGuiCol_CheckMark]            = accent;
     c[ImGuiCol_TableHeaderBg]        = tableHdr;
     c[ImGuiCol_TableRowBg]           = lerp_rgb(surface, deep, 0.35f);
     c[ImGuiCol_TableRowBgAlt]        = rowAlt;

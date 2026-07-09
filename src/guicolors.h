@@ -29,6 +29,7 @@ enum class GuiColorRole : unsigned char {
 
     // Grid text
     GridPrimaryText,
+    GridNoteText,
     GridSecondaryText,
     GridHeaderText,
     GridCommandText,

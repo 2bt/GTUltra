@@ -155,6 +155,7 @@ enum class Action : uint16_t {
 
     NamesFieldNext,
     NamesFieldPrev,
+    NamesFieldEdit,
 
     ToggleSIDTracker64,
     PrevMultiplier,

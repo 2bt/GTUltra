@@ -19,6 +19,7 @@ void gimgui_instr_name_begin(int inst);
 // Song metadata field focus (names panel, field index 0..2).
 bool gimgui_song_field_editing();
 void gimgui_song_field_begin(int field);
+void gimgui_song_field_end();
 
 // UI font size in pixels (default 18). Changing reloads the font atlas.
 float gimgui_font_size();
