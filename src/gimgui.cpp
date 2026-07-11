@@ -22,6 +22,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <functional>
+#include <string>
 
 // bme globals/hooks we bind to. Declared here (with C linkage) instead of
 // including bme's headers, so we pull the *system* SDL2 headers that the ImGui
@@ -617,26 +618,26 @@ void gimgui_draw_tables(ImVec2 pos, ImVec2 size) {
         return;
     }
 
-    const ImU32 cCursorRow  = gtui::color(gtui::GuiColorRole::GridCursorRow);
-    const ImU32 cSelect     = gtui::color(gtui::GuiColorRole::Selection);
-    const ImU32 cInstrSel   = gtui::color(gtui::GuiColorRole::InstrumentHighlight);
-    const ImU32 cCursorFill = gtui::color_a(gtui::GuiColorRole::Cursor, 70);
-    const ImU32 cCursorEdge = gtui::color_a(gtui::GuiColorRole::Cursor, 230);
-    const ImU32 cIdx        = gtui::color(gtui::GuiColorRole::GridSecondaryText);
-    const ImU32 cVal        = gtui::color(gtui::GuiColorRole::GridPrimaryText);
-    static const int colOff[4]   = { 3, 4, 6, 7 };
+    const ImU32        cCursorRow    = gtui::color(gtui::GuiColorRole::GridCursorRow);
+    const ImU32        cSelect       = gtui::color(gtui::GuiColorRole::Selection);
+    const ImU32        cInstrSel     = gtui::color(gtui::GuiColorRole::InstrumentHighlight);
+    const ImU32        cCursorFill   = gtui::color_a(gtui::GuiColorRole::Cursor, 70);
+    const ImU32        cCursorEdge   = gtui::color_a(gtui::GuiColorRole::Cursor, 230);
+    const ImU32        cIdx          = gtui::color(gtui::GuiColorRole::GridSecondaryText);
+    const ImU32        cVal          = gtui::color(gtui::GuiColorRole::GridPrimaryText);
+    static const int   colOff[4]     = { 3, 4, 6, 7 };
     static const char* kTableNames[] = { "Wave", "Pulse", "Filter", "Speed" };
 
-    const float charW  = gimgui_mono_advance();
-    const float lineH  = ImGui::GetTextLineHeight();
-    const float colW   = gimgui_table_column_width();
-    const float cellW8 = gimgui_text_width(8);
-    const int   tlen   = gtui::table_len();
+    const float charW       = gimgui_mono_advance();
+    const float lineH       = ImGui::GetTextLineHeight();
+    const float colW        = gimgui_table_column_width();
+    const float cellW8      = gimgui_text_width(8);
+    const int   tlen        = gtui::table_len();
     const bool  panelActive = gtui::edit_panel() == gtui::EditPanelTables;
-    const int   curTab = gtui::table_cursor_table();
-    const int   curPos = gtui::table_cursor_pos();
-    const int   curCol = gtui::table_cursor_col();
-    const int   markTab = gtui::table_mark_table();
+    const int   curTab      = gtui::table_cursor_table();
+    const int   curPos      = gtui::table_cursor_pos();
+    const int   curCol      = gtui::table_cursor_col();
+    const int   markTab     = gtui::table_mark_table();
     int         markLo = gtui::table_mark_start(), markHi = gtui::table_mark_end();
     if (markLo > markHi) {
         int tmp = markLo;
@@ -1420,34 +1421,14 @@ void gimgui_draw_legacy_mode_bar() {
 
 } // namespace
 
-// Load the bundled monospace font at @p sizePx. Searches a few locations (next to
-// the binary, the build-time source assets dir, then the cwd); falls back to the
-// default font if none are found.
+// Load the bundled monospace font at @p sizePx from assets/fonts next to the
+// executable (staged there by CMake at build time). Falls back to ImGui default.
 void gimgui_load_font_at(float sizePx) {
-    ImGuiIO&    io     = ImGui::GetIO();
-    const char* fname  = "IBMPlexMono-Regular.otf";
-
-    const char* dirs[3];
-    int         nd = 0;
-    char        baseDir[1024];
-    baseDir[0] = 0;
+    ImGuiIO& io = ImGui::GetIO();
     if (char* base = SDL_GetBasePath()) {
-        snprintf(baseDir, sizeof baseDir, "%sassets/fonts", base);
+        const std::string path = std::string(base) + "assets/fonts/IBMPlexMono-Medium.otf";
         SDL_free(base);
-        dirs[nd++] = baseDir;
-    }
-#ifdef GTULTRA_ASSETS_DIR
-    dirs[nd++] = GTULTRA_ASSETS_DIR "/fonts";
-#endif
-    dirs[nd++] = "assets/fonts";
-
-    char path[1152];
-    for (int i = 0; i < nd; i++) {
-        snprintf(path, sizeof path, "%s/%s", dirs[i], fname);
-        FILE* f = fopen(path, "rb");
-        if (!f) continue;
-        fclose(f);
-        if (io.Fonts->AddFontFromFileTTF(path, sizePx)) {
+        if (io.Fonts->AddFontFromFileTTF(path.c_str(), sizePx)) {
             io.FontDefault = io.Fonts->Fonts.back();
             return;
         }

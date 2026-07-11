@@ -216,11 +216,7 @@ target_link_libraries(gtultra PRIVATE imgui)
 set_target_properties(gtultra PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)
 # guimodel.cpp needs the legacy headers (model globals) + bme/asm include dirs
 target_include_directories(gtultra PRIVATE "${SRC}/bme" "${SRC}/asm" ${SDL2_INCLUDE_DIRS})
-# Absolute path to bundled assets (fonts, ...) for runtime loading. A proper
-# install layout / config-driven paths come with M7; this is the dev default.
-target_compile_definitions(gtultra PRIVATE
-    GTULTRA_ASSETS_DIR="${CMAKE_CURRENT_SOURCE_DIR}/assets")
-# Also stage assets next to the binary so an installed/copied build finds them.
+# Stage assets next to the binary so runtime code can load them from there.
 add_custom_command(TARGET gtultra POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${CMAKE_CURRENT_SOURCE_DIR}/assets" "$<TARGET_FILE_DIR:gtultra>/assets")
