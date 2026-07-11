@@ -311,6 +311,17 @@ int order_compressed_size(int ch)
     return (int)songCompressedSize[editorInfo.esnum][ch];
 }
 
+int order_compressed_payload_size(int ch)
+{
+    if (ch < 0 || ch >= MAX_CHN) return 0;
+    if (order_expanded_view()) {
+        const int total = (int)songCompressedSize[editorInfo.esnum][ch];
+        if (total > 0xff) return total;
+        return (total >= 2) ? total - 2 : 0;
+    }
+    return (int)songlen[editorInfo.esnum][ch];
+}
+
 bool order_is_master_channel(int displayCh)
 {
     if (displayCh < 0 || displayCh >= MAX_CHN) return false;
@@ -469,36 +480,36 @@ void order_set_cursor(int ch, int row, int col)
     editorInfo.escolumn  = col;
 }
 
+// Expanded rows use a spacer column between pattern (0..1) and transpose (3..4).
+// Plain left-clicks on that gap are ignored; modifier clicks snap to a real field.
+static bool order_expanded_gap_blocks_click(int ch, int row, int col, bool modifier)
+{
+    if (!order_expanded_view() || col != 2) return false;
+    if (songOrderPatterns[editorInfo.esnum][ch][row] >= 0xff) return false;
+    return !modifier;
+}
+
+static int order_expanded_snap_column(int ch, int row, int col)
+{
+    if (!order_expanded_view() || col != 2) return col;
+    if (songOrderPatterns[editorInfo.esnum][ch][row] >= 0xff) return col;
+    return 1; // default to low pattern nibble when landing in the gap
+}
+
 void order_mouse_left(int ch, int row, int col, bool shift_or_ctrl, bool held_drag)
 {
     if (editPaletteMode) return;
 
-    if (order_expanded_view() && col == 2 &&
-        songOrderPatterns[editorInfo.esnum][ch][row] < 0xff)
-        return;
+    col = order_expanded_snap_column(ch, row, col);
+    if (order_expanded_gap_blocks_click(ch, row, col, shift_or_ctrl || held_drag)) return;
 
     if (shift_or_ctrl || held_drag) {
-        if (order_expanded_view()) {
-            if (editorInfo.eseditpos == row) {
-                order_set_cursor(ch, row, col);
-                setMasterLoopChannel(&gtObject, "guimodel_order_drag_exp");
-                backupPatternDisplayInfo(&gtObject);
-                orderSelectPatternsFromSelected(&gtObject);
-                restorePatternDisplayInfo(&gtObject);
-            } else {
-                order_set_cursor(ch, row, col);
-            }
-        } else {
-            order_set_cursor(ch, row, col);
-            setMasterLoopChannel(&gtObject, "guimodel_order_drag");
-            backupPatternDisplayInfo(&gtObject);
-            orderSelectPatternsFromSelected(&gtObject);
-            restorePatternDisplayInfo(&gtObject);
-        }
+        order_set_cursor(ch, row, col);
+        setMasterLoopChannel(&gtObject, "guimodel_order_drag");
+        order_select_patterns(&gtObject);
     } else {
         order_set_cursor(ch, row, col);
-        if (!order_expanded_view())
-            setMasterLoopChannel(&gtObject, "guimodel_order_click");
+        setMasterLoopChannel(&gtObject, "guimodel_order_click");
     }
 }
 
@@ -506,9 +517,8 @@ void order_mouse_double_click(int ch, int row, int col)
 {
     if (editPaletteMode) return;
 
-    if (order_expanded_view() && col == 2 &&
-        songOrderPatterns[editorInfo.esnum][ch][row] < 0xff)
-        return;
+    col = order_expanded_snap_column(ch, row, col);
+    if (order_expanded_gap_blocks_click(ch, row, col, false)) return;
 
     order_set_cursor(ch, row, col);
     setMasterLoopChannel(&gtObject, "guimodel_order_dblclk");
@@ -767,6 +777,15 @@ void song_set_author(const char *s) { song_set_str(authorname, s); }
 void song_set_copyright(const char *s) { song_set_str(copyrightname, s); }
 
 void transport_play_start() { gtaction::perform(gtaction::Action::PlayFromBeginning); }
+
+void transport_toggle_play()
+{
+    if (isplaying(&gtObject))
+        stopsong(&gtObject);
+    else
+        playFromCurrentPosition(&gtObject, editorInfo.eppos);
+}
+
 void transport_play_pattern() { gtaction::perform(gtaction::Action::PlayPatternMode); }
 void transport_stop() { gtaction::perform(gtaction::Action::Stop); }
 bool transport_playing() { return isplaying(&gtObject) != 0; }

@@ -139,7 +139,8 @@ int  order_mark_start();
 int  order_mark_end();
 bool order_expanded_view();     // true when editing songOrderPatterns[]
 bool order_toggle_expanded_view(); // classic <-> expanded; false if compress blocked
-int  order_compressed_size(int ch); // compressed byte size, or >0xff when invalid
+int  order_compressed_size(int ch); // total compressed bytes incl. ENDPATT+loop trailer, or >0xff when invalid
+int  order_compressed_payload_size(int ch); // payload bytes only (same as songlen / total-2)
 bool order_is_master_channel(int displayCh);
 int  order_selected_row(int ch);   // synced pattern position (espos), -1 if none
 int  order_range_end_row(int ch); // F2 range end (esend), -1 if unset
@@ -203,6 +204,7 @@ void        song_set_author(const char *s);
 void        song_set_copyright(const char *s);
 
 void        transport_play_start();   // play from the start of the song
+void        transport_toggle_play();  // play from cursor or pause (legacy play button)
 void        transport_play_pattern(); // play the current pattern
 void        transport_stop();
 bool        transport_playing();

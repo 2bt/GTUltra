@@ -12,6 +12,7 @@
 
 #include "backends/imgui_impl_sdl2.h"
 #include "backends/imgui_impl_sdlrenderer2.h"
+#include "gactions.h"
 #include "guimodel.h" // SDL-free bridge to the legacy model
 #include "guicolors.h"
 #include "imgui.h"
@@ -252,7 +253,7 @@ bool gimgui_grid_body(const char* id,
         ImGui::Separator();
     }
 
-    ImGuiWindowFlags scrollFlags = kNoNavWindowFlags;
+    ImGuiWindowFlags scrollFlags = kNoNavWindowFlags | ImGuiWindowFlags_NoScrollWithMouse;
     if (h_scroll) scrollFlags |= ImGuiWindowFlags_HorizontalScrollbar;
     ImGui::BeginChild("##scroll", ImVec2(0, 0), false, scrollFlags);
     ImDrawList*  dl     = ImGui::GetWindowDrawList();
@@ -991,6 +992,10 @@ void gimgui_draw_orderlist(ImVec2 pos, ImVec2 size) {
         int off = (int)(cx / charW);
         if (expanded) {
             if (off > 4) off = 4;
+            if (off == 2) {
+                gtui::OrderCell cell = gtui::order_cell(c, r);
+                if (cell.kind != 4) off = (cx < cellW * 0.5f) ? 1 : 3;
+            }
         } else if (off > 1) {
             off = 1;
         }
@@ -1020,16 +1025,19 @@ void gimgui_draw_orderlist(ImVec2 pos, ImVec2 size) {
                 const bool  master = gtui::order_is_master_channel(c);
                 snprintf(hbuf, sizeof hbuf, "%X", gtui::order_actual_channel(c));
                 hdl->AddText(ImVec2(cx, y), master ? cMaster : cHeader, hbuf);
-                if (expanded) {
-                    const int csz = gtui::order_compressed_size(c);
-                    if (csz > 0xff)
+                {
+                    const int total = expanded ? gtui::order_compressed_size(c) : 0;
+                    const int payload = expanded
+                        ? gtui::order_compressed_payload_size(c)
+                        : gtui::order_length(c);
+                    if (expanded && total > 0xff)
                         snprintf(hbuf, sizeof hbuf, "**");
                     else
-                        snprintf(hbuf, sizeof hbuf, "%02X", csz);
-                    hdl->AddText(ImVec2(cx, y + lineH), csz > 0xff ? cSizeBad : cMuted, hbuf);
-                } else {
-                    snprintf(hbuf, sizeof hbuf, "%02X", gtui::order_length(c));
-                    hdl->AddText(ImVec2(cx, y + lineH), cMuted, hbuf);
+                        snprintf(hbuf, sizeof hbuf, "%02X", payload);
+                    const ImU32 sizeCol = (expanded && total > 0xff) ? cSizeBad
+                        : (expanded && total >= 0xf0) ? cSizeBad
+                        : cMuted;
+                    hdl->AddText(ImVec2(cx, y + lineH), sizeCol, hbuf);
                 }
             }
         },
@@ -1326,7 +1334,7 @@ void gimgui_draw_transport(ImVec2 pos, ImVec2 size) {
 
     if (gimgui_button("<<")) gtui::transport_rewind();
     ImGui::SameLine();
-    if (gimgui_button(">")) gtui::transport_play_start();
+    if (gimgui_toggle_button(">", gtui::transport_playing(), 1)) gtui::transport_toggle_play();
     ImGui::SameLine();
     if (gimgui_button("Pat")) gtui::transport_play_pattern();
     ImGui::SameLine();
@@ -1485,6 +1493,45 @@ void gimgui_reload_font() {
 
 // Called by bme (via bme_overlay_render_hook) between its RenderCopy and its
 // RenderPresent, i.e. on top of the freshly-drawn legacy frame.
+// Legacy maps the mouse wheel to Up/Down (cursor row/field). When the pointer is
+// over ImGui, getkey() clears win_mousewheel so the legacy path never runs.
+static void gimgui_dispatch_mouse_wheel() {
+    if (!g_show_new_ui || !g_imgui_ready) return;
+
+    ImGuiIO& io = ImGui::GetIO();
+    if (io.MouseWheel == 0.f) return;
+    if (!io.WantCaptureMouse) return;
+
+    if (gimgui_song_field_editing() || gimgui_instr_name_editing()) return;
+    if (ImGui::IsAnyItemActive()) return;
+
+    gtaction::Action act = gtaction::Action::None;
+    if (io.MouseWheel > 0.f) {
+        switch (gtui::edit_panel()) {
+        case gtui::EditPanelOrder:      act = gtaction::Action::OrderRowUp; break;
+        case gtui::EditPanelPattern:    act = gtaction::Action::PatternRowUp; break;
+        case gtui::EditPanelInstrument: act = gtaction::Action::InstrRowUp; break;
+        case gtui::EditPanelTables:     act = gtaction::Action::TableRowUp; break;
+        case gtui::EditPanelNames:      act = gtaction::Action::NamesFieldPrev; break;
+        default: break;
+        }
+    } else {
+        switch (gtui::edit_panel()) {
+        case gtui::EditPanelOrder:      act = gtaction::Action::OrderRowDown; break;
+        case gtui::EditPanelPattern:    act = gtaction::Action::PatternRowDown; break;
+        case gtui::EditPanelInstrument: act = gtaction::Action::InstrRowDown; break;
+        case gtui::EditPanelTables:     act = gtaction::Action::TableRowDown; break;
+        case gtui::EditPanelNames:      act = gtaction::Action::NamesFieldNext; break;
+        default: break;
+        }
+    }
+
+    if (act != gtaction::Action::None) gtaction::perform(act);
+
+    io.MouseWheel  = 0.f;
+    io.MouseWheelH = 0.f;
+}
+
 extern "C" void gimgui_overlay_render(void) {
     if (!g_imgui_ready) return;
 
@@ -1559,6 +1606,7 @@ extern "C" void gimgui_overlay_render(void) {
     if (g_show_demo) ImGui::ShowDemoWindow(&g_show_demo);
 
     gimgui_instr_name_sync_focus();
+    gimgui_dispatch_mouse_wheel();
 
     ImGui::Render();
 

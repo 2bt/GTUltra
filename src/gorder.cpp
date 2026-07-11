@@ -2304,24 +2304,42 @@ void order_list_mark_toggle(void)
 
 void order_list_transpose_up(void)
 {
-	if (editorInfo.expandOrderListView != 0)
-		return;
-	if (editorInfo.eseditpos < songlen[editorInfo.esnum][editorInfo.eschn])
-	{
-		songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] = TRANSUP;
-		editorInfo.escolumn = 1;
-	}
+    if (editorInfo.expandOrderListView) {
+        if (songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] < 0xff &&
+            editorInfo.escolumn == 3) {
+            songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] &= 0x7f;
+            if ((songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] & 0x7f) == 0xf)
+                songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos]--;
+            updateTransposeToPlayingSong(&gtObject);
+            songCompressedSize[editorInfo.esnum][editorInfo.eschn] =
+                generateCompressedSongChannel(editorInfo.esnum, editorInfo.eschn, 1);
+        }
+        return;
+    }
+    if (editorInfo.eseditpos < songlen[editorInfo.esnum][editorInfo.eschn])
+    {
+        songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] = TRANSUP;
+        editorInfo.escolumn = 1;
+    }
 }
 
 void order_list_transpose_down(void)
 {
-	if (editorInfo.expandOrderListView != 0)
-		return;
-	if (editorInfo.eseditpos < songlen[editorInfo.esnum][editorInfo.eschn])
-	{
-		songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] = TRANSDOWN + 0x0F;
-		editorInfo.escolumn = 1;
-	}
+    if (editorInfo.expandOrderListView) {
+        if (songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] < 0xff &&
+            editorInfo.escolumn == 3) {
+            songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] |= 0x80;
+            updateTransposeToPlayingSong(&gtObject);
+            songCompressedSize[editorInfo.esnum][editorInfo.eschn] =
+                generateCompressedSongChannel(editorInfo.esnum, editorInfo.eschn, 1);
+        }
+        return;
+    }
+    if (editorInfo.eseditpos < songlen[editorInfo.esnum][editorInfo.eschn])
+    {
+        songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] = TRANSDOWN + 0x0F;
+        editorInfo.escolumn = 1;
+    }
 }
 
 void order_list_insert_repeat(void)
