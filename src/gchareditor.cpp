@@ -4,8 +4,8 @@
 
 #define GCHAREDITOR_C
 
-#include "goattrk2.h"
-#include "gchareditor.h"
+#include "goattrk2.hpp"
+#include "gchareditor.hpp"
 
 
 int editPixelX = 0;

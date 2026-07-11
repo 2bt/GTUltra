@@ -4,8 +4,8 @@
 
 #define GINSTR_C
 
-#include "goattrk2.h"
-#include "gimgui.h"
+#include "goattrk2.hpp"
+#include "gimgui.hpp"
 
 INSTR instrcopybuffer;
 int cutinstr = -1;

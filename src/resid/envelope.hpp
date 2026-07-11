@@ -22,7 +22,7 @@
 
 #include <stdio.h>
 
-#include "siddefs.h"
+#include "siddefs.hpp"
 
 // ----------------------------------------------------------------------------
 // A 15 bit counter is used to implement the envelope rates, in effect

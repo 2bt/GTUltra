@@ -18,8 +18,8 @@
 //  ---------------------------------------------------------------------------
 //  Filter distortion code written by Antti S. Lankila 2007 - 2009.
 
-#include "filterfp.h"
-#include "sidfp.h"
+#include "filterfp.hpp"
+#include "sidfp.hpp"
 
 // ----------------------------------------------------------------------------
 // Constructor.

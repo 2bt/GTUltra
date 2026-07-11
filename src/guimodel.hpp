@@ -2,7 +2,7 @@
 // guimodel - a thin, SDL-free read/query bridge between GTUltra's legacy model
 // (globals in gsong / editorInfo) and the new ImGui UI layer.
 //
-// The ImGui layer (gimgui.cpp) must not include goattrk2.h/bme.h, because those
+// The ImGui layer (gimgui.cpp) must not include goattrk2.hpp/bme.h, because those
 // drag in bme's bundled SDL headers which would clash with the system SDL2 that
 // the ImGui backends use. This header exposes only plain declarations; the
 // implementation (guimodel.cpp) is free to include the full legacy headers.
@@ -14,7 +14,7 @@
 
 namespace gtui {
 
-// Legacy editorInfo.editmode values (SDL-free mirror of goattrk2.h).
+// Legacy editorInfo.editmode values (SDL-free mirror of goattrk2.hpp).
 enum EditPanel : int {
     EditPanelPattern    = 0,
     EditPanelOrder      = 1,

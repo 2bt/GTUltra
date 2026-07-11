@@ -4,8 +4,8 @@
 
 #define GUNDO_C
 
-#include "goattrk2.h"
-#include "gundo.h"
+#include "goattrk2.hpp"
+#include "gundo.hpp"
 
 //char jtext[256];
 

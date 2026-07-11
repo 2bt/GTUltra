@@ -4,8 +4,8 @@
 
 #define GFKEYS_C
 
-#include "goattrk2.h"
-#include "gfkeys.h"
+#include "goattrk2.hpp"
+#include "gfkeys.hpp"
 
 #define FKEY_REQUIRE_SHIFT 1
 #define FKEY_REQUIRE_CTRL 1

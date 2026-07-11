@@ -20,11 +20,11 @@
 #ifndef __SIDFP_H__
 #define __SIDFP_H__
 
-#include "siddefsfp.h"
-#include "voicefp.h"
-#include "filterfp.h"
-#include "extfiltfp.h"
-#include "potfp.h"
+#include "siddefsfp.hpp"
+#include "voicefp.hpp"
+#include "filterfp.hpp"
+#include "extfiltfp.hpp"
+#include "potfp.hpp"
 
 class SIDFP
 {

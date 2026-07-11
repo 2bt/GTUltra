@@ -4,7 +4,7 @@
 
 #define GPLAY_C
 
-#include "goattrk2.h"
+#include "goattrk2.hpp"
 
 //#define JP_NEW_FEATURES
 

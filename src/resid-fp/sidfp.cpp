@@ -17,7 +17,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  US
 //  ---------------------------------------------------------------------------
 
-#include "sidfp.h"
+#include "sidfp.hpp"
 #include <math.h>
 
 #define RINGSIZE 2048

@@ -4,7 +4,7 @@
 
 #define GHELP_C
 
-#include "goattrk2.h"
+#include "goattrk2.hpp"
 
 #define HELP_HEADER 15
 #define HELP_NORMAL 7

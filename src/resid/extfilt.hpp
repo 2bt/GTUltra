@@ -20,7 +20,7 @@
 #ifndef __EXTFILT_H__
 #define __EXTFILT_H__
 
-#include "siddefs.h"
+#include "siddefs.hpp"
 
 // ----------------------------------------------------------------------------
 // The audio output stage in a Commodore 64 consists of two STC networks,

@@ -4,8 +4,8 @@
 
 #define GPALETTEEDITOR_C
 
-#include "goattrk2.h"
-#include "gpaletteeditor.h"
+#include "goattrk2.hpp"
+#include "gpaletteeditor.hpp"
 #include <stdio.h>
 #include <dirent.h>
 

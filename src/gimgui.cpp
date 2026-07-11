@@ -8,15 +8,15 @@
 // the old UI keep working while native ImGui panels are built on top of it.
 //
 #define IMGUI_DEFINE_MATH_OPERATORS
-#include "gimgui.h"
+#include "gimgui.hpp"
 
 #include "backends/imgui_impl_sdl2.h"
 #include "backends/imgui_impl_sdlrenderer2.h"
-#include "gactions.h"
-#include "guimodel.h" // SDL-free bridge to the legacy model
-#include "guicolors.h"
+#include "gactions.hpp"
+#include "guimodel.hpp" // SDL-free bridge to the legacy model
+#include "guicolors.hpp"
 #include "imgui.h"
-#include "log.h"
+#include "log.hpp"
 
 #include <SDL.h>
 #include <cstdio>

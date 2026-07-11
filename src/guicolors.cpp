@@ -1,7 +1,7 @@
 //
 // guicolors - default palette + ImGui style derivation.
 //
-#include "guicolors.h"
+#include "guicolors.hpp"
 
 namespace gtui {
 namespace {

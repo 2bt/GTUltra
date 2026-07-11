@@ -4,8 +4,8 @@
 
 #define GTABLE_C
 
-#include "goattrk2.h"
-#include "gimgui.h"
+#include "goattrk2.hpp"
+#include "gimgui.hpp"
 
 unsigned char ltablecopybuffer[MAX_TABLELEN];
 unsigned char rtablecopybuffer[MAX_TABLELEN];

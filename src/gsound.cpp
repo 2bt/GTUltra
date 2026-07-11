@@ -10,7 +10,7 @@
 #include <windows.h>
 #endif
 
-#include "goattrk2.h"
+#include "goattrk2.hpp"
 
 extern void JPSoundMixer(Sint32 *dest, unsigned samples);
 

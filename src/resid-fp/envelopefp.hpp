@@ -20,7 +20,7 @@
 #ifndef __ENVELOPEFP_H__
 #define __ENVELOPEFP_H__
 
-#include "siddefsfp.h"
+#include "siddefsfp.hpp"
 
 extern float env_dac[256];
 

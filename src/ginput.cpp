@@ -1,7 +1,7 @@
 #define GINPUT_C
 
-#include "ginput.h"
-#include "gconsole.h"
+#include "ginput.hpp"
+#include "gconsole.hpp"
 
 extern int hexnybble;
 

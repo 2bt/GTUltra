@@ -4,13 +4,13 @@
 
 #include "../extern/portable-file-dialogs/portable-file-dialogs.h"
 
-#include "gfiledialog.h"
-#include "gimgui.h"
-#include "goattrk2.h"
-#include "gpattern.h"
-#include "greloc.h"
-#include "gsong.h"
-#include "log.h"
+#include "gfiledialog.hpp"
+#include "gimgui.hpp"
+#include "goattrk2.hpp"
+#include "gpattern.hpp"
+#include "greloc.hpp"
+#include "gsong.hpp"
+#include "log.hpp"
 
 #include <cstring>
 #include <strings.h>

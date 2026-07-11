@@ -20,6 +20,6 @@
 #ifndef __SIDDEFSFP_H__
 #define __SIDDEFSFP_H__
 
-#include "../resid/siddefs.h"
+#include "../resid/siddefs.hpp"
 
 #endif // not __SIDDEFSFP_H__

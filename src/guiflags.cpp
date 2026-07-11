@@ -2,7 +2,7 @@
 // Shared ImGui UI toggle (lives in gtcore so legacy *commands() can query it).
 //
 
-#include "gimgui.h"
+#include "gimgui.hpp"
 
 bool g_show_new_ui = false;
 

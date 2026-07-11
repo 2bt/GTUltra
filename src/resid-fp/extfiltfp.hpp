@@ -22,7 +22,7 @@
 
 #include <math.h>
 
-#include "siddefsfp.h"
+#include "siddefsfp.hpp"
 
 // ----------------------------------------------------------------------------
 // The audio output stage in a Commodore 64 consists of two STC networks,

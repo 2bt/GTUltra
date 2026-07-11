@@ -4,8 +4,8 @@
 
 #define GMIDISELECT_C
 
-#include "goattrk2.h"
-#include "gmidiselect.h"
+#include "goattrk2.hpp"
+#include "gmidiselect.hpp"
 
 void displayMIDISelectWindow()
 {

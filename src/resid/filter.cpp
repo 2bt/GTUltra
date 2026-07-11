@@ -18,7 +18,7 @@
 //  ---------------------------------------------------------------------------
 
 #define __FILTER_CC__
-#include "filter.h"
+#include "filter.hpp"
 
 // Maximum cutoff frequency is specified as
 // FCmax = 2.6e-5/C = 2.6e-5/2200e-12 = 11818.

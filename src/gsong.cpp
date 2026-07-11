@@ -4,8 +4,8 @@
 
 #define GSONG_C
 
-#include "goattrk2.h"
-#include "gsong.h"
+#include "goattrk2.hpp"
+#include "gsong.hpp"
 
 SNG_INFO songInfo[MAX_SONG_FILES + 1];
 

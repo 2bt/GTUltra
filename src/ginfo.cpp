@@ -4,8 +4,8 @@
 
 #define GINFO_C
 
-#include "goattrk2.h"
-#include "ginfo.h"
+#include "goattrk2.hpp"
+#include "ginfo.hpp"
 
 int clearInfoLine = 0;
 int forceInfoLine = 0;

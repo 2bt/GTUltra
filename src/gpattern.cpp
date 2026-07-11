@@ -4,8 +4,8 @@
 
 #define GPATTERN_C
 
-#include "goattrk2.h"
-#include "gimgui.h"
+#include "goattrk2.hpp"
+#include "gimgui.hpp"
 
 
 unsigned char notekeytbl1[] = { KEY_Z, KEY_S, KEY_X, KEY_D, KEY_C, KEY_V,

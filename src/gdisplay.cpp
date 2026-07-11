@@ -4,8 +4,8 @@
 
 #define GDISPLAY_C
 
-#include "goattrk2.h"
-#include "gimgui.h"
+#include "goattrk2.hpp"
+#include "gimgui.hpp"
 
 const char* notename[] = {
     "C-0", "C#0", "D-0", "D#0", "E-0", "F-0", "F#0", "G-0", "G#0", "A-0", "A#0", "B-0", "C-1", "C#1", "D-1", "D#1",

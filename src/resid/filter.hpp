@@ -20,8 +20,8 @@
 #ifndef __FILTER_H__
 #define __FILTER_H__
 
-#include "siddefs.h"
-#include "spline.h"
+#include "siddefs.hpp"
+#include "spline.hpp"
 
 // ----------------------------------------------------------------------------
 // The SID filter is modeled with a two-integrator-loop biquadratic filter,

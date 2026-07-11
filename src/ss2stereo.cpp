@@ -13,7 +13,7 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-#include "gcommon.h"
+#include "gcommon.hpp"
 
 #define MAX_SPLITS 16
 

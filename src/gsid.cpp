@@ -5,12 +5,12 @@
 #define GSID_C
 
 #include <stdlib.h>
-#include "resid/sid.h"
-#include "resid-fp/sidfp.h"
+#include "resid/sid.hpp"
+#include "resid-fp/sidfp.hpp"
 
-//#include "goattrk2.h"
-#include "gsid.h"
-#include "gsound.h"
+//#include "goattrk2.hpp"
+#include "gsid.hpp"
+#include "gsound.hpp"
 
 int clockrate;
 int samplerate;

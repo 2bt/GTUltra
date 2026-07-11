@@ -6,7 +6,7 @@
 
 #include <stdio.h>
 
-#include "goattrk2.h"
+#include "goattrk2.hpp"
 
 // asm is a C library; give its declarations C linkage when compiled as C++.
 #ifdef __cplusplus

@@ -17,54 +17,69 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //  ---------------------------------------------------------------------------
 
-#ifndef __VOICEFP_H__
-#define __VOICEFP_H__
+#ifndef __VOICE_H__
+#define __VOICE_H__
 
-#include "siddefsfp.h"
-#include "wavefp.h"
-#include "envelopefp.h"
+#include "siddefs.hpp"
+#include "wave.hpp"
+#include "envelope.hpp"
 
-class VoiceFP
+class Voice
 {
 public:
-  VoiceFP();
+  Voice();
 
   void set_chip_model(chip_model model);
+  void set_sync_source(Voice*);
   void reset();
-  void mute(bool enable);
 
-  void writeCONTROL_REG(WaveformGeneratorFP& source, reg8 value);
+  void writeCONTROL_REG(reg8);
 
   // Amplitude modulated waveform output.
   // Range [-2048*255, 2047*255].
-  inline float output(WaveformGeneratorFP& source);
+  RESID_INLINE sound_sample output();
 
-  inline float getPan();
+  RESID_INLINE float getPan();
 
 protected:
-  WaveformGeneratorFP wave;
-  EnvelopeGeneratorFP envelope;
+  WaveformGenerator wave;
+  EnvelopeGenerator envelope;
+
+  // Waveform D/A zero level.
+  sound_sample wave_zero;
 
   // Multiplying D/A DC offset.
-  float voice_DC;
-friend class SIDFP;
+  sound_sample voice_DC;
+
+friend class SID;
 };
+
+
+// ----------------------------------------------------------------------------
+// Inline functions.
+// The following function is defined inline because it is called every
+// time a sample is calculated.
+// ----------------------------------------------------------------------------
+
+#if RESID_INLINING || defined(__VOICE_CC__)
 
 // ----------------------------------------------------------------------------
 // Amplitude modulated waveform output.
 // Ideal range [-2048*255, 2047*255].
 // ----------------------------------------------------------------------------
-
-inline
-float VoiceFP::output(WaveformGeneratorFP& source)
+RESID_INLINE
+sound_sample Voice::output()
 {
-    return wave.output(source) * envelope.output() + voice_DC;
+  // Multiply oscillator output with envelope output.
+  return (wave.output() - wave_zero)*envelope.output() + voice_DC;
 }
 
-inline
-float VoiceFP::getPan()
+RESID_INLINE
+float Voice::getPan()
 {
 	return wave.getPan();
 }
 
-#endif // not __VOICEFP_H__
+#endif // RESID_INLINING || defined(__VOICE_CC__)
+
+#endif // not __VOICE_H__

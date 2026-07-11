@@ -17,7 +17,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //  ---------------------------------------------------------------------------
 
-#include "extfiltfp.h"
+#include "extfiltfp.hpp"
 
 const float pass_frequency = 15915.6f;
 

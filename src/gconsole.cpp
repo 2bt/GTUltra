@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "goattrk2.h"
+#include "goattrk2.hpp"
 
 FILE *charset;
 

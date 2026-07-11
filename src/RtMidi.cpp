@@ -45,7 +45,7 @@
 #define __MACOSX_CORE__	// Include this line for Linux
 #endif
 
-#include "RtMidi.h"
+#include "RtMidi.hpp"
 
 #include <sstream>
 

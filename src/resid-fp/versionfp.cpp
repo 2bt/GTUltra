@@ -18,4 +18,4 @@
 //  ---------------------------------------------------------------------------
 
 #define __VERSIONFP_CC__
-#include "siddefsfp.h"
+#include "siddefsfp.hpp"

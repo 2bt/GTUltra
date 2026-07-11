@@ -27,11 +27,11 @@
 #include <dirent.h>
 #include <time.h>
 
-#include "goattrk2.h"
-#include "gactions.h"
+#include "goattrk2.hpp"
+#include "gactions.hpp"
 #include "bme.h"
 
-#include "gimgui.h"
+#include "gimgui.hpp"
 
 int songExportSuccessFlag = 0;
 int sidAddr1 = 0xd400;

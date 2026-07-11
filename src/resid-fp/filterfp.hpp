@@ -21,7 +21,7 @@
 #define __FILTERFP_H__
 
 #include <math.h>
-#include "siddefsfp.h"
+#include "siddefsfp.hpp"
 
 // ----------------------------------------------------------------------------
 // The SID filter is modeled with a two-integrator-loop biquadratic filter,

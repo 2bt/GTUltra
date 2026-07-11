@@ -13,7 +13,7 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-#include "gcommon.h"
+#include "gcommon.hpp"
 
 int main(int argc, char **argv);
 unsigned char swapnybbles(unsigned char n);

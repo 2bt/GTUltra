@@ -4,8 +4,8 @@
 
 #define GORDER_C
 
-#include "goattrk2.h"
-#include "gimgui.h"
+#include "goattrk2.hpp"
+#include "gimgui.hpp"
 
 unsigned char trackcopybuffer[MAX_SONGLEN + 2];
 int trackcopyrows = 0;

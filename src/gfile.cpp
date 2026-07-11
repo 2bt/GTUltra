@@ -8,7 +8,7 @@
 #include <windows.h>
 #endif
 
-#include "goattrk2.h"
+#include "goattrk2.hpp"
 
 DIRENTRY direntry[MAX_DIRFILES];
 

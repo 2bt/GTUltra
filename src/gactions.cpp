@@ -2,22 +2,22 @@
 // gactions - action / keymap layer implementation (M3).
 //
 
-#include "gactions.h"
+#include "gactions.hpp"
 
-#include "goattrk2.h"
-#include "gorder.h"
-#include "ginfo.h"
-#include "gimgui.h"
-#include "ginput.h"
-#include "gfiledialog.h"
-#include "guimodel.h"
-#include "gpattern.h"
-#include "gsong.h"
-#include "gtable.h"
-#include "gdisplay.h"
-#include "gsound.h"
-#include "ginstr.h"
-#include "log.h"
+#include "goattrk2.hpp"
+#include "gorder.hpp"
+#include "ginfo.hpp"
+#include "gimgui.hpp"
+#include "ginput.hpp"
+#include "gfiledialog.hpp"
+#include "guimodel.hpp"
+#include "gpattern.hpp"
+#include "gsong.hpp"
+#include "gtable.hpp"
+#include "gdisplay.hpp"
+#include "gsound.hpp"
+#include "ginstr.hpp"
+#include "log.hpp"
 
 #include <vector>
 

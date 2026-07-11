@@ -22,7 +22,7 @@
 #include <windows.h>
 #endif
 
-#include "goattrk2.h"
+#include "goattrk2.hpp"
 #include "bme.h"
 
 int songExportSuccessFlag = 0;

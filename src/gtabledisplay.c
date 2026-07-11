@@ -4,6 +4,6 @@
 
 #define GTABLEDISPLAY_C
 
-#include "goattrk2.h"
-#include "gtabledisplay.h"
+#include "goattrk2.hpp"
+#include "gtabledisplay.hpp"
 

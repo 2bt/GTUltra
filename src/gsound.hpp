@@ -9,7 +9,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
-#include "cwsid.h"
+#include "cwsid.hpp"
 #endif
 
 #endif

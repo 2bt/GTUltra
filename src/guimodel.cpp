@@ -2,14 +2,14 @@
 // guimodel - implementation of the SDL-free model bridge (see guimodel.h).
 // This TU is free to pull in the full legacy headers.
 //
-#include "guimodel.h"
-#include "goattrk2.h"
-#include "gactions.h"
-#include "ginfo.h"
-#include "gmidi.h"
-#include "gsong.h"
-#include "gorder.h"
-#include "gplay.h"
+#include "guimodel.hpp"
+#include "goattrk2.hpp"
+#include "gactions.hpp"
+#include "ginfo.hpp"
+#include "gmidi.hpp"
+#include "gsong.hpp"
+#include "gorder.hpp"
+#include "gplay.hpp"
 
 #include <cstdio>
 #include <cstring>

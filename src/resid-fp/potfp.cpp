@@ -17,7 +17,7 @@
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //  ---------------------------------------------------------------------------
 
-#include "potfp.h"
+#include "potfp.hpp"
 
 reg8 PotentiometerFP::readPOT()
 {

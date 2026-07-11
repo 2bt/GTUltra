@@ -20,11 +20,11 @@
 #ifndef __SID_H__
 #define __SID_H__
 
-#include "siddefs.h"
-#include "voice.h"
-#include "filter.h"
-#include "extfilt.h"
-#include "pot.h"
+#include "siddefs.hpp"
+#include "voice.hpp"
+#include "filter.hpp"
+#include "extfilt.hpp"
+#include "pot.hpp"
 
 class SID
 {

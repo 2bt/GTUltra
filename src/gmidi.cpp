@@ -13,10 +13,10 @@
 #include <windows.h>
 #endif
 
-#include "RtMidi.h"
+#include "RtMidi.hpp"
 
-#include "gmidi.h"
-#include "gmidiselect.h"
+#include "gmidi.hpp"
+#include "gmidiselect.hpp"
 
 bool done;
 RtMidiIn *midiin = nullptr;
