@@ -376,31 +376,6 @@ Action lookup_ctx_table(Ctx ctx, Chord chord, const Binding* begin, const Bindin
     return Action::None;
 }
 
-Action lookup_table(Ctx ctx, Chord chord, const Binding* begin, const Binding* end) {
-    Action a = lookup_ctx_table(ctx, chord, begin, end);
-    if (a != Action::None) return a;
-    if (ctx != Ctx::Global) return lookup_ctx_table(Ctx::Global, chord, begin, end);
-    return Action::None;
-}
-
-Chord binding_in_table(Action action, Ctx ctx, const Binding* begin, const Binding* end) {
-    for (const Binding* p = begin; p != end; ++p) {
-        if (p->action == action && p->ctx == ctx) return p->chord;
-    }
-    return kNoChord;
-}
-
-Action lookup(Ctx ctx, Chord chord) {
-    if (chord == kNoChord) return Action::None;
-
-    if (!g_overrides.empty()) {
-        Action a = lookup_table(ctx, chord, g_overrides.data(), g_overrides.data() + g_overrides.size());
-        if (a != Action::None) return a;
-    }
-
-    return lookup_table(ctx, chord, kBindings, kBindings + sizeof(kBindings) / sizeof(kBindings[0]));
-}
-
 Action lookup_ctx(Ctx ctx, Chord chord) {
     if (chord == kNoChord) return Action::None;
 
@@ -1496,25 +1471,7 @@ bool handle_order_action(Action act) {
     }
 }
 
-void log_legacy_fallback(const char* handler) {
-    LOG_DEBUG("legacy input fallback: {}", handler ? handler : "(null)");
-}
-
-Chord chord_from_input(int raw_scancode, int ascii_key, int shift, int ctrl) {
-    uint32_t mods = 0;
-    if (shift) mods |= Shift;
-    if (ctrl) mods |= Ctrl;
-
-    if (raw_scancode) return make_scancode_chord(raw_scancode, mods);
-
-    if (ascii_key > 0 && ascii_key < 256) return make_chord(ascii_key, mods);
-
-    return kNoChord;
-}
-
 Action resolve_ctx(Ctx ctx, Chord chord) { return lookup_ctx(ctx, chord); }
-
-Action resolve(Ctx ctx, Chord chord) { return lookup(ctx, chord); }
 
 Action resolve_input(Ctx ctx, int raw_scancode, int ascii_key, int shift, int ctrl) {
     uint32_t mods = 0;
@@ -1574,15 +1531,6 @@ Action resolve_input_ctx_nav(Ctx ctx, int raw_scancode, int ascii_key, int shift
     if (shift && !ctrl && is_nav_arrow_key(raw_scancode))
         return resolve_input_ctx(ctx, raw_scancode, ascii_key, 0, 0);
     return Action::None;
-}
-
-Chord binding_for(Action action, Ctx ctx) {
-    if (action == Action::None) return kNoChord;
-
-    Chord c = binding_in_table(action, ctx, g_overrides.data(), g_overrides.data() + g_overrides.size());
-    if (c != kNoChord) return c;
-
-    return binding_in_table(action, ctx, kBindings, kBindings + sizeof(kBindings) / sizeof(kBindings[0]));
 }
 
 bool dispatch_order_navigation() {

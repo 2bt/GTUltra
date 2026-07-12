@@ -16,7 +16,6 @@ struct GuiColorDef {
 static ImU32 g_colors[(unsigned)GuiColorRole::Count];
 
 static const GuiColorDef kDefaultColors[] = {
-    // Renoise-inspired: charcoal base, orange reserved for focus/playhead/notes.
     { GuiColorRole::AppBackground,         "app_background",           "App background",             30, 30, 30, 255 },
     { GuiColorRole::PanelHeaderBg,         "panel_header_bg",          "Panel header",               46, 46, 46, 255 },
     { GuiColorRole::PanelHeaderBgActive,   "panel_header_bg_active",   "Panel header (active)",      58, 50, 44, 255 },

@@ -11,6 +11,7 @@
 #include "gorder.hpp"
 #include "gplay.hpp"
 
+#include <algorithm>
 #include <cstdio>
 #include <cstring>
 
@@ -616,16 +617,6 @@ static bool instr_editable(int i) { return i >= INSTR_FIRST && i < MAX_INSTR; }
 
 int instr_count() { return MAX_INSTR; }
 int instr_rows() { return INSTR_GRID_ROWS; }
-
-int instr_grid_row()
-{
-    int i = editorInfo.einum;
-    if (i < INSTR_FIRST)
-        i = INSTR_FIRST;
-    if (i >= MAX_INSTR)
-        i = MAX_INSTR - 1;
-    return i - INSTR_FIRST;
-}
 
 int instr_current() { return editorInfo.einum; }
 

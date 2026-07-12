@@ -834,10 +834,11 @@ bool ImGui::Button(const char* label, const ImVec2& size_arg)
 bool ImGui::SmallButton(const char* label)
 {
     ImGuiContext& g = *GImGui;
-    float backup_padding_y = g.Style.FramePadding.y;
+    auto backup_padding = g.Style.FramePadding;
     g.Style.FramePadding.y = 0.0f;
+    g.Style.FramePadding.x *= 0.75f;
     bool pressed = ButtonEx(label, ImVec2(0, 0), ImGuiButtonFlags_AlignTextBaseLine);
-    g.Style.FramePadding.y = backup_padding_y;
+    g.Style.FramePadding = backup_padding;
     return pressed;
 }
 

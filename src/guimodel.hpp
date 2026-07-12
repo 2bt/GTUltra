@@ -178,7 +178,6 @@ enum { INSTR_GRID_ROWS = 63 }; // MAX_INSTR (64) minus instrument 00
 enum { INSTR_FIELD_NAME = 10 }; // maps to legacy eipos == LAST_INST
 
 int         instr_rows();           // visible row count (63)
-int         instr_grid_row();       // 0-based row for cursor instrument (einum - 1)
 int         instr_cursor_field();   // 0..9 hex field, or INSTR_FIELD_NAME
 int         instr_cursor_nibble();  // 0 high / 1 low nibble (hex fields only)
 bool        instr_cursor_on_name();
