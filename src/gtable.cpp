@@ -1214,9 +1214,6 @@ void table_copy_or_cut(int cut)
 {
 	int c;
 
-	if (!shiftOrCtrlPressed)
-		return;
-
 	if (editorInfo.etmarknum == -1)
 	{
 		editorInfo.etmarknum = editorInfo.etnum;
@@ -1264,7 +1261,7 @@ void table_paste(void)
 {
 	int c;
 
-	if (!shiftOrCtrlPressed || !tablecopyrows)
+	if (!tablecopyrows)
 		return;
 
 	for (c = 0; c < tablecopyrows; c++)

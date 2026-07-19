@@ -1763,9 +1763,6 @@ void pattern_copy_or_cut(GTOBJECT *gt, int cut)
 	int c;
 	int c2 = getActualChannel(editorInfo.esnum, editorInfo.epchn);
 
-	if (!shiftOrCtrlPressed)
-		return;
-
 	if (editorInfo.epmarkchn != -1)
 	{
 		int mc2 = getActualChannel(editorInfo.esnum, editorInfo.epmarkchn);
@@ -1848,7 +1845,7 @@ void pattern_paste(GTOBJECT *gt)
 	int c;
 	int c2 = getActualChannel(editorInfo.esnum, editorInfo.epchn);
 
-	if (!shiftOrCtrlPressed || !patterncopyrows)
+	if (!patterncopyrows)
 		return;
 
 	for (c = 0; c < patterncopyrows; c++)

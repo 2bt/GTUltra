@@ -267,8 +267,11 @@ const Binding kBindings[] = {
     { Action::OrderSelectPatterns, Ctx::Order, make_scancode_chord(KEY_ENTER, Shift) },
     { Action::OrderSelectPatterns, Ctx::Order, make_scancode_chord(KEY_ENTER, Ctrl) },
     { Action::OrderCopy,           Ctx::Order, make_scancode_chord(KEY_C, Shift) },
+    { Action::OrderCopy,           Ctx::Order, make_scancode_chord(KEY_C, Ctrl) },
     { Action::OrderCut,            Ctx::Order, make_scancode_chord(KEY_X, Shift) },
+    { Action::OrderCut,            Ctx::Order, make_scancode_chord(KEY_X, Ctrl) },
     { Action::OrderPaste,          Ctx::Order, make_scancode_chord(KEY_V, Shift) },
+    { Action::OrderPaste,          Ctx::Order, make_scancode_chord(KEY_V, Ctrl) },
     { Action::OrderInsertPaste,    Ctx::Order, make_chord('i', Ctrl) },
     { Action::OrderMarkToggle,     Ctx::Order, make_scancode_chord(KEY_L, Shift) },
     { Action::OrderTransposeUp,    Ctx::Order, make_chord('+') },
@@ -311,6 +314,7 @@ const Binding kBindings[] = {
     { Action::PatternCut,               Ctx::Pattern, make_scancode_chord(KEY_X, Shift) },
     { Action::PatternCut,               Ctx::Pattern, make_scancode_chord(KEY_X, Ctrl) },
     { Action::PatternPaste,             Ctx::Pattern, make_scancode_chord(KEY_V, Shift) },
+    { Action::PatternPaste,             Ctx::Pattern, make_scancode_chord(KEY_V, Ctrl) },
     { Action::PatternMarkToggle,        Ctx::Pattern, make_scancode_chord(KEY_L, Shift) },
     { Action::PatternShrink,            Ctx::Pattern, make_scancode_chord(KEY_O, Shift) },
     { Action::PatternExpand,            Ctx::Pattern, make_scancode_chord(KEY_P, Shift) },
@@ -346,8 +350,11 @@ const Binding kBindings[] = {
     { Action::TableInsert,      Ctx::Tables, make_scancode_chord(KEY_INS) },
     { Action::TableDelete,      Ctx::Tables, make_scancode_chord(KEY_DEL) },
     { Action::TableCopy,        Ctx::Tables, make_scancode_chord(KEY_C, Shift) },
+    { Action::TableCopy,        Ctx::Tables, make_scancode_chord(KEY_C, Ctrl) },
     { Action::TableCut,         Ctx::Tables, make_scancode_chord(KEY_X, Shift) },
+    { Action::TableCut,         Ctx::Tables, make_scancode_chord(KEY_X, Ctrl) },
     { Action::TablePaste,       Ctx::Tables, make_scancode_chord(KEY_V, Shift) },
+    { Action::TablePaste,       Ctx::Tables, make_scancode_chord(KEY_V, Ctrl) },
     { Action::TableOptimize,    Ctx::Tables, make_scancode_chord(KEY_O, Shift) },
     { Action::TableToggleLock,  Ctx::Tables, make_scancode_chord(KEY_U, Shift) },
     { Action::TableTestNote,    Ctx::Tables, make_scancode_chord(KEY_SPACE) },
@@ -1514,10 +1521,11 @@ bool dispatch_order_navigation() {
 bool dispatch_pattern_navigation() {
     if (editorInfo.editmode != EDIT_PATTERN) return false;
 
-    // Ctrl+arrow is global song transport.
+    // Ctrl+arrow is global song transport. Other Ctrl chords (copy/cut/paste,
+    // mark-all, …) are pattern actions and must be handled here.
     if (ctrlpressed) {
         const Action act = resolve_input_ctx(Ctx::Pattern, rawkey, key, shiftpressed, ctrlpressed);
-        if (act != Action::PatternCopy && act != Action::PatternCut) return false;
+        if (act == Action::None) return false;
     }
 
     if (shiftpressed && !ctrlpressed && rawkey >= KEY_1 && rawkey <= KEY_6) {
@@ -1554,8 +1562,11 @@ bool dispatch_table_navigation() {
 
     table_use_raw_hex_mode();
 
-    // Ctrl+arrow is global song transport; leave to dispatch_global.
-    if (ctrlpressed) return false;
+    // Ctrl+arrow is global song transport; clipboard Ctrl chords stay here.
+    if (ctrlpressed) {
+        const Action act = resolve_input_ctx(Ctx::Tables, rawkey, key, shiftpressed, ctrlpressed);
+        if (act == Action::None) return false;
+    }
 
     const Action act = resolve_input_ctx_nav(Ctx::Tables, rawkey, key, shiftpressed, ctrlpressed);
     if (act == Action::None) return false;
