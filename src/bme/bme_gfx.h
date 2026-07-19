@@ -13,6 +13,10 @@ void gfx_flip(void);
 // surface is uploaded.
 void gfx_setdirtyrows(int top, int bot);
 
+// ImGui-first present (M6 Phase 3): clear → overlay hook → present.
+// Skips chargen texture upload and SDL_RenderCopy of the legacy surface.
+void gfx_present(void);
+
 // Aspect-preserving letterbox mapping of the virtual surface onto the renderer
 // output (pixels): drawn scaled by *scale, offset by (*offx, *offy). Used by
 // gfx_flip to place the frame and by mou_getpos to invert it for the pointer.
@@ -54,5 +58,6 @@ extern Uint8 gfx_palette[];
 extern SDL_Surface *gfx_screen;
 extern SDL_Renderer *gfx_renderer;
 
-// Optional overlay drawn on top of the legacy frame each flip (see gfx_flip).
+// Optional overlay drawn each present (see gfx_present / gfx_flip).
+// With ImGui-first present, this is the sole frame content.
 extern void (*bme_overlay_render_hook)(void);

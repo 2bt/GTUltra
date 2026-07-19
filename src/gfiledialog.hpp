@@ -1,7 +1,7 @@
 #pragma once
 //
 // Native file dialogs for the ImGui UI (portable-file-dialogs).
-// Legacy UI continues to use gfile.cpp fileselector().
+// Native file dialogs for the ImGui UI (chargen fileselector removed).
 //
 
 #include <stddef.h>

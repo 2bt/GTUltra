@@ -499,7 +499,6 @@ static int order_expanded_snap_column(int ch, int row, int col)
 
 void order_mouse_left(int ch, int row, int col, bool shift_or_ctrl, bool held_drag)
 {
-    if (editPaletteMode) return;
 
     col = order_expanded_snap_column(ch, row, col);
     if (order_expanded_gap_blocks_click(ch, row, col, shift_or_ctrl || held_drag)) return;
@@ -516,7 +515,6 @@ void order_mouse_left(int ch, int row, int col, bool shift_or_ctrl, bool held_dr
 
 void order_mouse_double_click(int ch, int row, int col)
 {
-    if (editPaletteMode) return;
 
     col = order_expanded_snap_column(ch, row, col);
     if (order_expanded_gap_blocks_click(ch, row, col, false)) return;
@@ -1014,7 +1012,6 @@ void player_multiplier_next()
 
 void context_help_refresh()
 {
-    if (editPaletteMode) return;
     switch (editorInfo.editmode) {
     case EDIT_PATTERN:    displayPatternInfo(&gtObject); break;
     case EDIT_INSTRUMENT: displayInstrumentInfo(&gtObject); break;

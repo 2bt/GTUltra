@@ -1,35 +1,24 @@
 #ifndef GDISPLAY_H
 #define GDISPLAY_H
 
-
-#define PANEL_NAMES_X 1	//60
-#define PANEL_NAMES_Y 37 //33
+// Panel geometry macros kept for leftover Legacy coordinate references.
+#define PANEL_NAMES_X 1
+#define PANEL_NAMES_Y 37
 #define PANEL_TABLES_X 60
-#define PANEL_TABLES_Y 25 //17
+#define PANEL_TABLES_Y 25
 #define PANEL_INSTR_X 60
 #define PANEL_INSTR_Y 18
 #define PANEL_ORDER_X 60
 #define PANEL_ORDER_Y 2
 #define EXTENDEDVISIBLEORDERLIST 13
 
-#define YES_NO_TEXT_X 2	//10
+#define YES_NO_TEXT_X 2
 #define YES_NO_TEXT_Y 40
 
 #ifndef GDISPLAY_C
-
-
 extern char debugtext[256];
-extern char* paletteText[];
-extern int displayOriginal3Channel;
-extern int timemin;
-extern int timesec;
-extern int timeframe;
-extern int lastDisplayChanCount;
-//extern int expandOrderListView;
-extern int getFreeMem;
 #endif
 
- 
 #define FIRST_UI_COLOR 0x20
 
 enum UI_COLORS {
@@ -39,7 +28,7 @@ enum UI_COLORS {
 	CPATTERN_FOREGROUND2,
 	CPATTERN_HIGHLIGHT_BACKGROUND,
 	CPATTERN_HIGHLIGHT_FOREGROUND,
-	CPATTERN_NOTE_FOREGROUND,	// uses background from above
+	CPATTERN_NOTE_FOREGROUND,
 	CPATTERN_COMMAND_FOREGROUND,
 	CPATTERN_DIVIDER_LINE,
 	CPATTERN_HIGHLIGHT_PLAYING_LINE_BACKGROUND,
@@ -85,12 +74,10 @@ enum UI_COLORS {
 	CTRANSPORT_BUTTON_FOREGROUND
 };
 
-
 extern int UIUnderline;
 
-
 #define PATTERN_X 0
-#define PATTERN_Y 2+4+1-4-1
+#define PATTERN_Y 2 + 4 + 1 - 4 - 1
 
 #define TRANSPORT_BAR_X 14
 #define TRANSPORT_BAR_Y 33
@@ -102,62 +89,22 @@ extern int UIUnderline;
 #define CCOMMAND 7
 #define CTITLE 15
 
-void displayTransportBar(GTOBJECT *gt);
-void displayTransportBarLoopPattern(int x, int y);
-void displayTransportBarFollow(int x, int y);
-void displayTransportBarRecord(int x, int y);
-void displayTransportBarPlaying(GTOBJECT *gt, int x, int y);
-void displayTransportBarPolyChannels(int x, int y);
-void displayTransportBarFastForward(int x, int y);
-void displayTransportBarRewind(int x, int y);
-void displayTransportBarOctave(int x, int y);
-void displayTransportBarSkinning(int x, int y);
-void displayTransportBarSIDCount(int x, int y);
-void displayTransportBarKeyboard(int x, int y);
-void displayTransportBarMasterVolume(int x, int y);
-void displayTransportBarDetune(int x, int y);
-void displayTransportBarMonoStereo(int x, int y);
+#ifndef GDISPLAY_C
+extern const char* notename[];
+extern const char* notenameTableView[];
+extern char timechar[];
+#endif
 
-int getTableTitleColour(int c);
-void displayOriginalTableView(int cc,int OX,int OY);
-void displayDetailedWaveTable(int cc, int OX, int OY);
-void displayDetailedFilterTable(int cc, int OX, int OY);
-void displayDetailedPulseTable(int cc, int OX, int OY);
-
-
-void displayPattern(GTOBJECT *gt);
-void displayPattern3Chn(GTOBJECT *gt);
-void displayPattern6Chn(GTOBJECT *gt);
-void printmainscreen(GTOBJECT *gt);
-void displayupdate(GTOBJECT *gt);
-void printstatus(GTOBJECT *gt);
-void resettime(GTOBJECT *gt);
-void incrementtime(GTOBJECT *gt);
-void displayOrderList(GTOBJECT *gt, int cc,int OX, int OY);
-void displayPaletteInfo(int cc);
-void clearOrderListDisplay();
-int getPaletteTextArraySize();
-void setSongLengthTime(GTOBJECT *gt);
-void displayInstrument(GTOBJECT *gt, int cc,int OX,int OY);
-void displaySongInfo(int cc,int OX,int OY);
-void updateDisplayWhenFollowingAndPlaying(GTOBJECT *gt);
-void displayTopBar(int menu, int cc);
-void displayExpandedOrderList(GTOBJECT *gt, int cc, int OX, int OY);
-
-void displayKeyboard();
-void setNote(int noteNumber);
-void resetKeyboardDisplay();
-void displayNotes(GTOBJECT *gt);
-void displayTables(int OX,int OY);
-void displayTable(int c,int OX,int OY);
-
-void displayWaveformInfo(int x, int y);
-int getWaveforumColour(int bit, int value);
-void updateDisplayWhenFollowingAndPlaying_Expanded(GTOBJECT *gt);
-void updateDisplayWhenFollowingAndPlaying_Compressed(GTOBJECT *gt);
+void printmainscreen(GTOBJECT* gt);
+void displayupdate(GTOBJECT* gt);
+void resettime(GTOBJECT* gt);
+void incrementtime(GTOBJECT* gt);
+void setSongLengthTime(GTOBJECT* gt);
 void setSIDTracker64KeyOnStyle();
-int doDisplay(void *gt);
+int doDisplay(void* gt);
 
-int FreeMem(void);
+void updateDisplayWhenFollowingAndPlaying(GTOBJECT* gt);
+void updateDisplayWhenFollowingAndPlaying_Expanded(GTOBJECT* gt);
+void updateDisplayWhenFollowingAndPlaying_Compressed(GTOBJECT* gt);
 
 #endif

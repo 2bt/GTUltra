@@ -92,7 +92,9 @@ from git history):
 - **New UI — Dear ImGui.** Replace the legacy text-mode UI with Dear ImGui,
   keeping the reusable model / editing logic. Full roadmap (M2–M6), informed by
   a study of the Furnace tracker, is in
-  [docs/UI_MIGRATION_PLAN.md](docs/UI_MIGRATION_PLAN.md).
+  [docs/UI_MIGRATION_PLAN.md](docs/UI_MIGRATION_PLAN.md). The M6 chargen /
+  legacy-renderer teardown is detailed in
+  [docs/M6_LEGACY_RENDERER_REMOVAL.md](docs/M6_LEGACY_RENDERER_REMOVAL.md).
 - **Configuration system (TOML).** User-configurable themes, fonts, and all
   keybindings in a real `config.toml`. Depends on the ImGui action/theme
   scaffolding; detailed as milestone **M7** in the UI migration plan.

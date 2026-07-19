@@ -21,6 +21,7 @@ void gfx_uninit(void);
 int gfx_lock(void);
 void gfx_unlock(void);
 void gfx_flip(void);
+void gfx_present(void);
 void gfx_setclipregion(unsigned left, unsigned top, unsigned right, unsigned bottom);
 void gfx_setmaxspritefiles(int num);
 void gfx_setmaxcolors(int num);
@@ -158,22 +159,16 @@ int gfx_init(unsigned xsize, unsigned ysize, unsigned framerate, unsigned flags)
 
 
 	gfx_renderer = SDL_CreateRenderer(win_window, -1, sdlflags);
-	// Note: we deliberately do NOT use SDL_RenderSetLogicalSize. The frame is
-	// letterboxed by an explicit destination rect computed in renderer OUTPUT
-	// pixels (see gfx_get_view / gfx_flip), and mou_getpos maps the pointer with
-	// that same rect. Using one shared mapping guarantees the drawn cursor and
-	// the OS pointer agree at any window size / fullscreen / display scale.
-	gfx_screen = SDL_CreateRGBSurfaceWithFormat(0, xsize, ysize, 8, SDL_PIXELFORMAT_INDEX8);
-	sdlTexture = SDL_CreateTexture(gfx_renderer,
-		SDL_PIXELFORMAT_RGBA32,
-		SDL_TEXTUREACCESS_STREAMING,
-		xsize, ysize);
+	// M6 Phase 6: no INDEX8 chargen surface / streaming texture. ImGui draws
+	// via gfx_present → bme_overlay_render_hook. Virtual size still drives
+	// letterbox mouse mapping (gfx_get_view / mou_getpos).
+	gfx_screen = NULL;
+	sdlTexture = NULL;
 	gfx_initexec = 0;
-	if (gfx_screen)
+	if (gfx_renderer)
 	{
 		gfx_initted = 1;
 		gfx_redraw = 1;
-		gfx_setpalette();
 		win_setmousemode(win_mousemode);
 		return BME_OK;
 	}
@@ -188,9 +183,21 @@ int gfx_reinit(void)
 
 void gfx_uninit(void)
 {
-	SDL_DestroyTexture(sdlTexture);
-	SDL_FreeSurface(gfx_screen);
-	SDL_DestroyRenderer(gfx_renderer);
+	if (sdlTexture)
+	{
+		SDL_DestroyTexture(sdlTexture);
+		sdlTexture = NULL;
+	}
+	if (gfx_screen)
+	{
+		SDL_FreeSurface(gfx_screen);
+		gfx_screen = NULL;
+	}
+	if (gfx_renderer)
+	{
+		SDL_DestroyRenderer(gfx_renderer);
+		gfx_renderer = NULL;
+	}
 	free(gfx_convbuf);
 	gfx_convbuf = NULL;
 	gfx_convbuf_size = 0;
@@ -201,7 +208,7 @@ void gfx_uninit(void)
 int gfx_lock(void)
 {
 	if (gfx_locked) return 1;
-	if (!gfx_initted) return 0;
+	if (!gfx_initted || !gfx_screen) return 0;
 	if (!SDL_LockSurface(gfx_screen))
 	{
 		gfx_locked = 1;
@@ -214,7 +221,8 @@ void gfx_unlock(void)
 {
 	if (gfx_locked)
 	{
-		SDL_UnlockSurface(gfx_screen);
+		if (gfx_screen)
+			SDL_UnlockSurface(gfx_screen);
 		gfx_locked = 0;
 	}
 }
@@ -247,8 +255,8 @@ void gfx_get_view(float *scale, float *offx, float *offy)
 	int outW = 0, outH = 0;
 	if (gfx_renderer)
 		SDL_GetRendererOutputSize(gfx_renderer, &outW, &outH);
-	int sw = gfx_screen ? gfx_screen->w : 1;
-	int sh = gfx_screen ? gfx_screen->h : 1;
+	int sw = (int)gfx_virtualxsize;
+	int sh = (int)gfx_virtualysize;
 	if (sw <= 0) sw = 1;
 	if (sh <= 0) sh = 1;
 
@@ -262,72 +270,20 @@ void gfx_get_view(float *scale, float *offx, float *offy)
 	*offy = ((float)outH - (float)sh * s) * 0.5f;
 }
 
-void gfx_flip()
+void gfx_flip(void)
 {
-	int w = gfx_screen->w;
-	int h = gfx_screen->h;
-	int pitch = gfx_screen->pitch;
+	// Legacy path unused; keep symbol for any leftover callers.
+	gfx_present();
+}
 
-	// Resolve which rows to (re)upload this frame.
-	int y0 = 0, y1 = h, skip = 0;
-	if (gfx_dirty_set)
-	{
-		if (gfx_dirty_bot <= gfx_dirty_top)
-			skip = 1;                       // nothing changed
-		else
-		{
-			y0 = gfx_dirty_top < 0 ? 0 : gfx_dirty_top;
-			y1 = gfx_dirty_bot > h ? h : gfx_dirty_bot;
-		}
-	}
+void gfx_present(void)
+{
+	// M6 Phase 3: ImGui owns the frame. No chargen surface upload/copy.
+	if (!gfx_renderer)
+		return;
 	gfx_dirty_set = 0;
-
-	if (!skip)
-	{
-		int rows = y1 - y0;
-		int need = w * rows * 4;
-		if (need > gfx_convbuf_size)
-		{
-			free(gfx_convbuf);
-			gfx_convbuf = malloc(need);
-			gfx_convbuf_size = gfx_convbuf ? need : 0;
-		}
-		if (gfx_convbuf)
-		{
-			// Convert only the dirty rows INDEX8 -> RGBA32 (byte order R,G,B,A)
-			// using the surface palette, then upload just that sub-rectangle.
-			const SDL_Color *pal = gfx_screen->format->palette->colors;
-			const Uint8 *src = (const Uint8 *)gfx_screen->pixels;
-			Uint8 *dst = gfx_convbuf;
-			int x, y;
-			for (y = y0; y < y1; y++)
-			{
-				const Uint8 *s = src + y * pitch;
-				for (x = 0; x < w; x++)
-				{
-					const SDL_Color c = pal[s[x]];
-					*dst++ = c.r;
-					*dst++ = c.g;
-					*dst++ = c.b;
-					*dst++ = 255;
-				}
-			}
-			SDL_Rect rect = { 0, y0, w, rows };
-			SDL_UpdateTexture(sdlTexture, &rect, gfx_convbuf, w * 4);
-		}
-	}
-	// Letterbox the surface into the output with an explicit destination rect
-	// (see gfx_get_view). RenderClear paints the black bars.
-	float vs, vox, voy;
-	gfx_get_view(&vs, &vox, &voy);
-	SDL_Rect dst;
-	dst.x = (int)vox;
-	dst.y = (int)voy;
-	dst.w = (int)((float)w * vs);
-	dst.h = (int)((float)h * vs);
-
+	SDL_SetRenderDrawColor(gfx_renderer, 0, 0, 0, 255);
 	SDL_RenderClear(gfx_renderer);
-	SDL_RenderCopy(gfx_renderer, sdlTexture, NULL, &dst);
 	if (bme_overlay_render_hook)
 		bme_overlay_render_hook();
 	SDL_RenderPresent(gfx_renderer);
@@ -406,9 +362,7 @@ void gfx_calcpalette(int fade, int radd, int gadd, int badd)
 
 void gfx_setpalette(void)
 {
-	if (!gfx_initted) return;
-
-
+	if (!gfx_initted || !gfx_screen) return;
 
 	SDL_SetPaletteColors(gfx_screen->format->palette, &gfx_sdlpalette[0], 0, gfx_maxcolors);
 }
@@ -614,6 +568,7 @@ void gfx_getspriteinfo(unsigned num)
 void gfx_fillArea(int x, int y, int sx, int sy, int color)
 {
 	Uint8 *dptr;
+	if (!gfx_screen) return;
 	dptr = gfx_screen->pixels + y * gfx_screen->pitch + x;
 
 	for (int yd = 0;yd < sy;yd++)
@@ -637,7 +592,7 @@ void gfx_drawsprite(int x, int y, unsigned num)
 	Uint8 *dptr;
 	int cx;
 
-	if (!gfx_initted) return;
+	if (!gfx_initted || !gfx_screen) return;
 	if (!gfx_locked) return;
 
 	if ((sprf >= gfx_maxspritefiles) || (!gfx_spriteheaders[sprf]) ||

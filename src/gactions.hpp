@@ -10,6 +10,10 @@
 //
 
 #include <stdint.h>
+#include <span>
+#include <string>
+#include <string_view>
+#include <vector>
 
 struct EditorInput;
 
@@ -193,6 +197,25 @@ Ctx context_from_editmode(int editmode);
 
 const char* action_name(Action a);
 const char* action_label(Action a);
+
+// Human-readable chord ("Ctrl+S", "F12", "Shift+Space").
+std::string format_chord(Chord chord);
+
+// Join alternate chords for one action. separator defaults to a middle dot so it
+// is not confused with the "/" key.
+std::string format_chord_list(std::span<const Chord> chords,
+                              std::string_view separator = " \xC2\xB7 "); // " · "
+
+// Effective bindings for a context (defaults + runtime overrides).
+// One entry per chord; the same action may appear multiple times.
+struct BindingEntry {
+    Action action;
+    Chord  chord;
+};
+std::vector<BindingEntry> bindings_for(Ctx ctx);
+
+// Print keymap (all contexts) + reference sections to stdout (CLI `-??`).
+void print_help_cli();
 
 // Run an action programmatically (ImGui toolbar, scripts, …).
 bool perform(Action act);

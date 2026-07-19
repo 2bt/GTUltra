@@ -7,14 +7,15 @@ void gimgui_init();
 // Tear down ImGui. Call once on shutdown.
 void gimgui_shutdown();
 
-// True while the native ImGui panels are shown (false = legacy chargen UI visible).
-bool gimgui_new_ui_active();
-
 // True while an instrument-name InputText has keyboard focus.
 bool gimgui_instr_name_editing();
 
 // Open the name editor for instrument @p inst (1..3F).
 void gimgui_instr_name_begin(int inst);
+
+// F12 help window. Opens on the tab matching the current editor panel.
+void gimgui_open_help();
+bool gimgui_help_open();
 
 // Song metadata field focus (names panel, field index 0..2).
 bool gimgui_song_field_editing();

@@ -160,82 +160,8 @@ void instrumentcommands(GTOBJECT *gt, const EditorInput *input)
 	const EditorInput in = input ? *input : editor_input_snapshot();
 	const int jrawkey = in.rawkey;
 
-	if (!gimgui_new_ui_active())
-	{
-		switch (jrawkey)
-		{
-		case KEY_UP:
-		case KEY_DOWN:
-		case KEY_LEFT:
-		case KEY_RIGHT:
-			win_enableKeyRepeat();
-			break;
-		default:
-			if (enablekeyrepeat)
-				win_disableKeyRepeat();
-		}
+	goto instr_hex_input;
 
-		switch (jrawkey)
-		{
-		case KEY_RIGHT:
-			if (!ctrlpressed)
-			{
-				if (editorInfo.eipos < LAST_INST)
-				{
-					editorInfo.eicolumn++;
-					if (editorInfo.eicolumn > 1)
-					{
-						editorInfo.eicolumn = 0;
-						editorInfo.eipos += 5;
-						if (editorInfo.eipos >= LAST_INST) editorInfo.eipos -= (LAST_INST);
-						if (editorInfo.eipos < 0) editorInfo.eipos = LAST_INST - 1;
-					}
-				}
-			}
-			break;
-
-		case KEY_LEFT:
-			if (!ctrlpressed)
-			{
-				if (editorInfo.eipos < LAST_INST)
-				{
-					editorInfo.eicolumn--;
-					if (editorInfo.eicolumn < 0)
-					{
-						editorInfo.eicolumn = 1;
-						editorInfo.eipos -= 5;
-						if (editorInfo.eipos < 0) editorInfo.eipos += (LAST_INST);
-						if (editorInfo.eipos >= LAST_INST) editorInfo.eipos = LAST_INST - 1;
-					}
-				}
-			}
-			break;
-
-		case KEY_DOWN:
-			if (editorInfo.eipos < LAST_INST)
-			{
-				editorInfo.eipos++;
-				if (editorInfo.eipos > (LAST_INST - 1)) editorInfo.eipos = 0;
-			}
-			break;
-
-		case KEY_UP:
-			if (editorInfo.eipos < LAST_INST)
-			{
-				editorInfo.eipos--;
-				if (editorInfo.eipos < 0) editorInfo.eipos = LAST_INST - 1;
-			}
-			break;
-		}
-
-		if (instrument_cell_input(gt, &in))
-			goto instr_validate;
-
-		if ((editorInfo.eipos == LAST_INST) && (editorInfo.einum))
-			editstring(instr[editorInfo.einum].name, MAX_INSTRNAMELEN);
-	}
-	else
-		goto instr_hex_input;
 
 instr_hex_input:
 	if ((hexnybble >= 0) && (editorInfo.eipos < LAST_INST) && (editorInfo.einum))

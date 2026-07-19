@@ -32,6 +32,8 @@
 #include "bme.h"
 
 #include "gimgui.hpp"
+#include "guialert.hpp"
+#include "ghelp.hpp"
 
 int songExportSuccessFlag = 0;
 int sidAddr1 = 0xd400;
@@ -123,7 +125,6 @@ double tuning[96];
 extern unsigned bigwindow;
 int checkUndoFlag = 0;
 unsigned int lmanMode = 1;
-unsigned int editPaletteMode = 0;
 unsigned int enablekeyrepeat = 0;
 unsigned int enableAntiAlias = 1;
 int useOriginalGTFunctionKeys = 0;
@@ -153,7 +154,7 @@ char tempSngFilename[MAX_PATHNAME];
 char backupSngFilename[MAX_PATHNAME];
 char fkeysFilename[MAX_PATHNAME];
 
-extern char* notename[];
+extern const char* notename[];
 char* programname = "$VER: GTUltra V1.5.4";
 char specialnotenames[186];
 char scalatuningfilepath[MAX_PATHNAME];
@@ -171,7 +172,6 @@ char transportLoopPattern = 0;
 char transportLoopPatternSelectArea = 0;
 char transportRecord = 1;
 char transportPlay = 1;
-char transportShowKeyboard = 0;
 char jdebugPlaying = 0;
 
 char jpdebug = 0;
@@ -188,7 +188,6 @@ extern unsigned char datafile[];
 
 int currentPalettePreset = 0;
 
-unsigned char backupPaletteSong[MAX_CHN][MAX_SONGLEN + 2];
 
 unsigned char paletteRGB[MAX_PALETTE_PRESETS][3][MAX_PALETTE_ENTRIES];
 unsigned char paletteLoadRGB[MAX_PALETTE_PRESETS][3][MAX_PALETTE_LOAD_ENTRIES];
@@ -373,58 +372,18 @@ int main(int argc, char** argv)
 		if (argv[c][0] == '-')
 #endif
 		{
-			int y = 0;
 			switch (argv[c][1]) //switch (toupper(argv[c][1]))
 			{
 			case '?':
-				if (!initscreen())
-					return 1;
 				if (argv[c][2] == '?') {
-					onlinehelp(1, 0, &gtObject);
+					gtaction::print_help_cli();
 					return 0;
 				}
 
-				printtext(0, y++, getColor(15, 0), "Usage: GT2STEREO [songname] [options]");
-				printtext(0, y++, getColor(15, 0), "Options:");
-				printtext(0, y++, getColor(15, 0), "-Axx Set ADSR parameter for hardrestart in hex. DEFAULT=0F00");
-				printtext(0, y++, getColor(15, 0), "-Bxx Set sound buffer length in milliseconds DEFAULT=100");
-				printtext(0, y++, getColor(15, 0), "-Cxx Use CatWeasel MK3 PCI SID (0 = off, 1 = on)");
-				printtext(0, y++, getColor(15, 0), "-Dxx Pattern row display (0 = decimal, 1 = hex, 2 = decimal w/dots, 3 = hex w/dots)");
-				printtext(0, y++, getColor(15, 0), "-Exx Set emulated SID model (0 = 6581 1 = 8580) DEFAULT=6581");
-				printtext(0, y++, getColor(15, 0), "-Fxx Set custom SID clock cycles per second (0 = use PAL/editorInfo.ntsc default)");
-				printtext(0, y++, getColor(15, 0), "-Gxx Set pitch of A-4 in Hz (0 = use default frequencytable, close to 440Hz)");
-				printtext(0, y++, getColor(15, 0), "-Hxx Use HardSID (0 = off, 1 = HardSID ID0 2 = HardSID ID1 etc.)");
-				printtext(0, y++, getColor(15, 0), "     Use high nybble (it's hexadecimal) to specify right HardSID ID");
-				printtext(0, y++, getColor(15, 0), "-Ixx Set reSID interpolation (0 = off, 1 = on, 2 = distortion, 3 = distortion & on) DEFAULT=off");
-				printtext(0, y++, getColor(15, 0), "-Jxx Set special note names (2 chars for every note in an octave/cycle, e.g. C-DbD-EbE-F-GbG-AbA-BbB-)");
-				printtext(0, y++, getColor(15, 0), "-Kxx Note-entry mode (0 = PROTRACKER 1 = DMC) DEFAULT=PROTRK.");
-				printtext(0, y++, getColor(15, 0), "-Lxx SID memory locations in hex. DEFAULT=D500D400");
-				printtext(0, y++, getColor(15, 0), "-Mxx Set sound mixing rate DEFAULT=44100");
-				printtext(0, y++, getColor(15, 0), "-Oxx Set pulseoptimization/skipping (0 = off, 1 = on) DEFAULT=on");
-				printtext(0, y++, getColor(15, 0), "-Qxx Set equal divisions per octave (12 = default, 8.2019143 = Bohlen-Pierce)");
-				printtext(0, y++, getColor(15, 0), "-Rxx Set realtime-effect optimization/skipping (0 = off, 1 = on) DEFAULT=on");
-				printtext(0, y++, getColor(15, 0), "-Sxx Set speed editorInfo.multiplier (0 for 25Hz, 1 for 1x, 2 for 2x etc.)");
-				printtext(0, y++, getColor(15, 0), "-Txx Set HardSID interactive mode sound buffer length in milliseconds DEFAULT=20, max.buffering=0");
-				printtext(0, y++, getColor(15, 0), "-Uxx Set HardSID playback mode sound buffer length in milliseconds DEFAULT=400, max.buffering=0");
-				printtext(0, y++, getColor(15, 0), "-Vxx Set finevibrato conversion (0 = off, 1 = on) DEFAULT=on");
-				printtext(0, y++, getColor(15, 0), "-Xxx Set window type (0 = window, 1 = fullscreen) DEFAULT=window");
-				printtext(0, y++, getColor(15, 0), "-Yxx Path to a Scala tuning file .scl");
-				printtext(0, y++, getColor(15, 0), "-Zxx Set random reSID write delay in cycles (0 = off) DEFAULT=off");
-				printtext(0, y++, getColor(15, 0), "-wxx Set window scale factor (1 = no scaling, 2 to 4 = 2 to 4 times bigger window) DEFAULT=1");
-				printtext(0, y++, getColor(15, 0), "-N   Use editorInfo.ntsc timing");
-				printtext(0, y++, getColor(15, 0), "-P   Use PAL timing (DEFAULT)");
-				printtext(0, y++, getColor(15, 0), "-W   Write sound output to a file SIDAUDIO.RAW");
-				printtext(0, y++, getColor(15, 0), "-cxx SID channel count (3,6,9 or 12) DEFAULT=6");
-				printtext(0, y++, getColor(15, 0), "-pxx set UI Skin (0-3) DEFAULT=0");
-				printtext(0, y++, getColor(15, 0), "-vxx Master Volume (floating point) DEFAULT=1(large values may cause clipping / distortion)");
-				printtext(0, y++, getColor(15, 0), "-dxxx Detune Pitchtable (-1 > 1 0 = no detune. -1 = -1 semitone 1 = +1 semitone");
-				printtext(0, y++, getColor(15, 0), "-kx  Enable key repeat (0=only on selected keys. 1= on everything (DEFAULT 0)");
-				printtext(0, y++, getColor(15, 0), "-mxx MIDI Port (DEFAULT 0.  9999 = disable all MIDI processing)");
-				printtext(0, y++, getColor(15, 0), "-ax  enable antialiasing (0=off. 1 = on. DEFAULT=1)");
-				printtext(0, y++, getColor(15, 0), "-bxxxx  Backup .sng every n seconds (0=off. DEFAULT=30");
-				printtext(0, y++, getColor(15, 0), "-?   Show this info again");
-				printtext(0, y++, getColor(15, 0), "-??  Standalone online help window");
-				waitkeynoupdate();
+				std::puts("Usage: GTUltra [songname] [options]");
+				std::puts("Options: (see documentation / gtultra -?? for full help)");
+				std::puts("-?   Show this short usage");
+				std::puts("-??  Print online help to stdout");
 				return 0;
 
 			case 'Z':
@@ -698,8 +657,8 @@ int main(int argc, char** argv)
 	// Init sound
 	if (!sound_init(b, mr, writer, hardsid, editorInfo.sidmodel, editorInfo.ntsc, editorInfo.multiplier, catweasel, interpolate, customclockrate))
 	{
-		printtextc(MAX_ROWS / 2 - 1, getColor(15, 0), "Sound init failed. Press any key to run without sound (notice that song timer won't start)");
-		waitkeynoupdate();
+		gt_ui_warn("Sound init failed. Continuing without sound "
+		           "(song timer will not start).");
 	}
 
 
@@ -1061,8 +1020,7 @@ void editor_frame_update(GTOBJECT* gt)
 
 		// Legacy horizontal order list used left/right for position; the ImGui
 		// vertical layout uses up/down for rows.
-		if (editorInfo.editmode == EDIT_ORDERLIST && editorInfo.expandOrderListView == 0 &&
-		    gimgui_new_ui_active())
+		if (editorInfo.editmode == EDIT_ORDERLIST && editorInfo.expandOrderListView == 0)
 		{
 			keyUp = KEY_UP;
 			keyDown = KEY_DOWN;
@@ -1180,22 +1138,10 @@ void waitkeymouse(GTOBJECT* gt)
 	converthex();
 }
 
-void waitkeymousenoupdate(void)
-{
-	for (;;)
-	{
-		fliptoscreen();
-		getkey();
-		if ((rawkey) || (key)) break;
-		if (win_quitted) break;
-		if (mouseb) break;
-	}
-
-	converthex();
-}
-
 void waitkeynoupdate(void)
 {
+	// Used by greloc interactive (!autoSave) screens — unreachable from ImGui
+	// Relocate (always autoSave=1). Presents ImGui frame via fliptoscreen.
 	for (;;)
 	{
 		fliptoscreen();
@@ -1203,7 +1149,6 @@ void waitkeynoupdate(void)
 		if ((rawkey) || (key)) break;
 		if ((mouseb) && (!prevmouseb)) break;
 		if (win_quitted) break;
-
 	}
 }
 
@@ -1247,7 +1192,7 @@ void docommand(void)
 
 	// "GUI" operation :)
 	int m = mousebDoubleClick;
-	mousecommands(gt);
+	// M6 Phase 2: mousecommands (chargen hit-testing) removed
 	if (m)
 		mousebDoubleClick = 0;
 
@@ -1287,7 +1232,7 @@ void docommand(void)
 
 		if (!gtaction::dispatch_mode_navigation()) {
 			const EditorInput in = editor_input_snapshot();
-			if (!gimgui_new_ui_active() || !gtaction::dispatch_global(gtaction::Ctx::Order))
+			if (!gtaction::dispatch_global(gtaction::Ctx::Order))
 				orderlistcommands(gt, &in);
 		}
 		displayOrderTableInfo(gt);
@@ -1297,16 +1242,9 @@ void docommand(void)
 
 
 
-		if (mouseTrackModify(EDIT_INSTRUMENT))
-		{
-			undoAreaSetCheckForChange(UNDO_AREA_INSTRUMENTS, editorInfo.einum, UNDO_AREA_DIRTY_CHECK);
-		}
 		if (!gtaction::dispatch_mode_navigation()) {
 			const EditorInput in = editor_input_snapshot();
-			if (gimgui_new_ui_active()) {
-				if (!gtaction::dispatch_instrument_cell_input(&in))
-					instrumentcommands(gt, &in);
-			} else
+			if (!gtaction::dispatch_instrument_cell_input(&in))
 				instrumentcommands(gt, &in);
 		}
 		displayInstrumentInfo(gt);
@@ -1314,19 +1252,9 @@ void docommand(void)
 
 	case EDIT_TABLES:
 
-		if (mouseTrackModify(EDIT_TABLES))
-		{
-			undoAreaSetCheckForChange(UNDO_AREA_INSTRUMENTS, editorInfo.einum, UNDO_AREA_DIRTY_CHECK);
-			undoAreaSetCheckForChange(UNDO_AREA_TABLES + editorInfo.etnum, 0, UNDO_AREA_DIRTY_CHECK);	// left table
-			undoAreaSetCheckForChange(UNDO_AREA_TABLES + editorInfo.etnum, 1, UNDO_AREA_DIRTY_CHECK);	// right table
-		}
-
 		if (!gtaction::dispatch_mode_navigation()) {
 			const EditorInput in = editor_input_snapshot();
-			if (gimgui_new_ui_active()) {
-				if (!gtaction::dispatch_table_cell_input(&in))
-					tablecommands(gt, &in);
-			} else
+			if (!gtaction::dispatch_table_cell_input(&in))
 				tablecommands(gt, &in);
 		}
 		displayTableInfo(gt);
@@ -1363,10 +1291,7 @@ void docommand(void)
 		// Also, if this is the case, set key and rawkey=0 so that only note input is recognised - just in case..
 		if (!gtaction::dispatch_mode_navigation()) {
 			const EditorInput in = editor_input_snapshot();
-			if (gimgui_new_ui_active())
-				gtaction::dispatch_pattern_cell_input(gMIDINote, &in);
-			else
-				patterncommands(gt, gMIDINote, &in);
+			gtaction::dispatch_pattern_cell_input(gMIDINote, &in);
 		}
 
 		displayPatternInfo(gt);
@@ -1375,574 +1300,22 @@ void docommand(void)
 		break;
 
 	case EDIT_NAMES:
-		if (!gtaction::dispatch_mode_navigation()) {
-			const EditorInput in = editor_input_snapshot();
-			if (!gimgui_new_ui_active())
-				namecommands(gt, &in);
-		}
+		gtaction::dispatch_mode_navigation();
 		break;
 	}
 
 
 
-	if (!editPaletteMode)
+	if (undoValidateUndoAreas(ed) == 0)
 	{
-		if (undoValidateUndoAreas(ed) == 0)
-		{
-			undoFreeUndoObject((GTUNDO_OBJECT*)ed);
-		}
-	}
-	else
 		undoFreeUndoObject((GTUNDO_OBJECT*)ed);
+	}
 
 	// Global commands — action layer handles migrated bindings first.
 	if (!gtaction::consume_legacy_hex_input(legacy_hex)) {
 		const gtaction::Ctx actx = gtaction::context_from_editmode(editorInfo.editmode);
 		if (!gtaction::dispatch_global(actx))
 			generalcommands(gt);
-	}
-}
-
-void mousecommands(GTOBJECT* gt)
-{
-	int c;
-	int c2 = getActualChannel(editorInfo.esnum, editorInfo.epchn);	// 0-12
-	//	int songNum = getActualSongNumber(editorInfo.esnum, c2);
-	//	int c3 = c % 6;
-
-
-	if (!mouseb)
-	{
-	}
-	else if (editorInfo.mouseTrack)
-	{
-		return;
-	}
-
-	// ImGui panels handle their own hit-testing; legacy text-cell coordinates
-	// do not map to the new layout.
-	if (gimgui_new_ui_active())
-		return;
-
-	if (mouseTransportBar(gt))
-		return;
-
-	/*
-		if (editPaletteMode)
-		{
-
-			if (((!prevmouseb) || (mouseheld > HOLDDELAY)) && (mousey == 2) && (mousex >= 63 + 21) && (mousex <= 64 + 21))
-			{
-				if (mouseb & MOUSEB_LEFT) nextsong(gt);
-				if (mouseb & MOUSEB_RIGHT) prevsong(gt);
-			}
-
-			// Song editpos & songnumber selection
-			if ((mousey >= 3) && (mousey <= 5) && (mousex >= 40 + 21) && mouseb)
-			{
-				if (editorInfo.editmode != EDIT_ORDERLIST && prevmouseb)
-					return;
-
-				// editing palette, so don't allow user to click elsewhere.
-
-				int newpos = editorInfo.esview + (mousex - 44 - 21) / 3;
-				int newcolumn = (mousex - 44 - 21) % 3;
-				int newchn = mousey - 3;
-				if (newcolumn < 0) newcolumn = 0;
-				if (newcolumn > 1) newcolumn = 1;
-				if (newpos < 0)
-				{
-					newpos = 0;
-					newcolumn = 0;
-				}
-
-				int maxPaletteText = getPaletteTextArraySize();
-
-				if (newpos >= maxPaletteText / 2)
-				{
-					newpos = (maxPaletteText / 2) - 1;
-					newcolumn = 1;
-				}
-
-				editorInfo.eschn = newchn;
-				editorInfo.eseditpos = newpos;
-				editorInfo.escolumn = newcolumn;
-
-				editorInfo.editmode = EDIT_ORDERLIST;
-
-			}
-			return;
-		}
-	*/
-
-	// V1.2.2 Fix - Ensure mouse clicking for 3 channel or 6 channel view is correct for mute + pattern change X positions
-	int patternWidth = 9;
-	int patternTextWidth = 7;
-	int chTextWidth = 2;
-	int chTextPos = 6;
-	//int ok = 0;
-	if (displayOriginal3Channel)
-	{
-		patternWidth = 14;
-		patternTextWidth = 9;
-		chTextWidth = 3;
-		chTextPos = 11;
-	}
-
-
-	// Pattern editpos & pattern number selection
-	for (c = 0; c < MAX_CHN; c++)
-	{
-		if (editorInfo.maxSIDChannels == 3 && c >= 3)
-			break;
-		if (editorInfo.maxSIDChannels == 9 && c >= 3 && (editorInfo.esnum & 1))
-			break;
-
-		if (mousey == PATTERN_Y)
-		{
-			if ((mousex >= PATTERN_X + 5 + chTextPos + c * patternWidth) && (mousex <= PATTERN_X + 5 + chTextPos + 1 + c * patternWidth))
-			{
-				if ((!prevmouseb) || (mouseheld > HOLDDELAY))
-				{
-					if (mouseb & MOUSEB_LEFT)
-					{
-						editorInfo.epchn = c;
-						nextpattern(gt);
-					}
-					if (mouseb & MOUSEB_RIGHT)
-					{
-						editorInfo.epchn = c;
-						prevpattern(gt);
-					}
-				}
-			}
-			else if (mouseb && !prevmouseb)
-			{
-
-				if ((mousex >= PATTERN_X + 5 + c * patternWidth) && (mousex <= PATTERN_X + 5 + chTextWidth + c * patternWidth))
-					mutechannel(c, gt);
-			}
-
-		}
-		else
-		{
-			if (!selectingInOrderList)
-			{
-				if ((mousey >= PATTERN_Y) && (mousey <= PATTERN_Y + VISIBLEPATTROWS + 0) && (mousex >= PATTERN_X + 5 + c * patternWidth) && (mousex <= PATTERN_X + 5 + patternTextWidth + c * patternWidth))
-				{
-					if (!mouseb)
-						return;
-					if (editorInfo.editmode != EDIT_PATTERN && prevmouseb)	// Don't allow hold/drag to select another panel
-						return;
-
-					int x = mousex - (PATTERN_X + 5) - c * patternWidth;
-					int newpos = mousey - PATTERN_Y + 1 + 12 + editorInfo.epview - VISIBLEPATTROWS / 2;
-
-					if (newpos < 0) newpos = 0;
-					if (newpos > pattlen[gt->editorUndoInfo.editorInfo[c2].epnum])
-						newpos = pattlen[gt->editorUndoInfo.editorInfo[c2].epnum];
-
-					editorInfo.editmode = EDIT_PATTERN;
-
-					if ((mouseb & (MOUSEB_RIGHT | MOUSEB_MIDDLE)) && (!prevmouseb))
-					{
-						if ((editorInfo.epmarkchn != c) || (newpos != editorInfo.epmarkend))
-						{
-							editorInfo.epmarkchn = c;
-							editorInfo.epmarkstart = editorInfo.epmarkend = newpos;
-						}
-					}
-
-					if (mouseb & MOUSEB_LEFT)
-					{
-						editorInfo.epchn = c;
-						if (x < 3) editorInfo.epcolumn = 0;
-						if (x >= 3)
-						{
-							if (!displayOriginal3Channel)
-								editorInfo.epcolumn = x - 2;
-							else
-							{
-								//	sprintf(textbuffer, "%d", x);
-								//	printtext(70, 36, 0xe, textbuffer);
-
-								if (x >= 4 && x <= 5)
-									editorInfo.epcolumn = 1 + (x - 4);	// instrument
-								else if (x == 7)
-									editorInfo.epcolumn = 3;	// instruction
-								else if (x >= 8 && x <= 9)
-									editorInfo.epcolumn = 4 + (x - 8);	// data
-							}
-						}
-
-						setMasterLoopChannel(gt, "debug_7");
-					}
-
-					if (!prevmouseb)
-					{
-						if (mouseb & MOUSEB_LEFT)
-							editorInfo.eppos = newpos;
-					}
-
-					if (editorInfo.eppos < 0) editorInfo.eppos = 0;
-					if (editorInfo.eppos > pattlen[gt->editorUndoInfo.editorInfo[c2].epnum])
-						editorInfo.eppos = pattlen[gt->editorUndoInfo.editorInfo[c2].epnum];
-
-					if (mouseb & (MOUSEB_RIGHT | MOUSEB_MIDDLE)) editorInfo.epmarkend = newpos;
-				}
-			}
-		}
-	}
-
-
-	int maxCh = 5;
-	if ((editorInfo.maxSIDChannels == 3) || (editorInfo.maxSIDChannels == 9 && (editorInfo.esnum & 1)))
-		maxCh = 2;
-
-	if ((mousey == 2) && (mousex >= 65 && mousex <= 65 + 8) && !prevmouseb && mouseb)
-	{
-		int jc2 = getActualChannel(editorInfo.esnum, editorInfo.eschn);	// 0-12 for currently selected channel in orderlist
-
-		int invalidCompressedDataLength = 0;
-		if (editorInfo.expandOrderListView == 1)
-		{
-			if (validateAllSongs() > 0xff)
-			{
-				// at least one channel in expanded view is too large (over 0xff bytes when compressed...)
-				invalidCompressedDataLength++;
-			}
-		}
-		if (!invalidCompressedDataLength)	// Only allow view to change to compressed view if expanded view isn't too large
-		{
-			stopsong(gt);
-			resetSongInfo(gt, jc2);
-			editorInfo.expandOrderListView = 1 - editorInfo.expandOrderListView;
-
-			if (editorInfo.expandOrderListView == 1)
-			{
-				expandAllSongs();
-				editorInfo.esnum = 1;
-				songchange(gt, 1);
-				editorInfo.esnum = 0;
-				songchange(gt, 1);
-				//	initEditorSongInfo(gt);
-			}
-			else
-			{
-				compressAllSongs();
-				editorInfo.esnum = 1;
-				songchange(gt, 1);
-				editorInfo.esnum = 0;
-				songchange(gt, 1);
-				//	initEditorSongInfo(gt);
-			}
-		}
-	}
-
-	if (editorInfo.expandOrderListView == 0)
-		checkForMouseInOrderList(gt, maxCh);
-	else
-		checkForMouseInExtendedOrderList(gt, maxCh);
-
-	//	if (((!prevmouseb) || (mouseheld > HOLDDELAY)) && (mousey == 2) && (mousex >= 64 + 20) && (mousex <= 65 + 20))
-
-	if (!gimgui_new_ui_active() && !prevmouseb && (mousey == 2) && (mousex >= 64 + 20) && (mousex <= 65 + 20))
-	{
-		if (mouseb & MOUSEB_LEFT) nextsong(gt);
-		if (mouseb & MOUSEB_RIGHT) prevsong(gt);
-
-	}
-
-
-
-	// Instrument editpos & instrument number selection
-	// Left instrument panel
-	if ((mousey >= PANEL_INSTR_Y + 1) && (mousey <= PANEL_INSTR_Y + 5) && (mousex >= PANEL_INSTR_X + 16) && (mousex <= PANEL_INSTR_X + 17))
-	{
-		if (editorInfo.editmode != EDIT_INSTRUMENT && prevmouseb)	// Don't allow hold/drag to select another panel
-			return;
-
-		if (!mouseb)
-			return;
-
-		if (!prevmouseb)
-		{
-			editorInfo.editmode = EDIT_INSTRUMENT;
-			editorInfo.eipos = mousey - (PANEL_INSTR_Y + 1);
-			editorInfo.eicolumn = mousex - (PANEL_INSTR_X + 16);
-			mouseTrack();	// MUST DO AFTER SETTING ABOVE VALUES
-		}
-	}
-
-	// right instrument panel
-	if ((mousey >= PANEL_INSTR_Y + 1) && (mousey <= PANEL_INSTR_Y + 5) && (mousex >= PANEL_INSTR_X + 36) && (mousex <= PANEL_INSTR_X + 37))
-	{
-		if (editorInfo.editmode != EDIT_INSTRUMENT && prevmouseb)	// Don't allow hold/drag to select another panel
-			return;
-
-		if (!mouseb)
-			return;
-
-		if (!prevmouseb)
-		{
-			editorInfo.editmode = EDIT_INSTRUMENT;
-			editorInfo.eipos = mousey - (PANEL_INSTR_Y + 1) + 5;
-			editorInfo.eicolumn = mousex - (PANEL_INSTR_X + 36);
-			mouseTrack();	// MUST DO AFTER SETTING ABOVE VALUES
-		}
-	}
-	if ((mousey == PANEL_INSTR_Y) && (mousex >= PANEL_INSTR_X))
-	{
-		if (editorInfo.editmode != EDIT_INSTRUMENT && prevmouseb)	// Don't allow hold/drag to select another panel
-			return;
-
-		if (!mouseb)
-			return;
-
-		if (!prevmouseb)
-		{
-			editorInfo.editmode = EDIT_INSTRUMENT;
-			editorInfo.eipos = LAST_INST;	// 10 = edit instrument name
-		}
-	}
-
-	if (((!prevmouseb) || (mouseheld > HOLDDELAY)) && (mousey == PANEL_INSTR_Y) && (mousex >= PANEL_INSTR_X + 16) && (mousex <= PANEL_INSTR_X + 17))
-	{
-		if (editorInfo.editmode != EDIT_INSTRUMENT && prevmouseb)	// Don't allow hold/drag to select another panel
-			return;
-
-		if (mouseb & MOUSEB_LEFT)
-		{
-			nextinstr();
-		}
-		if (mouseb & MOUSEB_RIGHT)
-		{
-			previnstr();
-		}
-	}
-
-	if (((!prevmouseb) || (mouseheld > HOLDDELAY)) && (mousey == 1) && (mousex >= PANEL_ORDER_X + 5) && (mousex <= PANEL_ORDER_X + 5 + 2))
-	{
-		if (mouseb & MOUSEB_LEFT)
-		{
-			if (currentSongFile < lastValidSongFileIndex + 1)
-			{
-				stopsong(gt);
-				undoCreateEditorInfoBackup();
-				copyCurrentToSngBuffer(gt, currentSongFile);
-				currentSongFile++;
-				copySngBufferToCurrent(gt, currentSongFile);
-				undoInvalidateUndoAreas();
-				editorInfo.currentSongFile = currentSongFile;
-				undoAddEditorSettingsToList();
-			}
-		}
-		if (mouseb & MOUSEB_RIGHT)
-		{
-			if (currentSongFile > 0)
-			{
-				stopsong(gt);
-				undoCreateEditorInfoBackup();
-				copyCurrentToSngBuffer(gt, currentSongFile);
-				currentSongFile--;
-				copySngBufferToCurrent(gt, currentSongFile);
-				editorInfo.currentSongFile = currentSongFile;
-				undoInvalidateUndoAreas();
-				undoAddEditorSettingsToList();
-			}
-		}
-	}
-
-
-
-	// Table editpos
-	for (c = 0; c < MAX_TABLES - 1; c++)
-	{
-		if (mouseb && (mousey == PANEL_TABLES_Y && (mousex >= PANEL_TABLES_X + c * 10) && (mousex <= PANEL_TABLES_X + 7 + c * 10)))
-		{
-			// JP - I've no idea why I added this..
-			if (editorInfo.editmode != EDIT_TABLE_WAVE && prevmouseb)	// Don't allow hold/drag to select another panel
-				return;
-
-			if (prevmouseb)
-				return;
-
-			if (editorInfo.editTableMode == EDIT_TABLE_WAVE + c)
-				editorInfo.editTableMode = EDIT_TABLE_NONE;
-			else if (editorInfo.editTableMode == EDIT_TABLE_NONE)
-				editorInfo.editTableMode = EDIT_TABLE_WAVE + c;
-			return;
-		}
-	}
-
-	if (editorInfo.editTableMode == EDIT_TABLE_NONE)
-	{
-		for (c = 0; c < MAX_TABLES; c++)
-		{
-			checkForMouseInTable(c, PANEL_TABLES_X, PANEL_TABLES_Y);
-		}
-	}
-	else if (editorInfo.editTableMode == EDIT_TABLE_WAVE)
-	{
-		checkForMouseInDetailedWaveTable(PANEL_TABLES_X, PANEL_TABLES_Y);
-		checkForMouseInTable(EDIT_TABLE_SPEED - 1, PANEL_TABLES_X, PANEL_TABLES_Y);
-	}
-	else if (editorInfo.editTableMode == EDIT_TABLE_FILTER)
-	{
-		checkForMouseInDetailedFilterTable(PANEL_TABLES_X, PANEL_TABLES_Y);
-	}
-	else if (editorInfo.editTableMode == EDIT_TABLE_PULSE)
-	{
-		checkForMouseInDetailedPulseTable(PANEL_TABLES_X, PANEL_TABLES_Y);
-	}
-
-
-	// Name editpos (song name, author, (c) )
-	if ((mousey >= (PANEL_NAMES_Y) && mousey < (PANEL_NAMES_Y + 3)) && (mousex >= PANEL_NAMES_X) && (mousex < PANEL_NAMES_X + 32))
-	{
-		if (!mouseb)
-			return;
-
-		editorInfo.nameIndex = mousey - PANEL_NAMES_Y;
-		editorInfo.editmode = EDIT_NAMES;
-
-	}
-
-
-	//	if ((!prevmouseb) && (mousex <= 7) && (mousey == TRANSPORT_BAR_Y))
-	//	{
-	//		recordmode ^= 1;
-	//	}
-//	for (c = 0; c < MAX_CHN; c++)
-//	{
-//		if ((!prevmouseb) && (mousey >= 23 + 3 + 10) && (mousex >= 59 + 7 * c) && (mousex <= 64 + 7 * c))
-//			mutechannel(c, gt);
-//	}
-
-
-
-	checkMouseInWaveformInfo();
-
-	// Titlebar actions
-	if (!menu)
-	{
-		if ((mousey == 0) && (!prevmouseb) && (mouseb == MOUSEB_LEFT))
-		{
-			if ((mousex >= 40 + 20) && (mousex <= 41 + 20))
-			{
-				// V1.3.9 change - handle fine vibrato correctly.
-				//	editorInfo.usefinevib ^= 1;
-				undoCreateEditorInfoBackup();
-				editorInfo.finevibrato = 1 - editorInfo.finevibrato;
-
-				// This is the same code as used when loading the .cfg file. Ensures finevib is only used in specific cases
-				editorInfo.usefinevib = 0;
-				if ((editorInfo.finevibrato == 1) && (editorInfo.multiplier < 2)) editorInfo.usefinevib = 1;
-				if (editorInfo.finevibrato > 1) editorInfo.usefinevib = 1;
-
-				undoAddEditorSettingsToList();
-			}
-			if ((mousex >= 43 + 20) && (mousex <= 44 + 20))
-			{
-				undoCreateEditorInfoBackup();
-				editorInfo.optimizepulse ^= 1;
-				undoAddEditorSettingsToList();
-			}
-			if ((mousex >= 46 + 20) && (mousex <= 47 + 20))
-			{
-
-				undoCreateEditorInfoBackup();
-				editorInfo.optimizerealtime ^= 1;
-				undoAddEditorSettingsToList();
-			}
-			if ((mousex >= 49 + 20) && (mousex <= 52 + 20))
-			{
-				undoCreateEditorInfoBackup();
-				editorInfo.ntsc ^= 1;
-				undoAddEditorSettingsToList();
-
-				sound_init(b, mr, writer, hardsid, editorInfo.sidmodel, editorInfo.ntsc, editorInfo.multiplier, catweasel, interpolate, customclockrate);
-			}
-			if ((mousex >= 54 + 20) && (mousex <= 57 + 20))
-			{
-				undoCreateEditorInfoBackup();
-				editorInfo.sidmodel ^= 1;
-				undoAddEditorSettingsToList();
-				sound_init(b, mr, writer, hardsid, editorInfo.sidmodel, editorInfo.ntsc, editorInfo.multiplier, catweasel, interpolate, customclockrate);
-			}
-
-			if ((mousex >= 59 + 20) && (mousex <= 60 + 20))
-				editPan = 1 - editPan;
-			if ((mousex >= 62 + 20) && (mousex <= 65 + 20))
-			{
-				if (!editPan)
-				{
-					//					undoCreateEditorInfoBackup();
-					editadsr(gt);
-					//				undoAddEditorSettingsToList();
-				}
-				else
-					editSIDPan(gt);
-			}
-
-			if ((mousex >= 67 + 20) && (mousex <= 68 + 20))
-			{
-				undoCreateEditorInfoBackup();
-				prevmultiplier();
-				undoAddEditorSettingsToList();
-			}
-			if ((mousex >= 69 + 20) && (mousex <= 70 + 20))
-			{
-				undoCreateEditorInfoBackup();
-				nextmultiplier();
-				undoAddEditorSettingsToList();
-			}
-		}
-	}
-	else
-	{
-		if ((!mousey) && (mouseb & MOUSEB_LEFT) && (!(prevmouseb & MOUSEB_LEFT)))
-		{
-			if ((mousex >= 0) && (mousex <= 5))
-			{
-				initsong(editorInfo.esnum, PLAY_BEGINNING, gt);
-				followplay = shiftOrCtrlPressed;
-			}
-			if ((mousex >= 7) && (mousex <= 15))
-			{
-				initsong(editorInfo.esnum, PLAY_POS, gt);
-				followplay = shiftOrCtrlPressed;
-			}
-			if ((mousex >= 17) && (mousex <= 26))
-			{
-				initsong(editorInfo.esnum, PLAY_PATTERN, gt);
-				followplay = shiftOrCtrlPressed;
-			}
-			if ((mousex >= 28) && (mousex <= 33))
-				stopsong(gt);
-			if ((mousex >= 35) && (mousex <= 40))
-			{
-				handleLoad(gt, NULL);
-			}
-			if ((mousex >= 42) && (mousex <= 47))
-				save(gt, 0);
-			if ((mousex >= 49) && (mousex <= 57))
-			{
-				stopScreenDisplay();
-				relocator(gt, 0, 0);
-				restartScreenDisplay();
-			}
-			if ((mousex >= 59) && (mousex <= 64))
-			{
-				stopScreenDisplay();
-				onlinehelp(0, 0, gt);
-				restartScreenDisplay();
-			}
-			if ((mousex >= 66) && (mousex <= 72))
-				clear(gt);
-			if ((mousex >= 74) && (mousex <= 79))
-				quit(gt);
-		}
 	}
 }
 
@@ -2710,19 +2083,6 @@ int isMatchingRGB(int presetIndex, int color)
 	return 1;
 }
 
-void swapPalettes(int p1, int p2)
-{
-	for (int i = 0;i < MAX_PALETTE_ENTRIES;i++)
-	{
-		for (int j = 0;j < 3;j++)
-		{
-			int t = paletteRGB[p1][j][i];
-			paletteRGB[p1][j][i] = paletteRGB[p2][j][i];
-			paletteRGB[p2][j][i] = t;
-		}
-	}
-}
-
 void setGFXPaletteRGBFromPaletteRGB(int presetIndex, int paletteIndex)
 {
 	int r = paletteRGB[presetIndex][0][paletteIndex];
@@ -2753,58 +2113,6 @@ void setGFXPaletteRGBFromPaletteRGB(int presetIndex, int paletteIndex)
 //	paletteB[FIRST_UI_COLOR + (paletteIndex * 2) + 1] = b2;
 }
 
-
-void handlePaletteDisplay(GTOBJECT* gt, int palettePreset)
-{
-	if (gt->songinit != PLAY_STOPPED)
-	{
-		stopsong(gt);
-	}
-	SDL_Delay(50);
-
-
-	// backup song 0
-	for (int c = 0;c < MAX_CHN;c++)
-	{
-		for (int p = 0;p < MAX_SONGLEN;p++)
-		{
-			if (editPaletteMode)
-				backupPaletteSong[c][p] = songorder[0][c][p];
-			else
-			{
-				songorder[0][c][p] = backupPaletteSong[c][p];
-			}
-		}
-	}
-
-
-	if (editPaletteMode)
-	{
-		copyPaletteToOrderList(palettePreset);
-
-	}
-
-	editorInfo.eseditpos = 0;
-	editorInfo.eppos = 0;
-	editorInfo.esnum = 0;
-	editorInfo.eschn = 0;
-	editorInfo.editmode = EDIT_ORDERLIST;
-	songchange(gt, 1);
-
-}
-
-void copyPaletteToOrderList(int palettePreset)
-{
-	for (int c = 0;c < MAX_CHN;c++)
-	{
-		for (int p = 0;p < MAX_PALETTE_ENTRIES;p++)
-		{
-			songorder[0][0][p] = paletteRGB[palettePreset][0][p];
-			songorder[0][1][p] = paletteRGB[palettePreset][1][p];
-			songorder[0][2][p] = paletteRGB[palettePreset][2][p];
-		}
-	}
-}
 
 int highlightTableBuffer[MAX_TABLELEN];
 
@@ -3071,293 +2379,6 @@ void playUntilEnd2(int songNumber)
 
 }
 
-int mouseTransportBar(GTOBJECT* gt)
-{
-	if (!mouseb)
-		return 0;
-
-
-
-	if (checkMouseRange(TRANSPORT_BAR_X + 37, TRANSPORT_BAR_Y, 3, 2))
-	{
-		if (mouseb == MOUSEB_RIGHT)
-		{
-			detuneCent -= (msDelta / 2000.0f);
-			if (detuneCent < -1)
-				detuneCent = -1;
-		}
-		else
-		{
-			detuneCent += (msDelta / 2000.0f);
-			if (detuneCent > 1)
-				detuneCent = 1;
-		}
-
-		calculatefreqtable();
-		return 0;
-
-
-	}
-
-
-	if (checkMouseRange(TRANSPORT_BAR_X + 12, TRANSPORT_BAR_Y, 3, 2))
-	{
-		if (mouseheld > HOLDDELAY)
-		{
-			setSongToBeginning(&gtObject);
-			return 1;
-		}
-	}
-
-	if (checkMouseRange(8, TRANSPORT_BAR_Y, 3, 2))
-	{
-		if (mouseb == MOUSEB_RIGHT)
-		{
-			masterVolume -= (msDelta / 500.0f);
-			if (masterVolume < 0)
-				masterVolume = 0;
-		}
-		else if (mouseb)
-		{
-			masterVolume += (msDelta / 500.0f);	// half a second to change int
-			if (masterVolume > 6)
-				masterVolume = 6;
-		}
-	}
-
-	if (prevmouseb)
-		return 0;
-
-	int change = 1;
-	if (mouseb == MOUSEB_RIGHT)
-		change = -change;
-
-	if (checkMouseRange(0, TRANSPORT_BAR_Y, 3, 2))
-	{
-		if (ctrlpressed)
-		{
-			if (bothShiftAndCtrlPressed)
-			{
-				if (gt->songinit != PLAY_STOPPED)
-				{
-					stopsong(gt);
-				}
-
-				stopScreenDisplay();
-				displayCharWindow();
-				restartScreenDisplay();
-				return 1;
-			}
-			else
-			{
-				//		editPaletteMode = 1 - editPaletteMode;
-				stopScreenDisplay();
-				displayPaletteEditorWindow(gt);
-				restartScreenDisplay();
-				return 1;
-				//		handlePaletteDisplay(gt, currentPalettePreset);
-				//		if (editPaletteMode)
-				//		{
-				//			stopsong(gt);
-				//		}
-			}
-		}
-		else
-		{
-			currentPalettePreset += change;
-			if (currentPalettePreset >= MAX_PALETTE_PRESETS)
-				currentPalettePreset = MAX_PALETTE_PRESETS - 1;
-			else if (currentPalettePreset < 0)
-				currentPalettePreset = 0;
-
-			setSkin(currentPalettePreset);
-		}
-
-		return 1;
-	}
-
-	//return 0;
-
-	if (checkMouseRange(4, TRANSPORT_BAR_Y, 3, 2))
-	{
-		if (editPaletteMode)
-			return 1;
-
-		int newCh = editorInfo.maxSIDChannels + change * 3;
-		if (newCh < 3)
-			newCh = 3;
-		else if (newCh > 12)
-			newCh = 12;
-
-		if (newCh != editorInfo.maxSIDChannels)
-		{
-			undoCreateEditorInfoBackup();
-			editorInfo.maxSIDChannels = newCh;
-			undoAddEditorSettingsToList();
-			handleSIDChannelCountChange(&gtObject);
-		}
-		return 1;
-	}
-
-	if (checkMouseRange(TRANSPORT_BAR_X - 2, TRANSPORT_BAR_Y, 3, 2))
-	{
-		editorInfo.epoctave += change;
-		if (editorInfo.epoctave < 0)
-			editorInfo.epoctave = 0;
-		else if (editorInfo.epoctave > 6)
-			editorInfo.epoctave = 6;
-
-		return 1;
-	}
-
-	if (checkMouseRange(TRANSPORT_BAR_X + 4 - 1, TRANSPORT_BAR_Y, 3, 2))
-	{
-		if (editPaletteMode)
-			return 1;
-
-		if (shiftOrCtrlPressed)
-		{
-			autoNextPattern = 1 - autoNextPattern;
-			if (autoNextPattern)
-				sprintf(infoTextBuffer, "Auto move to previous/next pattern: Enabled");
-			else
-				sprintf(infoTextBuffer, "Auto move to previous/next pattern: Disabled");
-			forceInfoLine = 1;
-		}
-		else
-		{
-			followplay = 1 - followplay;
-			if (followplay && gt->songinit != PLAY_STOPPED)
-				resetOrderView(&gtObject);
-		}
-		return 1;
-	}
-
-	if (checkMouseRange(TRANSPORT_BAR_X + 8 - 1, TRANSPORT_BAR_Y, 3, 2))
-	{
-		if (shiftOrCtrlPressed)
-		{
-			transportLoopPatternSelectArea = 1 - transportLoopPatternSelectArea;
-			if (transportLoopPatternSelectArea)
-				sprintf(infoTextBuffer, "Selected pattern area looping: Enabled");
-			else
-				sprintf(infoTextBuffer, "Selected pattern area looping: Disabled");
-			forceInfoLine = 1;
-			// Enable / Disable select area looping
-
-		}
-		else
-		{
-			transportLoopPattern = 1 - transportLoopPattern;
-		}
-		return 1;
-	}
-
-
-
-	if (checkMouseRange(TRANSPORT_BAR_X + 12 - 1, TRANSPORT_BAR_Y, 3, 2))
-	{
-		if (editPaletteMode)
-			return 1;
-
-		handlePressRewind(mousebDoubleClick, gt);
-		return 1;
-	}
-
-
-	if (checkMouseRange(TRANSPORT_BAR_X + 16 - 1, TRANSPORT_BAR_Y, 3, 2))
-	{
-		if (shiftOrCtrlPressed)
-		{
-
-			useOriginalGTFunctionKeys = 1 - useOriginalGTFunctionKeys;
-			if (useOriginalGTFunctionKeys)
-				sprintf(infoTextBuffer, "Use Original GT F1, F2 and F3 keys");
-			else
-				sprintf(infoTextBuffer, "Use GTUltra F1, F2 and F3 keys");
-			forceInfoLine = 1;
-		}
-		else
-			recordmode = 1 - recordmode;
-
-#ifdef DISPLAY_FREE_MEM
-		getFreeMem = 1;
-#endif
-		return 1;
-	}
-
-	if (checkMouseRange(TRANSPORT_BAR_X + 20 - 1, TRANSPORT_BAR_Y, 3, 2))
-	{
-		if (editPaletteMode)
-			return 1;
-		if (gt->songinit == PLAY_STOPPED)
-			playFromCurrentPosition(gt, editorInfo.eppos);
-		else
-		{
-			if (gt->songinit != PLAY_STOPPED)
-			{
-				stopsong(gt);
-			}
-		}
-		return 1;
-	}
-
-
-
-	if (checkMouseRange(TRANSPORT_BAR_X + 24 - 1, TRANSPORT_BAR_Y, 3, 2))
-	{
-		if (editPaletteMode)
-			return 1;
-
-		nextSongPos(&gtObject);
-		return 1;
-	}
-
-	if (checkMouseRange(TRANSPORT_BAR_X + 28, TRANSPORT_BAR_Y, 4, 2))
-	{
-		int index = 0;
-		if (mousey >= TRANSPORT_BAR_Y + 1)
-			index += 2;
-		if (mousex >= TRANSPORT_BAR_X + 28 + 2)
-			index += 1;
-
-		transportPolySIDEnabled[index] = 1 - transportPolySIDEnabled[index];
-		return 1;
-	}
-
-	if (checkMouseRange(TRANSPORT_BAR_X + 33, TRANSPORT_BAR_Y, 3, 2))
-	{
-		if (shiftOrCtrlPressed)
-		{
-			if (midiEnabled)
-				displayMIDISelectWindow();
-		}
-		else
-		{
-			lastDisplayChanCount = 0;
-			transportShowKeyboard = 1 - transportShowKeyboard;
-		}
-	}
-
-
-	if (checkMouseRange(TRANSPORT_BAR_X + 41, TRANSPORT_BAR_Y, 3, 2))
-	{
-		stereoMode++;
-		stereoMode %= 3;
-		if (stereoMode == 1 && editorInfo.maxSIDChannels == 3)
-			stereoMode++;
-		if (stereoMode == 0)
-			monomode = 1;
-		else
-			monomode = 0;
-
-		//monomode ^= 1;
-	}
-
-	return 0;
-
-}
-
 void handlePressRewind(int doubleClick, GTOBJECT* gt)
 {
 	if (doubleClick)
@@ -3373,13 +2394,6 @@ void handlePressRewind(int doubleClick, GTOBJECT* gt)
 	}
 }
 
-
-int checkMouseRange(int x, int y, int w, int h)
-{
-	if (mousex >= x && mousex < x + w && mousey >= y && mousey < y + h)
-		return 1;
-	return 0;
-}
 
 void handleSIDChannelCountChange(GTOBJECT* gt)
 {
@@ -3635,8 +2649,6 @@ void previousSongPos(GTOBJECT* gt, int songDffset)
 
 void setSongToBeginning(GTOBJECT* gt)
 {
-	if (editPaletteMode)
-		return;
 
 	editorInfo.eseditpos = 0;
 	editorInfo.eschn = editorInfo.epchn;
@@ -3659,8 +2671,6 @@ void setSongToBeginning(GTOBJECT* gt)
 void playFromCurrentPosition(GTOBJECT* gt, int currentPos)
 {
 
-	if (editPaletteMode)
-		return;
 
 	int t1 = followplay;
 	int t2 = gt->interPatternLoopEnabledFlag;
@@ -3674,15 +2684,6 @@ void playFromCurrentPosition(GTOBJECT* gt, int currentPos)
 	gt->interPatternLoopEnabledFlag = t2;
 	followplay = t1;
 }
-
-void mouseTrack()
-{
-	editorInfo.mouseTrack = 1;
-	editorInfo.mouseTrackX = mousex;
-	editorInfo.mouseTrackY = mousey;
-	ModifyTrackGetOriginalValue();
-}
-
 
 void ModifyTrackGetOriginalValue()
 {
@@ -3702,705 +2703,7 @@ void ModifyTrackGetOriginalValue()
 
 }
 
-// Hold left mouse button + move mouse = modify value under cursor
-int mouseTrackModify(int editorWindow)
-{
-
-
-	if (!mouseb || (editorWindow == EDIT_TABLES && editorInfo.editTableMode != EDIT_TABLE_NONE))
-	{
-		editorInfo.mouseTrackDoUndo = 0;
-		editorInfo.mouseTrack = 0;
-		return 1;
-	}
-
-	if (editorInfo.mouseTrack == 0)	// This ensures that we only track hold/move when we start to hold on the same value that the cursor is on
-		return 1;
-
-
-	int xdiff = mousex - editorInfo.mouseTrackX;
-	//int ydiff = mousey - editorInfo.mouseTrackY;
-
-	if (editorWindow == EDIT_TABLES)
-	{
-
-		char* dptr = (char*)&ltable[editorInfo.etnum][editorInfo.etpos];
-		if (editorInfo.etcolumn > 1)	// columns 0+1 = lefttable value
-			dptr = (char*)&rtable[editorInfo.etnum][editorInfo.etpos];
-
-		int v = editorInfo.mouseTrackOriginalValue << 1;
-		v += xdiff;
-		v >>= 1;
-
-		*dptr = v;
-
-		if (*dptr != editorInfo.mouseTrackOriginalValue)
-		{
-			editorInfo.mouseTrackDoUndo = 1;
-			return 0;	// 0 = stop recording change in UNDO. We only record the last value when releasing button for a hold/drag
-		}
-		return 1;
-	}
-	if (editorWindow == EDIT_INSTRUMENT)
-	{
-		if (editorInfo.eicolumn < 2 && editorInfo.eipos < 2)	// Editing ADSR. Only hold/drag on nybbles
-		{
-			int v = editorInfo.mouseTrackOriginalValue;
-
-			char* dptr = (char*)&instr[editorInfo.einum].ad;
-			if (editorInfo.eipos == 1)
-				dptr = (char*)&instr[editorInfo.einum].sr;
-
-			if (editorInfo.eicolumn == 0)	// high nybble
-				v >>= 4;
-			else
-				v &= 0xf;
-
-			//		v <<= 1;
-			v += xdiff;
-			//		v >>= 1;
-
-			if (v < 0)
-				v = 0;
-			else if (v > 0xf)
-				v = 0xf;
-			if (editorInfo.eicolumn == 0)	// high nybble
-			{
-				v <<= 4;
-				v |= (*dptr & 0xf);
-			}
-			else
-				v |= (*dptr & 0xf0);
-
-			*dptr = v;
-			if (*dptr != editorInfo.mouseTrackOriginalValue)
-			{
-				editorInfo.mouseTrackDoUndo = 1;
-				return 0;	// 0 = stop recording change in UNDO. We only record the last value when releasing button for a hold/drag
-			}
-			return 1;
-		}
-		else
-		{
-			unsigned char* dptr = &instr[editorInfo.einum].ad;
-			dptr += editorInfo.eipos;
-
-			int v = editorInfo.mouseTrackOriginalValue << 1;
-			v += xdiff;
-			*dptr = v >> 1;
-
-			setTableBackgroundColours(editorInfo.einum);
-
-			if (*dptr != editorInfo.mouseTrackOriginalValue)
-			{
-				editorInfo.mouseTrackDoUndo = 1;
-				return 0;	// 0 = stop recording change in UNDO. We only record the last value when releasing button for a hold/drag
-			}
-			return 1;
-
-		}
-	}
-	return 0;
-}
-
-int checkForMouseInTable(int c, int OX, int OY)
-{
-	if ((mousey > OY) && (mousey <= OY + 6 + 9) && (mousex >= OX + 3 + c * 10) && (mousex <= OX + 7 + c * 10))
-	{
-		if (editorInfo.editmode != EDIT_TABLES && prevmouseb)	// Don't allow hold/drag to select another panel
-			return 0;
-
-		if (!mouseb)
-			return 0;
-
-		int newpos = mousey - (OY + 1) + editorInfo.etview[editorInfo.etnum];
-		if (newpos < 0) newpos = 0;
-		if (newpos >= MAX_TABLELEN) newpos = MAX_TABLELEN - 1;
-
-		editorInfo.editmode = EDIT_TABLES;
-		disableEnterToReturnToLastPos = 1;
-
-		if ((mouseb & (MOUSEB_RIGHT | MOUSEB_MIDDLE)) && (!prevmouseb))
-		{
-			if ((editorInfo.etmarknum != editorInfo.etnum) || (newpos != editorInfo.etmarkend))
-			{
-				editorInfo.etmarknum = c;
-				editorInfo.etmarkstart = editorInfo.etmarkend = newpos;
-			}
-		}
-		if (mouseb & MOUSEB_LEFT && (!prevmouseb))
-		{
-			editorInfo.etnum = c;
-			editorInfo.etpos = mousey - (OY + 1) + editorInfo.etview[editorInfo.etnum];
-			editorInfo.etcolumn = mousex - (OX + 3) - c * 10;
-			if (editorInfo.etcolumn > 2) editorInfo.etcolumn--;
-			mouseTrack();	// MUST DO AFTER SETTING ABOVE VALUES
-
-		}
-
-		if (editorInfo.etpos < 0) editorInfo.etpos = 0;
-		if (editorInfo.etpos > MAX_TABLELEN - 1) editorInfo.etpos = MAX_TABLELEN - 1;
-
-		if (mouseb & (MOUSEB_RIGHT | MOUSEB_MIDDLE)) editorInfo.etmarkend = newpos;
-
-		return 1;
-	}
-	return 0;
-}
-
-
-int checkForMouseInDetailedFilterTable(int OX, int OY)
-{
-
-	if ((mousey > OY) && (mousey <= OY + 6 + 9))
-	{
-		int newpos = mousey - (OY + 1) + editorInfo.etview[editorInfo.etnum];
-		if (newpos < 0) newpos = 0;
-		if (newpos >= MAX_TABLELEN) newpos = MAX_TABLELEN - 1;
-
-		if (mousex >= OX + 4 && mousex <= OX + 7 && mouseb && !prevmouseb)
-		{
-			detailedFilterTableChangeCommand(mousex - (OX + 4), newpos);	// select Filter Cutoff, modify,filterinfo, jump/end option
-			return 1;
-		}
-		else if (mousex >= OX + 20 && mousex <= OX + 22 && mouseb && !prevmouseb)
-		{
-			detailedFilterTableChangeSign(mousex - (OX + 20), newpos);
-		}
-		else if (mousex >= OX + 24 && mousex <= OX + 29 && mouseb && !prevmouseb)
-		{
-			detailedFilterTableChangeFilterType((mousex - (OX + 24)) / 2, newpos);
-		}
-
-		int col = -1;
-		if (mousex > OX + 8 && mousex < OX + 17)
-		{
-			col = 0;
-		}
-		else if (mousex >= OX + 17 && mousex <= OX + 18)
-			col = mousex - (OX + 17);
-		else if (mousex >= OX + 21 && mousex <= OX + 22)
-			col = 2 + (mousex - (OX + 21));
-		if (col == -1)
-			return 0;
-
-		if (editorInfo.editmode != EDIT_TABLES && prevmouseb)	// Don't allow hold/drag to select another panel
-			return 0;
-
-		if (!mouseb)
-			return 0;
-
-		editorInfo.editmode = EDIT_TABLES;
-		disableEnterToReturnToLastPos = 1;
-
-		if ((mouseb & (MOUSEB_RIGHT | MOUSEB_MIDDLE)) && (!prevmouseb))
-		{
-			if ((editorInfo.etmarknum != editorInfo.etnum) || (newpos != editorInfo.etmarkend))
-			{
-				editorInfo.etmarknum = 0;
-				editorInfo.etmarkstart = editorInfo.etmarkend = newpos;
-			}
-		}
-		if (mouseb & MOUSEB_LEFT && (!prevmouseb))
-		{
-
-			editorInfo.etnum = FTBL;
-			editorInfo.etpos = mousey - (OY + 1) + editorInfo.etview[editorInfo.etnum];
-			editorInfo.etcolumn = col;
-			mouseTrack();	// MUST DO AFTER SETTING ABOVE VALUES
-		}
-		if (editorInfo.etpos < 0) editorInfo.etpos = 0;
-		if (editorInfo.etpos > MAX_TABLELEN - 1) editorInfo.etpos = MAX_TABLELEN - 1;
-
-		if (mouseb & (MOUSEB_RIGHT | MOUSEB_MIDDLE)) editorInfo.etmarkend = newpos;
-
-		return 1;
-	}
-	return 0;
-}
-
-
-
-int checkForMouseInDetailedPulseTable(int OX, int OY)
-{
-
-	if ((mousey > OY) && (mousey <= OY + 6 + 9))
-	{
-		int newpos = mousey - (OY + 1) + editorInfo.etview[editorInfo.etnum];
-		if (newpos < 0) newpos = 0;
-		if (newpos >= MAX_TABLELEN) newpos = MAX_TABLELEN - 1;
-
-		if (mousex >= OX + 4 && mousex <= OX + 6 && mouseb && !prevmouseb)
-		{
-			detailedPulseTableChangeCommand(mousex - (OX + 4), newpos);
-			return 1;
-		}
-		else if (mousex == OX + 21 && mouseb && !prevmouseb)
-		{
-			detailedPulseTableChangeSign(mousex - (OX + 21), newpos);
-		}
-
-
-		int col = -1;
-		if (mousex > OX + 8 && mousex < OX + 17)
-		{
-			col = 0;
-		}
-		else if (mousex >= OX + 17 && mousex <= OX + 19)	// 0-2 = left column (2 only used for setting pulse width)
-			col = mousex - (OX + 17);
-		else if (mousex >= OX + 22 && mousex <= OX + 23)	// 3-4 = right column
-			col = 3 + (mousex - (OX + 22));
-		if (col == -1)
-			return 0;
-
-		if (editorInfo.editmode != EDIT_TABLES && prevmouseb)	// Don't allow hold/drag to select another panel
-			return 0;
-
-		if (!mouseb)
-			return 0;
-
-		editorInfo.editmode = EDIT_TABLES;
-		disableEnterToReturnToLastPos = 1;
-
-		if ((mouseb & (MOUSEB_RIGHT | MOUSEB_MIDDLE)) && (!prevmouseb))
-		{
-			if ((editorInfo.etmarknum != editorInfo.etnum) || (newpos != editorInfo.etmarkend))
-			{
-				editorInfo.etmarknum = 0;
-				editorInfo.etmarkstart = editorInfo.etmarkend = newpos;
-			}
-		}
-		if (mouseb & MOUSEB_LEFT && (!prevmouseb))
-		{
-			editorInfo.etnum = PTBL;
-			editorInfo.etpos = mousey - (OY + 1) + editorInfo.etview[editorInfo.etnum];
-			editorInfo.etcolumn = col;
-			mouseTrack();	// MUST DO AFTER SETTING ABOVE VALUES
-		}
-		if (editorInfo.etpos < 0) editorInfo.etpos = 0;
-		if (editorInfo.etpos > MAX_TABLELEN - 1) editorInfo.etpos = MAX_TABLELEN - 1;
-
-		if (mouseb & (MOUSEB_RIGHT | MOUSEB_MIDDLE)) editorInfo.etmarkend = newpos;
-
-		return 1;
-	}
-	return 0;
-}
-
-
-
-/*
-Mouse clicking on the various -WDCJ / AB / + options in the detailed wavetable view?
-If so, initialise data accordingly.
-*/
-int checkForMouseInDetailedWaveTable(int OX, int OY)
-{
-	if ((mousey > OY) && (mousey <= OY + 6 + 9))
-	{
-		int newpos = mousey - (OY + 1) + editorInfo.etview[editorInfo.etnum];
-		if (newpos < 0) newpos = 0;
-		if (newpos >= MAX_TABLELEN) newpos = MAX_TABLELEN - 1;
-
-		if (mousex >= OX + 4 && mousex <= OX + 8 && mouseb && !prevmouseb)
-		{
-			detailedWaveTableChangeCommand(mousex - (OX + 4), newpos);	// Clicked on either -WDCJ
-			return 1;
-		}
-		else if (mousex >= OX + 10 && mousex <= OX + 11 && mouseb && !prevmouseb)
-		{
-			detailedWaveTableChangeData(mousex - (OX + 10), newpos);		// Clicked on either R or A (relative / Absolute)
-			return 1;
-		}
-		else if (mousex == 81 && mouseb && !prevmouseb)
-		{
-			detailedWaveTableChangeRelativeNote(mousex - (OX + 10), newpos);	// Clicked on +/- to change sign of relative note
-			return 1;
-		}
-		int col = -1;
-		if (mousex > OX + 12 && mousex < OX + 18)
-		{
-			col = 0;
-		}
-		else if (mousex >= OX + 18 && mousex <= OX + 19)
-			col = mousex - (OX + 18);
-		else if (mousex >= OX + 22 && mousex <= OX + 23)
-			col = 2 + (mousex - (OX + 22));
-		if (col == -1)
-			return 0;
-
-		if (editorInfo.editmode != EDIT_TABLES && prevmouseb)	// Don't allow hold/drag to select another panel
-			return 0;
-
-		if (!mouseb)
-			return 0;
-
-
-
-		editorInfo.editmode = EDIT_TABLES;
-		disableEnterToReturnToLastPos = 1;
-
-		if ((mouseb & (MOUSEB_RIGHT | MOUSEB_MIDDLE)) && (!prevmouseb))
-		{
-			if ((editorInfo.etmarknum != editorInfo.etnum) || (newpos != editorInfo.etmarkend))
-			{
-				editorInfo.etmarknum = 0;
-				editorInfo.etmarkstart = editorInfo.etmarkend = newpos;
-			}
-		}
-		if (mouseb & MOUSEB_LEFT && (!prevmouseb))
-		{
-			editorInfo.etnum = 0;
-			editorInfo.etpos = mousey - (OY + 1) + editorInfo.etview[editorInfo.etnum];
-			editorInfo.etcolumn = col;
-			mouseTrack();	// MUST DO AFTER SETTING ABOVE VALUES
-		}
-		if (editorInfo.etpos < 0) editorInfo.etpos = 0;
-		if (editorInfo.etpos > MAX_TABLELEN - 1) editorInfo.etpos = MAX_TABLELEN - 1;
-
-		if (mouseb & (MOUSEB_RIGHT | MOUSEB_MIDDLE)) editorInfo.etmarkend = newpos;
-
-		return 1;
-	}
-	return 0;
-}
-
-
-
-
-/*
-Wavetable right side:  00-5F Relative notes
-			   60-7F Negative relative notes (lower pitch)
-			   80    Keep frequency unchanged
-			   81-DF Absolute notes C#0 - B-7
-
-*/
-
-/*
-User has clicked on +/- to change relative note sign
-*/
-void detailedWaveTableChangeRelativeNote(int x, int y)
-{
-	unsigned char v = ltable[0][y];
-	if (v < 1 || v >= 0xf0)	// Does right table contain abs or relative note?
-		return;	// No..
-
-	int vr = rtable[0][y];
-	if (vr >= 0x80 || vr == 0)	// Does right table contain relative note (or a non-zero relative note)?
-		return;	// No..
-
-	if (vr <= 0x5f)	// positive relative?
-	{
-		vr = 0x80 - vr;
-		if (vr < 0x60)
-			vr = 0x60;
-		rtable[0][y] = vr;
-	}
-	else
-	{
-		vr -= 0x60;
-		vr = 0x20 - vr;
-		rtable[0][y] = vr;
-	}
-
-}
-
-/*
-User has clicked on R/A to change wavetable relative / absolute
-*/
-void detailedWaveTableChangeData(int x, int y)
-{
-	unsigned char v = ltable[0][y];
-	if (v < 1 || v >= 0xf0)	// Does right table contain abs or relative note?
-		return;	// No..
-
-	v = rtable[0][y];
-
-
-	if (v >= 0x81)	// was abs note?
-	{
-		if (x == 1)
-			rtable[0][y] = 0x80;	// Was absolute already. So turn off (make "no change")
-		else
-			rtable[0][y] = 0;	// set to Relative
-	}
-	else if (v < 0x80)	// relative note?
-	{
-		if (x == 0)
-			rtable[0][y] = 0x80;	// Was Relative already. So turn off (make "no change")
-		else
-			rtable[0][y] = 0x81;	// Set to Absolute
-	}
-	else if (v == 0x80)	// Was "no change"
-	{
-		if (x == 0)
-			rtable[0][y] = 0;	// Set to Relative
-		else
-			rtable[0][y] = 0x81;	// Set to Absolute
-	}
-
-}
-
-
-/*
-Wavetable left side:   00    Leave waveform unchanged
-					   01-0F Delay this step by 1-15 frames
-					   10-DF Waveform values
-					   E0-EF Inaudible waveform values $00-$0F
-					   F0-FE Execute command 0XY-EXY. Right side is parameter.
-					   FF    Jump. Right side tells position ($00 = stop)
-
-*/
-
-/*
-If user changes the command type, we need to reset the data within the table so that it's initialised in range for that specific command
-*/
-void detailedWaveTableChangeCommand(int x, int y)
-{
-
-	unsigned char v = ltable[WTBL][y];
-
-	int currentCommand = 0;
-	if (v >= 1 && v <= 0xf)
-		currentCommand = 2;
-	else if (v >= 0x10 && v <= 0xef)
-		currentCommand = 1;
-	else if (v >= 0xf0 && v <= 0xfe)
-		currentCommand = 3;
-	else if (v == 0xff)
-		currentCommand = 4;
-
-	if (x == currentCommand)	// selecting the same command?
-		return;
-
-	if (x == 0)
-		ltable[WTBL][y] = 0;
-	else if (x == 2)
-		ltable[WTBL][y] = 1;
-	else if (x == 1)
-	{
-		ltable[WTBL][y] = 0x41;
-	}
-	else if (x == 3)
-		ltable[WTBL][y] = 0xf0;
-	else if (x == 4)
-	{
-		ltable[WTBL][y] = 0xff;
-		rtable[WTBL][y] = 0;
-	}
-}
-
-
-
-/*
-Filtertable left side: 00    Set cutoff, indicated by right side
-					   01-7F Filter modulation step. Left side indicates time
-							 and right side the speed (signed 8-bit value)
-					   80-F0 Set filter parameters. Left side high nybble
-							 tells the passband ($90 = lowpass, $A0 = bandpass
-							 etc.) and right side tells resonance/channel
-							 bitmask, as in command BXY.
-					   FF    Jump. Right side tells position ($00 = stop)
-*/
-
-/*
-If user changes the command type, we need to reset the data within the table so that it's initialised in range for that specific command
-*/
-
-void detailedFilterTableChangeFilterType(int x, int y)
-{
-
-	unsigned char v = ltable[FTBL][y];
-
-	if (v >= 0x80 && v <= 0xfe)
-	{
-		v ^= (0x10 << x);
-		ltable[FTBL][y] = v;
-	}
-}
-
-void detailedFilterTableChangeSign(int x, int y)
-{
-	unsigned char v = ltable[FTBL][y];
-	if (v >= 0x1 && v <= 0x7f)
-	{
-		if (x == 0)// filter modulation
-		{
-			v = rtable[FTBL][y];
-			if (v >= 0x80)
-			{
-				v = 0x100 - v;
-				rtable[FTBL][y] = v;
-			}
-			else
-			{
-				if (v == 0)
-					v = 1;
-				v = 0x100 - v;
-				rtable[FTBL][y] = v;
-			}
-		}
-	}
-	else if (v >= 0x80)
-	{
-		int rv = rtable[FTBL][y];
-		rv ^= 1 << x;
-		rtable[FTBL][y] = rv;
-	}
-}
-
-
-
-void detailedPulseTableChangeSign(int x, int y)
-{
-	unsigned char v = ltable[PTBL][y];
-	if (v >= 0x1 && v <= 0x7f)
-	{
-		if (x == 0)// filter modulation
-		{
-			v = rtable[PTBL][y];
-			if (v >= 0x80)
-			{
-				v = 0x100 - v;
-				rtable[PTBL][y] = v;
-			}
-			else
-			{
-				if (v == 0)
-					v = 1;
-				v = 0x100 - v;
-				rtable[PTBL][y] = v;
-			}
-		}
-	}
-}
-
-
-void detailedFilterTableChangeCommand(int x, int y)
-{
-
-	unsigned char v = ltable[FTBL][y];
-
-	// CMFJ
-	int currentCommand = 0;
-	if (v >= 1 && v <= 0x7f)
-		currentCommand = 1;
-	else if (v >= 0x80 && v <= 0xfe)
-		currentCommand = 2;
-	else if (v == 0xff)
-		currentCommand = 3;
-
-	if (x == currentCommand)	// selecting the same command?
-		return;
-
-	if (x == 0)
-	{
-		ltable[FTBL][y] = 0;
-		rtable[FTBL][y] = 0;
-	}
-	else if (x == 1)
-	{
-		ltable[FTBL][y] = 0x1;
-		rtable[FTBL][y] = 0x0;
-	}
-	else if (x == 2)
-	{
-		ltable[FTBL][y] = 0x90;		// low pass
-		rtable[FTBL][y] = 0x7;		// all channels
-	}
-	else if (x == 3)
-	{
-		ltable[FTBL][y] = 0xff;
-		rtable[FTBL][y] = 0;
-	}
-
-}
-
-
-void detailedPulseTableChangeCommand(int x, int y)
-{
-
-	unsigned char v = ltable[PTBL][y];
-
-	// CMFJ
-	int currentCommand = 0;
-	if (v >= 1 && v <= 0x7f)
-		currentCommand = 1;
-	else if (v >= 0x80 && v <= 0xfe)
-		currentCommand = 0;
-	else if (v == 0xff)
-		currentCommand = 2;
-
-	if (x == currentCommand)	// selecting the same command?
-		return;
-
-	if (x == 1)	// Modify
-	{
-		ltable[PTBL][y] = 0x1;
-		rtable[PTBL][y] = 0x0;
-	}
-	else if (x == 0) //Set
-	{
-		ltable[PTBL][y] = 0x88;		// Set pulse to 0x800 as default
-		rtable[PTBL][y] = 0x0;		//
-	}
-	else if (x == 2)
-	{
-		ltable[PTBL][y] = 0xff;		// stop
-		rtable[PTBL][y] = 0;
-	}
-
-}
-
-int checkMouseInWaveformInfo()
-{
-	if (!mouseb)
-		return 0;
-	if (prevmouseb)
-		return 0;
-	if (mousey != TRANSPORT_BAR_Y - 1)
-		return 0;
-	if (waveformDisplayInfo.displayOnOff == 0)
-		return 0;
-
-	int x = mousex - (TRANSPORT_BAR_X - 5);
-	if (x < 0)
-		return 0;
-	if (x % 5 == 0)
-		return 0;
-
-	x /= 5;
-	if (x > 7)
-		return 0;
-
-	waveformDisplayInfo.value ^= (0x80 >> x);
-
-	if (editorInfo.editmode == EDIT_TABLES)
-	{
-		if (ltable[WTBL][editorInfo.etpos] < 0xf0)
-		{
-			int data = waveformDisplayInfo.value;	// wavetable value in left table
-			if (data < 0x10)
-				data += 0xe0;
-			*waveformDisplayInfo.destAddress = (unsigned char)data;
-		}
-		else
-		{
-			*waveformDisplayInfo.destAddress = (unsigned char)waveformDisplayInfo.value;
-		}
-	}
-	else if (editorInfo.editmode == EDIT_INSTRUMENT)
-	{
-		*waveformDisplayInfo.destAddress = (unsigned char)waveformDisplayInfo.value;
-	}
-	else if (editorInfo.editmode == EDIT_PATTERN)
-	{
-		*waveformDisplayInfo.destAddress = (unsigned char)waveformDisplayInfo.value;
-
-	}
-
-	return 1;
-}
-
+// M6 Phase 5: detailed table / waveform mouse helpers (chargen hit-testing) removed.
 
 // Wrote all this, then realised I could just easily modify the existing calculatefreqtable
 // Will leave it here anyway. May use it again one day...
@@ -4459,90 +2762,6 @@ void createFilename(char* filePath, char* newfileName, char* filename)
 	strcpy(&newfileName[d + 1], filename);
 }
 
-
-void checkForMouseInOrderList(GTOBJECT* gt, int maxCh)
-{
-	// Song editpos & songnumber selection
-	if ((mousey >= 3) && (mousey <= 3 + maxCh) && (mousex >= 40 + 21))
-	{
-		if (editorInfo.editmode != EDIT_ORDERLIST && prevmouseb)	// Don't allow hold/drag to select another panel
-			return;
-
-		if (!mouseb)
-			return;
-
-		int newpos = editorInfo.esview + (mousex - 44 - 21) / 3;
-		int newcolumn = (mousex - 44 - 21) % 3;
-		int newchn = mousey - 3;
-		if (newcolumn < 0) newcolumn = 0;
-		if (newcolumn > 1) newcolumn = 1;
-		if (newpos < 0)
-		{
-			newpos = 0;
-			newcolumn = 0;
-		}
-		if (newpos == songlen[editorInfo.esnum][editorInfo.eschn])
-		{
-			newpos++;
-			newcolumn = 0;
-		}
-		if (newpos > songlen[editorInfo.esnum][editorInfo.eschn] + 1)
-		{
-			newpos = songlen[editorInfo.esnum][editorInfo.eschn] + 1;
-			newcolumn = 1;
-		}
-
-		editorInfo.editmode = EDIT_ORDERLIST;
-
-		if ((mouseb & (MOUSEB_RIGHT | MOUSEB_MIDDLE)) && (!prevmouseb) && (newpos < songlen[editorInfo.esnum][editorInfo.eschn]))
-		{
-
-			if ((editorInfo.esmarkchn != newchn) || (newpos != editorInfo.esmarkend))
-			{
-				editorInfo.esmarkchn = newchn;
-				editorInfo.esmarkstart = editorInfo.esmarkend = newpos;
-			}
-
-		}
-
-		if (mouseb & MOUSEB_LEFT)
-		{
-			int m = mousebDoubleClick;
-			int s = shiftOrCtrlPressed;
-
-			if (((mouseheld > HOLDDELAY) || (s != 0)) && !editPaletteMode)
-			{
-				editorInfo.eschn = newchn;
-				editorInfo.eseditpos = newpos;
-				editorInfo.escolumn = newcolumn;
-				setMasterLoopChannel(gt, "debug_b");
-				backupPatternDisplayInfo(gt);	//V1.2.2 - Preserve pattern edit position
-				orderSelectPatternsFromSelected(gt);
-				restorePatternDisplayInfo(gt);	//V1.2.2
-			}
-			else if (m && !editPaletteMode)	// double click?
-			{
-
-				editorInfo.eschn = newchn;
-				editorInfo.eseditpos = newpos;
-				editorInfo.escolumn = newcolumn;
-				setMasterLoopChannel(gt, "debug_f");
-				orderPlayFromPosition(gt, 0, editorInfo.eseditpos, editorInfo.eschn, 1);
-			}
-			else
-			{
-				editorInfo.eschn = newchn;
-				editorInfo.eseditpos = newpos;
-				editorInfo.escolumn = newcolumn;
-
-				setMasterLoopChannel(gt, "debug_c");
-			}
-		}
-
-		if ((mouseb & (MOUSEB_RIGHT | MOUSEB_MIDDLE)) && (newpos < songlen[editorInfo.esnum][editorInfo.eschn]))
-			editorInfo.esmarkend = newpos;
-	}
-}
 
 void validateStereoMode()
 {
@@ -4625,161 +2844,6 @@ int createBackupFolder()
 
 
 
-
-void checkForMouseInExtendedOrderList(GTOBJECT* gt, int maxCh)
-{
-
-	// Song editpos & songnumber selection
-	if ((mousey >= PANEL_ORDER_Y + 2) && (mousey <= 3 + EXTENDEDVISIBLEORDERLIST) && (mousex >= PANEL_ORDER_X + 4) && (mousex <= PANEL_ORDER_X + 4 + 4 + (maxCh * 6)))
-	{
-		if (editorInfo.editmode != EDIT_ORDERLIST && prevmouseb)	// Don't allow hold/drag to select another panel
-			return;
-
-		if (!mouseb)
-			return;
-
-		int newpos = editorInfo.esview + (mousey - (PANEL_ORDER_Y + 2));	// -EXTENDEDVISIBLEORDERLIST);
-		int newcolumn = (mousex - (PANEL_ORDER_X + 4)) % 6;
-		if (newcolumn > 4)
-			return;
-		//			newcolumn--;
-
-		int newchn = (mousex - (PANEL_ORDER_X + 4)) / 6;
-
-		if (newpos < 0)
-		{
-			newpos = 0;
-		}
-		if (newpos >= 0x7ff)
-			newpos = 0x7ff;
-
-		// JP - Left mouse button + either middle or right button to cancel selection
-		if ((mouseb & MOUSEB_LEFT) && (mouseb & (MOUSEB_RIGHT | MOUSEB_MIDDLE)))
-		{
-			editorInfo.esmarkchn = -1;
-			editorInfo.esmarkchnend = -1;	// Cancel selection
-			selectingInOrderList = 0;
-			return;
-		}
-
-		if (songOrderPatterns[editorInfo.esnum][newchn][newpos] < 0xff)
-		{
-			if (newcolumn == 2)	// is cursor in the gap between pattern and transpose? if so, move it left
-			{
-				if (mouseb & MOUSEB_LEFT)
-					return;
-			}
-		}
-
-		editorInfo.editmode = EDIT_ORDERLIST;
-
-		if ((mouseb & (MOUSEB_RIGHT | MOUSEB_MIDDLE)) && (!prevmouseb) && (newpos < MAX_SONGLEN_EXPANDED))	//< songOrderLength[editorInfo.esnum][editorInfo.eschn]))
-		{
-
-			if ((editorInfo.esmarkchn != newchn) || (newpos != editorInfo.esmarkend))
-			{
-				editorInfo.esmarkchn = newchn;
-				editorInfo.esmarkstart = editorInfo.esmarkend = newpos;
-				selectingInOrderList = 1;
-				selectingInOrderListDeltaTime = 0;
-			}
-
-		}
-
-		if (mouseb & MOUSEB_LEFT)
-		{
-			int m = mousebDoubleClick;
-			int s = shiftOrCtrlPressed;
-
-			if (((mouseheld > HOLDDELAY) || (s != 0)) && !editPaletteMode)
-			{
-				if (editorInfo.eseditpos == newpos)
-				{
-					editorInfo.eschn = newchn;
-					editorInfo.eseditpos = newpos;
-					editorInfo.escolumn = newcolumn;
-					setMasterLoopChannel(gt, "debug_d");
-					backupPatternDisplayInfo(gt);	//V1.2.2 - Preserve pattern edit position
-					orderSelectPatternsFromSelected(gt);
-					restorePatternDisplayInfo(gt);	//V1.2.2
-				}
-				else
-				{
-					mouseheld = 0;
-					editorInfo.eschn = newchn;
-					editorInfo.eseditpos = newpos;
-					editorInfo.escolumn = newcolumn;
-				}
-			}
-			else if (m && !editPaletteMode)	// double click?
-			{
-
-				editorInfo.eschn = newchn;
-				editorInfo.eseditpos = newpos;
-				editorInfo.escolumn = newcolumn;
-				setMasterLoopChannel(gt, "debug_g");
-				orderPlayFromPosition(gt, 0, editorInfo.eseditpos, editorInfo.eschn, 1);
-
-			}
-			else
-			{
-				if (editorInfo.eseditpos != newpos)
-					mouseheld = 0;
-				editorInfo.eschn = newchn;
-				editorInfo.eseditpos = newpos;
-				editorInfo.escolumn = newcolumn;
-
-				setMasterLoopChannel(gt, "debug_e");
-			}
-		}
-
-		if ((mouseb & (MOUSEB_RIGHT | MOUSEB_MIDDLE)) && (newpos < MAX_SONGLEN_EXPANDED))
-		{
-			if (editorInfo.esmarkchn != -1)	// are we currently selecting?
-			{
-				editorInfo.esmarkend = newpos;
-				editorInfo.esmarkchnend = newchn;
-			}
-		}
-	}
-	else if (selectingInOrderList)
-	{
-		if (mouseb & (MOUSEB_RIGHT | MOUSEB_MIDDLE))
-		{
-			int deltaTicks = SDL_GetTicks();
-			selectingInOrderListDeltaTime += deltaTicks - selectingInOrderListDeltaTicks;
-			selectingInOrderListDeltaTicks = deltaTicks;
-
-			if (selectingInOrderListDeltaTime > 20)	//50)
-			{
-				selectingInOrderListDeltaTime = 0;
-				if (mousey > PANEL_ORDER_Y + 1 + EXTENDEDVISIBLEORDERLIST)
-				{
-					if (editorInfo.esmarkend < 0x7ff)
-					{
-						editorInfo.esmarkend = editorInfo.esview + EXTENDEDVISIBLEORDERLIST;
-						if (editorInfo.esmarkend >= 0x7ff)
-							editorInfo.esmarkend = 0x7fe;
-						editorInfo.eseditpos = editorInfo.esmarkend;
-					}
-				}
-				else if (mousey < PANEL_ORDER_Y + 2)
-				{
-					if (editorInfo.esmarkend > 0)
-					{
-						editorInfo.esmarkend = editorInfo.esview - 1;
-						if (editorInfo.esmarkend < 0)
-							editorInfo.esmarkend = 0;
-						editorInfo.eseditpos = editorInfo.esmarkend;
-					}
-				}
-			}
-		}
-		else
-			selectingInOrderList = 0;
-	}
-
-}
 
 void stopScreenDisplay()
 {

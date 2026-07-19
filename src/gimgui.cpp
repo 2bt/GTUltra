@@ -1,11 +1,9 @@
 //
-// GTUltra Dear ImGui integration layer (milestone M2).
+// GTUltra Dear ImGui integration layer.
 //
-// Strategy (see docs/UI_MIGRATION_PLAN.md): rather than open a second window,
-// reuse bme's existing SDL2 window + renderer. bme already renders the whole
-// legacy editor into a texture and blits it every frame; we hook in just before
-// its present to draw ImGui on top, and forward SDL events to ImGui. This lets
-// the old UI keep working while native ImGui panels are built on top of it.
+// Strategy (see docs/UI_MIGRATION_PLAN.md / docs/M6_LEGACY_RENDERER_REMOVAL.md):
+// reuse bme's SDL2 window + renderer. Each frame gfx_present() clears and
+// invokes the overlay hook; ImGui draws the full UI there.
 //
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "gimgui.hpp"
@@ -13,16 +11,22 @@
 #include "backends/imgui_impl_sdl2.h"
 #include "backends/imgui_impl_sdlrenderer2.h"
 #include "gactions.hpp"
+#include "ghelp.hpp"
 #include "guimodel.hpp" // SDL-free bridge to the legacy model
 #include "guicolors.hpp"
 #include "imgui.h"
 #include "log.hpp"
 
 #include <SDL.h>
+#include <cfloat>
 #include <cstdio>
 #include <cstdlib>
 #include <functional>
+#include <map>
+#include <span>
 #include <string>
+#include <string_view>
+#include <vector>
 
 // bme globals/hooks we bind to. Declared here (with C linkage) instead of
 // including bme's headers, so we pull the *system* SDL2 headers that the ImGui
@@ -37,13 +41,167 @@ extern int (*bme_input_capture_hook)(void);
 }
 
 bool g_imgui_ready = false;
-bool g_show_demo   = false; // toggleable ImGui reference/demo window
-extern bool g_show_new_ui;   // defined in guiflags.cpp (gtcore)
+bool g_show_demo = false; // toggleable ImGui reference/demo window
+bool g_show_help       = false;
+int  g_help_tab        = 0;
+bool g_help_select_tab = false; // one-shot: force tab when opening
+bool g_help_hovered    = false; // pointer over help window (blocks editor wheel)
+
+// Panel under the mouse for wheel → row navigation (-1 = none / non-editor).
+int g_hovered_edit_panel = -1;
 
 constexpr float kBaseUIFontPx = 18.0f;
 constexpr float kMinUIFontPx  = 10.0f;
 constexpr float kMaxUIFontPx  = 48.0f;
 float           g_font_size_px = kBaseUIFontPx;
+
+void gimgui_open_help() {
+    if (g_show_help) {
+        g_show_help = false;
+        return;
+    }
+    g_show_help       = true;
+    g_help_tab        = (int)gthelp::topic_index_for_edit_panel((int)gtui::edit_panel());
+    g_help_select_tab = true;
+}
+
+bool gimgui_help_open() { return g_show_help; }
+
+static gtaction::Ctx gimgui_help_ctx(gthelp::BindContext c) {
+    switch (c) {
+    case gthelp::BindContext::Global:     return gtaction::Ctx::Global;
+    case gthelp::BindContext::Pattern:    return gtaction::Ctx::Pattern;
+    case gthelp::BindContext::Order:      return gtaction::Ctx::Order;
+    case gthelp::BindContext::Instrument: return gtaction::Ctx::Instrument;
+    case gthelp::BindContext::Tables:     return gtaction::Ctx::Tables;
+    case gthelp::BindContext::Names:      return gtaction::Ctx::Names;
+    }
+    return gtaction::Ctx::Global;
+}
+
+static void gimgui_draw_help_notes(std::span<const std::string_view> notes) {
+    if (notes.empty()) return;
+    for (std::string_view line : notes)
+        ImGui::TextWrapped("%.*s", (int)line.size(), line.data());
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+}
+
+// Keycap-style chip so alternate bindings are not joined with "/" (looks like the slash key).
+static void gimgui_draw_key_chip(const char* label) {
+    const ImVec2 pad(6.0f, 2.0f);
+    const ImVec2 text = ImGui::CalcTextSize(label);
+    const ImVec2 size(text.x + pad.x * 2.0f, text.y + pad.y * 2.0f);
+    const ImVec2 p0   = ImGui::GetCursorScreenPos();
+    const ImVec2 p1(p0.x + size.x, p0.y + size.y);
+    ImDrawList*  dl   = ImGui::GetWindowDrawList();
+    const ImU32  bg   = ImGui::GetColorU32(ImGuiCol_FrameBg);
+    const ImU32  edge = ImGui::GetColorU32(ImGuiCol_Border);
+    const ImU32  fg   = ImGui::GetColorU32(ImGuiCol_Text);
+    dl->AddRectFilled(p0, p1, bg, 3.0f);
+    dl->AddRect(p0, p1, edge, 3.0f);
+    dl->AddText(ImVec2(p0.x + pad.x, p0.y + pad.y), fg, label);
+    ImGui::Dummy(size);
+}
+
+static void gimgui_draw_help_keybinds(gtaction::Ctx ctx) {
+    const auto binds = gtaction::bindings_for(ctx);
+
+    std::vector<gtaction::Action> actions;
+    std::map<gtaction::Action, std::vector<gtaction::Chord>> chords;
+    for (const gtaction::BindingEntry& e : binds) {
+        if (chords.find(e.action) == chords.end()) actions.push_back(e.action);
+        chords[e.action].push_back(e.chord);
+    }
+
+    if (actions.empty()) {
+        ImGui::TextDisabled("No keybindings in this context.");
+        return;
+    }
+
+    if (ImGui::BeginTable("##help_keys", 2,
+                          ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerV |
+                              ImGuiTableFlags_SizingStretchProp)) {
+        ImGui::TableSetupColumn("key", ImGuiTableColumnFlags_WidthFixed, 260.0f);
+        ImGui::TableSetupColumn("desc", ImGuiTableColumnFlags_WidthStretch);
+        for (gtaction::Action a : actions) {
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+            const auto& alts = chords[a];
+            for (std::size_t i = 0; i < alts.size(); ++i) {
+                if (i) ImGui::SameLine(0.0f, 6.0f);
+                const std::string label = gtaction::format_chord(alts[i]);
+                gimgui_draw_key_chip(label.c_str());
+            }
+            ImGui::TableNextColumn();
+            ImGui::TextWrapped("%s", gtaction::action_label(a));
+        }
+        ImGui::EndTable();
+    }
+}
+
+static void gimgui_draw_help_reference(std::span<const std::string_view> lines) {
+    for (std::string_view line : lines) {
+        ImGui::TextWrapped("%.*s", (int)line.size(), line.data());
+        ImGui::Spacing();
+    }
+}
+
+static void gimgui_draw_help_topic_body(const gthelp::Topic& topic) {
+    ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
+    ImGui::TextUnformatted(topic.title.data(), topic.title.data() + topic.title.size());
+    ImGui::PopStyleColor();
+    ImGui::Spacing();
+
+    if (topic.kind == gthelp::Kind::Keybinds && topic.binds) {
+        gimgui_draw_help_notes(topic.notes);
+        gimgui_draw_help_keybinds(gimgui_help_ctx(*topic.binds));
+    } else {
+        gimgui_draw_help_reference(topic.body);
+    }
+}
+
+static void gimgui_draw_help_window() {
+    g_help_hovered = false;
+    if (!g_show_help) return;
+
+    ImGui::SetNextWindowSize(ImVec2(780.0f, 560.0f), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSizeConstraints(ImVec2(480.0f, 320.0f), ImVec2(FLT_MAX, FLT_MAX));
+    if (!ImGui::Begin("Help", &g_show_help, ImGuiWindowFlags_NoCollapse)) {
+        ImGui::End();
+        return;
+    }
+
+    g_help_hovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows);
+
+    const auto topics = gthelp::topics();
+    if (g_help_tab < 0 || g_help_tab >= (int)topics.size()) g_help_tab = 0;
+
+    if (ImGui::BeginTabBar("##help_tabs", ImGuiTabBarFlags_FittingPolicyScroll)) {
+        for (int i = 0; i < (int)topics.size(); ++i) {
+            const gthelp::Topic& topic = topics[(std::size_t)i];
+
+            ImGuiTabItemFlags flags = 0;
+            if (g_help_select_tab && i == g_help_tab)
+                flags |= ImGuiTabItemFlags_SetSelected;
+
+            const std::string tab(topic.tab);
+            if (ImGui::BeginTabItem(tab.c_str(), nullptr, flags)) {
+                g_help_tab = i;
+                if (ImGui::BeginChild("##help_body", ImVec2(0, 0), false)) {
+                    gimgui_draw_help_topic_body(topic);
+                }
+                ImGui::EndChild();
+                ImGui::EndTabItem();
+            }
+        }
+        ImGui::EndTabBar();
+    }
+    g_help_select_tab = false;
+
+    ImGui::End();
+}
 
 // Instrument-name editing (per-row InputText, like song metadata fields).
 int  g_instr_name_edit        = -1; // instrument index 1..3F, or -1
@@ -564,6 +722,12 @@ bool gimgui_begin_panel(const char* title, ImVec2 pos, ImVec2 size) {
 
 void gimgui_end_panel(void) { ImGui::End(); }
 
+// Record which editor panel the pointer is over (for hover-targeted wheel).
+static void gimgui_note_panel_hover(gtui::EditPanel panel) {
+    if (ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows))
+        g_hovered_edit_panel = (int)panel;
+}
+
 // The four SID tables (wave/pulse/filter/speed): four independently-scrolling
 // columns (matching the legacy per-table scroll), each a custom grid like the
 // pattern editor. Keyboard editing flows through the legacy table editor;
@@ -658,6 +822,7 @@ void gimgui_draw_tables(ImVec2 pos, ImVec2 size) {
     }
     ImGui::PopStyleVar();
 
+    gimgui_note_panel_hover(gtui::EditPanelTables);
     gimgui_end_panel();
 }
 
@@ -844,6 +1009,7 @@ void gimgui_draw_pattern(ImVec2 pos, ImVec2 size) {
             gtui::pattern_set_cursor(c, r, col);
         });
 
+    gimgui_note_panel_hover(gtui::EditPanelPattern);
     gimgui_end_panel();
 }
 
@@ -1063,6 +1229,7 @@ void gimgui_draw_orderlist(ImVec2 pos, ImVec2 size) {
         nullptr,
         orderMouse);
 
+    gimgui_note_panel_hover(gtui::EditPanelOrder);
     gimgui_end_panel();
 }
 
@@ -1211,6 +1378,7 @@ void gimgui_draw_instruments(ImVec2 pos, ImVec2 size) {
         false);
     ImGui::PopItemFlag();
 
+    gimgui_note_panel_hover(gtui::EditPanelInstrument);
     gimgui_end_panel();
 }
 
@@ -1280,6 +1448,7 @@ void gimgui_draw_song(ImVec2 pos, ImVec2 size) {
     }
     ImGui::PopItemFlag();
 
+    gimgui_note_panel_hover(gtui::EditPanelNames);
     gimgui_end_panel();
 }
 
@@ -1320,11 +1489,9 @@ void gimgui_draw_transport_bar(ImVec2 pos, ImVec2 size) {
     }
 
     {
-        const float legacyW    = gimgui_button_width(6);
         const float midiComboW = gimgui_text_width(22) + ImGui::GetStyle().FramePadding.x * 2.0f;
         const float midiLabelW = gimgui_text_width(4);
-        const float midiBlockW =
-            midiLabelW + ImGui::GetStyle().ItemSpacing.x + midiComboW + ImGui::GetStyle().ItemSpacing.x + legacyW;
+        const float midiBlockW = midiLabelW + ImGui::GetStyle().ItemSpacing.x + midiComboW;
         gimgui_chrome_same_line_right(midiBlockW);
 
         ImGui::TextUnformatted("MIDI");
@@ -1345,35 +1512,9 @@ void gimgui_draw_transport_bar(ImVec2 pos, ImVec2 size) {
             }
             ImGui::EndCombo();
         }
-
-        ImGui::SameLine();
-        if (gimgui_button("Legacy")) {
-            g_show_new_ui = false;
-            LOG_INFO("switched to legacy UI");
-        }
     }
 
     ImGui::End();
-}
-
-// Small always-on-top bar shown when the legacy UI is visible — the only ImGui
-// chrome in that mode, so the chargen renderer underneath stays fully usable.
-void gimgui_draw_legacy_mode_bar() {
-    const ImGuiViewport* vp = ImGui::GetMainViewport();
-    const float          w  = 100.0f;
-    const float          h  = ImGui::GetFrameHeight() + 12.0f;
-    ImGui::SetNextWindowPos(ImVec2(vp->Pos.x + vp->Size.x - w - 8.0f, vp->Pos.y + 8.0f));
-    ImGui::SetNextWindowSize(ImVec2(w, h));
-    const ImGuiWindowFlags flags = kChromeWindowFlags;
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8, 6));
-    if (ImGui::Begin("##legacy_mode", nullptr, flags)) {
-        if (ImGui::Button("New UI")) {
-            g_show_new_ui = true;
-            LOG_INFO("switched to ImGui UI");
-        }
-    }
-    ImGui::End();
-    ImGui::PopStyleVar();
 }
 
 } // namespace
@@ -1431,38 +1572,38 @@ void gimgui_reload_font() {
     gimgui_apply_style();
 }
 
-// Called by bme (via bme_overlay_render_hook) between its RenderCopy and its
-// RenderPresent, i.e. on top of the freshly-drawn legacy frame.
-// Legacy maps the mouse wheel to Up/Down (cursor row/field). When the pointer is
-// over ImGui, getkey() clears win_mousewheel so the legacy path never runs.
+// Mouse wheel → cursor row/field for the panel under the pointer.
 static void gimgui_dispatch_mouse_wheel() {
-    if (!g_show_new_ui || !g_imgui_ready) return;
+    if (!g_imgui_ready) return;
 
     ImGuiIO& io = ImGui::GetIO();
     if (io.MouseWheel == 0.f) return;
     if (!io.WantCaptureMouse) return;
 
+    // Scrollable ImGui windows (Help, etc.) keep the wheel; don't move editor rows.
+    if (g_help_hovered) return;
+    if (g_hovered_edit_panel < 0) return;
+
     if (gimgui_song_field_editing() || gimgui_instr_name_editing()) return;
     if (ImGui::IsAnyItemActive()) return;
 
+    const auto panel = (gtui::EditPanel)g_hovered_edit_panel;
     gtaction::Action act = gtaction::Action::None;
     if (io.MouseWheel > 0.f) {
-        switch (gtui::edit_panel()) {
+        switch (panel) {
         case gtui::EditPanelOrder:      act = gtaction::Action::OrderRowUp; break;
         case gtui::EditPanelPattern:    act = gtaction::Action::PatternRowUp; break;
         case gtui::EditPanelInstrument: act = gtaction::Action::InstrRowUp; break;
         case gtui::EditPanelTables:     act = gtaction::Action::TableRowUp; break;
         case gtui::EditPanelNames:      act = gtaction::Action::NamesFieldPrev; break;
-        default: break;
         }
     } else {
-        switch (gtui::edit_panel()) {
+        switch (panel) {
         case gtui::EditPanelOrder:      act = gtaction::Action::OrderRowDown; break;
         case gtui::EditPanelPattern:    act = gtaction::Action::PatternRowDown; break;
         case gtui::EditPanelInstrument: act = gtaction::Action::InstrRowDown; break;
         case gtui::EditPanelTables:     act = gtaction::Action::TableRowDown; break;
         case gtui::EditPanelNames:      act = gtaction::Action::NamesFieldNext; break;
-        default: break;
         }
     }
 
@@ -1475,20 +1616,17 @@ static void gimgui_dispatch_mouse_wheel() {
 extern "C" void gimgui_overlay_render(void) {
     if (!g_imgui_ready) return;
 
+    // Called from gfx_present (ImGui-first): this draws the entire frame.
+    g_hovered_edit_panel = -1;
+
     ImGui_ImplSDLRenderer2_NewFrame();
     ImGui_ImplSDL2_NewFrame();
     ImGui::NewFrame();
 
-    if (!g_show_new_ui) {
-        gimgui_draw_legacy_mode_bar();
-        if (g_show_demo) ImGui::ShowDemoWindow(&g_show_demo);
-        ImGui::Render();
-        ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), gfx_renderer);
-        return;
-    }
-
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("View")) {
+            if (ImGui::MenuItem("Help", "F12")) gimgui_open_help();
+            ImGui::Separator();
             if (ImGui::MenuItem("Smaller font", nullptr, false, g_font_size_px > kMinUIFontPx))
                 gimgui_adjust_font_size(-2);
             if (ImGui::MenuItem("Larger font", nullptr, false, g_font_size_px < kMaxUIFontPx))
@@ -1503,8 +1641,7 @@ extern "C" void gimgui_overlay_render(void) {
     }
 
 
-    // Fixed tiled layout filling the whole window. Panels are opaque and cover the legacy screen; a full-window
-    // background fill hides the legacy in the gutters between panels. Five columns:
+    // Fixed tiled layout filling the whole window. Five columns:
     //   left       : Song (top) + Order List (bottom), fixed width
     //   centre     : Pattern (fills remaining width)
     //   right pair : Instruments + Tables side by side, each fixed width
@@ -1543,15 +1680,13 @@ extern "C" void gimgui_overlay_render(void) {
 
     gimgui_draw_context_help(ImVec2(vo.x, vo.y + vs.y - chromeH), ImVec2(vs.x, chromeH));
 
+    gimgui_draw_help_window();
+
     if (g_show_demo) ImGui::ShowDemoWindow(&g_show_demo);
 
     gimgui_dispatch_mouse_wheel();
 
     ImGui::Render();
-
-    // The legacy frame is letterboxed via an explicit destination rect (no
-    // renderer logical size), so ImGui already draws across the full window in
-    // output pixels here.
     ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), gfx_renderer);
 }
 
@@ -1582,7 +1717,6 @@ extern "C" int gimgui_input_capture(void) {
 }
 
 void gimgui_init() {
-    g_show_new_ui = true;
     if (g_imgui_ready) return;
     // gfx_renderer can be null under headless/unsupported video drivers.
     if (!win_window || !gfx_renderer) return;

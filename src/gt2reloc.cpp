@@ -110,7 +110,6 @@ char transportPolySIDEnabled[4];	// 0 = OFF 1 = ON (all OFF = mono)
 int currentPalettePreset = 0;
 WAVEFORM_INFO waveformDisplayInfo;
 int paletteChanged = 0;
-unsigned int editPaletteMode = 0;
 int autoNextPattern = 0;
 int sidAddr1 = 0xd400;
 int sidAddr2 = 0xd420;
@@ -143,7 +142,6 @@ int SID_StereoPanPositions[4][4] = {
 };
 
 char transportLoopPatternSelectArea = 0;
-char transportShowKeyboard = 0;
 
 int sidPanInts[4] = { 0x0007, 0x00e0, 0x07e0, 0xe0e0 };
 unsigned stereoMode = 1;
@@ -472,13 +470,8 @@ int main(int argc, char **argv)
 	return 0;
 }
 
-void waitkeymousenoupdate(void)
-{
-}
-
 void waitkeynoupdate(void)
 {
-
 }
 
 void getparam(FILE *handle, unsigned *value)

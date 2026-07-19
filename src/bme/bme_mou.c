@@ -31,18 +31,20 @@ void mou_uninit(void)
 
 void mou_getpos(unsigned *x, unsigned *y)
 {
-    if (!gfx_initted || !gfx_renderer || !gfx_screen || !win_window)
+    if (!gfx_initted || !gfx_renderer || !win_window)
     {
         *x = win_mousexpos;
         *y = win_mouseypos;
         return;
     }
 
-    int lw = gfx_screen->w;
-    int lh = gfx_screen->h;
+    int lw = (int)gfx_virtualxsize;
+    int lh = (int)gfx_virtualysize;
+    if (lw <= 0) lw = 1;
+    if (lh <= 0) lh = 1;
 
     // The frame is letterboxed onto the renderer OUTPUT (pixels) with this exact
-    // scale/offset (gfx_flip uses the same for the destination rect).
+    // scale/offset (gfx_present / gfx_get_view use the same mapping).
     float scale = 1.0f, offx = 0.0f, offy = 0.0f;
     gfx_get_view(&scale, &offx, &offy);
 

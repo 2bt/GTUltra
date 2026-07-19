@@ -72,8 +72,6 @@ char F7_SHIFT_OriginalGT[] = { FKEY_NEXT_MULTIPLIER,FKEY_DONE };
 
 int fkeys_check(GTOBJECT *gt, int rawkey)
 {
-	if (editPaletteMode)
-		return 0;
 
 	for (int i = 0;i < sizeof(GTFKeyInfo) / sizeof(GTFKEY_ENTRY);i++)
 	{

@@ -16,7 +16,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 set(CMAKE_C_STANDARD 11)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # The original codebase relies on lax conversion rules; keep -fpermissive for
@@ -57,8 +57,8 @@ add_executable(dat2inc "${SRC}/bme/dat2inc.c")
 set(DATAFILE_INPUTS
     player.s altplayer.s player3.s altplayer3.s
     player9.s altplayer9.s player12.s altplayer12.s
-    chargen.bin palette.bin bcursor.bin cursor.bin
-    goattrk2.bmp
+    # M6 Phase 4: chargen.bin / palette.bin / cursor.bin / bcursor.bin /
+    # goattrk2.bmp dropped (ImGui present + OS cursor + goat32.png icon).
     0default.gtp 1default.gtp 2default.gtp 3default.gtp 4default.gtp
     5default.gtp 6default.gtp 7default.gtp 8default.gtp
     goat32.png)
@@ -158,6 +158,7 @@ add_library(gtcore STATIC
     "${SRC}/gtable.cpp"
     "${SRC}/gplay.cpp"
     "${SRC}/gdisplay.cpp"
+    "${SRC}/gfollow.cpp"
     "${SRC}/gfile.cpp"
     "${SRC}/ghelp.cpp"
     "${SRC}/gsound.cpp"
@@ -166,12 +167,9 @@ add_library(gtcore STATIC
     "${SRC}/ginfo.cpp"
     "${SRC}/gmidi.cpp"
     "${SRC}/gundo.cpp"
-    "${SRC}/gchareditor.cpp"
     "${SRC}/RtMidi.cpp"
-    "${SRC}/gmidiselect.cpp"
-    "${SRC}/gpaletteeditor.cpp"
+    "${SRC}/gpalette.cpp"
     "${SRC}/gfkeys.cpp"
-    "${SRC}/guiflags.cpp"
     "${SRC}/ginput.cpp")
 # Note: ${SRC} is deliberately NOT on the include path. Project headers are
 # quote-includes resolved next to each source file; keeping src/ off the angle
@@ -209,11 +207,11 @@ target_sources(gtultra PRIVATE
     "${SRC}/guicolors.cpp"
     "${SRC}/guimodel.cpp"
     "${SRC}/gactions.cpp"
-    "${SRC}/gfiledialog.cpp")
+    "${SRC}/gfiledialog.cpp"
+    "${SRC}/guialert.cpp")
 target_include_directories(gtultra PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/extern/portable-file-dialogs")
 target_link_libraries(gtultra PRIVATE imgui)
-set_target_properties(gtultra PROPERTIES CXX_STANDARD 20 CXX_STANDARD_REQUIRED ON)
 # guimodel.cpp needs the legacy headers (model globals) + bme/asm include dirs
 target_include_directories(gtultra PRIVATE "${SRC}/bme" "${SRC}/asm" ${SDL2_INCLUDE_DIRS})
 # Stage assets next to the binary so runtime code can load them from there.

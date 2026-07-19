@@ -52,7 +52,7 @@ void orderlistcommands(GTOBJECT *gt, const EditorInput *input)
 
 	// ImGui order panel routes navigation/edits through the action layer; legacy
 	// switches remain for hex entry and for the expanded order-list view.
-	if (gimgui_new_ui_active() && !editorInfo.expandOrderListView)
+	if (!editorInfo.expandOrderListView)
 		goto order_sync_view;
 
 	switch (jrawkey)
@@ -620,41 +620,9 @@ order_sync_view:
 
 void namecommands(GTOBJECT *gt, const EditorInput *input)
 {
-	const EditorInput in = input ? *input : editor_input_snapshot();
-
-	if (gimgui_new_ui_active())
-		return;
-
-	switch (in.rawkey)
-	{
-	case KEY_DOWN:
-	case KEY_ENTER:
-		editorInfo.enpos++;
-		if (editorInfo.enpos > 2) editorInfo.enpos = 0;
-		break;
-
-	case KEY_UP:
-		editorInfo.enpos--;
-		if (editorInfo.enpos < 0) editorInfo.enpos = 2;
-		break;
-	}
-
-	editorInfo.enpos = editorInfo.nameIndex;
-
-	switch (editorInfo.enpos)
-	{
-	case 0:
-		editstring(songname, MAX_STR);
-		break;
-
-	case 1:
-		editstring(authorname, MAX_STR);
-		break;
-
-	case 2:
-		editstring(copyrightname, MAX_STR);
-		break;
-	}
+	(void)gt;
+	(void)input;
+	// M6: song name editing is ImGui-only.
 }
 
 // Insert single byte into orderlist
@@ -1218,8 +1186,6 @@ int calculateLoopInfo2(int songNum, int channelNum, int startSongPos, GTOBJECT *
 /*
 void playFromCurrentPosition(GTOBJECT *gt, int currentPos)
 {
-	if (editPaletteMode)
-		return;
 
 	int t1 = followplay;
 	int t2 = gt->interPatternLoopEnabledFlag;

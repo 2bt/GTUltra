@@ -21,7 +21,6 @@ extern "C" {
 
 
 #include "gmidi.hpp"
-#include "gmidiselect.hpp"
 
 #include "gcommon.hpp"
 #include "gconsole.hpp"
@@ -40,9 +39,8 @@ extern "C" {
 #include "gtable.hpp"
 #include "ginfo.hpp"
 #include "gundo.hpp"
-#include "gchareditor.hpp"
+#include "gpalette.hpp"
 #include "gtabledisplay.hpp"
-#include "gpaletteeditor.hpp"
 #include "gfkeys.hpp"
 
 #define REMOVE_UNDO 0
@@ -171,7 +169,6 @@ extern unsigned char paletteLoadRGB[MAX_PALETTE_PRESETS][3][MAX_PALETTE_LOAD_ENT
 
 extern float masterVolume;
 extern unsigned int lmanMode;
-extern unsigned int editPaletteMode;
 extern unsigned char paletteRGB[MAX_PALETTE_PRESETS][3][MAX_PALETTE_ENTRIES];
 extern int currentPalettePreset;
 extern short tableBackgroundColors[MAX_TABLES][MAX_TABLELEN];
@@ -195,7 +192,6 @@ extern char transportLoopPatternSelectArea;
 extern char transportRecord;
 extern char transportPlay;
 extern char transportFollowPlay;
-extern char transportShowKeyboard;
 
 extern unsigned int enablekeyrepeat;
 
@@ -228,12 +224,9 @@ void getstringparam(FILE *handle, char *value);
 void waitkey(GTOBJECT *gt);
 void editor_frame_update(GTOBJECT *gt);
 void waitkeymouse(GTOBJECT *gt);
-void waitkeynoupdate(void);
-void waitkeymousenoupdate(void);
+void waitkeynoupdate(void); // leftover for greloc !autoSave UI (unreachable from ImGui)
 void converthex(void);
 void docommand(void);
-void onlinehelp(int standalone, int context, GTOBJECT *gt);
-void mousecommands(GTOBJECT *gt);
 void generalcommands(GTOBJECT *gt);
 int load(GTOBJECT *gt, char *dragDropFileName);
 void save(GTOBJECT *gt, int exportWAVFlag);
@@ -245,9 +238,7 @@ void editadsr(GTOBJECT *gt);
 void calculatefreqtable(void);
 void setspecialnotenames(void);
 void readscalatuningfile(void);
-void handlePaletteDisplay(GTOBJECT *gt, int palettePreset);
 void setPaletteRGB(int presetIndex, int paletteIndex, int r, int g, int b);
-void copyPaletteToOrderList(int palettePreset);
 void initPaletteDisplay();
 void setGFXPaletteRGBFromPaletteRGB(int presetIndex, int paletteIndex);
 void setSkin(int palettePreset);
@@ -260,36 +251,16 @@ void playUntilEnd(int songNumber);
 void playUntilEnd2(int songNumber);
 void initRemapArrays();
 
-int mouseTransportBar(GTOBJECT *gt);
-int checkMouseRange(int x, int y, int w, int h);
 void handleSIDChannelCountChange(GTOBJECT *gt);
 void nextSongPos(GTOBJECT *gt);
 void previousSongPos(GTOBJECT *gt, int songDffset);
 void setSongToBeginning(GTOBJECT *gt);
 void playFromCurrentPosition(GTOBJECT *gt, int currentPos);
-int mouseTrackModify(int editorWindow);
-void mouseTrack();
 void ModifyTrackGetOriginalValue();
-int checkForMouseInTable(int c,int OX,int OY);
-int checkForMouseInDetailedWaveTable(int OX, int OY);
-int checkForMouseInDetailedFilterTable(int OX, int OY);
-int checkForMouseInDetailedPulseTable(int OX, int OY);
-void detailedWaveTableChangeRelativeNote(int x, int y);
-void detailedWaveTableChangeData(int x, int y);
-void detailedWaveTableChangeCommand(int x, int y);
-void detailedFilterTableChangeCommand(int x, int y);
-void detailedFilterTableChangeSign(int x, int y);
-void detailedFilterTableChangeFilterType(int x, int y);
-void detailedPulseTableChangeSign(int x, int y);
-void detailedPulseTableChangeCommand(int x, int y);
-void checkForMouseInOrderList(GTOBJECT *gt, int maxCh);
-void checkForMouseInExtendedOrderList(GTOBJECT *gt, int maxCh);
-int checkMouseInWaveformInfo();
 int HzToSIDFreq(float hz);
 float noteToHz(int note);
 float centToHz(int cent);
 void detunePitchTable();
-void swapPalettes(int p1, int p2);
 void handlePressRewind(int doubleClick, GTOBJECT *gt);
 void createFilename(char *filePath, char *newfileName, char *filename);
 void backupPatternDisplayInfo(GTOBJECT *gt);

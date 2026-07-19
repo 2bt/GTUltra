@@ -7,6 +7,9 @@
 #include <stdio.h>
 
 #include "goattrk2.hpp"
+#ifndef GT2RELOC
+#include "guialert.hpp"
+#endif
 
 // asm is a C library; give its declarations C linkage when compiled as C++.
 #ifdef __cplusplus
@@ -112,6 +115,17 @@ extern char packedsongname[MAX_PATHNAME];
 #endif
 
 
+
+
+static void reloc_alert(const char* msg)
+{
+#ifdef GT2RELOC
+	fputs(msg, STDERR);
+	fputc('\n', STDERR);
+#else
+	gt_ui_error(msg);
+#endif
+}
 
 void relocator(GTOBJECT *gt, int gt2relocMode, int autoSave)
 {
@@ -736,10 +750,7 @@ void relocator(GTOBJECT *gt, int gt2relocMode, int autoSave)
 				if (songorder[c][d][songlen[c][d] + 1] >= songlen[c][d])
 				{
 					sprintf(textbuffer, "ILLEGAL SONG RESTART POSITION! (SUBTUNE %02X, CHANNEL %d ODDEVEN %d)", c, d + 1, oddEvenSubSong);
-					clearscreen(getColor(1, 0));
-					printtextc(MAX_ROWS / 2, getColor(15, 0), textbuffer);
-					fliptoscreen();
-					waitkeynoupdate();
+					reloc_alert(textbuffer);
 					goto PRCLEANUP;
 				}
 			}
@@ -760,10 +771,7 @@ void relocator(GTOBJECT *gt, int gt2relocMode, int autoSave)
 
 	if (!songs)
 	{
-		clearscreen(getColor(1, 0));
-		printtextc(MAX_ROWS / 2, getColor(CTITLE, 0), "NO SONGS, NO DATA TO SAVE!");
-		fliptoscreen();
-		waitkeynoupdate();
+reloc_alert("NO SONGS, NO DATA TO SAVE!");
 		goto PRCLEANUP;
 	}
 
@@ -923,10 +931,7 @@ void relocator(GTOBJECT *gt, int gt2relocMode, int autoSave)
 				case CMD_SETWAVEPTR:
 				case CMD_FUNKTEMPO:
 					sprintf(textbuffer, "ILLEGAL WAVETABLE COMMAND (ROW %02X, COMMAND %X)", c + 1, ltable[WTBL][c] - WAVECMD);
-					clearscreen(getColor(1, 0));
-					printtextc(MAX_ROWS / 2, getColor(15, 0), textbuffer);
-					fliptoscreen();
-					waitkeynoupdate();
+					reloc_alert(textbuffer);
 					goto PRCLEANUP;
 				}
 
@@ -960,7 +965,6 @@ void relocator(GTOBJECT *gt, int gt2relocMode, int autoSave)
 	// Check for table errors
 	if (tableerrorcause)
 	{
-		clearscreen(getColor(1, 0));
 		switch (tableerrortype)
 		{
 		case TYPE_JUMP:
@@ -1001,10 +1005,7 @@ void relocator(GTOBJECT *gt, int gt2relocMode, int autoSave)
 			strcat(textbuffer, ")");
 			break;
 		}
-		printtextc(MAX_ROWS / 2, getColor(15, 0), textbuffer);
-
-		fliptoscreen();
-		waitkeynoupdate();
+reloc_alert(textbuffer);
 		goto PRCLEANUP;
 	}
 
@@ -1076,22 +1077,14 @@ void relocator(GTOBJECT *gt, int gt2relocMode, int autoSave)
 
 	//----------------
 #ifdef DISPLAY_FREE_MEM
-	clearscreen(getColor(1, 0));
-	sprintf(textbuffer, "SONG DATA SIZE REQUIRED 0x%x FREE: 0x%x", songdatasize, FreeMem());
-	printtextc(MAX_ROWS / 2, getColor(15, 0), textbuffer);
-	fliptoscreen();
-	waitkeynoupdate();
+reloc_alert(textbuffer);
 #endif
 	//-----------------
 
 	songwork = malloc(songdatasize);
 	if (!songwork)
 	{
-		clearscreen(getColor(1, 0));
-		sprintf(textbuffer, "OUT OF MEMORY IN PACKER/RELOCATOR (SONG DATA SIZE 0x%x)!", songdatasize);
-		printtextc(MAX_ROWS / 2, getColor(CTITLE, 0), textbuffer);
-		fliptoscreen();
-		waitkeynoupdate();
+reloc_alert(textbuffer);
 		goto PRCLEANUP;
 	}
 
@@ -1188,11 +1181,7 @@ void relocator(GTOBJECT *gt, int gt2relocMode, int autoSave)
 
 			if (result < 0)
 			{
-				clearscreen(getColor(1, 0));
-				sprintf(textbuffer, "PATTERN %02X IS TOO COMPLEX (OVER 256 BYTES PACKED)!", d);
-				printtextc(MAX_ROWS / 2, getColor(15, 0), textbuffer);
-				fliptoscreen();
-				waitkeynoupdate();
+reloc_alert(textbuffer);
 				goto PRCLEANUP;
 			}
 			pattdatasize += result;
@@ -1201,11 +1190,7 @@ void relocator(GTOBJECT *gt, int gt2relocMode, int autoSave)
 
 	//----------------
 #ifdef DISPLAY_FREE_MEM
-	clearscreen(getColor(1, 0));
-	sprintf(textbuffer, "PATTERN DATA SIZE REQUIRED 0x%x FREE: 0x%x", pattdatasize, FreeMem());
-	printtextc(MAX_ROWS / 2, getColor(15, 0), textbuffer);
-	fliptoscreen();
-	waitkeynoupdate();
+reloc_alert(textbuffer);
 #endif
 	//-----------------
 
@@ -1213,11 +1198,7 @@ void relocator(GTOBJECT *gt, int gt2relocMode, int autoSave)
 	pattwork = malloc(pattdatasize);
 	if (!pattwork)
 	{
-		clearscreen(getColor(1, 0));
-		sprintf(textbuffer, "OUT OF MEMORY IN PACKER/RELOCATOR (PATTERN SIZE 0x%x)!", pattdatasize);
-		printtextc(MAX_ROWS / 2, getColor(CTITLE, 0), textbuffer);
-		fliptoscreen();
-		waitkeynoupdate();
+reloc_alert(textbuffer);
 		goto PRCLEANUP;
 	}
 
@@ -1243,22 +1224,14 @@ void relocator(GTOBJECT *gt, int gt2relocMode, int autoSave)
 
 	//----------------
 #ifdef DISPLAY_FREE_MEM
-	clearscreen(getColor(1, 0));
-	sprintf(textbuffer, "INSTRUMENT DATA SIZE REQUIRED 0x%x FREE: 0x%x", instrsize, FreeMem());
-	printtextc(MAX_ROWS / 2, getColor(15, 0), textbuffer);
-	fliptoscreen();
-	waitkeynoupdate();
+reloc_alert(textbuffer);
 #endif
 	//-----------------
 
 	instrwork = malloc(instrsize);
 	if (!instrwork)
 	{
-		clearscreen(getColor(1, 0));
-		sprintf(textbuffer, "OUT OF MEMORY IN PACKER/RELOCATOR (INSTRUMENT DATA SIZE 0x%x)!", instrsize);
-		printtextc(MAX_ROWS / 2, getColor(CTITLE, 0), textbuffer);
-		fliptoscreen();
-		waitkeynoupdate();
+reloc_alert(textbuffer);
 		goto PRCLEANUP;
 	}
 
@@ -1562,10 +1535,7 @@ void relocator(GTOBJECT *gt, int gt2relocMode, int autoSave)
 
 		if (!insertfile(playername))
 		{
-			clearscreen(getColor(1, 0));
-			printtextc(MAX_ROWS / 2, getColor(CTITLE, 0), "COULD NOT OPEN PLAYROUTINE!");
-			fliptoscreen();
-			waitkeynoupdate();
+reloc_alert("COULD NOT OPEN PLAYROUTINE!");
 			goto PRCLEANUP;
 		}
 

@@ -16,7 +16,6 @@
 #include "RtMidi.hpp"
 
 #include "gmidi.hpp"
-#include "gmidiselect.hpp"
 
 bool done;
 RtMidiIn *midiin = nullptr;
