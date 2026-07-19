@@ -246,44 +246,7 @@ int main(int argc, char** argv)
 	createFilename(appFileName, backupSngFilename, "gtubackup.sng");
 	createFilename(appFileName, fkeysFilename, "fkeys.cfg");
 
-
-	// First, load the default palette and fill all 16 slots with it
-	// (paletteNames slots default to empty strings = undefined.)
-	currentLoadedPresetIndex = 0;
-	int maxPresetPalettes = 9;
-
-	for (int i = 0;i < maxPresetPalettes;i++)
-	{
-		sprintf(textbuffer, "%ddefault.gtp", i);
-		//	printf("palette:%s\n", textbuffer);
-		int handle = io_open(textbuffer);
-		if (handle == -1)
-			return 0;
-
-		int size = io_lseek(handle, 0, SEEK_END);
-		io_lseek(handle, 0, SEEK_SET);
-		char* paletteMem = malloc(size + 1);
-		io_read(handle, paletteMem, size);
-		io_close(handle);
-		paletteMem[size] = 0;	// end marker
-
-
-		if (i == 0)
-		{
-			for (int j = 0;j < 16;j++)
-			{
-				readPaletteData(paletteMem, textbuffer);
-			}
-			currentLoadedPresetIndex = 1;
-		}
-		else
-			readPaletteData(paletteMem, textbuffer);
-
-		free(paletteMem);
-	}
-
-	// Now load palettes from the gtpalettes folder to fill all 16 slots
-	loadPalettes();
+	// M6: chargen .gtp skins dropped — ImGui uses guicolors.
 
 	configfile = fopen(appFileName, "rt");
 	if (configfile)
@@ -635,9 +598,6 @@ int main(int argc, char** argv)
 	gimgui_init();
 
 	waveformDisplayInfo.displayOnOff = 0;
-
-	initPaletteDisplay();
-	setTableBackgroundColours(0);
 
 	initPolyKeyboard();
 	// Reset channels/song
@@ -1327,55 +1287,27 @@ void generalcommands(GTOBJECT* gt)
 
 int load(GTOBJECT* gt, char* dragDropFileName)
 {
+	// ImGui file I/O uses gtfile::; this path is drag-and-drop only.
+	if (!dragDropFileName) return 0;
+
 	win_enableKeyRepeat();
-	int ok = 0;
-	if (((editorInfo.editmode != EDIT_INSTRUMENT) && (editorInfo.editmode != EDIT_TABLES)) || dragDropFileName != NULL)
-	{
-		if (dragDropFileName != NULL)
-		{
-			for (int i = 0;i < 256;i++)
-			{
-				songfilename[i] = dragDropFileName[i];
-				if (dragDropFileName[i] == 0)
-					break;
-			}
-			ok = loadsong(gt, 0);
-
-			free(dragDropFileName);
-			dragDropFileName = NULL;
-		}
-		else if (!shiftOrCtrlPressed)
-		{
-			if (fileselector(songfilename, songpath, songfilter, "LOAD SONG", 0, gt, CEDIT, 0))
-				ok = loadsong(gt, 0);
-		}
-		else
-		{
-			if (fileselector(songfilename, songpath, songfilter, "MERGE SONG", 0, gt, CEDIT, 0))
-				ok = mergesong(gt);
-		}
-
-		if (ok)
-		{
-			loadedSongFlag = 1;
-			undoInitAllAreas(&gtObject);	// recreate undo buffers using the loaded song as the original info
-			countInstruments();
-			setTableBackgroundColours(editorInfo.einum);
-			expandAllSongs();
-		}
-		return ok;
+	for (int i = 0; i < 256; i++) {
+		songfilename[i] = dragDropFileName[i];
+		if (dragDropFileName[i] == 0) break;
 	}
-	else
-	{
-		if (editorInfo.einum)
-		{
-			if (fileselector(instrfilename, instrpath, instrfilter, "LOAD INSTRUMENT", 0, gt, 15, 0))
-				loadinstrument(gt);
-		}
+	free(dragDropFileName);
+
+	const int ok = loadsong(gt, 0);
+	if (ok) {
+		loadedSongFlag = 1;
+		undoInitAllAreas(&gtObject);
+		countInstruments();
+		setTableBackgroundColours(editorInfo.einum);
+		expandAllSongs();
 	}
 	key = 0;
 	rawkey = 0;
-	return 0;
+	return ok;
 }
 
 int quickSave()
@@ -1389,177 +1321,23 @@ int quickSave()
 	return loadedSongFlag;
 }
 
-void save(GTOBJECT* gt, int exportWAVFlag)
-{
-	win_enableKeyRepeat();
-
-	if ((editorInfo.editmode != EDIT_INSTRUMENT) && (editorInfo.editmode != EDIT_TABLES))
-	{
-		int done = 0;
-
-		// Repeat until quit or save successful
-		while (!done)
-		{
-			if (strlen(loadedsongfilename))
-				strcpy(songfilename, loadedsongfilename);
-			if (exportWAVFlag == 0)
-			{
-				if (fileselector(songfilename, songpath, songfilter, "SAVE SONG", 3, gt, 12, 1))
-					done = savesong();
-				else done = 1;
-			}
-			else
-			{
-				if (fileselector(wavfilename, songpath, wavfilter, "EXPORT AS WAV", 3, gt, 11, 2))
-				{
-					done = 1;
-					doExportToWAV = 1;
-				}
-				else done = 1;
-			}
-
-
-		}
-	}
-	else
-	{
-		if (editorInfo.einum)
-		{
-			int done = 0;
-			int useinstrname = 0;
-			char tempfilename[MAX_FILENAME];
-
-			// Repeat until quit or save successful
-			while (!done)
-			{
-				if ((!strlen(instrfilename)) && (strlen(instr[editorInfo.einum].name)))
-				{
-					useinstrname = 1;
-					strcpy(instrfilename, instr[editorInfo.einum].name);
-					strcat(instrfilename, ".ins");
-					strcpy(tempfilename, instrfilename);
-				}
-
-				if (fileselector(instrfilename, instrpath, instrfilter, "SAVE INSTRUMENT", 3, gt, 12, 0))
-					done = saveinstrument();
-				else done = 1;
-
-				if (useinstrname)
-				{
-					if (!strcmp(tempfilename, instrfilename))
-						memset(instrfilename, 0, sizeof instrfilename);
-				}
-			}
-		}
-	}
-	key = 0;
-	rawkey = 0;
-}
-
-void quit(GTOBJECT* gt)
-{
-	if ((!shiftOrCtrlPressed) || (mouseb))
-	{
-		//78,36
-		printtext(YES_NO_TEXT_X, YES_NO_TEXT_Y, getColor(CINFO_FOREGROUND, CGENERAL_BACKGROUND), "Really Quit (y/n)?");
-		waitkey(gt);
-
-		printtext(YES_NO_TEXT_X, YES_NO_TEXT_Y, getColor(CINFO_FOREGROUND, CGENERAL_BACKGROUND), "                  ");
-		if ((key == 'y') || (key == 'Y')) exitprogram = 1;
-	}
-	key = 0;
-	rawkey = 0;
-}
-
 void clear(GTOBJECT* gt)
 {
-	int cs = 0;
-	int cp = 0;
-	int ci = 0;
-	int ct = 0;
-	int cn = 0;
-
-	printtext(YES_NO_TEXT_X, YES_NO_TEXT_Y, getColor(15, CGENERAL_BACKGROUND), "Optimize everything (y/n)?");
-	waitkey(gt);
-	printbyterow(YES_NO_TEXT_X, YES_NO_TEXT_Y, getColor(15, CGENERAL_BACKGROUND), 32, 39);
-
-	if ((key == 'y') || (key == 'Y'))
-	{
+	if (gt_ui_confirm("Optimize everything?")) {
 		optimizeeverything(1, 1, &gtObject);
+		countpatternlengths();
 		key = 0;
 		rawkey = 0;
-		countpatternlengths();
 		return;
 	}
 
-	printtext(YES_NO_TEXT_X, YES_NO_TEXT_Y, getColor(15, CGENERAL_BACKGROUND), "Clear orderlists (y/n)?");
-	waitkey(gt);
-	printbyterow(YES_NO_TEXT_X, YES_NO_TEXT_Y, getColor(15, CGENERAL_BACKGROUND), 32, 39);
-	if ((key == 'y') || (key == 'Y')) cs = 1;
+	const int cs = gt_ui_confirm("Clear orderlists?") ? 1 : 0;
+	const int cp = gt_ui_confirm("Clear patterns?") ? 1 : 0;
+	const int ci = gt_ui_confirm("Clear instruments?") ? 1 : 0;
+	const int ct = gt_ui_confirm("Clear tables?") ? 1 : 0;
+	const int cn = gt_ui_confirm("Clear song name?") ? 1 : 0;
 
-	printtext(YES_NO_TEXT_X, YES_NO_TEXT_Y, getColor(15, CGENERAL_BACKGROUND), "Clear patterns (y/n)?");
-	waitkey(gt);
-	printbyterow(YES_NO_TEXT_X, YES_NO_TEXT_Y, getColor(15, CGENERAL_BACKGROUND), 32, 39);
-	if ((key == 'y') || (key == 'Y')) cp = 1;
-
-	printtext(YES_NO_TEXT_X, YES_NO_TEXT_Y, getColor(15, CGENERAL_BACKGROUND), "Clear instruments (y/n)?");
-	waitkey(gt);
-	printbyterow(YES_NO_TEXT_X, YES_NO_TEXT_Y, getColor(15, CGENERAL_BACKGROUND), 32, 39);
-	if ((key == 'y') || (key == 'Y')) ci = 1;
-
-	printtext(YES_NO_TEXT_X, YES_NO_TEXT_Y, getColor(15, CGENERAL_BACKGROUND), "Clear tables (y/n)?");
-	waitkey(gt);
-	printbyterow(YES_NO_TEXT_X, YES_NO_TEXT_Y, getColor(15, CGENERAL_BACKGROUND), 32, 39);
-	if ((key == 'y') || (key == 'Y')) ct = 1;
-
-	printtext(YES_NO_TEXT_X, YES_NO_TEXT_Y, getColor(15, CGENERAL_BACKGROUND), "Clear songname (y/n)?");
-	waitkey(gt);
-	printbyterow(YES_NO_TEXT_X, YES_NO_TEXT_Y, getColor(15, CGENERAL_BACKGROUND), 32, 39);
-	if ((key == 'y') || (key == 'Y')) cn = 1;
-
-	if (cp == 1)
-	{
-		int selectdone = 0;
-		int olddpl = defaultpatternlength;
-
-		printtext(60, 36, getColor(15, CGENERAL_BACKGROUND), "Pattern length:");
-		while (!selectdone)
-		{
-			sprintf(textbuffer, "%02d ", defaultpatternlength);
-			printtext(60 + 15, 36, getColor(15, CGENERAL_BACKGROUND), textbuffer);
-
-			waitkey(gt);
-			switch (rawkey)
-			{
-			case KEY_LEFT:
-				defaultpatternlength -= 7;
-			case KEY_DOWN:
-				defaultpatternlength--;
-				if (defaultpatternlength < 1) defaultpatternlength = 1;
-				break;
-
-			case KEY_RIGHT:
-				defaultpatternlength += 7;
-			case KEY_UP:
-				defaultpatternlength++;
-				if (defaultpatternlength > MAX_PATTROWS) defaultpatternlength = MAX_PATTROWS;
-				break;
-
-			case KEY_ESC:
-				defaultpatternlength = olddpl;
-				selectdone = 1;
-				break;
-
-			case KEY_ENTER:
-				selectdone = 1;
-				break;
-			}
-		}
-		printbyterow(60, 36, getColor(15, CGENERAL_BACKGROUND), 32, 39);
-	}
-
-	if (cs | cp | ci | ct | cn)
-	{
+	if (cs | cp | ci | ct | cn) {
 		loadedSongFlag = 0;
 		memset(songfilename, 0, sizeof songfilename);
 	}
@@ -1567,6 +1345,7 @@ void clear(GTOBJECT* gt)
 
 	key = 0;
 	rawkey = 0;
+	(void)gt;
 }
 
 

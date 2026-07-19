@@ -1,9 +1,9 @@
 //
 // GTUltra Dear ImGui integration layer.
 //
-// Strategy (see docs/UI_MIGRATION_PLAN.md / docs/M6_LEGACY_RENDERER_REMOVAL.md):
-// reuse bme's SDL2 window + renderer. Each frame gfx_present() clears and
-// invokes the overlay hook; ImGui draws the full UI there.
+// Strategy (see docs/UI_MIGRATION_PLAN.md): reuse bme's SDL2 window + renderer.
+// Each frame gfx_present() clears and invokes the overlay hook; ImGui draws
+// the full UI there.
 //
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include "gimgui.hpp"

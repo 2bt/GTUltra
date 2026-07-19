@@ -229,8 +229,6 @@ void converthex(void);
 void docommand(void);
 void generalcommands(GTOBJECT *gt);
 int load(GTOBJECT *gt, char *dragDropFileName);
-void save(GTOBJECT *gt, int exportWAVFlag);
-void quit(GTOBJECT *gt);
 void clear(GTOBJECT *gt);
 int prevmultiplier(void);
 int nextmultiplier(void);

@@ -57,10 +57,7 @@ add_executable(dat2inc "${SRC}/bme/dat2inc.c")
 set(DATAFILE_INPUTS
     player.s altplayer.s player3.s altplayer3.s
     player9.s altplayer9.s player12.s altplayer12.s
-    # M6 Phase 4: chargen.bin / palette.bin / cursor.bin / bcursor.bin /
-    # goattrk2.bmp dropped (ImGui present + OS cursor + goat32.png icon).
-    0default.gtp 1default.gtp 2default.gtp 3default.gtp 4default.gtp
-    5default.gtp 6default.gtp 7default.gtp 8default.gtp
+    # M6: chargen/cursor/palette.bin and .gtp skins dropped (ImGui + guicolors).
     goat32.png)
 list(TRANSFORM DATAFILE_INPUTS PREPEND "${SRC}/")
 

@@ -27,3 +27,29 @@ static void gt_ui_message(Uint32 flags, const char* title, const char* message)
 void gt_ui_error(const char* message) { gt_ui_message(SDL_MESSAGEBOX_ERROR, "GTUltra", message); }
 void gt_ui_warn(const char* message) { gt_ui_message(SDL_MESSAGEBOX_WARNING, "GTUltra", message); }
 void gt_ui_info(const char* message) { gt_ui_message(SDL_MESSAGEBOX_INFORMATION, "GTUltra", message); }
+
+bool gt_ui_confirm(const char* message)
+{
+    if (!message) message = "Continue?";
+    LOG_INFO("confirm: {}", message);
+
+    const SDL_MessageBoxButtonData buttons[] = {
+        { SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 1, "Yes" },
+        { SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 0, "No" },
+    };
+    const SDL_MessageBoxData data = {
+        SDL_MESSAGEBOX_WARNING,
+        win_window,
+        "GTUltra",
+        message,
+        (int)(sizeof buttons / sizeof buttons[0]),
+        buttons,
+        nullptr,
+    };
+    int button = 0;
+    if (SDL_ShowMessageBox(&data, &button) < 0) {
+        LOG_WARN("SDL_ShowMessageBox failed: {}", SDL_GetError());
+        return false;
+    }
+    return button == 1;
+}

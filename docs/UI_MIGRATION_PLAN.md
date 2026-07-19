@@ -1,7 +1,6 @@
 # GTUltra UI Modernization Plan — Dear ImGui + Config System
 
-Status: **in progress** (M2–M5 landed on branch `2bt`; **M6 Phase 0–6 done**; M7 remains).
-M6 teardown plan (phased, detailed): [M6_LEGACY_RENDERER_REMOVAL.md](M6_LEGACY_RENDERER_REMOVAL.md).
+Status: **in progress** (M2–M5 landed on branch `2bt`; **M6 done**; M7 remains).
 This document is the agreed roadmap for replacing GTUltra's legacy text-mode UI
 with Dear ImGui, and for adding a proper configuration system (themes, fonts,
 keybindings).
@@ -362,28 +361,20 @@ Port the other views to ImGui, retiring their legacy `display*` counterparts:
     `config.toml`, not a port of `gpaletteeditor.cpp`).
 - Remove each panel from the legacy bridge as it is ported.
 
-### M6 — Remove the legacy renderer + bme gfx/win
-Goal: delete dead code once every panel is ImGui. **Full phased plan:**
-[M6_LEGACY_RENDERER_REMOVAL.md](M6_LEGACY_RENDERER_REMOVAL.md).
+### M6 — Remove the legacy renderer — **DONE**
+Chargen / dual-UI teardown is complete on `2bt`. ImGui is the sole editor UI;
+`bme` remains as the SDL/window/audio layer until a later replacement milestone
+(`MODERNIZATION.md`).
 
-Summary (do not big-bang; each phase must build and run):
-- **Phase 0:** ImGui-only — remove Legacy toggle / dual-UI.
-- **Phase 1:** Replace hard chargen entry points still reachable under ImGui
-  (F12 help, reloc/bootstrap errors, extract follow-play state from `gdisplay`).
-- **Phase 2:** Delete dead subsystems — `gchareditor.*`, `gpaletteeditor.*`,
-  `gmidiselect.*`, `fileselector` UI, `mousecommands`, `printstatus` / `display*`
-  draw tree, `editPaletteMode` / skin UI.
-- **Phase 3:** ~~ImGui-first present (clear → ImGui → `SDL_RenderPresent`); stop
-  depending on chargen texture upload.~~
-- **Phase 4:** ~~Delete chargen rasterize in `gconsole` + drop `chargen.bin` /
-  cursor / palette assets from `goatdata`.~~ (`.gtp` presets kept for boot.)
-- **Phase 5:** ~~Render-adjacent input cleanup (`waitkeymousenoupdate`, etc.).~~
-- **Phase 6 (optional):** ~~Shrink unused bme gfx surface; keep `win`/`gfx` as
-  SDL owners.~~ Full bme removal stays a later modernization milestone
-  (`MODERNIZATION.md`). Keep `snd`/`io`/`end`.
+Completed (summary):
+- ImGui-only (no Legacy toggle); Help / reloc errors / follow-play off chargen.
+- Deleted dead chargen subsystems (char/palette/MIDI-select UI, mousecommands,
+  draw tree, fileselector UI).
+- ImGui-first present; chargen rasterize + assets dropped; INDEX8 surface gone.
+- Leftover Clear confirms via `gt_ui_confirm`; `.gtp` boot skins dropped.
 
-Non-goals for M6: detailed tables / filter HUD / transport parity / M7 config —
-those land afterwards on the single ImGui surface.
+Non-goals deferred: detailed tables / filter HUD / transport parity / M7 config /
+full bme rewrite.
 
 ### M7 — Configuration system (TOML) — *scheduled later*
 Goal: user-configurable everything (themes, fonts, all keybindings) in a real
@@ -455,11 +446,9 @@ a consumer. Instead:
 
 ## 5. Suggested next steps
 
-1. **M6 — legacy renderer removal** — **Phase 0–6 done** on `2bt`.
-   Follow [M6_LEGACY_RENDERER_REMOVAL.md](M6_LEGACY_RENDERER_REMOVAL.md) for
-   smoke checklist / leftover stubs (quit prompts, `.gtp` boot, etc.).
-   Parity polish is intentionally deferred until after chargen teardown.
-2. **Post-M6 parity** (after ImGui is the only UI):
+1. **M6 — legacy renderer removal** — **done** on `2bt` (chargen gone; `bme`
+   remains as SDL/audio until its own replacement milestone).
+2. **Post-M6 parity** (ImGui-only polish):
    - Detailed table views + waveform editor (PDF §33–36)
    - Filter info display (PDF §24)
    - Transport bar completeness (PDF §5)
@@ -467,8 +456,7 @@ a consumer. Instead:
 3. **M7** — TOML config (themes, keybinds, `gtultra.cfg` migration).
 
 Note: expanded order list (PDF §42–47) and a context-help chrome bar are
-already on the ImGui path; treat leftover 🔶 rows as verify/polish, not blockers
-for M6.
+already on the ImGui path; treat leftover 🔶 rows as verify/polish.
 
 ---
 
