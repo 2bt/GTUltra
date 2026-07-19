@@ -33,7 +33,7 @@ enum class Action : uint16_t {
 
     Save,
     Undo,
-    Quit,
+    Cancel,
     Clear,
     Help,
 
@@ -213,6 +213,22 @@ struct BindingEntry {
     Chord  chord;
 };
 std::vector<BindingEntry> bindings_for(Ctx ctx);
+
+// Same data grouped by action (first-seen action order). Shared by Help UI + CLI.
+struct BindingRow {
+    Action             action;
+    std::vector<Chord> chords;
+};
+std::vector<BindingRow> binding_rows_for(Ctx ctx);
+
+// Same chord claimed by more than one action in a context (later claim wins).
+// Empty when the keymap has no intra-context collisions. Useful for Help / M7.
+struct ChordConflict {
+    Chord               chord;
+    Action              effective; // last claim — what bindings_for() uses
+    std::vector<Action> claimants; // claim order; back() == effective
+};
+std::vector<ChordConflict> conflicts_for(Ctx ctx);
 
 // Print keymap (all contexts) + reference sections to stdout (CLI `-??`).
 void print_help_cli();

@@ -33,7 +33,6 @@
 
 #include "gimgui.hpp"
 #include "guialert.hpp"
-#include "ghelp.hpp"
 
 int songExportSuccessFlag = 0;
 int sidAddr1 = 0xd400;

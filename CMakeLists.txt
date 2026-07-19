@@ -160,7 +160,6 @@ add_library(gtcore STATIC
     "${SRC}/gdisplay.cpp"
     "${SRC}/gfollow.cpp"
     "${SRC}/gfile.cpp"
-    "${SRC}/ghelp.cpp"
     "${SRC}/gsound.cpp"
     "${SRC}/gconsole.cpp"
     "${SRC}/gsid.cpp"
@@ -207,6 +206,7 @@ target_sources(gtultra PRIVATE
     "${SRC}/guicolors.cpp"
     "${SRC}/guimodel.cpp"
     "${SRC}/gactions.cpp"
+    "${SRC}/ghelp.cpp"
     "${SRC}/gfiledialog.cpp"
     "${SRC}/guialert.cpp")
 target_include_directories(gtultra PRIVATE

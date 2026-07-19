@@ -628,7 +628,7 @@ CFG options for expanded order list (from PDF v1.5):
 
 | PDF | Feature | Status | Milestone / notes |
 |-----|---------|--------|-------------------|
-| — | F12 help screen | ⬜ | Not in PDF TOC; expected from legacy `ghelp.cpp` |
+| — | F12 help screen | ✅ | ImGui modal; keybinds from `gactions`; Esc dismisses |
 
 ### Cross-reference to milestones
 

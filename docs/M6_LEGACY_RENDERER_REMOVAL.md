@@ -178,9 +178,11 @@ ImGui path.
 
 #### 1a. Help (F12) — done
 
-- ImGui Help window (`gimgui_open_help` / F12 / View→Help).
-- Help content lives in `ghelp.cpp` as data; chargen loop removed.
-- CLI `-??` prints help via `gtaction::print_help_cli()` (bindings + `gthelp::print_reference`).
+- ImGui Help **modal** (`gimgui_open_help` / F12 / View→Help; Esc = Cancel).
+- Keybind tabs are generated from `gtaction` (`binding_rows_for`); reference
+  tabs stay authored in `ghelp.cpp`. Intra-context chord collisions surface via
+  `conflicts_for()` in Help UI and CLI `-??`.
+- CLI `-??` walks `gthelp::topics()` then `gthelp::print_reference()`.
 
 #### 1b. Relocator errors / progress — done
 

@@ -115,18 +115,21 @@ void gui_colors_apply_imgui_style() {
     const ImVec4 scrollHover = lerp_rgb(deep, white, 0.22f);
     const ImVec4 rowAlt      = lerp_rgb(surface, white, 0.03f);
     const ImVec4 tableHdr    = lerp_rgb(surface, white, 0.06f);
+    const ImVec4 tabIdle     = lerp_rgb(deep, surface, 0.40f);
+    const ImVec4 tabSel      = lerp_rgb(surface, accent, 0.20f);
 
     c[ImGuiCol_Text]                 = text;
     c[ImGuiCol_TextDisabled]         = textDim;
     c[ImGuiCol_WindowBg]             = surface;
     c[ImGuiCol_ChildBg]              = surface;
-    c[ImGuiCol_PopupBg]              = deep;
+    c[ImGuiCol_PopupBg]              = surface;
     c[ImGuiCol_Border]               = border;
     c[ImGuiCol_FrameBg]              = frame;
     c[ImGuiCol_FrameBgHovered]       = frameHover;
     c[ImGuiCol_FrameBgActive]        = frameActive;
     c[ImGuiCol_TitleBg]              = deep;
-    c[ImGuiCol_TitleBgActive]        = lerp_rgb(surface, accent, 0.18f);
+    c[ImGuiCol_TitleBgActive]        = deep;
+    c[ImGuiCol_TitleBgCollapsed]     = deep;
     c[ImGuiCol_MenuBarBg]            = deep;
     c[ImGuiCol_ScrollbarBg]          = deep;
     c[ImGuiCol_ScrollbarGrab]        = scrollGrab;
@@ -139,16 +142,29 @@ void gui_colors_apply_imgui_style() {
     c[ImGuiCol_HeaderHovered]        = lerp_rgb(btnHover, accent, 0.18f);
     c[ImGuiCol_HeaderActive]         = lerp_rgb(btnActive, accent, 0.22f);
     c[ImGuiCol_Separator]            = border;
+    c[ImGuiCol_SeparatorHovered]     = lerp_rgb(border, accent, 0.55f);
+    c[ImGuiCol_SeparatorActive]      = accent;
 
     c[ImGuiCol_SliderGrab]           = btnActive;
     c[ImGuiCol_SliderGrabActive]     = btnActive;
 
     c[ImGuiCol_CheckMark]            = accent;
+    c[ImGuiCol_Tab]                  = tabIdle;
+    c[ImGuiCol_TabHovered]           = lerp_rgb(tabIdle, accent, 0.28f);
+    c[ImGuiCol_TabSelected]          = tabSel;
+    c[ImGuiCol_TabSelectedOverline]  = accent;
+    c[ImGuiCol_TabDimmed]            = deep;
+    c[ImGuiCol_TabDimmedSelected]    = lerp_rgb(deep, accent, 0.16f);
+    c[ImGuiCol_TabDimmedSelectedOverline] = lerp_rgb(accent, deep, 0.35f);
     c[ImGuiCol_TableHeaderBg]        = tableHdr;
     c[ImGuiCol_TableRowBg]           = lerp_rgb(surface, deep, 0.35f);
     c[ImGuiCol_TableRowBgAlt]        = rowAlt;
     c[ImGuiCol_TableBorderLight]     = lerp_rgb(border, surface, 0.35f);
     c[ImGuiCol_TableBorderStrong]    = border;
+    c[ImGuiCol_ModalWindowDimBg]     = ImVec4(0.0f, 0.0f, 0.0f, 0.55f);
+    c[ImGuiCol_ResizeGrip]           = lerp_rgb(deep, white, 0.10f);
+    c[ImGuiCol_ResizeGripHovered]    = lerp_rgb(deep, accent, 0.35f);
+    c[ImGuiCol_ResizeGripActive]     = lerp_rgb(deep, accent, 0.55f);
 }
 
 } // namespace gtui

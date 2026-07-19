@@ -13,8 +13,10 @@ bool gimgui_instr_name_editing();
 // Open the name editor for instrument @p inst (1..3F).
 void gimgui_instr_name_begin(int inst);
 
-// F12 help window. Opens on the tab matching the current editor panel.
+// Help modal. Opens on the tab matching the current editor panel.
+// Toggle via Action::Help; dismiss via Action::Cancel (Esc).
 void gimgui_open_help();
+void gimgui_close_help();
 bool gimgui_help_open();
 
 // Song metadata field focus (names panel, field index 0..2).

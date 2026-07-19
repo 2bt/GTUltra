@@ -73,12 +73,12 @@ constexpr std::string_view kTableEncoding[] = {
 };
 
 constexpr Topic kTopics[] = {
-    {"General", "General keys", Kind::Keybinds, BindContext::Global, {}, {}},
-    {"Pattern", "Pattern editor", Kind::Keybinds, BindContext::Pattern, kPatternNotes, {}},
-    {"Order", "Order list", Kind::Keybinds, BindContext::Order, kOrderNotes, {}},
-    {"Instrument", "Instrument editor", Kind::Keybinds, BindContext::Instrument, kInstrNotes, {}},
-    {"Tables", "Table editor", Kind::Keybinds, BindContext::Tables, kTableNotes, {}},
-    {"Song", "Song metadata", Kind::Keybinds, BindContext::Names, kNamesNotes, {}},
+    {"General", "General keys", Kind::Keybinds, gtaction::Ctx::Global, {}, {}},
+    {"Pattern", "Pattern editor", Kind::Keybinds, gtaction::Ctx::Pattern, kPatternNotes, {}},
+    {"Order", "Order list", Kind::Keybinds, gtaction::Ctx::Order, kOrderNotes, {}},
+    {"Instrument", "Instrument editor", Kind::Keybinds, gtaction::Ctx::Instrument, kInstrNotes, {}},
+    {"Tables", "Table editor", Kind::Keybinds, gtaction::Ctx::Tables, kTableNotes, {}},
+    {"Song", "Song metadata", Kind::Keybinds, gtaction::Ctx::Names, kNamesNotes, {}},
     {"FX commands", "Pattern effect commands", Kind::Reference, std::nullopt, {}, kPattCmds},
     {"Instr fields", "Instrument fields", Kind::Reference, std::nullopt, {}, kInstParm},
     {"Table encoding", "Table row encoding", Kind::Reference, std::nullopt, {}, kTableEncoding},
@@ -90,14 +90,13 @@ std::span<const Topic> topics() { return kTopics; }
 
 std::size_t topic_index_for_edit_panel(int edit_panel)
 {
-    switch (edit_panel) {
-    case 0: return 1; // Pattern
-    case 1: return 2; // Order
-    case 2: return 3; // Instrument
-    case 3: return 4; // Tables
-    case 4: return 5; // Song
-    default: return 0;
+    const gtaction::Ctx want = gtaction::context_from_editmode(edit_panel);
+    const auto all = topics();
+    for (std::size_t i = 0; i < all.size(); ++i) {
+        if (all[i].kind == Kind::Keybinds && all[i].binds && *all[i].binds == want)
+            return i;
     }
+    return 0;
 }
 
 void print_reference(std::ostream& out)

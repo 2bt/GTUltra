@@ -21,6 +21,7 @@
 #include "log.hpp"
 
 #include <cstdio>
+#include <iostream>
 #include <map>
 #include <unordered_map>
 #include <vector>
@@ -54,7 +55,7 @@ struct Binding {
 const ActionMeta kActionMeta[] = {
     { Action::Save,                     "Save",                     "Save song" },
     { Action::Undo,                     "Undo",                     "Undo" },
-    { Action::Quit,                     "Quit",                     "Quit" },
+    { Action::Cancel,                   "Cancel",                   "Cancel" },
     { Action::Clear,                    "Clear",                    "Clear song" },
     { Action::Help,                     "Help",                     "Help" },
     { Action::EditModeNext,             "EditModeNext",             "Next edit mode" },
@@ -188,7 +189,7 @@ const Binding kBindings[] = {
     // Global file / session
     { Action::Save,               Ctx::Global, make_scancode_chord(KEY_S, Ctrl) },
     { Action::Undo,               Ctx::Global, make_scancode_chord(KEY_Z, Ctrl) },
-    { Action::Quit,               Ctx::Global, make_scancode_chord(KEY_ESC) },
+    { Action::Cancel,             Ctx::Global, make_scancode_chord(KEY_ESC) },
     { Action::Clear,              Ctx::Global, make_scancode_chord(KEY_ESC, Shift) },
     { Action::Help,               Ctx::Global, make_scancode_chord(KEY_F12) },
     { Action::ToggleSIDTracker64, Ctx::Global, make_scancode_chord(KEY_F12, Shift) },
@@ -888,6 +889,11 @@ void edit_next_instr() {
 
 bool handle_global_action(Action act) {
     GTOBJECT* gt = &gtObject;
+
+    // Help modal: only Cancel (dismiss) and Help (toggle) may run; swallow the rest.
+    if (gimgui_help_open() && act != Action::Cancel && act != Action::Help)
+        return true;
+
     switch (act) {
     case Action::Save: {
         int validSize = 1;
@@ -915,17 +921,17 @@ bool handle_global_action(Action act) {
         undoPerform(gt);
         return true;
 
-    case Action::Quit:
-        if (!shiftOrCtrlPressed) quit(gt);
+    case Action::Cancel:
+        if (gimgui_help_open()) gimgui_close_help();
         return true;
 
     case Action::Clear:
         if (shiftOrCtrlPressed) clear(gt);
         return true;
 
-        case Action::Help:
-            gimgui_open_help();
-            return true;
+    case Action::Help:
+        gimgui_open_help();
+        return true;
 
     case Action::EditModeNext:
         if (!shiftOrCtrlPressed) {
@@ -1770,32 +1776,70 @@ std::vector<BindingEntry> bindings_for(Ctx ctx) {
     return out;
 }
 
-static void print_bindings_for_ctx(Ctx ctx, const char* title) {
-    std::fputs(title, stdout);
-    std::fputc('\n', stdout);
+std::vector<BindingRow> binding_rows_for(Ctx ctx) {
+    std::vector<BindingRow> rows;
+    std::map<Action, std::size_t> index;
 
-    const auto binds = bindings_for(ctx);
-    // Group chords by action, preserving action order of first appearance.
-    std::vector<Action> actions;
-    std::map<Action, std::vector<Chord>> chords;
-    for (const BindingEntry& e : binds) {
-        if (chords.find(e.action) == chords.end()) actions.push_back(e.action);
-        chords[e.action].push_back(e.chord);
+    for (const BindingEntry& e : bindings_for(ctx)) {
+        auto it = index.find(e.action);
+        if (it == index.end()) {
+            index[e.action] = rows.size();
+            rows.push_back({ e.action, { e.chord } });
+        } else {
+            rows[it->second].chords.push_back(e.chord);
+        }
     }
-    for (Action a : actions) {
-        const std::string keys = format_chord_list(chords[a]);
-        std::printf("  %-32s  %s\n", keys.c_str(), action_label(a));
+    return rows;
+}
+
+std::vector<ChordConflict> conflicts_for(Ctx ctx) {
+    std::vector<Chord>                         order;
+    std::unordered_map<Chord, std::vector<Action>> claims;
+
+    auto consider = [&](Chord c, Action a) {
+        auto& v = claims[c];
+        if (v.empty()) order.push_back(c);
+        if (v.empty() || v.back() != a) v.push_back(a);
+    };
+
+    for (const Binding& b : kBindings) {
+        if (b.ctx == ctx) consider(b.chord, b.action);
     }
-    std::fputc('\n', stdout);
+    for (const Binding& b : g_overrides) {
+        if (b.ctx == ctx) consider(b.chord, b.action);
+    }
+
+    std::vector<ChordConflict> out;
+    for (Chord c : order) {
+        const auto& v = claims[c];
+        if (v.size() < 2) continue;
+        out.push_back({ c, v.back(), v });
+    }
+    return out;
 }
 
 void print_help_cli() {
-    print_bindings_for_ctx(Ctx::Global, "GENERAL");
-    print_bindings_for_ctx(Ctx::Pattern, "PATTERN");
-    print_bindings_for_ctx(Ctx::Order, "ORDER LIST");
-    print_bindings_for_ctx(Ctx::Instrument, "INSTRUMENT");
-    print_bindings_for_ctx(Ctx::Tables, "TABLES");
-    print_bindings_for_ctx(Ctx::Names, "SONG INFO");
+    for (const gthelp::Topic& t : gthelp::topics()) {
+        if (t.kind != gthelp::Kind::Keybinds || !t.binds) continue;
+        std::cout << t.title << '\n';
+        for (const BindingRow& row : binding_rows_for(*t.binds)) {
+            const std::string keys = format_chord_list(row.chords);
+            std::printf("  %-32s  %s\n", keys.c_str(), action_label(row.action));
+        }
+        const auto conflicts = conflicts_for(*t.binds);
+        if (!conflicts.empty()) {
+            std::cout << "  [conflicts — last binding wins]\n";
+            for (const ChordConflict& cf : conflicts) {
+                std::printf("  ! %-30s  ", format_chord(cf.chord).c_str());
+                for (std::size_t i = 0; i < cf.claimants.size(); ++i) {
+                    if (i) std::fputs(" → ", stdout);
+                    std::fputs(action_label(cf.claimants[i]), stdout);
+                }
+                std::fputc('\n', stdout);
+            }
+        }
+        std::cout << '\n';
+    }
     gthelp::print_reference();
 }
 
@@ -1814,6 +1858,9 @@ const char* action_label(Action a) {
 }
 
 bool dispatch_mode_navigation() {
+    // Leave keys intact for dispatch_global (Cancel/Help) while Help is modal.
+    if (gimgui_help_open()) return true;
+
     switch (editorInfo.editmode) {
     case EDIT_ORDERLIST: return dispatch_order_navigation();
     case EDIT_PATTERN: return dispatch_pattern_navigation();

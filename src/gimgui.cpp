@@ -20,12 +20,14 @@
 #include <SDL.h>
 #include <cfloat>
 #include <cstdio>
+#include <cstring>
 #include <cstdlib>
 #include <functional>
 #include <map>
 #include <span>
 #include <string>
 #include <string_view>
+#include <unordered_set>
 #include <vector>
 
 // bme globals/hooks we bind to. Declared here (with C linkage) instead of
@@ -45,6 +47,7 @@ bool g_show_demo = false; // toggleable ImGui reference/demo window
 bool g_show_help       = false;
 int  g_help_tab        = 0;
 bool g_help_select_tab = false; // one-shot: force tab when opening
+int  g_help_tab_bar_id = 0;     // bump on open so ImGui does not restore the old tab
 bool g_help_hovered    = false; // pointer over help window (blocks editor wheel)
 
 // Panel under the mouse for wheel → row navigation (-1 = none / non-editor).
@@ -63,21 +66,12 @@ void gimgui_open_help() {
     g_show_help       = true;
     g_help_tab        = (int)gthelp::topic_index_for_edit_panel((int)gtui::edit_panel());
     g_help_select_tab = true;
+    ++g_help_tab_bar_id;
 }
+
+void gimgui_close_help() { g_show_help = false; }
 
 bool gimgui_help_open() { return g_show_help; }
-
-static gtaction::Ctx gimgui_help_ctx(gthelp::BindContext c) {
-    switch (c) {
-    case gthelp::BindContext::Global:     return gtaction::Ctx::Global;
-    case gthelp::BindContext::Pattern:    return gtaction::Ctx::Pattern;
-    case gthelp::BindContext::Order:      return gtaction::Ctx::Order;
-    case gthelp::BindContext::Instrument: return gtaction::Ctx::Instrument;
-    case gthelp::BindContext::Tables:     return gtaction::Ctx::Tables;
-    case gthelp::BindContext::Names:      return gtaction::Ctx::Names;
-    }
-    return gtaction::Ctx::Global;
-}
 
 static void gimgui_draw_help_notes(std::span<const std::string_view> notes) {
     if (notes.empty()) return;
@@ -89,33 +83,61 @@ static void gimgui_draw_help_notes(std::span<const std::string_view> notes) {
 }
 
 // Keycap-style chip so alternate bindings are not joined with "/" (looks like the slash key).
-static void gimgui_draw_key_chip(const char* label) {
+static void gimgui_draw_key_chip(const char* label, bool warn = false) {
     const ImVec2 pad(6.0f, 2.0f);
     const ImVec2 text = ImGui::CalcTextSize(label);
     const ImVec2 size(text.x + pad.x * 2.0f, text.y + pad.y * 2.0f);
     const ImVec2 p0   = ImGui::GetCursorScreenPos();
     const ImVec2 p1(p0.x + size.x, p0.y + size.y);
     ImDrawList*  dl   = ImGui::GetWindowDrawList();
-    const ImU32  bg   = ImGui::GetColorU32(ImGuiCol_FrameBg);
-    const ImU32  edge = ImGui::GetColorU32(ImGuiCol_Border);
+    const ImU32  bg   = warn ? ImGui::GetColorU32(ImGuiCol_HeaderActive)
+                             : ImGui::GetColorU32(ImGuiCol_FrameBg);
+    const ImU32  edge = warn ? ImGui::GetColorU32(ImGuiCol_CheckMark)
+                             : ImGui::GetColorU32(ImGuiCol_Border);
     const ImU32  fg   = ImGui::GetColorU32(ImGuiCol_Text);
-    dl->AddRectFilled(p0, p1, bg, 3.0f);
-    dl->AddRect(p0, p1, edge, 3.0f);
+    dl->AddRectFilled(p0, p1, bg, 0.0f);
+    dl->AddRect(p0, p1, edge, 0.0f);
     dl->AddText(ImVec2(p0.x + pad.x, p0.y + pad.y), fg, label);
     ImGui::Dummy(size);
 }
 
 static void gimgui_draw_help_keybinds(gtaction::Ctx ctx) {
-    const auto binds = gtaction::bindings_for(ctx);
+    const auto rows      = gtaction::binding_rows_for(ctx);
+    const auto conflicts = gtaction::conflicts_for(ctx);
 
-    std::vector<gtaction::Action> actions;
-    std::map<gtaction::Action, std::vector<gtaction::Chord>> chords;
-    for (const gtaction::BindingEntry& e : binds) {
-        if (chords.find(e.action) == chords.end()) actions.push_back(e.action);
-        chords[e.action].push_back(e.chord);
+    std::unordered_set<gtaction::Chord> conflict_chords;
+    conflict_chords.reserve(conflicts.size());
+    for (const gtaction::ChordConflict& cf : conflicts)
+        conflict_chords.insert(cf.chord);
+
+    if (!conflicts.empty()) {
+        ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_CheckMark));
+        ImGui::TextWrapped("Chord conflicts in this context (last binding wins):");
+        for (const gtaction::ChordConflict& cf : conflicts) {
+            const std::string chord = gtaction::format_chord(cf.chord);
+            ImGui::Bullet();
+            ImGui::SameLine(0.0f, 4.0f);
+            gimgui_draw_key_chip(chord.c_str(), true);
+            ImGui::SameLine(0.0f, 8.0f);
+            for (std::size_t i = 0; i < cf.claimants.size(); ++i) {
+                if (i) {
+                    ImGui::SameLine(0.0f, 0.0f);
+                    ImGui::TextUnformatted(" → ");
+                    ImGui::SameLine(0.0f, 0.0f);
+                }
+                const bool win = (i + 1 == cf.claimants.size());
+                if (win) ImGui::Text("%s", gtaction::action_label(cf.claimants[i]));
+                else ImGui::TextDisabled("%s", gtaction::action_label(cf.claimants[i]));
+                if (i + 1 < cf.claimants.size()) ImGui::SameLine(0.0f, 0.0f);
+            }
+        }
+        ImGui::PopStyleColor();
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
     }
 
-    if (actions.empty()) {
+    if (rows.empty()) {
         ImGui::TextDisabled("No keybindings in this context.");
         return;
     }
@@ -125,27 +147,89 @@ static void gimgui_draw_help_keybinds(gtaction::Ctx ctx) {
                               ImGuiTableFlags_SizingStretchProp)) {
         ImGui::TableSetupColumn("key", ImGuiTableColumnFlags_WidthFixed, 260.0f);
         ImGui::TableSetupColumn("desc", ImGuiTableColumnFlags_WidthStretch);
-        for (gtaction::Action a : actions) {
+        for (const gtaction::BindingRow& row : rows) {
             ImGui::TableNextRow();
             ImGui::TableNextColumn();
-            const auto& alts = chords[a];
-            for (std::size_t i = 0; i < alts.size(); ++i) {
+            for (std::size_t i = 0; i < row.chords.size(); ++i) {
                 if (i) ImGui::SameLine(0.0f, 6.0f);
-                const std::string label = gtaction::format_chord(alts[i]);
-                gimgui_draw_key_chip(label.c_str());
+                const std::string label = gtaction::format_chord(row.chords[i]);
+                const bool warn = conflict_chords.count(row.chords[i]) > 0;
+                gimgui_draw_key_chip(label.c_str(), warn);
             }
             ImGui::TableNextColumn();
-            ImGui::TextWrapped("%s", gtaction::action_label(a));
+            ImGui::TextWrapped("%s", gtaction::action_label(row.action));
         }
         ImGui::EndTable();
     }
 }
 
-static void gimgui_draw_help_reference(std::span<const std::string_view> lines) {
-    for (std::string_view line : lines) {
-        ImGui::TextWrapped("%.*s", (int)line.size(), line.data());
-        ImGui::Spacing();
+// Split "Label — body" or "Label: body" (short labels only) for reference prose.
+static bool gimgui_help_split_labeled(std::string_view line, std::string_view* label,
+                                      std::string_view* body) {
+    constexpr std::string_view kEmDash = " \xE2\x80\x94 "; // " — "
+    const std::size_t em = line.find(kEmDash);
+    if (em != std::string_view::npos && em > 0 && em < 40) {
+        *label = line.substr(0, em);
+        *body  = line.substr(em + kEmDash.size());
+        return !body->empty();
     }
+
+    const std::size_t colon = line.find(": ");
+    if (colon != std::string_view::npos && colon > 0 && colon < 40) {
+        *label = line.substr(0, colon);
+        *body  = line.substr(colon + 2);
+        return !body->empty();
+    }
+    return false;
+}
+
+static void gimgui_draw_help_reference_line(std::string_view line) {
+    // "Command 0XY: …" → chip + wrapped description
+    constexpr std::string_view kCmd = "Command ";
+    if (line.size() > kCmd.size() && line.substr(0, kCmd.size()) == kCmd) {
+        const std::size_t colon = line.find(": ");
+        if (colon != std::string_view::npos && colon > kCmd.size()) {
+            const std::string code(line.substr(kCmd.size(), colon - kCmd.size()));
+            const std::string_view body = line.substr(colon + 2);
+            gimgui_draw_key_chip(code.c_str());
+            ImGui::SameLine(0.0f, 10.0f);
+            ImGui::BeginGroup();
+            ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + ImGui::GetContentRegionAvail().x);
+            ImGui::TextUnformatted(body.data(), body.data() + body.size());
+            ImGui::PopTextWrapPos();
+            ImGui::EndGroup();
+            ImGui::Spacing();
+            ImGui::Spacing();
+            return;
+        }
+    }
+
+    std::string_view label, body;
+    if (gimgui_help_split_labeled(line, &label, &body)) {
+        const ImVec4 accent = ImGui::GetStyleColorVec4(ImGuiCol_CheckMark);
+        ImGui::PushStyleColor(ImGuiCol_Text, accent);
+        ImGui::TextUnformatted(label.data(), label.data() + label.size());
+        ImGui::PopStyleColor();
+        ImGui::Indent(10.0f);
+        ImGui::PushTextWrapPos(0.0f);
+        ImGui::TextUnformatted(body.data(), body.data() + body.size());
+        ImGui::PopTextWrapPos();
+        ImGui::Unindent(10.0f);
+        ImGui::Spacing();
+        ImGui::Spacing();
+        return;
+    }
+
+    ImGui::PushTextWrapPos(0.0f);
+    ImGui::TextUnformatted(line.data(), line.data() + line.size());
+    ImGui::PopTextWrapPos();
+    ImGui::Spacing();
+    ImGui::Spacing();
+}
+
+static void gimgui_draw_help_reference(std::span<const std::string_view> lines) {
+    for (std::string_view line : lines)
+        gimgui_draw_help_reference_line(line);
 }
 
 static void gimgui_draw_help_topic_body(const gthelp::Topic& topic) {
@@ -156,7 +240,7 @@ static void gimgui_draw_help_topic_body(const gthelp::Topic& topic) {
 
     if (topic.kind == gthelp::Kind::Keybinds && topic.binds) {
         gimgui_draw_help_notes(topic.notes);
-        gimgui_draw_help_keybinds(gimgui_help_ctx(*topic.binds));
+        gimgui_draw_help_keybinds(*topic.binds);
     } else {
         gimgui_draw_help_reference(topic.body);
     }
@@ -164,21 +248,25 @@ static void gimgui_draw_help_topic_body(const gthelp::Topic& topic) {
 
 static void gimgui_draw_help_window() {
     g_help_hovered = false;
-    if (!g_show_help) return;
+    if (g_show_help)
+        ImGui::OpenPopup("Help");
 
-    ImGui::SetNextWindowSize(ImVec2(780.0f, 560.0f), ImGuiCond_FirstUseEver);
+    ImGuiViewport* vp = ImGui::GetMainViewport();
+    ImGui::SetNextWindowPos(vp->GetCenter(), ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+    ImGui::SetNextWindowSize(ImVec2(780.0f, 560.0f), ImGuiCond_Appearing);
     ImGui::SetNextWindowSizeConstraints(ImVec2(480.0f, 320.0f), ImVec2(FLT_MAX, FLT_MAX));
-    if (!ImGui::Begin("Help", &g_show_help, ImGuiWindowFlags_NoCollapse)) {
-        ImGui::End();
+    if (!ImGui::BeginPopupModal("Help", &g_show_help, ImGuiWindowFlags_NoCollapse))
         return;
-    }
 
     g_help_hovered = ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows);
 
     const auto topics = gthelp::topics();
     if (g_help_tab < 0 || g_help_tab >= (int)topics.size()) g_help_tab = 0;
 
-    if (ImGui::BeginTabBar("##help_tabs", ImGuiTabBarFlags_FittingPolicyScroll)) {
+    char tab_bar_id[32];
+    snprintf(tab_bar_id, sizeof tab_bar_id, "##help_tabs_%d", g_help_tab_bar_id);
+
+    if (ImGui::BeginTabBar(tab_bar_id, ImGuiTabBarFlags_FittingPolicyScroll)) {
         for (int i = 0; i < (int)topics.size(); ++i) {
             const gthelp::Topic& topic = topics[(std::size_t)i];
 
@@ -188,10 +276,11 @@ static void gimgui_draw_help_window() {
 
             const std::string tab(topic.tab);
             if (ImGui::BeginTabItem(tab.c_str(), nullptr, flags)) {
-                g_help_tab = i;
-                if (ImGui::BeginChild("##help_body", ImVec2(0, 0), false)) {
+                // While forcing the panel-matched tab, don't let an earlier
+                // BeginTabItem (stale selection) overwrite g_help_tab.
+                if (!g_help_select_tab) g_help_tab = i;
+                if (ImGui::BeginChild("##help_body", ImVec2(0, 0), false))
                     gimgui_draw_help_topic_body(topic);
-                }
                 ImGui::EndChild();
                 ImGui::EndTabItem();
             }
@@ -200,7 +289,7 @@ static void gimgui_draw_help_window() {
     }
     g_help_select_tab = false;
 
-    ImGui::End();
+    ImGui::EndPopup();
 }
 
 // Instrument-name editing (per-row InputText, like song metadata fields).
@@ -1535,8 +1624,7 @@ void gimgui_load_font_at(float sizePx) {
     io.FontDefault = io.Fonts->Fonts.back();
 }
 
-// Flat, professional dark theme: square windows, minimal borders, a blue accent.
-// Spacing scales with UI font size so chrome bars stay proportional.
+// Flat dark theme: square chrome; colors from guicolors.
 void gimgui_apply_style() {
     ImGuiStyle& s     = ImGui::GetStyle();
     const float scale = g_font_size_px / kBaseUIFontPx;
@@ -1575,12 +1663,13 @@ void gimgui_reload_font() {
 // Mouse wheel → cursor row/field for the panel under the pointer.
 static void gimgui_dispatch_mouse_wheel() {
     if (!g_imgui_ready) return;
+    if (g_show_help) return; // modal Help owns input
 
     ImGuiIO& io = ImGui::GetIO();
     if (io.MouseWheel == 0.f) return;
     if (!io.WantCaptureMouse) return;
 
-    // Scrollable ImGui windows (Help, etc.) keep the wheel; don't move editor rows.
+    // Scrollable ImGui windows keep the wheel; don't move editor rows.
     if (g_help_hovered) return;
     if (g_hovered_edit_panel < 0) return;
 
@@ -1625,7 +1714,17 @@ extern "C" void gimgui_overlay_render(void) {
 
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("View")) {
-            if (ImGui::MenuItem("Help", "F12")) gimgui_open_help();
+            const char* help_shortcut = "F12";
+            std::string help_shortcut_owned;
+            for (const gtaction::BindingRow& row :
+                 gtaction::binding_rows_for(gtaction::Ctx::Global)) {
+                if (row.action == gtaction::Action::Help && !row.chords.empty()) {
+                    help_shortcut_owned = gtaction::format_chord(row.chords[0]);
+                    help_shortcut       = help_shortcut_owned.c_str();
+                    break;
+                }
+            }
+            if (ImGui::MenuItem("Help", help_shortcut)) gimgui_open_help();
             ImGui::Separator();
             if (ImGui::MenuItem("Smaller font", nullptr, false, g_font_size_px > kMinUIFontPx))
                 gimgui_adjust_font_size(-2);
@@ -1705,8 +1804,10 @@ extern "C" void gimgui_event_process(void* sdl_event) {
 // input that ImGui is consuming. bit0 = mouse, bit1 = keyboard.
 extern "C" int gimgui_input_capture(void) {
     if (!g_imgui_ready) return 0;
-    ImGuiIO& io    = ImGui::GetIO();
-    int      flags = 0;
+    ImGuiIO& io = ImGui::GetIO();
+    // Modal Help: always block mouse. Leave keyboard free for gactions (Cancel/Help).
+    if (g_show_help) return 1;
+    int flags = 0;
     if (io.WantCaptureMouse) flags |= 1;
     if (io.WantCaptureKeyboard) {
         // Let Tab / Shift+Tab through to the action layer even when a text field
