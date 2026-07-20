@@ -1,0 +1,62 @@
+# clang-tidy for GTUltra (C++20, incremental C → C++ modernization).
+#
+# Goal: catch real bugs and nudge new/touched code toward modern C++, without
+# flooding the still-C-shaped translation units.
+#
+# Run from the build dir (compile_commands.json):
+#   clang-tidy -p build src/embed.cpp
+# Or on a diff / file list you care about; do not expect a clean whole-tree run yet.
+
+Checks: >
+  -*,
+  bugprone-*,
+  clang-analyzer-*,
+  misc-*,
+  modernize-*,
+  performance-*,
+  readability-*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-narrowing-conversions,
+  -clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling,
+  -misc-include-cleaner,
+  -misc-no-recursion,
+  -misc-non-private-member-variables-in-classes,
+  -misc-use-anonymous-namespace,
+  -modernize-avoid-c-arrays,
+  -modernize-use-trailing-return-type,
+  -modernize-raw-string-literal,
+  -performance-avoid-endl,
+  -readability-braces-around-statements,
+  -readability-convert-member-functions-to-static,
+  -readability-else-after-return,
+  -readability-function-cognitive-complexity,
+  -readability-identifier-length,
+  -readability-implicit-bool-conversion,
+  -readability-magic-numbers,
+  -readability-named-parameter,
+  -readability-uppercase-literal-suffix
+
+WarningsAsErrors: ''
+
+HeaderFilterRegex: 'src/.*'
+
+CheckOptions:
+  # Match project C++20 / modern-cpp guidance.
+  - key: modernize-use-auto.MinTypeNameLength
+    value: '8'
+  - key: modernize-use-emplace.IgnoreImplicitConstructors
+    value: 'true'
+  - key: modernize-use-nullptr.NullMacros
+    value: 'NULL'
+  - key: modernize-use-override.AllowOverrideAndFinal
+    value: 'true'
+  - key: performance-unnecessary-value-param.AllowedTypes
+    value: ''
+  - key: readability-function-size.LineThreshold
+    value: '800'
+  - key: readability-function-size.StatementThreshold
+    value: '500'
+  - key: readability-simplify-boolean-expr.ChainedConditionalReturn
+    value: 'true'
+  # Prefer fixed-width / size_t style; do not enforce naming yet (legacy names).
+  # Enable readability-identifier-naming later for new namespaces only if desired.

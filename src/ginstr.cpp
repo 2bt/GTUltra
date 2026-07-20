@@ -157,13 +157,9 @@ bool instrument_cell_input(GTOBJECT *gt, const EditorInput *input)
 
 void instrumentcommands(GTOBJECT *gt, const EditorInput *input)
 {
-	const EditorInput in = input ? *input : editor_input_snapshot();
-	const int jrawkey = in.rawkey;
+	(void)gt;
+	(void)input;
 
-	goto instr_hex_input;
-
-
-instr_hex_input:
 	if ((hexnybble >= 0) && (editorInfo.eipos < LAST_INST) && (editorInfo.einum))
 	{
 		unsigned char *ptr = &instr[editorInfo.einum].ad;
@@ -191,7 +187,6 @@ instr_hex_input:
 		}
 		lastEditWindow = -1;	// force redraw of Info bar with updated info
 	}
-instr_validate:
 	// Validate instrument parameters
 	if (editorInfo.einum)
 	{

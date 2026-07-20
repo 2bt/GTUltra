@@ -3,50 +3,58 @@
 //
 #include "guicolors.hpp"
 
+#include <cstdint>
+
 namespace gtui {
 namespace {
 
 struct GuiColorDef {
-    GuiColorRole  role;
-    const char*   name;
-    const char*   label;
-    unsigned char r, g, b, a;
+    GuiColorRole role;
+    const char*  name;
+    const char*  label;
+    uint8_t      r, g, b, a;
 };
 
 static ImU32 g_colors[(unsigned)GuiColorRole::Count];
 
 static const GuiColorDef kDefaultColors[] = {
-    { GuiColorRole::AppBackground,         "app_background",           "App background",             30, 30, 30, 255 },
-    { GuiColorRole::PanelHeaderBg,         "panel_header_bg",          "Panel header",               46, 46, 46, 255 },
-    { GuiColorRole::PanelHeaderBgActive,   "panel_header_bg_active",   "Panel header (active)",      58, 50, 44, 255 },
-    { GuiColorRole::PanelHeaderText,       "panel_header_text",        "Panel header text",          195, 200, 205, 255 },
-    { GuiColorRole::PanelHeaderTextActive, "panel_header_text_active", "Panel header text (active)", 255, 155, 60, 255 },
+    { GuiColorRole::AppBackground, "app_background", "App background", 30, 30, 30, 255 },
+    { GuiColorRole::PanelHeaderBg, "panel_header_bg", "Panel header", 46, 46, 46, 255 },
+    { GuiColorRole::PanelHeaderBgActive, "panel_header_bg_active", "Panel header (active)", 58, 50, 44, 255 },
+    { GuiColorRole::PanelHeaderText, "panel_header_text", "Panel header text", 195, 200, 205, 255 },
+    { GuiColorRole::PanelHeaderTextActive,
+      "panel_header_text_active",
+      "Panel header text (active)",
+      255,
+      155,
+      60,
+      255 },
 
-    { GuiColorRole::WidgetSurface,         "widget_surface",           "Widget surface",             40, 40, 40, 255 },
-    { GuiColorRole::WidgetSurfaceDeep,     "widget_surface_deep",      "Widget surface (deep)",      32, 32, 32, 255 },
-    { GuiColorRole::WidgetFrameBg,         "widget_frame_bg",          "Widget frame",               54, 54, 54, 255 },
-    { GuiColorRole::WidgetBorder,          "widget_border",            "Widget border",              22, 22, 22, 255 },
-    { GuiColorRole::WidgetAccent,          "widget_accent",            "Widget accent",              220, 100, 25, 255 },
+    { GuiColorRole::WidgetSurface, "widget_surface", "Widget surface", 40, 40, 40, 255 },
+    { GuiColorRole::WidgetSurfaceDeep, "widget_surface_deep", "Widget surface (deep)", 32, 32, 32, 255 },
+    { GuiColorRole::WidgetFrameBg, "widget_frame_bg", "Widget frame", 54, 54, 54, 255 },
+    { GuiColorRole::WidgetBorder, "widget_border", "Widget border", 22, 22, 22, 255 },
+    { GuiColorRole::WidgetAccent, "widget_accent", "Widget accent", 220, 100, 25, 255 },
 
-    { GuiColorRole::GridPrimaryText,       "grid_primary_text",        "Grid primary text",          224, 230, 238, 255 },
-    { GuiColorRole::GridNoteText,          "grid_note_text",           "Grid note text",             255, 255, 255, 255 },
-    { GuiColorRole::GridSecondaryText,     "grid_secondary_text",      "Grid secondary text",        130, 145, 160, 255 },
-    { GuiColorRole::GridHeaderText,        "grid_header_text",         "Grid header text",           200, 210, 220, 255 },
-    { GuiColorRole::GridCommandText,       "grid_command_text",        "Grid command text",          235, 195, 110, 255 },
-    { GuiColorRole::GridInstrumentText,    "grid_instrument_text",     "Grid instrument text",       155, 205, 135, 255 },
-    { GuiColorRole::GridMuted,             "grid_muted",               "Grid muted text",            115, 125, 140, 255 },
-    { GuiColorRole::GridDots,              "grid_dots",                "Grid dots",                  70, 78, 88, 255 },
-    { GuiColorRole::GridEndMarker,         "grid_end_marker",          "Grid end marker",            155, 165, 180, 255 },
+    { GuiColorRole::GridPrimaryText, "grid_primary_text", "Grid primary text", 224, 230, 238, 255 },
+    { GuiColorRole::GridNoteText, "grid_note_text", "Grid note text", 255, 255, 255, 255 },
+    { GuiColorRole::GridSecondaryText, "grid_secondary_text", "Grid secondary text", 130, 145, 160, 255 },
+    { GuiColorRole::GridHeaderText, "grid_header_text", "Grid header text", 200, 210, 220, 255 },
+    { GuiColorRole::GridCommandText, "grid_command_text", "Grid command text", 235, 195, 110, 255 },
+    { GuiColorRole::GridInstrumentText, "grid_instrument_text", "Grid instrument text", 155, 205, 135, 255 },
+    { GuiColorRole::GridMuted, "grid_muted", "Grid muted text", 115, 125, 140, 255 },
+    { GuiColorRole::GridDots, "grid_dots", "Grid dots", 70, 78, 88, 255 },
+    { GuiColorRole::GridEndMarker, "grid_end_marker", "Grid end marker", 155, 165, 180, 255 },
 
-    { GuiColorRole::GridCursorRow,         "grid_cursor_row",          "Grid cursor row",            220, 100, 25, 22 },
-    { GuiColorRole::GridCursorRowWarm,     "grid_cursor_row_warm",     "Grid cursor row (warm)",     220, 100, 25, 32 },
-    { GuiColorRole::Cursor,                "cursor",                   "Cursor",                     255, 145, 50, 255 },
-    { GuiColorRole::Selection,             "selection",                "Selection",                  220, 100, 25, 85 },
-    { GuiColorRole::InstrumentHighlight,   "instrument_highlight",     "Instrument highlight",       220, 100, 25, 32 },
-    { GuiColorRole::Playhead,              "playhead",                 "Playhead",                   220, 100, 25, 70 },
-    { GuiColorRole::BeatLine,              "beat_line",                "Beat line",                  68, 68, 68, 55 },
-    { GuiColorRole::MasterChannel,         "master_channel",           "Master channel",             225, 155, 75, 255 },
-    { GuiColorRole::Error,                 "error",                    "Error",                      215, 85, 85, 255 },
+    { GuiColorRole::GridCursorRow, "grid_cursor_row", "Grid cursor row", 220, 100, 25, 22 },
+    { GuiColorRole::GridCursorRowWarm, "grid_cursor_row_warm", "Grid cursor row (warm)", 220, 100, 25, 32 },
+    { GuiColorRole::Cursor, "cursor", "Cursor", 255, 145, 50, 255 },
+    { GuiColorRole::Selection, "selection", "Selection", 220, 100, 25, 85 },
+    { GuiColorRole::InstrumentHighlight, "instrument_highlight", "Instrument highlight", 220, 100, 25, 32 },
+    { GuiColorRole::Playhead, "playhead", "Playhead", 220, 100, 25, 70 },
+    { GuiColorRole::BeatLine, "beat_line", "Beat line", 68, 68, 68, 55 },
+    { GuiColorRole::MasterChannel, "master_channel", "Master channel", 225, 155, 75, 255 },
+    { GuiColorRole::Error, "error", "Error", 215, 85, 85, 255 },
 };
 
 static ImVec4 to_vec4(GuiColorRole role) {
@@ -78,7 +86,7 @@ ImU32 color(GuiColorRole role) {
     return g_colors[i];
 }
 
-ImU32 color_a(GuiColorRole role, unsigned char alpha) {
+ImU32 color_a(GuiColorRole role, uint8_t alpha) {
     return (color(role) & 0x00FFFFFFu) | ((ImU32)alpha << IM_COL32_A_SHIFT);
 }
 
@@ -145,26 +153,26 @@ void gui_colors_apply_imgui_style() {
     c[ImGuiCol_SeparatorHovered]     = lerp_rgb(border, accent, 0.55f);
     c[ImGuiCol_SeparatorActive]      = accent;
 
-    c[ImGuiCol_SliderGrab]           = btnActive;
-    c[ImGuiCol_SliderGrabActive]     = btnActive;
+    c[ImGuiCol_SliderGrab]       = btnActive;
+    c[ImGuiCol_SliderGrabActive] = btnActive;
 
-    c[ImGuiCol_CheckMark]            = accent;
-    c[ImGuiCol_Tab]                  = tabIdle;
-    c[ImGuiCol_TabHovered]           = lerp_rgb(tabIdle, accent, 0.28f);
-    c[ImGuiCol_TabSelected]          = tabSel;
-    c[ImGuiCol_TabSelectedOverline]  = accent;
-    c[ImGuiCol_TabDimmed]            = deep;
-    c[ImGuiCol_TabDimmedSelected]    = lerp_rgb(deep, accent, 0.16f);
+    c[ImGuiCol_CheckMark]                 = accent;
+    c[ImGuiCol_Tab]                       = tabIdle;
+    c[ImGuiCol_TabHovered]                = lerp_rgb(tabIdle, accent, 0.28f);
+    c[ImGuiCol_TabSelected]               = tabSel;
+    c[ImGuiCol_TabSelectedOverline]       = accent;
+    c[ImGuiCol_TabDimmed]                 = deep;
+    c[ImGuiCol_TabDimmedSelected]         = lerp_rgb(deep, accent, 0.16f);
     c[ImGuiCol_TabDimmedSelectedOverline] = lerp_rgb(accent, deep, 0.35f);
-    c[ImGuiCol_TableHeaderBg]        = tableHdr;
-    c[ImGuiCol_TableRowBg]           = lerp_rgb(surface, deep, 0.35f);
-    c[ImGuiCol_TableRowBgAlt]        = rowAlt;
-    c[ImGuiCol_TableBorderLight]     = lerp_rgb(border, surface, 0.35f);
-    c[ImGuiCol_TableBorderStrong]    = border;
-    c[ImGuiCol_ModalWindowDimBg]     = ImVec4(0.0f, 0.0f, 0.0f, 0.55f);
-    c[ImGuiCol_ResizeGrip]           = lerp_rgb(deep, white, 0.10f);
-    c[ImGuiCol_ResizeGripHovered]    = lerp_rgb(deep, accent, 0.35f);
-    c[ImGuiCol_ResizeGripActive]     = lerp_rgb(deep, accent, 0.55f);
+    c[ImGuiCol_TableHeaderBg]             = tableHdr;
+    c[ImGuiCol_TableRowBg]                = lerp_rgb(surface, deep, 0.35f);
+    c[ImGuiCol_TableRowBgAlt]             = rowAlt;
+    c[ImGuiCol_TableBorderLight]          = lerp_rgb(border, surface, 0.35f);
+    c[ImGuiCol_TableBorderStrong]         = border;
+    c[ImGuiCol_ModalWindowDimBg]          = ImVec4(0.0f, 0.0f, 0.0f, 0.55f);
+    c[ImGuiCol_ResizeGrip]                = lerp_rgb(deep, white, 0.10f);
+    c[ImGuiCol_ResizeGripHovered]         = lerp_rgb(deep, accent, 0.35f);
+    c[ImGuiCol_ResizeGripActive]          = lerp_rgb(deep, accent, 0.55f);
 }
 
 } // namespace gtui

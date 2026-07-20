@@ -15,6 +15,8 @@ Applies to **new and actively modernized** C++ (e.g. `gplatform`, ImGui UI, help
 - No `void` parameter lists: write `foo()` not `foo(void)`.
 - Prefer **`underscore_case`** for variables and parameters (`mouse_buttons`, not `mouseButtons` / `mouseb`). Legacy globals may keep old names until touched.
 - **Do not add a `g` / `G` prefix** on new files, types, functions, or namespaces (`embed`, not `gembed`; `embed::File`, not `GembedFile`). Legacy `g*` names (`gplatform`, `gwin`, …) stay until deliberately renamed; when introducing new APIs prefer real namespaces over goat-prefixed globals.
+- Prefer **fixed-width integer types** from `<cstdint>` (`uint8_t`, `uint16_t`, `uint32_t`, `int8_t`, …) over `unsigned char` / `unsigned short` / `unsigned int` for byte buffers, SID registers, and other width-sensitive data. Use `size_t` for sizes/indices into containers. Leave plain `int` for general counters when width does not matter.
+- Prefer the global names from `<cstddef>` / `<cstdint>` (`size_t`, `ptrdiff_t`, `uint8_t`, …) over the `std::` equivalents (`std::size_t`, `std::uint8_t`, …). Keep `std::` for library types that only live in `std` (`std::string`, `std::vector`, `std::span`, …).
 - In `.cpp` files, prefer an **anonymous namespace** for file-local helpers and state over `static` at namespace scope. (`static` on members / local variables is fine.)
 - After editing C/C++ sources, run **clang-format** on the touched files
   (`clang-format -i <files>`), using the project-root `.clang-format`

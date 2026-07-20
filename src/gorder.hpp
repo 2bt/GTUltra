@@ -10,7 +10,7 @@ int calculateLoopInfo2(int songNum, int channelNum, int startSongPos, GTOBJECT *
 int addOrRemoveInterPatternLoop();
 int calculateLoopInfo(int startPatternPos, int testForRemoveLoop);
 int calcStartofInterPatternLoop(int songNum, int channelNum, int startSongPos, GTOBJECT *gtloop);
-void setMasterLoopChannel(GTOBJECT *gt,char *debugText);
+void setMasterLoopChannel(GTOBJECT *gt, const char *debugText);
 
 void orderPlayFromPosition(GTOBJECT *gt, int startPatternPos, int startSongPos, int focusChannel, int enableSIDWrites);
 void orderSelectPatternsFromSelected(GTOBJECT *gt);

@@ -1524,7 +1524,7 @@ void countInstrumentsInPattern(int pat)
 }
 
 
-void setMasterLoopChannel(GTOBJECT *gt, char *debugText)
+void setMasterLoopChannel(GTOBJECT *gt, const char *debugText)
 {
 
 	//	sprintf(textbuffer, "%x master %s", jdebug[15]++, debugText);

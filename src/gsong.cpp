@@ -4,8 +4,23 @@
 
 #define GSONG_C
 
+#include <cstdlib>
+
 #include "goattrk2.hpp"
 #include "gsong.hpp"
+
+
+namespace {
+// Read exactly `size` bytes; on short read zero the buffer so callers don't keep garbage.
+bool read_exact(FILE* f, void* buf, std::size_t size) {
+    if (size == 0)
+        return true;
+    if (fread(buf, size, 1, f) == 1)
+        return true;
+    memset(buf, 0, size);
+    return false;
+}
+} // namespace
 
 SNG_INFO songInfo[MAX_SONG_FILES + 1];
 
@@ -456,7 +471,7 @@ int loadsong(GTOBJECT *gt, int gt2relocMode)
 
 	if (handle)
 	{
-		fread(ident, 4, 1, handle);
+		read_exact(handle, ident, 4);
 		if ((!memcmp(ident, "GTS3", 4)) || (!memcmp(ident, "GTS4", 4)) || (!memcmp(ident, "GTS5", 4)))
 		{
 			int d;
@@ -468,9 +483,9 @@ int loadsong(GTOBJECT *gt, int gt2relocMode)
 
 
 			// Read infotexts
-			fread(songname, sizeof songname, 1, handle);
-			fread(authorname, sizeof authorname, 1, handle);
-			fread(copyrightname, sizeof copyrightname, 1, handle);
+			read_exact(handle, songname, sizeof songname);
+			read_exact(handle, authorname, sizeof authorname);
+			read_exact(handle, copyrightname, sizeof copyrightname);
 
 			// Read songorderlists
 			channelstoload = determinechannels(handle);
@@ -488,7 +503,7 @@ int loadsong(GTOBJECT *gt, int gt2relocMode)
 					length = fread8(handle);
 					loadsize = length;
 					loadsize++;
-					fread(songorder[d][c], loadsize, 1, handle);
+					read_exact(handle, songorder[d][c], loadsize);
 				}
 			}
 			// Read instruments
@@ -505,21 +520,21 @@ int loadsong(GTOBJECT *gt, int gt2relocMode)
 				instr[c].vibdelay = fread8(handle);
 				instr[c].gatetimer = fread8(handle);
 				instr[c].firstwave = fread8(handle);
-				fread(&instr[c].name, MAX_INSTRNAMELEN, 1, handle);
+				read_exact(handle, &instr[c].name, MAX_INSTRNAMELEN);
 			}
 			// Read tables
 			for (c = 0; c < MAX_TABLES; c++)
 			{
 				loadsize = fread8(handle);
-				fread(ltable[c], loadsize, 1, handle);
-				fread(rtable[c], loadsize, 1, handle);
+				read_exact(handle, ltable[c], loadsize);
+				read_exact(handle, rtable[c], loadsize);
 			}
 			// Read patterns
 			amount = fread8(handle);
 			for (c = 0; c < amount; c++)
 			{
 				length = fread8(handle) * 4;
-				fread(pattern[c], length, 1, handle);
+				read_exact(handle, pattern[c], length);
 			}
 
 			SIDTracker64ForIPadIsAmazing = 0;
@@ -530,7 +545,7 @@ int loadsong(GTOBJECT *gt, int gt2relocMode)
 				getNext = 0;
 				ID = 0;
 				// JP - Need to check that this works (previously read into a char array and then copied into uchar...)
-				fread(&ID, 1, 1, handle);
+				read_exact(handle, &ID, 1);
 
 				// JP: New. Load GTUltra settings (FV/R0/P0/HR/SIDType & Speed)
 				if (ID == 0x1f)	// ID for info
@@ -589,9 +604,9 @@ int loadsong(GTOBJECT *gt, int gt2relocMode)
 			ok = 1;
 
 			// Read infotexts
-			fread(songname, sizeof songname, 1, handle);
-			fread(authorname, sizeof authorname, 1, handle);
-			fread(copyrightname, sizeof copyrightname, 1, handle);
+			read_exact(handle, songname, sizeof songname);
+			read_exact(handle, authorname, sizeof authorname);
+			read_exact(handle, copyrightname, sizeof copyrightname);
 
 			// Read songorderlists
 			channelstoload = determinechannels(handle);
@@ -609,7 +624,7 @@ int loadsong(GTOBJECT *gt, int gt2relocMode)
 					length = fread8(handle);
 					loadsize = length;
 					loadsize++;
-					fread(songorder[d][c], loadsize, 1, handle);
+					read_exact(handle, songorder[d][c], loadsize);
 				}
 			}
 			// Read instruments
@@ -625,14 +640,14 @@ int loadsong(GTOBJECT *gt, int gt2relocMode)
 				instr[c].ptr[STBL] = makespeedtable(fread8(handle), editorInfo.finevibrato, 0) + 1;
 				instr[c].gatetimer = fread8(handle);
 				instr[c].firstwave = fread8(handle);
-				fread(&instr[c].name, MAX_INSTRNAMELEN, 1, handle);
+				read_exact(handle, &instr[c].name, MAX_INSTRNAMELEN);
 			}
 			// Read tables
 			for (c = 0; c < MAX_TABLES - 1; c++)
 			{
 				loadsize = fread8(handle);
-				fread(ltable[c], loadsize, 1, handle);
-				fread(rtable[c], loadsize, 1, handle);
+				read_exact(handle, ltable[c], loadsize);
+				read_exact(handle, rtable[c], loadsize);
 			}
 			// Read patterns
 			amount = fread8(handle);
@@ -640,7 +655,7 @@ int loadsong(GTOBJECT *gt, int gt2relocMode)
 			{
 				int d;
 				length = fread8(handle) * 4;
-				fread(pattern[c], length, 1, handle);
+				read_exact(handle, pattern[c], length);
 
 				// Convert speedtable-requiring commands
 				for (d = 0; d < length; d++)
@@ -689,9 +704,9 @@ int loadsong(GTOBJECT *gt, int gt2relocMode)
 			ok = 1;
 
 			// Read infotexts
-			fread(songname, sizeof songname, 1, handle);
-			fread(authorname, sizeof authorname, 1, handle);
-			fread(copyrightname, sizeof copyrightname, 1, handle);
+			read_exact(handle, songname, sizeof songname);
+			read_exact(handle, authorname, sizeof authorname);
+			read_exact(handle, copyrightname, sizeof copyrightname);
 
 			// Read songorderlists
 			channelstoload = determinechannels(handle);
@@ -709,7 +724,7 @@ int loadsong(GTOBJECT *gt, int gt2relocMode)
 					length = fread8(handle);
 					loadsize = length;
 					loadsize++;
-					fread(songorder[d][c], loadsize, 1, handle);
+					read_exact(handle, songorder[d][c], loadsize);
 				}
 			}
 
@@ -729,7 +744,7 @@ int loadsong(GTOBJECT *gt, int gt2relocMode)
 				if (pulse[c] & 1) instr[c].gatetimer |= 0x80; // "No hardrestart" flag
 				pulse[c] &= 0xfe;
 				wavelen = fread8(handle) / 2;
-				fread(&instr[c].name, MAX_INSTRNAMELEN, 1, handle);
+				read_exact(handle, &instr[c].name, MAX_INSTRNAMELEN);
 				instr[c].ptr[WTBL] = fw + 1;
 
 				// Convert wavetable
@@ -947,7 +962,7 @@ int loadsong(GTOBJECT *gt, int gt2relocMode)
 			songchange(gt, 1);
 
 			// Read filtertable
-			fread(filtertable, 256, 1, handle);
+			read_exact(handle, filtertable, 256);
 
 			// Convert filtertable
 			for (c = 0; c < 64; c++)
@@ -1281,7 +1296,7 @@ void loadinstrument(GTOBJECT *gt)
 		{
 			stopsong(gt);
 		}
-		fread(ident, 4, 1, handle);
+		read_exact(handle, ident, 4);
 
 		if ((!memcmp(ident, "GTI3", 4)) || (!memcmp(ident, "GTI4", 4)) || (!memcmp(ident, "GTI5", 4)))
 		{
@@ -1296,7 +1311,7 @@ void loadinstrument(GTOBJECT *gt)
 			instr[editorInfo.einum].vibdelay = fread8(handle);
 			instr[editorInfo.einum].gatetimer = fread8(handle);
 			instr[editorInfo.einum].firstwave = fread8(handle);
-			fread(&instr[editorInfo.einum].name, MAX_INSTRNAMELEN, 1, handle);
+			read_exact(handle, &instr[editorInfo.einum].name, MAX_INSTRNAMELEN);
 
 			// Erase old tabledata
 			deleteinstrtable(editorInfo.einum);
@@ -1359,7 +1374,7 @@ void loadinstrument(GTOBJECT *gt)
 			instr[editorInfo.einum].ptr[STBL] = makespeedtable(fread8(handle), editorInfo.finevibrato, 0) + 1;
 			instr[editorInfo.einum].gatetimer = fread8(handle);
 			instr[editorInfo.einum].firstwave = fread8(handle);
-			fread(&instr[editorInfo.einum].name, MAX_INSTRNAMELEN, 1, handle);
+			read_exact(handle, &instr[editorInfo.einum].name, MAX_INSTRNAMELEN);
 
 			// Erase old tabledata
 			deleteinstrtable(editorInfo.einum);
@@ -1433,7 +1448,7 @@ void loadinstrument(GTOBJECT *gt)
 			instr[editorInfo.einum].ptr[FTBL] = fread8(handle) ? ff + 1 : 0;
 			if (pulse & 1) instr[editorInfo.einum].gatetimer |= 0x80; // "No hardrestart" flag
 			wavelen = fread8(handle) / 2;
-			fread(&instr[editorInfo.einum].name, MAX_INSTRNAMELEN, 1, handle);
+			read_exact(handle, &instr[editorInfo.einum].name, MAX_INSTRNAMELEN);
 			instr[editorInfo.einum].ptr[WTBL] = fw + 1;
 
 			// Convert wavetable
@@ -1584,7 +1599,7 @@ void loadinstrument(GTOBJECT *gt)
 			// Convert filter (if any)
 			if ((instr[editorInfo.einum].ptr[FTBL]) && (ff < MAX_TABLELEN - 2))
 			{
-				fread(filtertemp, sizeof filtertemp, 1, handle);
+				read_exact(handle, filtertemp, sizeof filtertemp);
 				// Filter set
 				if (filtertemp[0])
 				{
@@ -2154,7 +2169,7 @@ int determinechannels(FILE* handle)
 			int loadsize = fread8(handle);
 			loadsize++;
 			memset(songbuffer, 0, 257);
-			fread(songbuffer, loadsize, 1, handle);
+			read_exact(handle, songbuffer, loadsize);
 
 			// Check that each track of each song has a valid endmark.
 			// Should fail if it's a mono song (not certain)
@@ -2223,7 +2238,7 @@ int mergesong(GTOBJECT *gt)
 
 	if (handle)
 	{
-		fread(ident, 4, 1, handle);
+		read_exact(handle, ident, 4);
 		if ((!memcmp(ident, "GTS3", 4)) || (!memcmp(ident, "GTS4", 4)) || (!memcmp(ident, "GTS5", 4)))
 		{
 			int d;
@@ -2257,7 +2272,7 @@ int mergesong(GTOBJECT *gt)
 					length = fread8(handle);
 					loadsize = length;
 					loadsize++;
-					fread(songorder[songbase + d][c], loadsize, 1, handle);
+					read_exact(handle, songorder[songbase + d][c], loadsize);
 					// Remap patterns
 					for (e = 0; e < loadsize - 1; e++)
 					{
@@ -2295,7 +2310,7 @@ int mergesong(GTOBJECT *gt)
 				instr[c + instrbase].vibdelay = fread8(handle);
 				instr[c + instrbase].gatetimer = fread8(handle);
 				instr[c + instrbase].firstwave = fread8(handle);
-				fread(&instr[c + instrbase].name, MAX_INSTRNAMELEN, 1, handle);
+				read_exact(handle, &instr[c + instrbase].name, MAX_INSTRNAMELEN);
 			}
 			// Read tables
 			for (c = 0; c < MAX_TABLES; c++)
@@ -2309,8 +2324,8 @@ int mergesong(GTOBJECT *gt)
 				}
 				nextTable[c] = loadsize + tablebase[c] + 1;
 
-				fread(&ltable[c][tablebase[c]], loadsize, 1, handle);
-				fread(&rtable[c][tablebase[c]], loadsize, 1, handle);
+				read_exact(handle, &ltable[c][tablebase[c]], loadsize);
+				read_exact(handle, &rtable[c][tablebase[c]], loadsize);
 				// Remap jumps and tablecommands
 				for (d = tablebase[c]; d < tablebase[c] + loadsize; d++)
 				{
@@ -2343,7 +2358,7 @@ int mergesong(GTOBJECT *gt)
 			for (c = 0; c < amount; c++)
 			{
 				length = fread8(handle) * 4;
-				fread(pattern[c + pattbase], length, 1, handle);
+				read_exact(handle, pattern[c + pattbase], length);
 				// Remap pattern instruments and commands
 				for (d = 0; d < length; d += 4)
 				{
@@ -2707,28 +2722,29 @@ int allocateSngMemory(int sngIndex)
 
 	SNG_INFO *si = &songInfo[sngIndex];
 
-	si->instrumentData = malloc(sizeof(INSTR)*MAX_INSTR);
-	si->editorInfo = malloc(sizeof(EDITOR_INFO));
-	si->ltable = malloc(sizeof(char)*(MAX_TABLES*MAX_TABLELEN));
-	si->rtable = malloc(sizeof(char)*(MAX_TABLES*MAX_TABLELEN));
-	si->songorder = malloc(sizeof(char)*(MAX_SONGS*MAX_CHN*(MAX_SONGLEN + 2)));
-	si->songOrderPatternsExpanded = malloc(sizeof(char)*(MAX_SONGS*MAX_CHN*MAX_SONGLEN_EXPANDED));
-	si->songOrderTransposeExpanded = malloc(sizeof(short)*(MAX_SONGS*MAX_CHN*MAX_SONGLEN_EXPANDED));
-	si->songOrderLengthExpanded = malloc(sizeof(int)*(MAX_SONGS*MAX_CHN));
-	si->songCompressedSizeExpanded = malloc(sizeof(int)*(MAX_SONGS*MAX_CHN));
-	//	si->songOrderPatternsCopyPasteExpanded = malloc(sizeof(char)*(MAX_CHN*MAX_SONGLEN_EXPANDED));
-	//	si->songOrderTransposeCopyPasteExpanded = malloc(sizeof(short)*(MAX_CHN*MAX_SONGLEN_EXPANDED));
+	// SNG_INFO still stores raw char* blobs; cast until this becomes owned vectors/strings.
+	si->instrumentData = static_cast<char*>(std::malloc(sizeof(INSTR) * MAX_INSTR));
+	si->editorInfo = static_cast<char*>(std::malloc(sizeof(EDITOR_INFO)));
+	si->ltable = static_cast<char*>(std::malloc(sizeof(char) * (MAX_TABLES * MAX_TABLELEN)));
+	si->rtable = static_cast<char*>(std::malloc(sizeof(char) * (MAX_TABLES * MAX_TABLELEN)));
+	si->songorder = static_cast<char*>(std::malloc(sizeof(char) * (MAX_SONGS * MAX_CHN * (MAX_SONGLEN + 2))));
+	si->songOrderPatternsExpanded =
+	    static_cast<char*>(std::malloc(sizeof(char) * (MAX_SONGS * MAX_CHN * MAX_SONGLEN_EXPANDED)));
+	si->songOrderTransposeExpanded =
+	    static_cast<char*>(std::malloc(sizeof(short) * (MAX_SONGS * MAX_CHN * MAX_SONGLEN_EXPANDED)));
+	si->songOrderLengthExpanded = static_cast<char*>(std::malloc(sizeof(int) * (MAX_SONGS * MAX_CHN)));
+	si->songCompressedSizeExpanded = static_cast<char*>(std::malloc(sizeof(int) * (MAX_SONGS * MAX_CHN)));
 
-	si->pattern = malloc(sizeof(char)*MAX_PATT*(MAX_PATTROWS * 4 + 4));
-	si->songName = malloc(sizeof(char)* MAX_STR);
-	si->loadedSongFileName = malloc(sizeof(char)*MAX_PATHNAME);
-	si->wavfilename= malloc(sizeof(char)*MAX_PATHNAME);
-	si->copyrightName = malloc(sizeof(char)* MAX_STR);
-	si->authorName = malloc(sizeof(char)* MAX_STR);
-	si->patternLen = malloc(sizeof(int)*MAX_PATT);
-	si->songLen = malloc(sizeof(int)*MAX_SONGS*MAX_CHN);
+	si->pattern = static_cast<char*>(std::malloc(sizeof(char) * MAX_PATT * (MAX_PATTROWS * 4 + 4)));
+	si->songName = static_cast<char*>(std::malloc(sizeof(char) * MAX_STR));
+	si->loadedSongFileName = static_cast<char*>(std::malloc(sizeof(char) * MAX_PATHNAME));
+	si->wavfilename = static_cast<char*>(std::malloc(sizeof(char) * MAX_PATHNAME));
+	si->copyrightName = static_cast<char*>(std::malloc(sizeof(char) * MAX_STR));
+	si->authorName = static_cast<char*>(std::malloc(sizeof(char) * MAX_STR));
+	si->patternLen = static_cast<char*>(std::malloc(sizeof(int) * MAX_PATT));
+	si->songLen = static_cast<char*>(std::malloc(sizeof(int) * MAX_SONGS * MAX_CHN));
 
-	si->editorUndoInfo = malloc(sizeof(EDITOR_UNDO_INFO));
+	si->editorUndoInfo = static_cast<char*>(std::malloc(sizeof(EDITOR_UNDO_INFO)));
 
 	/*
 

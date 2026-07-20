@@ -75,10 +75,10 @@ char packedsongname[MAX_FILENAME];
 
 
 int SID_StereoPanPositions[4][4] = {
-									{ 7,0,0,0 },
-									{ 0,14,0,0 },
-									{0, 14, 7, 0},
-									{0, 14, 0, 14}
+    { 7, 0, 0, 0 },
+    { 0, 14, 0, 0 },
+    { 0, 14, 7, 0 },
+    { 0, 14, 0, 14 },
 };
 
 int sidPanInts[4] = { 0x0007, 0x00e0, 0x07e0, 0xe0e0 };
@@ -149,7 +149,7 @@ char backupSngFilename[MAX_PATHNAME];
 char fkeysFilename[MAX_PATHNAME];
 
 extern const char* notename[];
-char* programname = "$VER: GTUltra V1.5.4";
+const char* programname = "$VER: GTUltra V1.5.4";
 char specialnotenames[186];
 char scalatuningfilepath[MAX_PATHNAME];
 char tuningname[64];
@@ -2269,7 +2269,7 @@ void detunePitchTable()
 }
 
 
-void createFilename(char* filePath, char* newfileName, char* filename)
+void createFilename(char* filePath, char* newfileName, const char* filename)
 {
 	int d = 0;
 	for (d = strlen(filePath) - 1; d >= 0; d--)

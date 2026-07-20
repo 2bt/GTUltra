@@ -1,20 +1,31 @@
 #pragma once
 
 #include <cstddef>
-#include <string_view>
+#include <cstdint>
 
-// Build-time embedded resources (player .s sources, window icon).
-// Data lives in the binary; looked up by filename via a thin catalog.
+// Build-time embedded resources (sources in assets/, HEX'd into the binary).
 
 namespace embed {
 
-struct File {
-    const char*          name;
-    const unsigned char* data;
-    std::size_t          size;
+enum class Id {
+    player,
+    altplayer,
+    player3,
+    altplayer3,
+    player9,
+    altplayer9,
+    player12,
+    altplayer12,
+    window_icon,
+    font,
+    count,
 };
 
-// Case-insensitive basename match (e.g. "player.s" / "PLAYER.S").
-const File* find(std::string_view name);
+struct Blob {
+    const uint8_t* data;
+    std::size_t    size;
+};
+
+Blob const& get(Id id);
 
 } // namespace embed

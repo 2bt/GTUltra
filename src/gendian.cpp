@@ -26,13 +26,13 @@ void fwritele32(FILE* file, unsigned data) {
 
 unsigned fread8(FILE* file) {
     uint8_t bytes[1];
-    fread(bytes, 1, 1, file);
+    if (fread(bytes, 1, 1, file) != 1) return 0;
     return bytes[0];
 }
 
 unsigned freadle32(FILE* file) {
     uint8_t bytes[4];
-    fread(bytes, 4, 1, file);
+    if (fread(bytes, 4, 1, file) != 1) return 0;
     return (unsigned)bytes[0] | ((unsigned)bytes[1] << 8) | ((unsigned)bytes[2] << 16) |
            ((unsigned)bytes[3] << 24);
 }

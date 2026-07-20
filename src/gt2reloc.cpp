@@ -91,7 +91,7 @@ char  instrfilter[MAX_FILENAME];
 char  instrpath[MAX_PATHNAME];
 char  packedpath[MAX_PATHNAME];
 char  packedsongname[MAX_PATHNAME];
-char* programname = "$VER: GTUltra";
+const char* programname = "$VER: GTUltra";
 
 char textbuffer[MAX_PATHNAME];
 char debugTextbuffer[MAX_PATHNAME];
@@ -508,7 +508,7 @@ void calculatefreqtable() {
 void playFromCurrentPosition(GTOBJECT* gt, int currentPos) {}
 
 
-void createFilename(char* filePath, char* newfileName, char* filename) {}
+void createFilename(char* filePath, char* newfileName, const char* filename) {}
 void converthex() {}
 
 

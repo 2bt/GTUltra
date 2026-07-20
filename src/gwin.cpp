@@ -8,12 +8,12 @@ SDL_Window* win_window = nullptr;
 
 char* dropFileDir = nullptr;
 
-int           win_mousewheel                  = 0;
-int           win_fullscreen                  = 0;
-int           win_quitted                     = 0;
-unsigned char win_keytable[SDL_NUM_SCANCODES] = { 0 };
-unsigned char win_asciikey                    = 0;
-unsigned char win_keystate[SDL_NUM_SCANCODES] = { 0 };
+int     win_mousewheel                  = 0;
+int     win_fullscreen                  = 0;
+int     win_quitted                     = 0;
+uint8_t win_keytable[SDL_NUM_SCANCODES] = { 0 };
+uint8_t win_asciikey                    = 0;
+uint8_t win_keystate[SDL_NUM_SCANCODES] = { 0 };
 
 namespace {
 
@@ -30,11 +30,10 @@ int      key_repeat     = 0;
 float    modal_opacity  = 1.0f;
 
 void load_window_icon() {
-    const embed::File* icon = embed::find("goat32.png");
-    if (!icon || icon->size == 0) return;
+    const auto icon = embed::get(embed::Id::window_icon);
 
     // goat32.png is a BMP payload (historical name).
-    SDL_RWops*   rw      = SDL_RWFromConstMem(icon->data, (int)icon->size);
+    SDL_RWops*   rw      = SDL_RWFromConstMem(icon.data, static_cast<int>(icon.size));
     SDL_Surface* surface = SDL_LoadBMP_RW(rw, 1);
     if (surface) {
         SDL_SetWindowIcon(win_window, surface);
@@ -67,7 +66,7 @@ void pump_events() {
             }
             break;
         case SDL_QUIT: win_quitted = 1; break;
-        case SDL_TEXTINPUT: win_asciikey = (unsigned char)event.text.text[0]; break;
+        case SDL_TEXTINPUT: win_asciikey = static_cast<uint8_t>(event.text.text[0]); break;
         case SDL_KEYDOWN:
             if (!(event.key.repeat && !key_repeat)) {
                 unsigned keynum = event.key.keysym.scancode;

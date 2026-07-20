@@ -1045,7 +1045,7 @@ void pattern_set_cursor(int ch, int row, int col)
     editorInfo.epcolumn = col;
     // Keep the master-loop / mark channel in sync, as the legacy click does, so
     // play-from-here and Shift-select act on the clicked channel.
-    setMasterLoopChannel(&gtObject, (char *)"imgui");
+    setMasterLoopChannel(&gtObject, "imgui");
 }
 
 // ---- MIDI input ----

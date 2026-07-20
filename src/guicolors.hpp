@@ -10,9 +10,11 @@
 
 #include "imgui.h"
 
+#include <cstdint>
+
 namespace gtui {
 
-enum class GuiColorRole : unsigned char {
+enum class GuiColorRole : uint8_t {
     // Chrome / fixed layout
     AppBackground,
     PanelHeaderBg,
@@ -56,7 +58,7 @@ void gui_colors_init();
 void gui_colors_reset_defaults();
 
 ImU32 color(GuiColorRole role);
-ImU32 color_a(GuiColorRole role, unsigned char alpha);
+ImU32 color_a(GuiColorRole role, uint8_t alpha);
 
 const char* color_role_name(GuiColorRole role);
 const char* color_role_label(GuiColorRole role);

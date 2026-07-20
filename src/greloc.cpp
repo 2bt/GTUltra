@@ -8,6 +8,9 @@
 #include "embed.hpp"
 
 #include <stdio.h>
+#include <new>
+#include <cstdint>
+#include <vector>
 #ifndef GT2RELOC
 #include "guialert.hpp"
 #endif
@@ -22,59 +25,69 @@ extern "C" {
 }
 #endif
 
-char* tableleftname[] = { "mt_wavetbl", "mt_pulsetimetbl", "mt_filttimetbl", "mt_speedlefttbl" };
+const char* tableleftname[] = {
+    "mt_wavetbl",
+    "mt_pulsetimetbl",
+    "mt_filttimetbl",
+    "mt_speedlefttbl",
+};
 
-char* tablerightname[] = { "mt_notetbl", "mt_pulsespdtbl", "mt_filtspdtbl", "mt_speedrighttbl" };
+const char* tablerightname[] = {
+    "mt_notetbl",
+    "mt_pulsespdtbl",
+    "mt_filtspdtbl",
+    "mt_speedrighttbl",
+};
 
-unsigned char chnused[MAX_CHN];
-unsigned char pattused[MAX_PATT];
-unsigned char pattmap[MAX_PATT];
-unsigned char instrused[MAX_INSTR];
-unsigned char instrmap[MAX_INSTR];
-unsigned char tableused[MAX_TABLES][MAX_TABLELEN + 1];
-unsigned char tablemap[MAX_TABLES][MAX_TABLELEN + 1];
-int           pattoffset[MAX_PATT];
-int           pattsize[MAX_PATT];
-int           songoffset[MAX_SONGS][MAX_CHN];
-int           songsize[MAX_SONGS][MAX_CHN];
-int           tableerror;
-int           channels;
-int           fixedparams;
-int           simplepulse;
-int           firstnote;
-int           lastnote;
-int           patternlastnote;
-int           nofilter;
-int           nofiltermod;
-int           nopulse;
-int           nopulsemod;
-int           nowavedelay;
-int           norepeat;
-int           notrans;
-int           noportamento;
-int           notoneporta;
-int           novib;
-int           noinsvib;
-int           nosetad;
-int           nosetsr;
-int           nosetwave;
-int           nosetwaveptr;
-int           nosetpulseptr;
-int           nosetfiltptr;
-int           nosetfiltcutoff;
-int           nosetfiltctrl;
-int           nosetmastervol;
-int           nofunktempo;
-int           noglobaltempo;
-int           nochanneltempo;
-int           nogate;
-int           noeffects;
-int           nowavecmd;
-int           nofirstwavecmd;
-int           nocalculatedspeed;
-int           nonormalspeed;
-int           nozerospeed;
-int           sidPlayAddr;
+uint8_t chnused[MAX_CHN];
+uint8_t pattused[MAX_PATT];
+uint8_t pattmap[MAX_PATT];
+uint8_t instrused[MAX_INSTR];
+uint8_t instrmap[MAX_INSTR];
+uint8_t tableused[MAX_TABLES][MAX_TABLELEN + 1];
+uint8_t tablemap[MAX_TABLES][MAX_TABLELEN + 1];
+int     pattoffset[MAX_PATT];
+int     pattsize[MAX_PATT];
+int     songoffset[MAX_SONGS][MAX_CHN];
+int     songsize[MAX_SONGS][MAX_CHN];
+int     tableerror;
+int     channels;
+int     fixedparams;
+int     simplepulse;
+int     firstnote;
+int     lastnote;
+int     patternlastnote;
+int     nofilter;
+int     nofiltermod;
+int     nopulse;
+int     nopulsemod;
+int     nowavedelay;
+int     norepeat;
+int     notrans;
+int     noportamento;
+int     notoneporta;
+int     novib;
+int     noinsvib;
+int     nosetad;
+int     nosetsr;
+int     nosetwave;
+int     nosetwaveptr;
+int     nosetpulseptr;
+int     nosetfiltptr;
+int     nosetfiltcutoff;
+int     nosetfiltctrl;
+int     nosetmastervol;
+int     nofunktempo;
+int     noglobaltempo;
+int     nochanneltempo;
+int     nogate;
+int     noeffects;
+int     nowavecmd;
+int     nofirstwavecmd;
+int     nocalculatedspeed;
+int     nonormalspeed;
+int     nozerospeed;
+int     sidPlayAddr;
 
 struct membuf src  = STATIC_MEMBUF_INIT;
 struct membuf dest = STATIC_MEMBUF_INIT;
@@ -108,42 +121,45 @@ void relocator(GTOBJECT* gt, int gt2relocMode) {
     //	char *tempFirstSIDBuffer;		// Used for 9 channel SID creation
     //	int tempSecondSIDOffset;
 
-    unsigned char* packeddata = NULL;
-    char*          playername = "player.s";
+    uint8_t*  packeddata = NULL;
+    embed::Id player_id  = embed::Id::player;
 
-    int            tableerrortype    = TYPE_NONE;
-    int            tableerrorcause   = CAUSE_NONE;
-    int            tableerrorsource1 = 0;
-    int            tableerrorsource2 = 0;
-    int            patterns          = 0;
-    int            songs             = 0;
-    int            instruments       = 0;
-    int            numlegato         = 0;
-    int            numnohr           = 0;
-    int            numnormal         = 0;
-    int            freenormal;
-    int            freenohr;
-    int            freelegato;
-    int            transuprange   = 0;
-    int            transdownrange = 0;
-    int            pattdatasize   = 0;
-    int            patttblsize    = 0;
-    int            songdatasize   = 0;
-    int            songtblsize    = 0;
-    int            instrsize      = 0;
-    int            wavetblsize    = 0;
-    int            pulsetblsize   = 0;
-    int            filttblsize    = 0;
-    int            speedtblsize   = 0;
-    int            playersize     = 0;
-    int            packedsize     = 0;
-    FILE*          songhandle     = NULL;
-    unsigned char  speedcode[]    = { 0xa2, 0x00, 0x8e, 0x04, 0xdc, 0xa2, 0x00, 0x8e, 0x05, 0xdc };
-    int            c, d, e;
-    unsigned char  patttemp[512];
-    unsigned char* songwork  = NULL;
-    unsigned char* pattwork  = NULL;
-    unsigned char* instrwork = NULL;
+    int tableerrortype    = TYPE_NONE;
+    int tableerrorcause   = CAUSE_NONE;
+    int tableerrorsource1 = 0;
+    int tableerrorsource2 = 0;
+    int patterns          = 0;
+    int songs             = 0;
+    int instruments       = 0;
+    int numlegato         = 0;
+    int numnohr           = 0;
+    int numnormal         = 0;
+    int freenormal;
+    int freenohr;
+    int freelegato;
+    int transuprange   = 0;
+    int transdownrange = 0;
+    int pattdatasize   = 0;
+    int patttblsize    = 0;
+    int songdatasize   = 0;
+    int songtblsize    = 0;
+    int instrsize      = 0;
+    int wavetblsize    = 0;
+    int pulsetblsize   = 0;
+    int filttblsize    = 0;
+    int speedtblsize   = 0;
+#ifdef GT2RELOC
+    int playersize = 0;
+#endif
+    int     packedsize  = 0;
+    FILE*   songhandle  = NULL;
+    uint8_t speedcode[] = { 0xa2, 0x00, 0x8e, 0x04, 0xdc, 0xa2, 0x00, 0x8e, 0x05, 0xdc };
+    int     c, d, e;
+    uint8_t patttemp[512];
+    // Declared early so `goto PRCLEANUP` does not jump over non-trivial ctors.
+    std::vector<uint8_t> songwork;
+    std::vector<uint8_t> pattwork;
+    std::vector<uint8_t> instrwork;
 
 
     channels          = editorInfo.maxSIDChannels;
@@ -587,8 +603,10 @@ void relocator(GTOBJECT* gt, int gt2relocMode) {
 #endif
     //-----------------
 
-    songwork = malloc(songdatasize);
-    if (!songwork) {
+    try {
+        songwork.resize(static_cast<size_t>(songdatasize));
+    }
+    catch (const std::bad_alloc&) {
         reloc_alert(textbuffer);
         goto PRCLEANUP;
     }
@@ -681,8 +699,10 @@ void relocator(GTOBJECT* gt, int gt2relocMode) {
     //-----------------
 
     patttblsize = patterns * 2;
-    pattwork    = malloc(pattdatasize);
-    if (!pattwork) {
+    try {
+        pattwork.resize(static_cast<size_t>(pattdatasize));
+    }
+    catch (const std::bad_alloc&) {
         reloc_alert(textbuffer);
         goto PRCLEANUP;
     }
@@ -695,7 +715,7 @@ void relocator(GTOBJECT* gt, int gt2relocMode) {
         //		if (pattused[c])
         if (e != -1) {
             pattoffset[d] = pattdatasize;
-            pattsize[d]   = packpattern(&pattwork[pattdatasize], pattern[e], pattlen[e]);
+            pattsize[d]   = packpattern(pattwork.data() + pattdatasize, pattern[e], pattlen[e]);
             pattdatasize += pattsize[d];
             d++;
         }
@@ -711,8 +731,10 @@ void relocator(GTOBJECT* gt, int gt2relocMode) {
 #endif
     //-----------------
 
-    instrwork = malloc(instrsize);
-    if (!instrwork) {
+    try {
+        instrwork.resize(static_cast<size_t>(instrsize));
+    }
+    catch (const std::bad_alloc&) {
         reloc_alert(textbuffer);
         goto PRCLEANUP;
     }
@@ -938,28 +960,25 @@ void relocator(GTOBJECT* gt, int gt2relocMode) {
 
         // Insert source code of player
         if (editorInfo.adparam >= 0xf000) {
-            if (editorInfo.maxSIDChannels == 3) playername = "altplayer3.s";
+            if (editorInfo.maxSIDChannels == 3) player_id = embed::Id::altplayer3;
             else if (editorInfo.maxSIDChannels == 9)
-                playername = "altplayer9.s";
+                player_id = embed::Id::altplayer9;
             else if (editorInfo.maxSIDChannels == 12)
-                playername = "altplayer12.s";
+                player_id = embed::Id::altplayer12;
             else
-                playername = "altplayer.s"; // use 6 channel GT 6502
+                player_id = embed::Id::altplayer; // 6-channel GT 6502
         }
         else {
-            if (editorInfo.maxSIDChannels == 3) playername = "player3.s";
+            if (editorInfo.maxSIDChannels == 3) player_id = embed::Id::player3;
             else if (editorInfo.maxSIDChannels == 9)
-                playername = "player9.s";
+                player_id = embed::Id::player9;
             else if (editorInfo.maxSIDChannels == 12)
-                playername = "player12.s";
+                player_id = embed::Id::player12;
             else
-                playername = "player.s"; // use 6 channel GT 6502
+                player_id = embed::Id::player; // 6-channel GT 6502
         }
 
-        if (!insertfile(playername)) {
-            reloc_alert("COULD NOT OPEN PLAYROUTINE!");
-            goto PRCLEANUP;
-        }
+        insert_resource(player_id);
 
         // JP Added this (copied from 3channel GoatTracker) 31st March 2022
         // Modify ghostregs to not be zeropage if needed
@@ -1018,7 +1037,7 @@ void relocator(GTOBJECT* gt, int gt2relocMode) {
 
         // Insert instruments
         insertlabel("mt_insad");
-        insertbytes(&instrwork[0], instruments);
+        insertbytes(instrwork.data(), instruments);
         insertlabel("mt_inssr");
         insertbytes(&instrwork[instruments], instruments);
         insertlabel("mt_inswaveptr");
@@ -1061,7 +1080,7 @@ void relocator(GTOBJECT* gt, int gt2relocMode) {
                     switch (c) {
                         // In wavetable, convert waveform values for the playroutine
                     case WTBL: {
-                        unsigned char wave = ltable[c][d];
+                        uint8_t wave = ltable[c][d];
                         if ((ltable[c][d] >= WAVESILENT) && (ltable[c][d] <= WAVELASTSILENT)) wave &= 0xf;
                         if ((ltable[c][d] > WAVELASTDELAY) && (ltable[c][d] <= WAVELASTSILENT) && (!nowavedelay))
                             wave += 0x10;
@@ -1178,11 +1197,10 @@ void relocator(GTOBJECT* gt, int gt2relocMode) {
             inserttext(textbuffer);
         }
 
-        sprintf(textbuffer, "debug_0.s");
-
-        FILE* handle = fopen(textbuffer, "wt");
-        fwrite(membuf_get(&src), membuf_memlen(&src), 1, handle);
-        fclose(handle);
+        // sprintf(textbuffer, "debug_0.s");
+        // FILE* handle = fopen(textbuffer, "wt");
+        // fwrite(membuf_get(&src), membuf_memlen(&src), 1, handle);
+        // fclose(handle);
 
         // Assemble; on error fail in a rude way (the parser does so too)
 
@@ -1220,10 +1238,15 @@ void relocator(GTOBJECT* gt, int gt2relocMode) {
         }
     } while (doAgain == 1);
 
-    packeddata = membuf_get(&dest);
+    packeddata = static_cast<uint8_t*>(membuf_get(&dest));
 
+#ifdef GT2RELOC
     playersize = packedsize - songtblsize - songdatasize - patttblsize - pattdatasize - instrsize - wavetblsize -
                  pulsetblsize - filttblsize - speedtblsize;
+#else
+    (void)patttblsize;
+    (void)songtblsize;
+#endif
 
     // Copy author info
     if (playerversion & PLAYER_AUTHORINFO) {
@@ -1265,7 +1288,7 @@ void relocator(GTOBJECT* gt, int gt2relocMode) {
         // See: https://www.hvsc.de/download/C64Music/DOCUMENTS/SID_file_format.txt
 
         // Identification
-        unsigned char ident[] = { 'P', 'S', 'I', 'D', 0x00, 0x04, 0x00, 0x7c };
+        uint8_t ident[] = { 'P', 'S', 'I', 'D', 0x00, 0x04, 0x00, 0x7c };
         if (editorInfo.maxSIDChannels == 3)
             ident[5] = 2; // JP - 3 channel, so we want to use ID 2 (otherwise it plays in stereo..urgh..)
         else if (editorInfo.maxSIDChannels == 9)
@@ -1274,7 +1297,7 @@ void relocator(GTOBJECT* gt, int gt2relocMode) {
             ident[5] = 3; // JP - original 6 channel ID (we don't care about 12 channel .SID file format, as the
                           // format only handles 3 SID max)
 
-        unsigned char byte;
+        uint8_t byte;
         fwrite(ident, sizeof ident, 1, songhandle);
 
         // Load address
@@ -1284,7 +1307,7 @@ void relocator(GTOBJECT* gt, int gt2relocMode) {
 
         // Init address
         if ((editorInfo.multiplier > 1) || (!editorInfo.multiplier)) {
-            unsigned speedvalue;
+            uint32_t speedvalue;
             byte = (playeradr - 10) >> 8;
             fwrite8(songhandle, byte);
             byte = (playeradr - 10) & 0xff;
@@ -1423,9 +1446,6 @@ PREXPORTCOMPLETE:
     membuf_free(&src);
     membuf_free(&dest);
 
-    if (pattwork) free(pattwork);
-    if (songwork) free(songwork);
-    if (instrwork) free(instrwork);
     key    = 0;
     rawkey = 0;
 }
@@ -1447,15 +1467,15 @@ int findDataPattern(char* tempFirstSIDBuffer, int offset, int maxSize, char* dat
     return -1;
 }
 
-int packpattern(unsigned char* dest, unsigned char* src, int rows) {
-    unsigned char temp1[MAX_PATTROWS * 4];
-    unsigned char temp2[512];
-    unsigned char instr      = 0;
-    int           command    = -1;
-    int           databyte   = -1;
-    int           destsizeim = 0;
-    int           destsize   = 0;
-    int           c, d;
+int packpattern(uint8_t* dest, uint8_t* src, int rows) {
+    uint8_t temp1[MAX_PATTROWS * 4];
+    uint8_t temp2[512];
+    uint8_t instr      = 0;
+    int     command    = -1;
+    int     databyte   = -1;
+    int     destsizeim = 0;
+    int     destsize   = 0;
+    int     c, d;
 
     // First optimize instrument changes
     for (c = 0; c < rows; c++) {
@@ -1559,10 +1579,10 @@ int packpattern(unsigned char* dest, unsigned char* src, int rows) {
         databyte = 0;
     }
 
-    unsigned char lastNote = REST;
+    uint8_t lastNote = REST;
     // Write in playroutine format
     for (c = 0; c < rows; c++) {
-        unsigned char newNote = temp1[c * 4];
+        uint8_t newNote = temp1[c * 4];
         // Instrument change with mapping
         if (temp1[c * 4 + 1]) {
             temp2[destsizeim++] = instrmap[INSTRCHG + temp1[c * 4 + 1]];
@@ -1632,7 +1652,7 @@ int packpattern(unsigned char* dest, unsigned char* src, int rows) {
 
             if (!packok) dest[destsize++] = temp2[c++];
             else {
-                unsigned char toFind = REST;
+                uint8_t toFind = REST;
                 if (temp2[c] == KEYON) toFind = KEYON;
 
                 for (d = c; d < destsizeim;) {
@@ -1731,59 +1751,55 @@ int testoverlap(int area1start, int area1size, int area2start, int area2size) {
     }
 }
 
-unsigned char swapnybbles(unsigned char n) {
-    unsigned char highnybble = n >> 4;
-    unsigned char lownybble  = n & 0xf;
+uint8_t swapnybbles(uint8_t n) {
+    uint8_t highnybble = n >> 4;
+    uint8_t lownybble  = n & 0xf;
 
     return (lownybble << 4) | highnybble;
 }
 
-int insertfile(char* name) {
-    const embed::File* file = embed::find(name ? name : "");
-    if (!file)
-        return 0;
-
-    membuf_append(&src, file->data, (int)file->size);
-    return 1;
+void insert_resource(embed::Id id) {
+    const embed::Blob& file = embed::get(id);
+    membuf_append(&src, file.data, static_cast<int>(file.size));
 }
 
 void inserttext(const char* text) { membuf_append(&src, text, strlen(text)); }
 
 void insertdefine(const char* name, int value) {
-    char insertbuffer[80];
+    char insertbuffer[96];
 
-    sprintf(insertbuffer, "%-16s = %d\n", name, value);
+    snprintf(insertbuffer, sizeof insertbuffer, "%-16s = %d\n", name, value);
     inserttext(insertbuffer);
 }
 
 void insertlabel(const char* name) {
-    char insertbuffer[80];
+    char insertbuffer[MAX_PATHNAME + 8];
 
-    sprintf(insertbuffer, "%s:\n", name);
+    snprintf(insertbuffer, sizeof insertbuffer, "%s:\n", name);
     inserttext(insertbuffer);
 }
 
 void insertdefinestring(const char* name, const char* name2) {
-    char insertbuffer[80];
+    char insertbuffer[96];
 
-    sprintf(insertbuffer, "%-16s = %-16s\n", name, name2);
+    snprintf(insertbuffer, sizeof insertbuffer, "%-16s = %-16s\n", name, name2);
     inserttext(insertbuffer);
 }
 
-void insertbytes(const unsigned char* bytes, int size) {
+void insertbytes(const uint8_t* bytes, int size) {
     char insertbuffer[80];
     int  row = 0;
 
     while (size--) {
         if (!row) {
             inserttext("                .BYTE (");
-            sprintf(insertbuffer, "$%02x", *bytes);
+            snprintf(insertbuffer, sizeof insertbuffer, "$%02x", *bytes);
             inserttext(insertbuffer);
             bytes++;
             row++;
         }
         else {
-            sprintf(insertbuffer, ",$%02x", *bytes);
+            snprintf(insertbuffer, sizeof insertbuffer, ",$%02x", *bytes);
             inserttext(insertbuffer);
             bytes++;
             row++;
@@ -1796,24 +1812,24 @@ void insertbytes(const unsigned char* bytes, int size) {
     if (row) inserttext(")\n");
 }
 
-void insertbyte(unsigned char byte) {
+void insertbyte(uint8_t byte) {
     char insertbuffer[80];
 
-    sprintf(insertbuffer, "                .BYTE ($%02x)\n", byte);
+    snprintf(insertbuffer, sizeof insertbuffer, "                .BYTE ($%02x)\n", byte);
     inserttext(insertbuffer);
 }
 
 void insertaddrlo(const char* name) {
-    char insertbuffer[80];
+    char insertbuffer[MAX_PATHNAME + 32];
 
-    sprintf(insertbuffer, "                .BYTE (%s %% 256)\n", name);
+    snprintf(insertbuffer, sizeof insertbuffer, "                .BYTE (%s %% 256)\n", name);
     inserttext(insertbuffer);
 }
 
 void insertaddrhi(const char* name) {
-    char insertbuffer[80];
+    char insertbuffer[MAX_PATHNAME + 32];
 
-    sprintf(insertbuffer, "                .BYTE (%s / 256)\n", name);
+    snprintf(insertbuffer, sizeof insertbuffer, "                .BYTE (%s / 256)\n", name);
     inserttext(insertbuffer);
 }
 
@@ -1910,7 +1926,7 @@ int isusedandselfcontained(int num, int start) {
     return 1;
 }
 
-void calcspeedtest(unsigned char pos) {
+void calcspeedtest(uint8_t pos) {
     if (!pos) {
         nozerospeed = 0;
         return;

@@ -12,6 +12,8 @@
 
 #include "goattrk2.hpp"
 
+#include <vector>
+
 extern void JPSoundMixer(Sint32 *dest, unsigned samples);
 
 // General / reSID output
@@ -23,6 +25,29 @@ int usecatweasel = 0;
 int initted = 0;
 int firsttimeinit = 1;
 unsigned framerate = PALFRAMERATE;
+
+namespace {
+std::vector<Sint16> sid0_storage;
+std::vector<Sint16> sid1_storage;
+std::vector<Sint16> sid2_storage;
+std::vector<Sint16> sid3_storage;
+std::vector<Sint16> temp_storage;
+
+Sint16* ensure_mix_buffer(std::vector<Sint16>& storage, Sint16*& view) {
+    if (!view) {
+        storage.resize(MIXBUFFERSIZE * 2);
+        view = storage.data();
+    }
+    return view;
+}
+
+void release_mix_buffer(std::vector<Sint16>& storage, Sint16*& view) {
+    storage.clear();
+    storage.shrink_to_fit();
+    view = nullptr;
+}
+} // namespace
+
 Sint16 *sid0buffer = NULL;
 Sint16 *sid1buffer = NULL;
 Sint16 *sid2buffer = NULL;
@@ -202,13 +227,11 @@ int sound_init(unsigned b, unsigned mr, unsigned writer, unsigned hardsid, unsig
 		goto SOUNDOK;
 	}
 
-	if (!tempbuffer) tempbuffer = malloc(MIXBUFFERSIZE * 2 * sizeof(Sint16));
-
-	if (!sid0buffer) sid0buffer = malloc(MIXBUFFERSIZE * 2 * sizeof(Sint16));
-	if (!sid1buffer) sid1buffer = malloc(MIXBUFFERSIZE * 2 * sizeof(Sint16));
-
-	if (!sid2buffer) sid2buffer = malloc(MIXBUFFERSIZE * 2 * sizeof(Sint16));
-	if (!sid3buffer) sid3buffer = malloc(MIXBUFFERSIZE * 2 * sizeof(Sint16));
+	ensure_mix_buffer(temp_storage, tempbuffer);
+	ensure_mix_buffer(sid0_storage, sid0buffer);
+	ensure_mix_buffer(sid1_storage, sid1buffer);
+	ensure_mix_buffer(sid2_storage, sid2buffer);
+	ensure_mix_buffer(sid3_storage, sid3buffer);
 
 	if ((!sid0buffer) || (!sid1buffer)) return 0;
 
@@ -281,33 +304,15 @@ void sound_uninit(void)
 	}
 
 	if (sid0buffer)
-	{
-		free(sid0buffer);
-		sid0buffer = NULL;
-	}
+		release_mix_buffer(sid0_storage, sid0buffer);
 	if (sid1buffer)
-	{
-		free(sid1buffer);
-		sid1buffer = NULL;
-	}
-
+		release_mix_buffer(sid1_storage, sid1buffer);
 	if (sid2buffer)
-	{
-		free(sid2buffer);
-		sid2buffer = NULL;
-	}
-
+		release_mix_buffer(sid2_storage, sid2buffer);
 	if (sid3buffer)
-	{
-		free(sid3buffer);
-		sid3buffer = NULL;
-	}
-
+		release_mix_buffer(sid3_storage, sid3buffer);
 	if (tempbuffer)
-	{
-		free(tempbuffer);
-		tempbuffer = NULL;
-	}
+		release_mix_buffer(temp_storage, tempbuffer);
 	if (usehardsid)
 	{
 #ifdef __WIN32__

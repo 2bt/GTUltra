@@ -183,7 +183,9 @@ static void sync_song_paths_from_full_path(const char* full_path)
     if (slash) {
         *slash = '\0';
         snprintf(songpath, MAX_PATHNAME, "%s", dirbuf);
-        chdir(songpath);
+        if (chdir(songpath) != 0) {
+            /* keep songpath; cwd unchanged on failure */
+        }
     }
 }
 
@@ -198,7 +200,9 @@ static void sync_instr_paths_from_full_path(const char* full_path)
         snprintf(instrfilename, MAX_FILENAME, "%s", slash + 1);
         *slash = '\0';
         snprintf(instrpath, MAX_PATHNAME, "%s", dirbuf);
-        chdir(instrpath);
+        if (chdir(instrpath) != 0) {
+            /* keep instrpath; cwd unchanged on failure */
+        }
     } else {
         snprintf(instrfilename, MAX_FILENAME, "%s", full_path);
     }
@@ -234,7 +238,9 @@ static void sync_packed_paths_from_full_path(const char* full_path)
         snprintf(packedsongname, MAX_FILENAME, "%s", slash + 1);
         *slash = '\0';
         snprintf(packedpath, MAX_PATHNAME, "%s", dirbuf);
-        chdir(packedpath);
+        if (chdir(packedpath) != 0) {
+            /* keep packedpath; cwd unchanged on failure */
+        }
     } else {
         snprintf(packedsongname, MAX_FILENAME, "%s", full_path);
     }

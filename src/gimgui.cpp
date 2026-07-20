@@ -10,7 +10,9 @@
 
 #include "backends/imgui_impl_sdl2.h"
 #include "backends/imgui_impl_sdlrenderer2.h"
+#include "embed.hpp"
 #include "gactions.hpp"
+#include "gfile.hpp"
 #include "ggfx.hpp"
 #include "ghelp.hpp"
 #include "guicolors.hpp"
@@ -29,8 +31,12 @@
 #include <span>
 #include <string>
 #include <string_view>
+#include <sys/stat.h>
 #include <unordered_set>
 #include <vector>
+
+extern char appFileName[MAX_PATHNAME];
+void        createFilename(char* filePath, char* newfileName, const char* filename);
 
 bool g_imgui_ready     = false;
 bool g_show_demo       = false; // toggleable ImGui reference/demo window
@@ -1584,17 +1590,19 @@ void gimgui_draw_transport_bar(ImVec2 pos, ImVec2 size) {
 
 } // namespace
 
-// Load the bundled monospace font at @p sizePx from assets/fonts next to the
-// executable (staged there by CMake at build time). Falls back to ImGui default.
+// Load the bundled monospace font from the embed catalog. Falls back to ImGui default.
 void gimgui_load_font_at(float sizePx) {
-    ImGuiIO& io = ImGui::GetIO();
-    if (char* base = SDL_GetBasePath()) {
-        const std::string path = std::string(base) + "assets/fonts/IBMPlexMono-Medium.otf";
-        SDL_free(base);
-        if (io.Fonts->AddFontFromFileTTF(path.c_str(), sizePx)) {
-            io.FontDefault = io.Fonts->Fonts.back();
-            return;
-        }
+    ImGuiIO&     io   = ImGui::GetIO();
+    auto const&  font = embed::get(embed::Id::font);
+    ImFontConfig cfg;
+    // Embedded bytes live in the binary for the process lifetime.
+    cfg.FontDataOwnedByAtlas = false;
+    if (io.Fonts->AddFontFromMemoryTTF(const_cast<void*>(static_cast<const void*>(font.data)),
+                                       static_cast<int>(font.size),
+                                       sizePx,
+                                       &cfg)) {
+        io.FontDefault = io.Fonts->Fonts.back();
+        return;
     }
     io.Fonts->AddFontDefault();
     io.FontDefault = io.Fonts->Fonts.back();
@@ -1806,6 +1814,22 @@ void gimgui_init() {
 
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags &= ~(ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_NavEnableGamepad);
+
+    // Keep layout next to gtultra.cfg (not the process cwd, which chdir's on export).
+    // ImGui stores the pointer; this buffer must outlive the context.
+    static char imgui_ini_path[MAX_PATHNAME];
+    createFilename(appFileName, imgui_ini_path, "imgui.ini");
+#if !defined(__WIN32__) && !defined(__amigaos__)
+    {
+        char dir[MAX_PATHNAME];
+        std::snprintf(dir, sizeof(dir), "%s", imgui_ini_path);
+        if (char* slash = std::strrchr(dir, '/')) {
+            *slash = '\0';
+            mkdir(dir, S_IRUSR | S_IWUSR | S_IXUSR);
+        }
+    }
+#endif
+    io.IniFilename = imgui_ini_path;
 
     gimgui_load_font_at(g_font_size_px);
     gimgui_apply_style();

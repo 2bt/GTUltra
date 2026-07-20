@@ -17,7 +17,7 @@ void initpaths(void) {
     strcpy(wavfilter, "*.wav");
     strcpy(instrfilter, "*.ins");
 
-    getcwd(songpath, MAX_PATHNAME);
+    if (!getcwd(songpath, MAX_PATHNAME)) songpath[0] = '\0';
     strcpy(instrpath, songpath);
     strcpy(packedpath, songpath);
 }

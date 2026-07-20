@@ -43,7 +43,7 @@ void displayFilterTableInfo(GTOBJECT *gt);
 void displaySpeedTableInfo(GTOBJECT *gt);
 void displayOrderTableInfo(GTOBJECT *gt);
 
-void displayWaveTableLeft(GTOBJECT *gt, char *leftright);
+void displayWaveTableLeft(GTOBJECT *gt, const char *leftright);
 void displayWaveTableRight(GTOBJECT *gt);
 
 

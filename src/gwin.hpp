@@ -1,6 +1,7 @@
 #pragma once
 
 #include <SDL.h>
+#include <cstdint>
 
 bool win_openwindow(unsigned xsize, unsigned ysize, const char* appname, int enable_anti_alias);
 // Editor bootstrap: SDL init, window, icon, renderer. scale is 1..3 (legacy "bigwindow").
@@ -15,11 +16,11 @@ void win_native_modal_end();
 
 unsigned mou_getbuttons();
 
-extern int           win_mousewheel;
-extern char*         dropFileDir;
-extern int           win_quitted;
-extern int           win_fullscreen;
-extern unsigned char win_keytable[SDL_NUM_SCANCODES];
-extern unsigned char win_keystate[SDL_NUM_SCANCODES];
-extern unsigned char win_asciikey;
-extern SDL_Window*   win_window;
+extern int         win_mousewheel;
+extern char*       dropFileDir;
+extern int         win_quitted;
+extern int         win_fullscreen;
+extern uint8_t     win_keytable[SDL_NUM_SCANCODES];
+extern uint8_t     win_keystate[SDL_NUM_SCANCODES];
+extern uint8_t     win_asciikey;
+extern SDL_Window* win_window;
