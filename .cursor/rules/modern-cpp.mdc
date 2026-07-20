@@ -14,6 +14,7 @@ Applies to **new and actively modernized** C++ (e.g. `gplatform`, ImGui UI, help
 - Use `#pragma once` — no include guards.
 - No `void` parameter lists: write `foo()` not `foo(void)`.
 - Prefer **`underscore_case`** for variables and parameters (`mouse_buttons`, not `mouseButtons` / `mouseb`). Legacy globals may keep old names until touched.
+- **Do not add a `g` / `G` prefix** on new files, types, functions, or namespaces (`embed`, not `gembed`; `embed::File`, not `GembedFile`). Legacy `g*` names (`gplatform`, `gwin`, …) stay until deliberately renamed; when introducing new APIs prefer real namespaces over goat-prefixed globals.
 - In `.cpp` files, prefer an **anonymous namespace** for file-local helpers and state over `static` at namespace scope. (`static` on members / local variables is fine.)
 - After editing C/C++ sources, run **clang-format** on the touched files
   (`clang-format -i <files>`), using the project-root `.clang-format`
@@ -39,6 +40,6 @@ When touching a global:
 2. **Eliminate low-hanging fruit** when the resulting change is objectively better (e.g. anonymous-namespace state, member of a small owning object, parameter, or return value) and does not explode unrelated call sites.
 3. Be practical: a widely read input/frame global can stay until a deliberate platform redesign; do not invent a god-object just to hide `extern`.
 
-## gplatform note
+## Platform layer note
 
-The first `bme` → `gplatform` extract kept C-like names and globals on purpose (call-site stability). Further edits in `gwin` / `ggfx` / `gaudio` / `gio` / `gendian` should move toward these rules incrementally.
+The first `bme` → `gplatform` extract kept C-like names, `g` prefixes, and globals on purpose (call-site stability). Further edits in `gwin` / `ggfx` / `gaudio` / `gendian` / `embed` should drop the `g` prefix and move toward these rules incrementally.

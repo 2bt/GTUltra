@@ -129,7 +129,6 @@ extern const char*   notenameTableView[];
 extern char          textbuffer[MAX_PATHNAME];
 extern char          debugTextbuffer[MAX_PATHNAME];
 extern unsigned char hexkeytbl[16];
-extern unsigned char datafile[];
 extern int           jdebug[16];
 extern char          backupFolderName[MAX_PATHNAME];
 extern char          backupSngFilename[MAX_PATHNAME];

@@ -117,7 +117,6 @@ int           sidAddr4        = 0xd460;
 char          fkeysFilename[MAX_PATHNAME];
 int           selectedMIDIPort = 0;
 
-extern unsigned char datafile[];
 int                  debugTicks; // used to measure CPU use when looking to improve performance
 char                 appFileName[MAX_PATHNAME];
 unsigned int         enablekeyrepeat = 0;
@@ -193,9 +192,6 @@ int main(int argc, char** argv) {
 
 
     programname += sizeof "$VER:";
-    // Open datafile
-    io_openlinkeddatafile(datafile);
-
 
     // Reset channels/song
     gtObject.songinit = PLAY_STOPPED;

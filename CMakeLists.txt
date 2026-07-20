@@ -42,38 +42,31 @@ pkg_check_modules(ALSA REQUIRED alsa)
 find_package(Threads REQUIRED)
 
 # ---------------------------------------------------------------------------
-# Host code-generation tools (datafile, dat2inc) and the embedded data blob
-#
-# The player .s sources and icon are bundled into gt2stereo.dat and then emitted
-# as a C array (goatdata) that is compiled into the editor. Generation happens
-# entirely inside the build tree - the source tree is never written to.
+# Embedded resources (player .s + icon) via CMake HEX → embed catalog
 # ---------------------------------------------------------------------------
-add_executable(datafile "${SRC}/tools/datafile.c" "${SRC}/gendian.cpp")
-target_include_directories(datafile PRIVATE "${SRC}")
-
-add_executable(dat2inc "${SRC}/tools/dat2inc.c")
-
-set(DATAFILE_INPUTS
+set(EMBED_INPUTS
     player.s altplayer.s player3.s altplayer3.s
     player9.s altplayer9.s player12.s altplayer12.s
-    # M6: chargen/cursor/palette.bin and .gtp skins dropped (ImGui + guicolors).
     goat32.png)
-list(TRANSFORM DATAFILE_INPUTS PREPEND "${SRC}/")
+list(TRANSFORM EMBED_INPUTS PREPEND "${SRC}/")
+
+set(EMBED_DATA_INC "${GEN}/embed_data.inc")
+set(EMBED_LISTFILE "${GEN}/embed_inputs.txt")
+file(WRITE "${EMBED_LISTFILE}" "")
+foreach(f IN LISTS EMBED_INPUTS)
+    file(APPEND "${EMBED_LISTFILE}" "${f}\n")
+endforeach()
 
 add_custom_command(
-    OUTPUT "${GEN}/gt2stereo.dat"
-    COMMAND datafile "${GEN}/gt2stereo.dat" gt2stereo.seq
-    WORKING_DIRECTORY "${SRC}"
-    DEPENDS datafile "${SRC}/gt2stereo.seq" ${DATAFILE_INPUTS}
-    COMMENT "Packing embedded data -> gt2stereo.dat"
-    VERBATIM)
-
-set(GOATDATA "${GEN}/goatdata.cpp")
-add_custom_command(
-    OUTPUT "${GOATDATA}"
-    COMMAND dat2inc "${GEN}/gt2stereo.dat" "${GOATDATA}"
-    DEPENDS dat2inc "${GEN}/gt2stereo.dat"
-    COMMENT "Embedding data blob -> goatdata.cpp"
+    OUTPUT "${EMBED_DATA_INC}"
+    COMMAND ${CMAKE_COMMAND}
+        "-DOUT=${EMBED_DATA_INC}"
+        "-DLISTFILE=${EMBED_LISTFILE}"
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/cmake/EmbedResources.cmake"
+    DEPENDS ${EMBED_INPUTS}
+            "${EMBED_LISTFILE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/cmake/EmbedResources.cmake"
+    COMMENT "Embedding resources -> embed_data.inc"
     VERBATIM)
 
 # ---------------------------------------------------------------------------
@@ -125,15 +118,18 @@ add_library(gtasm STATIC
     "${SRC}/asm/vec.c")
 target_include_directories(gtasm PUBLIC "${SRC}/asm")
 
-# gplatform - SDL2 window / present / input / audio / embedded datafile I/O
+# gplatform - SDL2 window / present / input / audio / endian helpers
 add_library(gplatform STATIC
     "${SRC}/gwin.cpp"
     "${SRC}/ggfx.cpp"
     "${SRC}/gaudio.cpp"
-    "${SRC}/gio.cpp"
+    "${SRC}/embed.cpp"
     "${SRC}/gendian.cpp")
-target_include_directories(gplatform PUBLIC "${SRC}" ${SDL2_INCLUDE_DIRS})
+target_include_directories(gplatform PUBLIC "${SRC}" ${SDL2_INCLUDE_DIRS}
+    PRIVATE "${GEN}")
 target_link_libraries(gplatform PUBLIC ${SDL2_LIBRARIES} ${ALSA_LIBRARIES} Threads::Threads)
+# Ensure the generated include exists before compiling embed.cpp
+set_source_files_properties("${SRC}/embed.cpp" PROPERTIES OBJECT_DEPENDS "${EMBED_DATA_INC}")
 
 # ---------------------------------------------------------------------------
 # Shared editor core (used by both gtultra and gt2reloc)
@@ -143,7 +139,6 @@ target_link_libraries(gplatform PUBLIC ${SDL2_LIBRARIES} ${ALSA_LIBRARIES} Threa
 # separately. This mirrors the original makefile exactly.
 # ---------------------------------------------------------------------------
 add_library(gtcore STATIC
-    "${GOATDATA}"
     "${SRC}/gsong.cpp"
     "${SRC}/gorder.cpp"
     "${SRC}/gpattern.cpp"

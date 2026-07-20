@@ -1,7 +1,7 @@
 #include "gimgui.hpp"
+#include "embed.hpp"
 #include "gplatform.hpp"
 
-#include <cstdlib>
 #include <cstring>
 
 SDL_Window* win_window = nullptr;
@@ -30,23 +30,16 @@ int      key_repeat     = 0;
 float    modal_opacity  = 1.0f;
 
 void load_window_icon() {
-    int handle = io_open("goat32.png");
-    if (handle == -1) return;
+    const embed::File* icon = embed::find("goat32.png");
+    if (!icon || icon->size == 0) return;
 
-    int size = io_lseek(handle, 0, SEEK_END);
-    io_lseek(handle, 0, SEEK_SET);
-    char* icon_buffer = (char*)malloc((size_t)size);
-    if (!icon_buffer) {
-        io_close(handle);
-        return;
+    // goat32.png is a BMP payload (historical name).
+    SDL_RWops*   rw      = SDL_RWFromConstMem(icon->data, (int)icon->size);
+    SDL_Surface* surface = SDL_LoadBMP_RW(rw, 1);
+    if (surface) {
+        SDL_SetWindowIcon(win_window, surface);
+        SDL_FreeSurface(surface);
     }
-    io_read(handle, icon_buffer, size);
-    io_close(handle);
-
-    SDL_RWops*   rw   = SDL_RWFromMem(icon_buffer, size);
-    SDL_Surface* icon = SDL_LoadBMP_RW(rw, 0);
-    if (icon) SDL_SetWindowIcon(win_window, icon);
-    free(icon_buffer);
 }
 
 void pump_events() {

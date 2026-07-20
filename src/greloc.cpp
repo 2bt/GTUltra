@@ -5,6 +5,7 @@
 #define GRELOC_C
 
 #include "goattrk2.hpp"
+#include "embed.hpp"
 
 #include <stdio.h>
 #ifndef GT2RELOC
@@ -1738,16 +1739,11 @@ unsigned char swapnybbles(unsigned char n) {
 }
 
 int insertfile(char* name) {
-    int size;
-    int handle = io_open(name);
-    if (handle == -1) return 0;
+    const embed::File* file = embed::find(name ? name : "");
+    if (!file)
+        return 0;
 
-    size = io_lseek(handle, 0, SEEK_END);
-    io_lseek(handle, 0, SEEK_SET);
-    while (size--) {
-        membuf_append_char(&src, io_read8(handle));
-    }
-    io_close(handle);
+    membuf_append(&src, file->data, (int)file->size);
     return 1;
 }
 

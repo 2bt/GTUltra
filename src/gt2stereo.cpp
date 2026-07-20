@@ -175,10 +175,8 @@ int selectedMIDIPort = 0;
 
 
 
-unsigned char hexkeytbl[] = { '0', '1', '2', '3', '4', '5', '6', '7',
-  '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+const char hexkeytbl[] = "0123456789abcdef";
 
-extern unsigned char datafile[];
 
 
 
@@ -214,8 +212,6 @@ int main(int argc, char** argv)
 	editorInfo.adparam = 0x0f00;
 
 	programname += sizeof "$VER:";
-	// Open datafile
-	io_openlinkeddatafile(datafile);
 
 	// Load configuration
 #ifdef __WIN32__

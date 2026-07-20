@@ -1,9 +1,7 @@
-// GTUltra platform layer (SDL2 window / present / input / audio / datafile).
+// GTUltra platform layer (SDL2 window / present / input / audio).
 #pragma once
 
 #include <SDL.h>
-
-#define MAX_HANDLES 16
 
 #define MOUSE_ALWAYS_VISIBLE 0
 #define MOUSE_FULLSCREEN_HIDDEN 1
@@ -130,5 +128,4 @@
 #include "gaudio.hpp"
 #include "gendian.h"
 #include "ggfx.hpp"
-#include "gio.hpp"
 #include "gwin.hpp"
