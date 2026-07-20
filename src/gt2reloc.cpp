@@ -23,7 +23,7 @@
 #endif
 
 #include "goattrk2.hpp"
-#include "bme.h"
+#include "gplatform.hpp"
 
 int songExportSuccessFlag = 0;
 int songExported = 0;

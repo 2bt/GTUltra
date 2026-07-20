@@ -21,7 +21,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # The original codebase relies on lax conversion rules; keep -fpermissive for
 # the C++ translation units so the incremental C -> C++ migration can proceed.
-# (No effect on the remaining C sources in asm/ and bme/.)
+# (No effect on the remaining C sources in asm/; host tools are plain C.)
 add_compile_options(-Wall)
 # -fpermissive: allow the lax C-style conversions the code relies on.
 # -Wno-narrowing: the code initialises char[] tables with values > 127 (byte
@@ -44,15 +44,14 @@ find_package(Threads REQUIRED)
 # ---------------------------------------------------------------------------
 # Host code-generation tools (datafile, dat2inc) and the embedded data blob
 #
-# The player .s sources and assorted binaries are bundled into gt2stereo.dat
-# and then emitted as a C array (goatdata) that is compiled into the editor.
-# Generation happens entirely inside the build tree - the source tree is never
-# written to.
+# The player .s sources and icon are bundled into gt2stereo.dat and then emitted
+# as a C array (goatdata) that is compiled into the editor. Generation happens
+# entirely inside the build tree - the source tree is never written to.
 # ---------------------------------------------------------------------------
-add_executable(datafile "${SRC}/bme/datafile.c" "${SRC}/bme/bme_end.c")
-target_include_directories(datafile PRIVATE "${SRC}/bme" ${SDL2_INCLUDE_DIRS})
+add_executable(datafile "${SRC}/tools/datafile.c" "${SRC}/gendian.cpp")
+target_include_directories(datafile PRIVATE "${SRC}")
 
-add_executable(dat2inc "${SRC}/bme/dat2inc.c")
+add_executable(dat2inc "${SRC}/tools/dat2inc.c")
 
 set(DATAFILE_INPUTS
     player.s altplayer.s player3.s altplayer3.s
@@ -126,18 +125,15 @@ add_library(gtasm STATIC
     "${SRC}/asm/vec.c")
 target_include_directories(gtasm PUBLIC "${SRC}/asm")
 
-# BME - the small game/media engine the editor is built on top of
-add_library(bme STATIC
-    "${SRC}/bme/bme.c"
-    "${SRC}/bme/bme_end.c"
-    "${SRC}/bme/bme_gfx.c"
-    "${SRC}/bme/bme_io.c"
-    "${SRC}/bme/bme_kbd.c"
-    "${SRC}/bme/bme_mou.c"
-    "${SRC}/bme/bme_snd.c"
-    "${SRC}/bme/bme_win.c")
-target_include_directories(bme PUBLIC "${SRC}/bme" ${SDL2_INCLUDE_DIRS})
-target_link_libraries(bme PUBLIC ${SDL2_LIBRARIES} ${ALSA_LIBRARIES} Threads::Threads)
+# gplatform - SDL2 window / present / input / audio / embedded datafile I/O
+add_library(gplatform STATIC
+    "${SRC}/gwin.cpp"
+    "${SRC}/ggfx.cpp"
+    "${SRC}/gaudio.cpp"
+    "${SRC}/gio.cpp"
+    "${SRC}/gendian.cpp")
+target_include_directories(gplatform PUBLIC "${SRC}" ${SDL2_INCLUDE_DIRS})
+target_link_libraries(gplatform PUBLIC ${SDL2_LIBRARIES} ${ALSA_LIBRARIES} Threads::Threads)
 
 # ---------------------------------------------------------------------------
 # Shared editor core (used by both gtultra and gt2reloc)
@@ -167,14 +163,11 @@ add_library(gtcore STATIC
     "${SRC}/gpalette.cpp"
     "${SRC}/gfkeys.cpp"
     "${SRC}/ginput.cpp")
-# Note: ${SRC} is deliberately NOT on the include path. Project headers are
-# quote-includes resolved next to each source file; keeping src/ off the angle
-# search path prevents the bundled (incomplete) src/SDL headers from shadowing
-# the system SDL, matching the original makefile's behaviour.
-target_include_directories(gtcore PUBLIC "${SRC}/bme" "${SRC}/asm" ${SDL2_INCLUDE_DIRS} ${ALSA_INCLUDE_DIRS})
+# Project headers are quote-includes under src/; gplatform PUBLIC adds ${SRC}.
+target_include_directories(gtcore PUBLIC "${SRC}/asm" ${SDL2_INCLUDE_DIRS} ${ALSA_INCLUDE_DIRS})
 # RtMidi ALSA backend
 target_compile_definitions(gtcore PRIVATE __LINUX_ALSA__)
-target_link_libraries(gtcore PUBLIC resid residfp gtasm bme ${SDL2_LIBRARIES} ${ALSA_LIBRARIES} Threads::Threads)
+target_link_libraries(gtcore PUBLIC resid residfp gtasm gplatform ${SDL2_LIBRARIES} ${ALSA_LIBRARIES} Threads::Threads)
 
 # ---------------------------------------------------------------------------
 # Dear ImGui (vendored, docking branch) + SDL2 / SDL_Renderer backends.
@@ -209,8 +202,7 @@ target_sources(gtultra PRIVATE
 target_include_directories(gtultra PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/extern/portable-file-dialogs")
 target_link_libraries(gtultra PRIVATE imgui)
-# guimodel.cpp needs the legacy headers (model globals) + bme/asm include dirs
-target_include_directories(gtultra PRIVATE "${SRC}/bme" "${SRC}/asm" ${SDL2_INCLUDE_DIRS})
+target_include_directories(gtultra PRIVATE "${SRC}/asm" ${SDL2_INCLUDE_DIRS})
 # Stage assets next to the binary so runtime code can load them from there.
 add_custom_command(TARGET gtultra POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
@@ -220,15 +212,12 @@ add_custom_command(TARGET gtultra POST_BUILD
 add_executable(gt2reloc "${SRC}/gt2reloc.cpp")
 target_link_libraries(gt2reloc PRIVATE gtcore)
 
-# Small standalone conversion utilities (no SDL/resid needed).
-# Only bme/ is on the include path: gcommon.h is picked up as a quote-include
-# relative to each tool's own source, and keeping ${SRC} off the path avoids
-# the bundled (incomplete) src/SDL headers shadowing the system SDL.
-add_executable(mod2sng2 "${SRC}/mod2sng2.cpp" "${SRC}/bme/bme_end.c")
-target_include_directories(mod2sng2 PRIVATE "${SRC}/bme")
+# Small standalone conversion utilities (endian helpers only).
+add_executable(mod2sng2 "${SRC}/mod2sng2.cpp" "${SRC}/gendian.cpp")
+target_include_directories(mod2sng2 PRIVATE "${SRC}")
 
-add_executable(ins2snd2 "${SRC}/ins2snd2.cpp" "${SRC}/bme/bme_end.c")
-target_include_directories(ins2snd2 PRIVATE "${SRC}/bme")
+add_executable(ins2snd2 "${SRC}/ins2snd2.cpp" "${SRC}/gendian.cpp")
+target_include_directories(ins2snd2 PRIVATE "${SRC}")
 
-add_executable(ss2stereo "${SRC}/ss2stereo.cpp" "${SRC}/bme/bme_end.c")
-target_include_directories(ss2stereo PRIVATE "${SRC}/bme")
+add_executable(ss2stereo "${SRC}/ss2stereo.cpp" "${SRC}/gendian.cpp")
+target_include_directories(ss2stereo PRIVATE "${SRC}")

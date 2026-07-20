@@ -10,14 +10,7 @@
 #include <sys/stat.h>
 #include <math.h>
 
-// bme is a C library; give its declarations C linkage when compiled as C++.
-#ifdef __cplusplus
-extern "C" {
-#endif
-#include "bme.h"
-#ifdef __cplusplus
-}
-#endif
+#include "gplatform.hpp"
 
 
 #include "gmidi.hpp"

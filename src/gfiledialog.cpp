@@ -23,11 +23,6 @@
 #include <unistd.h>
 #endif
 
-extern "C" {
-void win_native_modal_begin(void);
-void win_native_modal_end(void);
-}
-
 namespace {
 
 static const std::vector<std::string> kSngFilters = {

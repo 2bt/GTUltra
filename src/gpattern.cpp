@@ -1180,8 +1180,8 @@ int handlePolyphonicKeyboard(GTOBJECT *gt)
 	int c = 0;
 
 	// ImGui text fields (instrument name, song metadata, …) consume keyboard
-	// input via bme_input_capture_hook; don't jam/record from held QWERTY keys.
-	if (bme_input_capture_hook && (bme_input_capture_hook() & 2))
+	// input via gp_input_capture_hook; don't jam/record from held QWERTY keys.
+	if (gp_input_capture_hook && (gp_input_capture_hook() & 2))
 	{
 		for (int i = 0; i < KEYBOARD_POLYPHONY; i++)
 		{

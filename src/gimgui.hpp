@@ -1,6 +1,6 @@
 #pragma once
 
-// Initialise ImGui on bme's existing window + renderer and install the bme
+// Initialise ImGui on gplatform's window + renderer and install the
 // overlay/event hooks. Call once, after the graphics subsystem is up.
 void gimgui_init();
 

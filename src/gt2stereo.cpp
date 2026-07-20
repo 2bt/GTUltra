@@ -29,7 +29,7 @@
 
 #include "goattrk2.hpp"
 #include "gactions.hpp"
-#include "bme.h"
+#include "gplatform.hpp"
 
 #include "gimgui.hpp"
 #include "guialert.hpp"

@@ -9,7 +9,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include "bme_end.h"
+#include "gendian.h"
 #ifdef __cplusplus
 }
 #endif

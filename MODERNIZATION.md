@@ -28,17 +28,18 @@ top-level `CMakeLists.txt`. It reproduces the original build exactly:
   `build/generated/` — the source tree is never written to (previously
   `src/goatdata.c` and `src/gt2stereo.dat` were regenerated in place).
 - **Vendored libs** are split into static libraries: `resid`, `residfp`
-  (already C++), `gtasm` (the 6502 assembler, stays C), and `bme` (the
-  media engine, stays C).
+  (already C++), `gtasm` (the 6502 assembler, stays C), and **`gplatform`**
+  (SDL2 window / present / input / audio / embedded datafile I/O — C++,
+  replaces the former `bme` media engine).
 - **`gtcore`** holds the shared editor sources used by both `gtultra` and
   `gt2reloc`. As in the original build, `greloc` and `gt2stereo` are not part
   of the shared set: `gt2reloc.c` `#include`s `greloc.c` itself (with
   `GT2RELOC` defined) while `gtultra` links `greloc` separately.
 
 Notes:
-- `src/` is intentionally kept off the angle-`<>` include path so the bundled
-  (incomplete) `src/SDL` headers don't shadow the system SDL. Project headers
-  are quote-includes resolved next to each source, matching the old build.
+- Project headers under `src/` are quote-includes (and `gplatform` adds
+  `${SRC}` on its include path). Bundled incomplete SDL1 headers were removed
+  with the `bme` replacement; the build uses system SDL2 via `pkg-config`.
 - Build artifacts (object files, binaries) are no longer committed; see
   `.gitignore`. The stale prebuilt binaries under `linux/` were untracked.
 
@@ -49,14 +50,13 @@ history is preserved) and now compile as C++. Out of scope (will be replaced
 wholesale later, so left as C, compiled as C):
 
 - `src/asm/*` — the 6502 assembler (includes flex-generated `lexyy.c`)
-- `src/bme/*` — the media engine
 
-`resid` / `resid-fp` were already C++.
+`resid` / `resid-fp` were already C++. The former `src/bme/*` media engine has
+been replaced by the C++ `gplatform` modules (`gwin` / `ggfx` / `gaudio` /
+`gio` / `gendian`). Host packers live in `src/tools/` (`datafile`, `dat2inc`).
 
-Because `asm` and `bme` stay C, the C-header includes are wrapped in
-`extern "C"` at their include sites in the C++ code (`goattrk2.h` for `bme.h`,
-`greloc.cpp` for the `asm` headers, and each standalone tool for `bme_end.h`)
-so their symbols link correctly.
+Because `asm` stays C, its headers are wrapped in `extern "C"` at include
+sites in the C++ code (`greloc.cpp`).
 
 Migration flags applied to the C++ translation units (`-fpermissive`,
 `-Wno-narrowing`) absorb the lax conversions and `char[]` byte-table
@@ -93,16 +93,14 @@ from git history):
   keeping the reusable model / editing logic. Full roadmap (M2–M7), informed by
   a study of the Furnace tracker, is in
   [docs/UI_MIGRATION_PLAN.md](docs/UI_MIGRATION_PLAN.md). M6 (chargen / legacy
-  renderer removal) is **done**; `bme` remains until a dedicated replacement.
+  renderer removal) is **done**.
 - **Configuration system (TOML).** User-configurable themes, fonts, and all
   keybindings in a real `config.toml`. Depends on the ImGui action/theme
   scaffolding; detailed as milestone **M7** in the UI migration plan.
-- **SDL2 (not SDL3 yet).** The Linux build already links system **SDL2** (via
-  `pkg-config sdl2`); the bundled `src/SDL` headers are legacy SDL1 used only
-  by the old win32 build. Decision (2026-07): **stay on SDL2** — SDL3 has no
-  Ubuntu 24.04 package yet, and almost all SDL usage lives inside `bme`, so the
-  version choice is best made during the `bme` rewrite. A dedicated milestone
-  will make SDL2 the sole explicit target (dropping the bundled SDL1 headers
-  and the `<SDL/…>` include style).
-- **Replace `bme`** (media engine) with a modern implementation.
+- **SDL2 (not SDL3 yet).** System **SDL2** via `pkg-config sdl2` is the sole
+  platform target (`#include <SDL.h>`). Decision (2026-07): stay on SDL2 —
+  SDL3 has no Ubuntu 24.04 package yet. SDL3 can be reconsidered later.
+- **Replace `bme`** — **done.** Editor uses C++ `gplatform` (`gwin`, `ggfx`,
+  `gaudio`, `gio`, `gendian`); call-site APIs (`win_*` / `gfx_*` / `snd_*` /
+  `io_*`) kept for stability. Host tools: `src/tools/datafile.c`, `dat2inc.c`.
 - **Replace `asm`** (6502 assembler) — possibly with a 64-bit assembler.

@@ -1,7 +1,7 @@
 //
 // GTUltra Dear ImGui integration layer.
 //
-// Strategy (see docs/UI_MIGRATION_PLAN.md): reuse bme's SDL2 window + renderer.
+// Strategy (see docs/UI_MIGRATION_PLAN.md): reuse gplatform's SDL2 window + renderer.
 // Each frame gfx_present() clears and invokes the overlay hook; ImGui draws
 // the full UI there.
 //
@@ -30,17 +30,13 @@
 #include <unordered_set>
 #include <vector>
 
-// bme globals/hooks we bind to. Declared here (with C linkage) instead of
-// including bme's headers, so we pull the *system* SDL2 headers that the ImGui
-// backends use rather than bme's bundled copy. Both are SDL2, so the opaque
-// SDL_Window*/SDL_Renderer* types and the underlying library match.
-extern "C" {
+// gplatform globals/hooks we bind to. Declared here instead of including
+// goattrk2.hpp, so this TU stays clear of the full editor header graph.
 extern SDL_Window*   win_window;
 extern SDL_Renderer* gfx_renderer;
-extern void (*bme_overlay_render_hook)(void);
-extern void (*bme_event_hook)(void* sdl_event);
-extern int (*bme_input_capture_hook)(void);
-}
+extern void (*gp_overlay_render_hook)(void);
+extern void (*gp_event_hook)(void* sdl_event);
+extern int (*gp_input_capture_hook)(void);
 
 bool g_imgui_ready = false;
 bool g_show_demo = false; // toggleable ImGui reference/demo window
@@ -1789,7 +1785,7 @@ extern "C" void gimgui_overlay_render(void) {
     ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), gfx_renderer);
 }
 
-// Called by bme (via bme_event_hook) for every polled SDL event.
+// Called by gplatform (via gp_event_hook) for every polled SDL event.
 extern "C" void gimgui_event_process(void* sdl_event) {
     if (!g_imgui_ready) return;
     const SDL_Event* e = static_cast<const SDL_Event*>(sdl_event);
@@ -1800,7 +1796,7 @@ extern "C" void gimgui_event_process(void* sdl_event) {
     ImGui_ImplSDL2_ProcessEvent(e);
 }
 
-// Called by bme (via bme_input_capture_hook): tells the legacy editor to ignore
+// Called by gplatform (via gp_input_capture_hook): tells the legacy editor to ignore
 // input that ImGui is consuming. bit0 = mouse, bit1 = keyboard.
 extern "C" int gimgui_input_capture(void) {
     if (!g_imgui_ready) return 0;
@@ -1843,18 +1839,18 @@ void gimgui_init() {
 
     g_imgui_ready = true;
 
-    bme_overlay_render_hook = gimgui_overlay_render;
-    bme_event_hook          = gimgui_event_process;
-    bme_input_capture_hook  = gimgui_input_capture;
+    gp_overlay_render_hook = gimgui_overlay_render;
+    gp_event_hook          = gimgui_event_process;
+    gp_input_capture_hook  = gimgui_input_capture;
     LOG_INFO("ImGui UI initialized (font {}px)", static_cast<int>(g_font_size_px));
 }
 
 void gimgui_shutdown() {
     if (!g_imgui_ready) return;
 
-    bme_overlay_render_hook = nullptr;
-    bme_event_hook          = nullptr;
-    bme_input_capture_hook  = nullptr;
+    gp_overlay_render_hook = nullptr;
+    gp_event_hook          = nullptr;
+    gp_input_capture_hook  = nullptr;
 
     ImGui_ImplSDLRenderer2_Shutdown();
     ImGui_ImplSDL2_Shutdown();

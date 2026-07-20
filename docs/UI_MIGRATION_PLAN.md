@@ -362,9 +362,7 @@ Port the other views to ImGui, retiring their legacy `display*` counterparts:
 - Remove each panel from the legacy bridge as it is ported.
 
 ### M6 — Remove the legacy renderer — **DONE**
-Chargen / dual-UI teardown is complete on `2bt`. ImGui is the sole editor UI;
-`bme` remains as the SDL/window/audio layer until a later replacement milestone
-(`MODERNIZATION.md`).
+Chargen / dual-UI teardown is complete on `2bt`. ImGui is the sole editor UI.
 
 Completed (summary):
 - ImGui-only (no Legacy toggle); Help / reloc errors / follow-play off chargen.
@@ -373,8 +371,13 @@ Completed (summary):
 - ImGui-first present; chargen rasterize + assets dropped; INDEX8 surface gone.
 - Leftover Clear confirms via `gt_ui_confirm`; `.gtp` boot skins dropped.
 
-Non-goals deferred: detailed tables / filter HUD / transport parity / M7 config /
-full bme rewrite.
+### Replace bme → gplatform — **DONE**
+SDL2 window / present / input / audio / linked-datafile I/O live in C++
+`gplatform` (`gwin`, `ggfx`, `gaudio`, `gio`, `gendian`). `src/bme` and bundled
+SDL1 headers are gone. Call-site APIs (`win_*` / `gfx_*` / `snd_*` / `io_*`)
+and ImGui hooks (`gp_*_hook`) are stable.
+
+Non-goals deferred: detailed tables / filter HUD / transport parity / M7 config.
 
 ### M7 — Configuration system (TOML) — *scheduled later*
 Goal: user-configurable everything (themes, fonts, all keybindings) in a real
@@ -446,14 +449,14 @@ a consumer. Instead:
 
 ## 5. Suggested next steps
 
-1. **M6 — legacy renderer removal** — **done** on `2bt` (chargen gone; `bme`
-   remains as SDL/audio until its own replacement milestone).
-2. **Post-M6 parity** (ImGui-only polish):
+1. **M6 — legacy renderer removal** — **done** (chargen gone).
+2. **Replace bme → gplatform** — **done** (SDL2 owned in C++ `gplatform`).
+3. **Post-M6 parity** (ImGui-only polish):
    - Detailed table views + waveform editor (PDF §33–36)
    - Filter info display (PDF §24)
    - Transport bar completeness (PDF §5)
    - Remaining ⬜ rows in §6
-3. **M7** — TOML config (themes, keybinds, `gtultra.cfg` migration).
+4. **M7** — TOML config (themes, keybinds, `gtultra.cfg` migration).
 
 Note: expanded order list (PDF §42–47) and a context-help chrome bar are
 already on the ImGui path; treat leftover 🔶 rows as verify/polish.

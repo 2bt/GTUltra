@@ -1,0 +1,39 @@
+---
+description: Modern C++ conventions for newly written GTUltra code
+globs: src/**/*.{cpp,hpp,h}
+alwaysApply: false
+---
+
+# Modern C++ (new code)
+
+Applies to **new and actively modernized** C++ (e.g. `gplatform`, ImGui UI, helpers). Do not wholesale rewrite untouched legacy TUs just to satisfy this; when you touch a legacy API, improve it under these rules if the change stays local and clearly better.
+
+## Style
+
+- Write modern C++ (C++20 in this project). Prefer RAII, `nullptr`, typed enums, `std::` utilities, and narrow interfaces over C patterns.
+- Use `#pragma once` — no include guards.
+- No `void` parameter lists: write `foo()` not `foo(void)`.
+
+## Functions (especially when porting legacy)
+
+For each legacy function you touch or re-expose:
+
+1. **Where is it used?** Grep call sites; note editor vs tools vs dead.
+2. **Still needed?** Delete or leave unported if unused.
+3. **Improve** naming and types where call-site churn is acceptable (e.g. `bool` returns, `std::string_view`, scoped enums, drop Hungarian / `BME_` noise when renaming a surface you own).
+
+Do not preserve a bad signature only for nostalgia. Temporary stability during a cutover is fine; document and follow up.
+
+## Globals
+
+Modern code should **avoid new globals**. Legacy globals (`win_*`, `gfx_*`, `snd_*`, …) exist for historical reasons.
+
+When touching a global:
+
+1. **Track uses** (grep); if non-obvious, add a short comment at the definition listing primary consumers.
+2. **Eliminate low-hanging fruit** when the resulting change is objectively better (e.g. file-local `static`, member of a small owning object, parameter, or return value) and does not explode unrelated call sites.
+3. Be practical: a widely read input/frame global can stay until a deliberate platform redesign; do not invent a god-object just to hide `extern`.
+
+## gplatform note
+
+The first `bme` → `gplatform` extract kept C-like names and globals on purpose (call-site stability). Further edits in `gwin` / `ggfx` / `gaudio` / `gio` / `gendian` should move toward these rules incrementally.

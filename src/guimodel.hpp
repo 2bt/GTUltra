@@ -2,10 +2,10 @@
 // guimodel - a thin, SDL-free read/query bridge between GTUltra's legacy model
 // (globals in gsong / editorInfo) and the new ImGui UI layer.
 //
-// The ImGui layer (gimgui.cpp) must not include goattrk2.hpp/bme.h, because those
-// drag in bme's bundled SDL headers which would clash with the system SDL2 that
-// the ImGui backends use. This header exposes only plain declarations; the
-// implementation (guimodel.cpp) is free to include the full legacy headers.
+// The ImGui layer (gimgui.cpp) should prefer this SDL-free bridge over
+// goattrk2.hpp / gplatform.hpp so panel code stays decoupled from SDL types.
+// This header exposes only plain declarations; the implementation
+// (guimodel.cpp) is free to include the full legacy headers.
 //
 // As more panels are ported, extend this with the accessors they need.
 //

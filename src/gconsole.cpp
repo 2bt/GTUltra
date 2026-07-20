@@ -286,8 +286,8 @@ void getkey(void)
 	if (rawkey == SDL_SCANCODE_KP_8) key = '8';
 	if (rawkey == SDL_SCANCODE_KP_9) key = '9';
 
-	if (bme_input_capture_hook) {
-		int cap = bme_input_capture_hook();
+	if (gp_input_capture_hook) {
+		int cap = gp_input_capture_hook();
 		if (cap & 1) {
 			mouseb = 0;
 			prevmouseb = 0;
