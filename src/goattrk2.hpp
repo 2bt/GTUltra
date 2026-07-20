@@ -130,7 +130,6 @@ extern char          textbuffer[MAX_PATHNAME];
 extern char          debugTextbuffer[MAX_PATHNAME];
 extern unsigned char hexkeytbl[16];
 extern unsigned char datafile[];
-extern char          charsetFilename[MAX_PATHNAME];
 extern int           jdebug[16];
 extern char          backupFolderName[MAX_PATHNAME];
 extern char          backupSngFilename[MAX_PATHNAME];

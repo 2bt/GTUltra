@@ -144,7 +144,6 @@ char instrfilename[MAX_FILENAME];
 char instrfilter[MAX_FILENAME];
 char instrpath[MAX_PATHNAME];
 char packedpath[MAX_PATHNAME];
-char charsetFilename[MAX_PATHNAME];
 char tempSngFilename[MAX_PATHNAME];
 char backupSngFilename[MAX_PATHNAME];
 char fkeysFilename[MAX_PATHNAME];
@@ -231,11 +230,10 @@ int main(int argc, char** argv)
 	strcat(appFileName, "/.goattrk/gtultra.cfg");
 #endif
 
-	createFilename(appFileName, charsetFilename, "charset.bin");
 	createFilename(appFileName, backupSngFilename, "gtubackup.sng");
 	createFilename(appFileName, fkeysFilename, "fkeys.cfg");
 
-	// M6: chargen .gtp skins dropped — ImGui uses guicolors.
+	// Skins are ImGui guicolors (legacy .gtp / charset.bin removed).
 
 	configfile = fopen(appFileName, "rt");
 	if (configfile)
@@ -700,24 +698,6 @@ int main(int argc, char** argv)
 
 	// Shutdown sound output now
 	sound_uninit();
-
-	/*
-	#ifndef __WIN32__
-	#ifdef __amigaos__
-		strcpy(filename, "PROGDIR:gtskins.bin");
-	#else
-		strcpy(filename, getenv("HOME"));
-		strcat(filename, "/.goattrk");
-		mkdir(filename, S_IRUSR | S_IWUSR | S_IXUSR);
-		strcat(filename, "/gtskins.bin");
-	#endif
-	#endif
-
-	*/
-	//			fclose(configfile);
-	//		}
-	//	}
-
 
 		// Save configuration
 #ifndef __WIN32__

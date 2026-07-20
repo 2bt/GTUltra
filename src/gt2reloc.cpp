@@ -134,7 +134,6 @@ char transportLoopPatternSelectArea = 0;
 
 int      sidPanInts[4] = { 0x0007, 0x00e0, 0x07e0, 0xe0e0 };
 unsigned stereoMode    = 1;
-char     charsetFilename[MAX_PATHNAME];
 
 #ifdef __WIN32__
 FILE *STDOUT, *STDERR;
