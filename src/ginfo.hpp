@@ -2,25 +2,23 @@
 
 #include "gplay.hpp"
 
-enum INFO_TYPE { INFO_CLEAR = 0, INFO_UNDO_SIZE, INFO_PATTERN_NOTE, INFO_INSTRUMENT, INFO_CHORD };
+#include <cstdint>
 
 struct WAVEFORM_INFO {
-    int            displayOnOff;
-    int            value;
-    unsigned char* destAddress;
+    bool     displayOnOff;
+    int      value;
+    uint8_t* destAddress;
 };
 
-extern int lastInfoDisplayed;
-extern int clearInfoLine;
-extern int forceInfoLine;
-extern int lastEditWindow;
+// Shared with the editor frame / other panels (force or clear the info line).
+extern bool clearInfoLine;
+extern int  forceInfoLine;     // countdown: skip that many info-line refreshes
+extern int  lastEditWindow;    // last EditMode as int; -1 forces redraw
+extern int  lastInfoPatternCh; // channel; -1 forces redraw
 
-extern int lastInfoPatternCh;
-extern int lastInfoPattern;
-extern int lastInfoPatternPos;
-extern int infoWaitMS;
-extern int msDelta;
-extern int lastMS;
+// Frame timing written by the main loop; consumed when refreshing pattern info.
+extern int      msDelta;
+extern uint32_t lastMS;
 
 void displayPatternInfo(GTOBJECT* gt);
 void displayInstrumentInfo(GTOBJECT* gt);

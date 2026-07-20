@@ -498,7 +498,7 @@ int main(int argc, char** argv) {
     // Composite the experimental ImGui layer on top of the legacy editor.
     gimgui_init();
 
-    waveformDisplayInfo.displayOnOff = 0;
+    waveformDisplayInfo.displayOnOff = false;
 
     initPolyKeyboard();
     // Reset channels/song
@@ -906,7 +906,7 @@ void editor_frame_update(GTOBJECT* gt) {
                     clearPolyChannel(i, gt);
                 }
                 if (clearInfoLine) {
-                    clearInfoLine = 0;
+                    clearInfoLine = false;
                     if (editorInfo.editmode == EditMode::Pattern) {
                         lastInfoPatternCh = -1; // force text
                         displayPatternInfo(gt);

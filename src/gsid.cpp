@@ -15,12 +15,12 @@ namespace {
 int clockrate;
 int samplerate;
 
-unsigned char sidorder[] = {
+uint8_t sidorder[] = {
     0x15, 0x16, 0x18, 0x17, 0x05, 0x06, 0x02, 0x03, 0x00, 0x01, 0x04, 0x0c, 0x0d,
     0x09, 0x0a, 0x07, 0x08, 0x0b, 0x13, 0x14, 0x10, 0x11, 0x0e, 0x0f, 0x12,
 };
 
-unsigned char altsidorder[] = {
+uint8_t altsidorder[] = {
     0x15, 0x16, 0x18, 0x17, 0x04, 0x00, 0x01, 0x02, 0x03, 0x05, 0x06, 0x0b, 0x07,
     0x08, 0x09, 0x0a, 0x0c, 0x0d, 0x12, 0x0e, 0x0f, 0x10, 0x11, 0x13, 0x14,
 };
@@ -36,10 +36,10 @@ SIDFP* sidfp4 = nullptr;
 
 } // namespace
 
-unsigned char sidreg[NUMSIDREGS];
-unsigned char sidreg2[NUMSIDREGS];
-unsigned char sidreg3[NUMSIDREGS];
-unsigned char sidreg4[NUMSIDREGS];
+uint8_t sidreg[NUMSIDREGS];
+uint8_t sidreg2[NUMSIDREGS];
+uint8_t sidreg3[NUMSIDREGS];
+uint8_t sidreg4[NUMSIDREGS];
 
 FILTERPARAMS filterparams = {
     0.50f,
@@ -217,7 +217,7 @@ void sid_init(int      sample_rate,
     }
 }
 
-unsigned char sid_getorder(unsigned char index, unsigned int adparam) {
+uint8_t sid_getorder(uint8_t index, unsigned int adparam) {
     if (adparam >= 0xf000) return altsidorder[index];
     else return sidorder[index];
 }
@@ -244,7 +244,7 @@ int sid_fillbuffer(short*       lptr,
 
 
     for (c = 0; c < NUMSIDREGS; c++) {
-        unsigned char o = sid_getorder(c, adparam);
+        uint8_t o = sid_getorder(static_cast<uint8_t>(c), adparam);
 
         // Extra delay for loading the waveform (and mt_chngate,x)
         if ((o == 4) || (o == 11) || (o == 18)) {

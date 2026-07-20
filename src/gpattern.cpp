@@ -1131,12 +1131,12 @@ void initPolyKeyboard() {
     }
 }
 
-int clearPolyChannel(int i, GTOBJECT* gt) {
+bool clearPolyChannel(int i, GTOBJECT* gt) {
 
     if (playingChannelOnKey[i] != -1) {
         releasenote(playingGTChannel[i], gt);
         playingChannelOnKey[i] = -1;
-        clearInfoLine          = 1;
+        clearInfoLine          = true;
     }
 
     return clearInfoLine; // Used to clear Info if any keys were pressed and are now not

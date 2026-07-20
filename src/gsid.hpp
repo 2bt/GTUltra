@@ -1,8 +1,10 @@
 #pragma once
 
-#define NUMSIDREGS 0x19
-#define SIDWRITEDELAY 9
-#define SIDWAVEDELAY 4
+#include <cstdint>
+
+constexpr int NUMSIDREGS    = 0x19;
+constexpr int SIDWRITEDELAY = 9;
+constexpr int SIDWAVEDELAY  = 4;
 
 struct FILTERPARAMS {
     float distortionrate;
@@ -17,23 +19,23 @@ struct FILTERPARAMS {
     float voicenonlinearity;
 };
 
-void          sid_init(int      sample_rate,
-                       bool     use_8580,
-                       bool     ntsc,
-                       bool     interpolate,
-                       unsigned custom_clock_rate,
-                       bool     use_fp);
-int           sid_fillbuffer(short*       lptr,
-                             short*       rptr,
-                             short*       lptr2,
-                             short*       rptr2,
-                             int          samples,
-                             int          bufferHalfSize,
-                             unsigned int adparam);
-unsigned char sid_getorder(unsigned char index, unsigned int adparam);
+void    sid_init(int      sample_rate,
+                 bool     use_8580,
+                 bool     ntsc,
+                 bool     interpolate,
+                 unsigned custom_clock_rate,
+                 bool     use_fp);
+int     sid_fillbuffer(short*       lptr,
+                       short*       rptr,
+                       short*       lptr2,
+                       short*       rptr2,
+                       int          samples,
+                       int          bufferHalfSize,
+                       unsigned int adparam);
+uint8_t sid_getorder(uint8_t index, unsigned int adparam);
 
-extern unsigned char sidreg[NUMSIDREGS];
-extern unsigned char sidreg2[NUMSIDREGS];
-extern unsigned char sidreg3[NUMSIDREGS];
-extern unsigned char sidreg4[NUMSIDREGS];
-extern FILTERPARAMS  filterparams;
+extern uint8_t      sidreg[NUMSIDREGS];
+extern uint8_t      sidreg2[NUMSIDREGS];
+extern uint8_t      sidreg3[NUMSIDREGS];
+extern uint8_t      sidreg4[NUMSIDREGS];
+extern FILTERPARAMS filterparams;

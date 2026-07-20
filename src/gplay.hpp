@@ -78,7 +78,7 @@ struct FILTERINFO {
 };
 
 struct GTOBJECT {
-    char*      sidreg[4];
+    uint8_t*   sidreg[4];
     FILTERINFO filterInfo[4];
     uint8_t    funktable[2];
     uint8_t    masterfader;

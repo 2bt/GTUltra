@@ -5,7 +5,16 @@
 #include "goattrk2.hpp"
 #include "ginfo.hpp"
 
-const char* patternInstructionInfoString[] = {
+bool     clearInfoLine     = false;
+int      forceInfoLine     = 0;
+int      lastEditWindow    = -1;
+int      lastInfoPatternCh = -1;
+uint32_t lastMS            = 0;
+int      msDelta           = 0;
+
+namespace {
+
+const char* pattern_instruction_info_string[] = {
     "(1) Portamento up. Value: $%04X",
     "(2) Portamento down. Value: $%04X",
     "(3) Tone portamento. Value: $%04X",
@@ -23,7 +32,40 @@ const char* patternInstructionInfoString[] = {
     "(F) Global Tempo: $%02X",
 };
 
-namespace {
+const char* instrument_info_string[] = {
+    "Attack: $%02X Decay: $%02X",
+    "Sustain: $%02X Release: $%02X",
+    "Wavetable pointer: $%02X",
+    "Pulsetable pointer: $%02X (00 = leave untouched)",
+    "Filtertable pointer: $%02X (00 = leave untouched)",
+    "Vibrato speedtable pointer. Speed: $%02X Depth: $%02X",
+    "Vibrato Delay: $%02X ticks until vibrato starts",
+    "HR/Gate Delay: $%02X ticks until note start",
+    "1st Frame Wave: $%02X .Usually $09 (gate + testbit)",
+};
+
+const char* filter_type_string[] = {
+    "No Filter Type",
+    "Low Pass",
+    "Band Pass",
+    "High Pass",
+};
+
+const char* filter_channels_enabled_string[] = {
+    "Active chn: None (0)", "Active chn: 1 (1)",   "Active chn: 2 (2)",   "Active chn: 1+2 (3)",
+    "Active chn: 3 (4)",    "Active chn: 1+3 (5)", "Active chn: 2+3 (6)", "Active chn: All (7)",
+};
+
+int last_info_pattern      = -1;
+int last_info_pattern_pos  = -1;
+int last_info_table_pos    = -1;
+int last_info_table_num    = -1;
+int last_instrument_number = -1;
+int last_instrument_param  = -1;
+int last_table_number      = -1;
+int last_table_index       = -1;
+int last_table_lr          = -1;
+int info_wait_ms           = 0;
 
 void display_wave_table_left(GTOBJECT* gt, const char* leftright) {
     int ldata = ltable[WTBL][editorInfo.etpos];
@@ -33,14 +75,14 @@ void display_wave_table_left(GTOBJECT* gt, const char* leftright) {
     else if (ldata < 0x10)
         sprintf(infoTextBuffer, "(%s):Delay $%02X (%d) (delay this step for n frames)", leftright, ldata, ldata);
     else if (ldata < 0xe0) {
-        waveformDisplayInfo.displayOnOff = 1;
+        waveformDisplayInfo.displayOnOff = true;
         waveformDisplayInfo.value        = ldata;
         waveformDisplayInfo.destAddress  = &ltable[WTBL][editorInfo.etpos];
 
         sprintf(infoTextBuffer, "(%s):Waveform $%02X", leftright, ldata);
     }
     else if (ldata < 0xf0) {
-        waveformDisplayInfo.displayOnOff = 1;
+        waveformDisplayInfo.displayOnOff = true;
         waveformDisplayInfo.value        = ldata - 0xe0;
         waveformDisplayInfo.destAddress  = &ltable[WTBL][editorInfo.etpos];
         sprintf(infoTextBuffer,
@@ -55,18 +97,18 @@ void display_wave_table_left(GTOBJECT* gt, const char* leftright) {
 
         if (instr == 1 || instr == 2 || instr == 3) {
             int speed = (ltable[STBL][rdata - 1] << 8) | rtable[STBL][rdata - 1];
-            sprintf(infoTextBuffer, patternInstructionInfoString[instrIndex], speed);
+            sprintf(infoTextBuffer, pattern_instruction_info_string[instrIndex], speed);
         }
         else if (instr == 5 || instr == 6 || instr == 0xb) {
             int nybHi = (rdata & 0xf0) >> 4;
             int nybLo = rdata & 0xf;
-            sprintf(infoTextBuffer, patternInstructionInfoString[instrIndex], nybHi, nybLo);
+            sprintf(infoTextBuffer, pattern_instruction_info_string[instrIndex], nybHi, nybLo);
         }
         else if (instr == 7 || instr == 8 || instr == 9 || instr == 0xa || instr == 0xc || instr == 0xd) {
-            sprintf(infoTextBuffer, patternInstructionInfoString[instrIndex], ldata);
+            sprintf(infoTextBuffer, pattern_instruction_info_string[instrIndex], ldata);
 
             if (instr == 7) {
-                waveformDisplayInfo.displayOnOff = 1;
+                waveformDisplayInfo.displayOnOff = true;
                 waveformDisplayInfo.value        = rdata;
                 waveformDisplayInfo.destAddress  = &rtable[WTBL][editorInfo.etpos];
             }
@@ -74,7 +116,7 @@ void display_wave_table_left(GTOBJECT* gt, const char* leftright) {
         else if (instr == 4 || instr == 0xe) {
             int tempo1 = ltable[STBL][rdata - 1];
             int tempo2 = rtable[STBL][rdata - 1];
-            sprintf(infoTextBuffer, patternInstructionInfoString[instrIndex], tempo1, tempo2);
+            sprintf(infoTextBuffer, pattern_instruction_info_string[instrIndex], tempo1, tempo2);
         }
     }
     else if (ldata == 0xff) {
@@ -103,77 +145,22 @@ void display_wave_table_right(GTOBJECT* gt) {
     else if (rdata < 0xe0) {
         sprintf(infoTextBuffer, "(right): Absolute note ($%02X = %s)", rdata, notenameTableView[rdata - 0x80]);
     }
-    else
-        sprintf(infoTextBuffer,
-                "(right): Invalid value ($%02X. Max value:$DF)",
-                rdata); //, notenameTableView[rdata - 0x80]);
+    else sprintf(infoTextBuffer, "(right): Invalid value ($%02X. Max value:$DF)", rdata);
 }
 
 } // namespace
 
-int clearInfoLine = 0;
-int forceInfoLine = 0;
-
-int  lastInfoDisplayed = INFO_CLEAR;
-void infoDisplay() { return; }
-
-
-const char* instrumentInfoString[] = {
-    "Attack: $%02X Decay: $%02X",
-    "Sustain: $%02X Release: $%02X",
-    "Wavetable pointer: $%02X",
-    "Pulsetable pointer: $%02X (00 = leave untouched)",
-    "Filtertable pointer: $%02X (00 = leave untouched)",
-    "Vibrato speedtable pointer. Speed: $%02X Depth: $%02X",
-    "Vibrato Delay: $%02X ticks until vibrato starts",
-    "HR/Gate Delay: $%02X ticks until note start",         // $80=No Hard Restart. $40=No GateOff",
-    "1st Frame Wave: $%02X .Usually $09 (gate + testbit)", // . $00,$FE & $FF = special"
-};
-
-const char* filterTypeString[] = {
-    "No Filter Type",
-    "Low Pass",
-    "Band Pass",
-    "High Pass",
-};
-
-const char* filterChannelsEnabledString[] = {
-    "Active chn: None (0)", "Active chn: 1 (1)",   "Active chn: 2 (2)",   "Active chn: 1+2 (3)",
-    "Active chn: 3 (4)",    "Active chn: 1+3 (5)", "Active chn: 2+3 (6)", "Active chn: All (7)",
-};
-
-int lastEditWindow = -1;
-
-// Pattern specific
-int lastInfoPatternCh  = -1;
-int lastInfoPattern    = -1;
-int lastInfoPatternPos = -1;
-int lastInfoTablePos   = -1;
-int lastInfoTableNum   = -1;
-
-// Instrument specific
-int lastInstrumentNumber = -1;
-int lastInstrumentParam  = -1; // example: AD,SR, Vibrato..
-
-int lastTableNumber = -1;
-int lastTableIndex  = -1;
-int lastTableLR     = -1;
-int infoWaitMS      = 0;
-int lastMS          = 0;
-int msDelta         = 0;
-
 void displayTableInfo(GTOBJECT* gt) {
-    if (editorInfo.etcolumn == lastTableLR && editorInfo.etnum == lastTableNumber &&
-        editorInfo.etpos == lastTableIndex && static_cast<int>(editorInfo.editmode) == lastEditWindow)
+    if (editorInfo.etcolumn == last_table_lr && editorInfo.etnum == last_table_number &&
+        editorInfo.etpos == last_table_index && static_cast<int>(editorInfo.editmode) == lastEditWindow)
         return;
 
-    waveformDisplayInfo.displayOnOff = 0;
+    waveformDisplayInfo.displayOnOff = false;
 
-
-    lastEditWindow  = static_cast<int>(editorInfo.editmode);
-    lastTableIndex  = editorInfo.etpos;
-    lastTableLR     = editorInfo.etcolumn;
-    lastTableNumber = editorInfo.etnum;
+    lastEditWindow    = static_cast<int>(editorInfo.editmode);
+    last_table_index  = editorInfo.etpos;
+    last_table_lr     = editorInfo.etcolumn;
+    last_table_number = editorInfo.etnum;
 
     if (editorInfo.etnum == WTBL) {
         displayWaveTableInfo(gt);
@@ -189,20 +176,25 @@ void displayTableInfo(GTOBJECT* gt) {
     }
 }
 
-void displaySpeedTableInfo(GTOBJECT* gt) { sprintf(infoTextBuffer, "SpeedTable"); }
+void displaySpeedTableInfo(GTOBJECT* gt) {
+    (void)gt;
+    sprintf(infoTextBuffer, "SpeedTable");
+}
 
-void displayOrderTableInfo(GTOBJECT* gt) { sprintf(infoTextBuffer, "OrderTable"); }
+void displayOrderTableInfo(GTOBJECT* gt) {
+    (void)gt;
+    sprintf(infoTextBuffer, "OrderTable");
+}
 
 void displayWaveTableInfo(GTOBJECT* gt) {
-
     if ((editorInfo.etcolumn / 2) == 0) {
         display_wave_table_left(gt, "left");
     }
     else display_wave_table_right(gt);
 }
 
-
 void displayPulseTableInfo(GTOBJECT* gt) {
+    (void)gt;
     int ldata = ltable[PTBL][editorInfo.etpos];
     int rdata = rtable[PTBL][editorInfo.etpos];
 
@@ -225,8 +217,8 @@ void displayPulseTableInfo(GTOBJECT* gt) {
     }
 }
 
-
 void displayFilterTableInfo(GTOBJECT* gt) {
+    (void)gt;
     int ldata = ltable[FTBL][editorInfo.etpos];
     int rdata = rtable[FTBL][editorInfo.etpos];
 
@@ -253,10 +245,10 @@ void displayFilterTableInfo(GTOBJECT* gt) {
 
         sprintf(infoTextBuffer,
                 "%s ($%02X). Resonance: $%02X. %s",
-                filterTypeString[ft],
+                filter_type_string[ft],
                 ldata,
                 resonance,
-                filterChannelsEnabledString[channelsEnabled]);
+                filter_channels_enabled_string[channelsEnabled]);
     }
     else if (ldata == 0xff) {
         if (rdata) sprintf(infoTextBuffer, "Jump to $%02X ($00 = stop)", rdata);
@@ -264,86 +256,81 @@ void displayFilterTableInfo(GTOBJECT* gt) {
     }
 }
 
-
 void displayInstrumentInfo(GTOBJECT* gt) {
+    (void)gt;
 
-    if (editorInfo.einum == lastInstrumentNumber && editorInfo.eipos == lastInstrumentParam &&
+    if (editorInfo.einum == last_instrument_number && editorInfo.eipos == last_instrument_param &&
         static_cast<int>(editorInfo.editmode) == lastEditWindow)
         return;
 
-    waveformDisplayInfo.displayOnOff = 0;
+    waveformDisplayInfo.displayOnOff = false;
 
-
-    lastInstrumentNumber = editorInfo.einum;
-    lastInstrumentParam  = editorInfo.eipos;
-    lastEditWindow       = static_cast<int>(editorInfo.editmode);
+    last_instrument_number = editorInfo.einum;
+    last_instrument_param  = editorInfo.eipos;
+    lastEditWindow         = static_cast<int>(editorInfo.editmode);
 
     int param = editorInfo.eipos;
 
     if (param == 0) {
         int nybHi = instr[editorInfo.einum].ad >> 4;
         int nybLo = instr[editorInfo.einum].ad & 0xf;
-        sprintf(infoTextBuffer, instrumentInfoString[param], nybHi, nybLo);
+        sprintf(infoTextBuffer, instrument_info_string[param], nybHi, nybLo);
     }
     if (param == 1) {
         int nybHi = instr[editorInfo.einum].sr >> 4;
         int nybLo = instr[editorInfo.einum].sr & 0xf;
-        sprintf(infoTextBuffer, instrumentInfoString[param], nybHi, nybLo);
+        sprintf(infoTextBuffer, instrument_info_string[param], nybHi, nybLo);
     }
     if (param == 2) {
-        sprintf(infoTextBuffer, instrumentInfoString[param], instr[editorInfo.einum].ptr[WTBL]);
+        sprintf(infoTextBuffer, instrument_info_string[param], instr[editorInfo.einum].ptr[WTBL]);
     }
     if (param == 3) {
-        sprintf(infoTextBuffer, instrumentInfoString[param], instr[editorInfo.einum].ptr[PTBL]);
+        sprintf(infoTextBuffer, instrument_info_string[param], instr[editorInfo.einum].ptr[PTBL]);
     }
     if (param == 4) {
-        sprintf(infoTextBuffer, instrumentInfoString[param], instr[editorInfo.einum].ptr[FTBL]);
+        sprintf(infoTextBuffer, instrument_info_string[param], instr[editorInfo.einum].ptr[FTBL]);
     }
     if (param == 5) {
         int tempo1 = ltable[STBL][instr[editorInfo.einum].ptr[STBL] - 1];
         int tempo2 = rtable[STBL][instr[editorInfo.einum].ptr[STBL] - 1];
-        sprintf(infoTextBuffer, instrumentInfoString[param], tempo1, tempo2);
+        sprintf(infoTextBuffer, instrument_info_string[param], tempo1, tempo2);
     }
     if (param == 6) {
-        sprintf(infoTextBuffer, instrumentInfoString[param], instr[editorInfo.einum].vibdelay);
+        sprintf(infoTextBuffer, instrument_info_string[param], instr[editorInfo.einum].vibdelay);
     }
     if (param == 7) {
-        sprintf(infoTextBuffer, instrumentInfoString[param], instr[editorInfo.einum].gatetimer);
+        sprintf(infoTextBuffer, instrument_info_string[param], instr[editorInfo.einum].gatetimer);
     }
     if (param == 8) {
-        waveformDisplayInfo.displayOnOff = 1;
+        waveformDisplayInfo.displayOnOff = true;
         waveformDisplayInfo.value        = instr[editorInfo.einum].firstwave;
         waveformDisplayInfo.destAddress  = &instr[editorInfo.einum].firstwave;
-        sprintf(infoTextBuffer, instrumentInfoString[param], instr[editorInfo.einum].firstwave);
+        sprintf(infoTextBuffer, instrument_info_string[param], instr[editorInfo.einum].firstwave);
     }
 }
 
 void displayPatternInfo(GTOBJECT* gt) {
-
     int c2 = getActualChannel(editorInfo.esnum, editorInfo.epchn);
 
-
-    if (infoWaitMS > 0) {
-        infoWaitMS -= msDelta;
-        if (infoWaitMS > 0) return;
+    if (info_wait_ms > 0) {
+        info_wait_ms -= msDelta;
+        if (info_wait_ms > 0) return;
     }
-    infoWaitMS = 0;
+    info_wait_ms = 0;
 
-    if (editorInfo.etnum == lastInfoTableNum && editorInfo.etpos == lastInfoTablePos && c2 == lastInfoPatternCh &&
-        gt->editorUndoInfo.editorInfo[c2].epnum == lastInfoPattern && editorInfo.eppos == lastInfoPatternPos &&
-        static_cast<int>(editorInfo.editmode) == lastEditWindow)
+    if (editorInfo.etnum == last_info_table_num && editorInfo.etpos == last_info_table_pos &&
+        c2 == lastInfoPatternCh && gt->editorUndoInfo.editorInfo[c2].epnum == last_info_pattern &&
+        editorInfo.eppos == last_info_pattern_pos && static_cast<int>(editorInfo.editmode) == lastEditWindow)
         return;
 
+    waveformDisplayInfo.displayOnOff = false;
 
-    waveformDisplayInfo.displayOnOff = 0;
-
-
-    lastInfoTableNum   = editorInfo.etnum;
-    lastInfoTablePos   = editorInfo.etpos;
-    lastInfoPatternCh  = c2;
-    lastInfoPattern    = gt->editorUndoInfo.editorInfo[c2].epnum;
-    lastInfoPatternPos = editorInfo.eppos;
-    lastEditWindow     = static_cast<int>(editorInfo.editmode);
+    last_info_table_num   = editorInfo.etnum;
+    last_info_table_pos   = editorInfo.etpos;
+    lastInfoPatternCh     = c2;
+    last_info_pattern     = gt->editorUndoInfo.editorInfo[c2].epnum;
+    last_info_pattern_pos = editorInfo.eppos;
+    lastEditWindow        = static_cast<int>(editorInfo.editmode);
 
     if (forceInfoLine) {
         forceInfoLine--; // = 0;
@@ -359,32 +346,32 @@ void displayPatternInfo(GTOBJECT* gt) {
 
         if (instr == 1 || instr == 2 || instr == 3) {
             int speed = (ltable[STBL][data - 1] << 8) | rtable[STBL][data - 1];
-            sprintf(infoTextBuffer, patternInstructionInfoString[instrIndex], speed);
+            sprintf(infoTextBuffer, pattern_instruction_info_string[instrIndex], speed);
         }
         else if (instr == 5 || instr == 6 || instr == 0xb) {
             int nybHi = (pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4 + 3] & 0xf0) >> 4;
             int nybLo = pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4 + 3] & 0xf;
-            sprintf(infoTextBuffer, patternInstructionInfoString[instrIndex], nybHi, nybLo);
+            sprintf(infoTextBuffer, pattern_instruction_info_string[instrIndex], nybHi, nybLo);
         }
         else if (instr == 7 || instr == 8 || instr == 9 || instr == 0xa || instr == 0xc || instr == 0xd) {
             if (instr == 7) {
                 waveformDisplayInfo.destAddress =
                     &pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4 + 3];
-                waveformDisplayInfo.displayOnOff = 1;
+                waveformDisplayInfo.displayOnOff = true;
                 waveformDisplayInfo.value        = data;
             }
-            sprintf(infoTextBuffer, patternInstructionInfoString[instrIndex], data);
+            sprintf(infoTextBuffer, pattern_instruction_info_string[instrIndex], data);
         }
         else if (instr == 4 || instr == 0xe) {
             int tempo1 = ltable[STBL][data - 1];
             int tempo2 = rtable[STBL][data - 1];
-            sprintf(infoTextBuffer, patternInstructionInfoString[instrIndex], tempo1, tempo2);
+            sprintf(infoTextBuffer, pattern_instruction_info_string[instrIndex], tempo1, tempo2);
         }
         else if (instr == 0xf) {
-            if (data < 0x80) sprintf(infoTextBuffer, patternInstructionInfoString[instrIndex], data);
+            if (data < 0x80) sprintf(infoTextBuffer, pattern_instruction_info_string[instrIndex], data);
             else sprintf(infoTextBuffer, "Channel Tempo: %02X", (data - 0x80));
         }
-        else sprintf(infoTextBuffer, patternInstructionInfoString[instr]);
+        else sprintf(infoTextBuffer, pattern_instruction_info_string[instr]);
     }
     else sprintf(infoTextBuffer, "                                ");
 }
