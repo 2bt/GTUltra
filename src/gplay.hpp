@@ -9,17 +9,17 @@
 #define PLAY_STOP 0x04
 #define PLAY_STOPPED 0x80
 
-typedef struct {
+struct CHN_EDITOR_INFO {
     int espos;
     int esend;
     int epnum;
-} CHN_EDITOR_INFO;
+};
 
-typedef struct {
+struct EDITOR_UNDO_INFO {
     CHN_EDITOR_INFO editorInfo[MAX_PLAY_CH];
-} EDITOR_UNDO_INFO;
+};
 
-typedef struct {
+struct CHN {
     unsigned char requestKeyOff;
 
     unsigned char  trans;
@@ -63,18 +63,17 @@ typedef struct {
     unsigned      lastpattptr;
     unsigned char lastsongptr;
     unsigned char lastpattnum;
+};
 
-} CHN;
-
-typedef struct {
+struct FILTERINFO {
     unsigned char filterctrl;
     unsigned char filtertype;
     unsigned char filtercutoff;
     unsigned char filtertime;
     unsigned char filterptr;
-} FILTERINFO;
+};
 
-typedef struct {
+struct GTOBJECT {
     char*         sidreg[4];
     FILTERINFO    filterInfo[4];
     unsigned char funktable[2];
@@ -114,8 +113,7 @@ typedef struct {
 
     unsigned char controlEditor;
     int           noSIDWrites;
-
-} GTOBJECT;
+};
 
 extern GTOBJECT gtObject;
 extern GTOBJECT gtEditorObject;

@@ -1,9 +1,9 @@
 #pragma once
 
-typedef struct {
+struct MIDI_MESSAGE {
     unsigned char* message;
     int            size;
-} MIDI_MESSAGE;
+};
 
 // 9999 = MIDI input disabled (legacy gtultra.cfg convention).
 enum { MIDI_PORT_DISABLED = 9999 };

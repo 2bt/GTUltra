@@ -4,7 +4,7 @@
 #define SIDWRITEDELAY 9
 #define SIDWAVEDELAY 4
 
-typedef struct {
+struct FILTERPARAMS {
     float distortionrate;
     float distortionpoint;
     float distortioncfthreshold;
@@ -15,14 +15,14 @@ typedef struct {
     float type4k;
     float type4b;
     float voicenonlinearity;
-} FILTERPARAMS;
+};
 
-void          sid_init(int      speed,
-                       unsigned m,
-                       unsigned ntsc,
-                       unsigned interpolate,
-                       unsigned customclockrate,
-                       unsigned usefp);
+void          sid_init(int      sample_rate,
+                       bool     use_8580,
+                       bool     ntsc,
+                       bool     interpolate,
+                       unsigned custom_clock_rate,
+                       bool     use_fp);
 int           sid_fillbuffer(short*       lptr,
                              short*       rptr,
                              short*       lptr2,

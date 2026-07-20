@@ -4,8 +4,8 @@
 
 #define MAX_UNDO 20
 
-typedef struct GTUNDO_OBJECT GTUNDO_OBJECT;
-typedef struct GTUNDO_AREA   GTUNDO_AREA;
+struct GTUNDO_OBJECT;
+struct GTUNDO_AREA;
 
 struct GTUNDO_OBJECT {
     char*        jtest;

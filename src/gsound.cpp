@@ -310,7 +310,7 @@ int sound_init(unsigned b,
 
     playspeed = snd_mixrate;
 
-    sid_init(playspeed, m, ntsc, interpolate & 1, customclockrate, interpolate >> 1);
+    sid_init(playspeed, m == 1, ntsc != 0, (interpolate & 1) != 0, customclockrate, (interpolate >> 1) != 0);
 
     snd_player = &sound_playrout;
     snd_set_custom_mixer(sound_mixer);

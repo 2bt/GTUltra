@@ -2,8 +2,6 @@
 
 #include "gplay.hpp"
 
-typedef struct GTFKEY_ENTRY GTFKEY_ENTRY;
-
 enum GTFKEY_ANDOR { FKEYS_AND = 0, FKEYS_OR, FKEYS_NONE };
 
 struct GTFKEY_ENTRY {

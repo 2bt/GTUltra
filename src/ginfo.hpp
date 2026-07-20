@@ -4,11 +4,11 @@
 
 enum INFO_TYPE { INFO_CLEAR = 0, INFO_UNDO_SIZE, INFO_PATTERN_NOTE, INFO_INSTRUMENT, INFO_CHORD };
 
-typedef struct {
+struct WAVEFORM_INFO {
     int            displayOnOff;
     int            value;
     unsigned char* destAddress;
-} WAVEFORM_INFO;
+};
 
 extern int lastInfoDisplayed;
 extern int clearInfoLine;

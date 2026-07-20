@@ -64,10 +64,10 @@ char           d22[DEBUG_PAD_SIZE];
 int            detailedTableBaseRValue[MAX_TABLELEN];
 char           d23[DEBUG_PAD_SIZE];
 
-typedef struct {
+struct CHN_QUICKPLAY {
     CHN chn[MAX_PLAY_CH];
     int updateCounter;
-} CHN_QUICKPLAY;
+};
 
 CHN_QUICKPLAY songQuickPlay[MAX_SONGS][MAX_CHN][MAX_SONGLEN + 2];
 char          d24[DEBUG_PAD_SIZE];

@@ -11,7 +11,7 @@ extern int  playingChannelOnKey[KEYBOARD_POLYPHONY];
 extern int  MIDINotesHeld;
 extern char keyOffsetText[100];
 
-typedef struct {
+struct EDITOR_INFO {
     int          currentSongFile;
     unsigned int eacolumn;
     unsigned int multiplier;
@@ -77,8 +77,7 @@ typedef struct {
 
     int etDetailedWaveTableColumn;
     int expandOrderListView;
-
-} EDITOR_INFO;
+};
 
 extern EDITOR_INFO editorInfo;
 extern EDITOR_INFO editorInfoBackup;

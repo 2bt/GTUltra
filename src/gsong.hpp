@@ -3,7 +3,7 @@
 #include "gcommon.hpp"
 #include "gplay.hpp"
 
-typedef struct {
+struct SNG_INFO {
     char* instrumentData;
     char* editorInfo;
     char* ltable;
@@ -27,7 +27,7 @@ typedef struct {
     char* editorUndoInfo;
     int   highestUsedPattern;
     int   highestUsedInstr;
-} SNG_INFO;
+};
 
 extern INSTR instr[MAX_INSTR];
 

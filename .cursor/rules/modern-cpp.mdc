@@ -11,6 +11,7 @@ Applies to **new and actively modernized** C++ (e.g. `gplatform`, ImGui UI, help
 ## Style
 
 - Write modern C++ (C++20 in this project). Prefer RAII, `nullptr`, typed enums, `std::` utilities, and narrow interfaces over C patterns.
+- Prefer **`struct Name { ... };`** over `typedef struct { ... } Name;` (and `struct Name;` over `typedef struct Name Name;` for forward declarations).
 - Use `#pragma once` — no include guards.
 - No `void` parameter lists: write `foo()` not `foo(void)`.
 - Prefer **`underscore_case`** for variables, parameters, and functions (`mouse_buttons`, not `mouseButtons` / `mouseb`). When touching a legacy identifier that runs words together, split it (`isusedandselfcontained` → `is_used_and_selfcontained`). Legacy globals may keep old names until touched.
@@ -30,7 +31,7 @@ For each legacy function you touch or re-expose:
 
 1. **Where is it used?** Grep call sites; note editor vs tools vs dead.
 2. **Still needed?** Delete or leave unported if unused.
-3. **Improve** naming and types where call-site churn is acceptable (e.g. insert underscores between words, `bool` returns, `std::string_view`, scoped enums, drop out-params, drop Hungarian / `BME_` noise when renaming a surface you own).
+3. **Improve** naming and types where call-site churn is acceptable (e.g. insert underscores between words, `bool` for binary flags / returns, `std::string_view`, scoped enums, drop out-params, drop Hungarian / `BME_` noise when renaming a surface you own). Do not keep `int`/`unsigned` for yes/no parameters.
 
 Do not preserve a bad signature only for nostalgia. Temporary stability during a cutover is fine; document and follow up.
 
