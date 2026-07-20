@@ -5,9 +5,8 @@
 #include "gfollow.hpp"
 
 void updateDisplayWhenFollowingAndPlaying(GTOBJECT* gt) {
-    if (editorInfo.expandOrderListView == 1) updateDisplayWhenFollowingAndPlaying_Expanded(gt);
-    else
-        updateDisplayWhenFollowingAndPlaying_Compressed(gt);
+    if (editorInfo.expandOrderListView) updateDisplayWhenFollowingAndPlaying_Expanded(gt);
+    else updateDisplayWhenFollowingAndPlaying_Compressed(gt);
 }
 
 void updateDisplayWhenFollowingAndPlaying_Compressed(GTOBJECT* gt) {

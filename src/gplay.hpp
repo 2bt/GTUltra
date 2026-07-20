@@ -2,12 +2,16 @@
 
 #include "gcommon.hpp"
 
-#define PLAY_PLAYING 0x00
-#define PLAY_BEGINNING 0x01
-#define PLAY_POS 0x02
-#define PLAY_PATTERN 0x03
-#define PLAY_STOP 0x04
-#define PLAY_STOPPED 0x80
+#include <cstdint>
+
+enum class PlayMode : int {
+    Playing   = 0x00,
+    Beginning = 0x01,
+    Pos       = 0x02,
+    Pattern   = 0x03,
+    Stop      = 0x04,
+    Stopped   = 0x80,
+};
 
 struct CHN_EDITOR_INFO {
     int espos;
@@ -20,70 +24,70 @@ struct EDITOR_UNDO_INFO {
 };
 
 struct CHN {
-    unsigned char requestKeyOff;
+    uint8_t requestKeyOff;
 
-    unsigned char  trans;
-    unsigned char  instr;
-    unsigned char  note;
-    unsigned char  lastnote;
-    unsigned char  newnote;
-    unsigned       pattptr;
-    unsigned char  pattnum;
-    unsigned int   songptr;
-    unsigned int   nextPatternTriggered;
-    unsigned int   songLoopPtr;
-    unsigned char  repeat;
-    unsigned short freq;
-    unsigned char  gate;
-    unsigned char  wave;
-    unsigned short pulse;
-    unsigned char  pan;
+    uint8_t  trans;
+    uint8_t  instr;
+    uint8_t  note;
+    uint8_t  lastnote;
+    uint8_t  newnote;
+    unsigned pattptr;
+    uint8_t  pattnum;
+    uint32_t songptr;
+    uint32_t nextPatternTriggered;
+    uint32_t songLoopPtr;
+    uint8_t  repeat;
+    uint16_t freq;
+    uint8_t  gate;
+    uint8_t  wave;
+    uint16_t pulse;
+    uint8_t  pan;
 
-    unsigned char  ptr[2];
-    unsigned char  pulsetime;
-    unsigned char  wavetime;
-    unsigned char  vibtime;
-    unsigned char  vibdelay;
-    unsigned char  command;
-    unsigned char  cmddata;
-    unsigned char  newcommand;
-    unsigned char  newcmddata;
-    unsigned char  tick;
-    unsigned char  tempo;
-    unsigned char  mute;
-    unsigned char  advance;
-    unsigned char  gatetimer;
-    unsigned char  loopCount;
-    unsigned short freqBackup;
+    uint8_t  ptr[2];
+    uint8_t  pulsetime;
+    uint8_t  wavetime;
+    uint8_t  vibtime;
+    uint8_t  vibdelay;
+    uint8_t  command;
+    uint8_t  cmddata;
+    uint8_t  newcommand;
+    uint8_t  newcmddata;
+    uint8_t  tick;
+    uint8_t  tempo;
+    uint8_t  mute;
+    uint8_t  advance;
+    uint8_t  gatetimer;
+    uint8_t  loopCount;
+    uint16_t freqBackup;
 
     int releaseTime;
 
     int portCounter;
 
-    unsigned      lastpattptr;
-    unsigned char lastsongptr;
-    unsigned char lastpattnum;
+    unsigned lastpattptr;
+    uint8_t  lastsongptr;
+    uint8_t  lastpattnum;
 };
 
 struct FILTERINFO {
-    unsigned char filterctrl;
-    unsigned char filtertype;
-    unsigned char filtercutoff;
-    unsigned char filtertime;
-    unsigned char filterptr;
+    uint8_t filterctrl;
+    uint8_t filtertype;
+    uint8_t filtercutoff;
+    uint8_t filtertime;
+    uint8_t filterptr;
 };
 
 struct GTOBJECT {
-    char*         sidreg[4];
-    FILTERINFO    filterInfo[4];
-    unsigned char funktable[2];
-    unsigned char masterfader;
+    char*      sidreg[4];
+    FILTERINFO filterInfo[4];
+    uint8_t    funktable[2];
+    uint8_t    masterfader;
 
-    int psnum;
-    int startpattpos;
-    int songinit;
-    int lastsonginit;
-    CHN chn[MAX_PLAY_CH];
+    int      psnum;
+    int      startpattpos;
+    PlayMode songinit;
+    PlayMode lastsonginit;
+    CHN      chn[MAX_PLAY_CH];
 
     EDITOR_UNDO_INFO editorUndoInfo;
 
@@ -111,8 +115,8 @@ struct GTOBJECT {
     int totalSec;
     int totalFrame;
 
-    unsigned char controlEditor;
-    int           noSIDWrites;
+    uint8_t controlEditor;
+    int     noSIDWrites;
 };
 
 extern GTOBJECT gtObject;
@@ -120,18 +124,18 @@ extern GTOBJECT gtEditorObject;
 extern GTOBJECT gtLoopObject;
 extern GTOBJECT gtEditorLoopObject;
 
-extern unsigned char freqtbllo[];
-extern unsigned char freqtblhi[];
+extern uint8_t freqtbllo[];
+extern uint8_t freqtblhi[];
 
 void initchannels(GTOBJECT* gt);
-void initsong(int num, int mode, GTOBJECT* gt);
-void initsongpos(int num, int playmode, int pattpos, GTOBJECT* gt);
+void initsong(int num, PlayMode mode, GTOBJECT* gt);
+void initsongpos(int num, PlayMode playmode, int pattpos, GTOBJECT* gt);
 void stopsong(GTOBJECT* gt);
 void rewindsong(GTOBJECT* gt);
 void playtestnote(int note, int ins, int chnnum, GTOBJECT* gt);
 void releasenote(int chnnum, GTOBJECT* gt);
 void mutechannel(int chnnum, GTOBJECT* gt);
-int  isplaying(GTOBJECT* gt);
+bool isplaying(GTOBJECT* gt);
 void playroutine(GTOBJECT* gt);
 
 int  getActualSongNumber(int currentSong, int channel);

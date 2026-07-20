@@ -33,7 +33,8 @@ namespace {
 void clear_input() { editor_input_clear(); }
 
 bool instrument_file_context() {
-    return editorInfo.einum && (editorInfo.editmode == EDIT_INSTRUMENT || editorInfo.editmode == EDIT_TABLES);
+    return editorInfo.einum &&
+           (editorInfo.editmode == EditMode::Instrument || editorInfo.editmode == EditMode::Tables);
 }
 
 struct ActionMeta {
@@ -597,7 +598,7 @@ void order_nav_end(GTOBJECT* gt) {
     (void)gt;
 }
 
-void table_use_raw_hex_mode() { editorInfo.editTableMode = EDIT_TABLE_NONE; }
+void table_use_raw_hex_mode() { editorInfo.editTableMode = EditTableMode::None; }
 
 // Preserve the on-screen row when stepping across table columns (legacy
 // etview[] tracks each column's scroll offset).
@@ -769,11 +770,11 @@ void transport_on_f1(GTOBJECT* gt) {
 
     if (useOriginalGTFunctionKeys) {
         transportLoopPattern = 0;
-        followplay           = shiftOrCtrlPressed ? 1 : 0;
-        orderPlayFromPosition(gt, 0, 0, 0, 1);
+        followplay           = shiftOrCtrlPressed;
+        orderPlayFromPosition(gt, 0, 0, 0, true);
     }
     else {
-        if (shiftpressed) orderPlayFromPosition(gt, 0, 0, 0, 1);
+        if (shiftpressed) orderPlayFromPosition(gt, 0, 0, 0, true);
         else playFromCurrentPosition(gt, 0);
     }
 }
@@ -781,17 +782,17 @@ void transport_on_f1(GTOBJECT* gt) {
 void transport_on_f2(GTOBJECT* gt) {
 
     if (SIDTracker64ForIPadIsAmazing != 0) {
-        if (shiftOrCtrlPressed) followplay = 1 - followplay;
+        if (shiftOrCtrlPressed) followplay = !followplay;
         else playFromCurrentPosition(gt, 0);
     }
     else if (useOriginalGTFunctionKeys) {
         playFromCurrentPosition(gt, 0);
         transportLoopPattern = 0;
-        followplay           = shiftOrCtrlPressed ? 1 : 0;
+        followplay           = shiftOrCtrlPressed;
     }
     else {
         if (shiftOrCtrlPressed) {
-            followplay = 1 - followplay;
+            followplay = !followplay;
         }
         else {
             transportLoopPattern = 1 - transportLoopPattern;
@@ -809,16 +810,16 @@ void transport_on_f3(GTOBJECT* gt) {
 
     if (useOriginalGTFunctionKeys && SIDTracker64ForIPadIsAmazing == 0) {
         transportLoopPattern = 1;
-        followplay           = shiftOrCtrlPressed ? 1 : 0;
+        followplay           = shiftOrCtrlPressed;
         playFromCurrentPosition(gt, 0);
     }
     else {
         if (shiftOrCtrlPressed) {
             transportLoopPattern = 1 - transportLoopPattern;
         }
-        else if (editorInfo.editmode == EDIT_ORDERLIST) {
+        else if (editorInfo.editmode == EditMode::OrderList) {
             orderSelectPatternsFromSelected(gt);
-            orderPlayFromPosition(gt, 0, editorInfo.eseditpos, editorInfo.eschn, 1);
+            orderPlayFromPosition(gt, 0, editorInfo.eseditpos, editorInfo.eschn, true);
         }
         else {
             playFromCurrentPosition(gt, editorInfo.eppos);
@@ -831,49 +832,51 @@ void transport_on_f4(GTOBJECT* gt) {
         mutechannel(editorInfo.epchn, gt);
         return;
     }
-    if (gt->songinit != PLAY_STOPPED) {
+    if (gt->songinit != PlayMode::Stopped) {
         stopsong(gt);
         setMasterLoopChannel(gt, "debug_9");
     }
 }
 
 void edit_octave_up() {
-    if (editorInfo.editmode == EDIT_NAMES) return;
-    if (editorInfo.editmode == EDIT_INSTRUMENT && editorInfo.eipos >= 9) return;
+    if (editorInfo.editmode == EditMode::Names) return;
+    if (editorInfo.editmode == EditMode::Instrument && editorInfo.eipos >= 9) return;
     if (editorInfo.epoctave < 7) editorInfo.epoctave++;
 }
 
 void edit_octave_down() {
-    if (editorInfo.editmode == EDIT_NAMES) return;
-    if (editorInfo.editmode == EDIT_INSTRUMENT && editorInfo.eipos >= 9) return;
+    if (editorInfo.editmode == EditMode::Names) return;
+    if (editorInfo.editmode == EditMode::Instrument && editorInfo.eipos >= 9) return;
     if (editorInfo.epoctave > 0) editorInfo.epoctave--;
 }
 
 void instr_clamp_after_global_step() {
-    if (editorInfo.editmode != EDIT_INSTRUMENT) return;
+    if (editorInfo.editmode != EditMode::Instrument) return;
     gtui::instr_clamp_selection();
 }
 
 void edit_prev_instr() {
-    if ((editorInfo.editmode == EDIT_INSTRUMENT && editorInfo.eipos != 9) || editorInfo.editmode == EDIT_TABLES) {
+    if ((editorInfo.editmode == EditMode::Instrument && editorInfo.eipos != 9) ||
+        editorInfo.editmode == EditMode::Tables) {
         previnstr();
         instr_clamp_after_global_step();
         return;
     }
-    if (editorInfo.editmode != EDIT_NAMES && editorInfo.editmode != EDIT_ORDERLIST) {
-        if (!(editorInfo.editmode == EDIT_INSTRUMENT && editorInfo.eipos == 9)) previnstr();
+    if (editorInfo.editmode != EditMode::Names && editorInfo.editmode != EditMode::OrderList) {
+        if (!(editorInfo.editmode == EditMode::Instrument && editorInfo.eipos == 9)) previnstr();
         instr_clamp_after_global_step();
     }
 }
 
 void edit_next_instr() {
-    if ((editorInfo.editmode == EDIT_INSTRUMENT && editorInfo.eipos != 9) || editorInfo.editmode == EDIT_TABLES) {
+    if ((editorInfo.editmode == EditMode::Instrument && editorInfo.eipos != 9) ||
+        editorInfo.editmode == EditMode::Tables) {
         nextinstr();
         instr_clamp_after_global_step();
         return;
     }
-    if (editorInfo.editmode != EDIT_NAMES && editorInfo.editmode != EDIT_ORDERLIST) {
-        if (!(editorInfo.editmode == EDIT_INSTRUMENT && editorInfo.eipos >= 9)) nextinstr();
+    if (editorInfo.editmode != EditMode::Names && editorInfo.editmode != EditMode::OrderList) {
+        if (!(editorInfo.editmode == EditMode::Instrument && editorInfo.eipos >= 9)) nextinstr();
         instr_clamp_after_global_step();
     }
 }
@@ -922,47 +925,49 @@ bool handle_global_action(Action act) {
 
     case Action::EditModeNext:
         if (!shiftOrCtrlPressed) {
-            editorInfo.editmode++;
-            if (editorInfo.editmode > EDIT_NAMES) editorInfo.editmode = EDIT_PATTERN;
+            int mode = static_cast<int>(editorInfo.editmode) + 1;
+            if (mode > static_cast<int>(EditMode::Names)) mode = static_cast<int>(EditMode::Pattern);
+            editorInfo.editmode = static_cast<EditMode>(mode);
             setMasterLoopChannel(gt, "action_editmode_next");
         }
         return true;
 
     case Action::EditModePrev:
         if (shiftOrCtrlPressed) {
-            editorInfo.editmode--;
-            if (editorInfo.editmode < EDIT_PATTERN) editorInfo.editmode = EDIT_NAMES;
+            int mode = static_cast<int>(editorInfo.editmode) - 1;
+            if (mode < static_cast<int>(EditMode::Pattern)) mode = static_cast<int>(EditMode::Names);
+            editorInfo.editmode = static_cast<EditMode>(mode);
             setMasterLoopChannel(gt, "action_editmode_prev");
         }
         return true;
 
     case Action::EditModePattern:
         if (!shiftOrCtrlPressed) {
-            if (editorInfo.editmode == EDIT_ORDERLIST) {
-                if (!order_go_pattern(gt)) editorInfo.editmode = EDIT_PATTERN;
+            if (editorInfo.editmode == EditMode::OrderList) {
+                if (!order_go_pattern(gt)) editorInfo.editmode = EditMode::Pattern;
             }
-            else editorInfo.editmode = EDIT_PATTERN;
+            else editorInfo.editmode = EditMode::Pattern;
         }
         return true;
 
     case Action::EditModeOrder:
-        if (!shiftOrCtrlPressed) editorInfo.editmode = EDIT_ORDERLIST;
+        if (!shiftOrCtrlPressed) editorInfo.editmode = EditMode::OrderList;
         return true;
 
     case Action::EditModeInstrument:
         if (!shiftOrCtrlPressed) {
-            if (editorInfo.editmode == EDIT_INSTRUMENT) {
-                editorInfo.editmode = EDIT_TABLES;
+            if (editorInfo.editmode == EditMode::Instrument) {
+                editorInfo.editmode = EditMode::Tables;
                 table_use_raw_hex_mode();
             }
-            else editorInfo.editmode = EDIT_INSTRUMENT;
+            else editorInfo.editmode = EditMode::Instrument;
             disableEnterToReturnToLastPos = 1;
         }
         return true;
 
     case Action::EditModeTables:
         if (!shiftOrCtrlPressed) {
-            editorInfo.editmode = EDIT_TABLES;
+            editorInfo.editmode = EditMode::Tables;
             table_use_raw_hex_mode();
             disableEnterToReturnToLastPos = 1;
         }
@@ -970,7 +975,7 @@ bool handle_global_action(Action act) {
 
     case Action::EditModeNames:
         if (!shiftOrCtrlPressed) {
-            editorInfo.editmode = EDIT_NAMES;
+            editorInfo.editmode = EditMode::Names;
             gimgui_song_field_end();
         }
         return true;
@@ -987,11 +992,11 @@ bool handle_global_action(Action act) {
 
     case Action::Stop: transport_on_f4(gt); return true;
 
-    case Action::PlayFromBeginning: initsong(editorInfo.esnum, PLAY_BEGINNING, gt); return true;
+    case Action::PlayFromBeginning: initsong(editorInfo.esnum, PlayMode::Beginning, gt); return true;
 
-    case Action::PlayPatternMode: initsong(editorInfo.esnum, PLAY_PATTERN, gt); return true;
+    case Action::PlayPatternMode: initsong(editorInfo.esnum, PlayMode::Pattern, gt); return true;
 
-    case Action::ToggleFollow: followplay = 1 - followplay; return true;
+    case Action::ToggleFollow: followplay = !followplay; return true;
 
     case Action::ToggleLoop: transportLoopPattern = 1 - transportLoopPattern; return true;
 
@@ -1006,7 +1011,7 @@ bool handle_global_action(Action act) {
             LOG_DEBUG("Relocate: export");
             char path[MAX_PATHNAME];
             if (gtfile::save_relocated(path, sizeof path)) {
-                relocator(gt, 0);
+                relocator(gt, false);
                 sprintf(infoTextBuffer, "Song Exported:%s", packedsongname);
                 LOG_INFO("exported to {}", packedsongname);
             }
@@ -1093,7 +1098,7 @@ bool handle_global_action(Action act) {
     case Action::FastRelocate:
         if (songExported) {
             LOG_DEBUG("FastRelocate to {}", packedsongname);
-            relocator(gt, 0);
+            relocator(gt, false);
             sprintf(infoTextBuffer, "Song Exported:%s", packedsongname);
             LOG_INFO("re-exported to {}", packedsongname);
         }
@@ -1102,7 +1107,7 @@ bool handle_global_action(Action act) {
     case Action::SaveWav: {
         char path[MAX_PATHNAME];
         if (gtfile::export_wav(path, sizeof path)) {
-            doExportToWAV = 1;
+            doExportToWAV = true;
         }
         return true;
     }
@@ -1291,11 +1296,11 @@ bool handle_order_action(Action act) {
         if (editorInfo.expandOrderListView == 0) orderListPasteToCursor(gt);
         else {
             int transposeOnly = editorInfo.escolumn > 2 ? 1 : 0;
-            orderListPasteToCursor_External(gt, 0, transposeOnly);
+            orderListPasteToCursor_External(gt, false, transposeOnly);
         }
         return true;
     case Action::OrderInsertPaste:
-        if (editorInfo.expandOrderListView) orderListPasteToCursor_External(gt, 1, 0);
+        if (editorInfo.expandOrderListView) orderListPasteToCursor_External(gt, true, false);
         return true;
     case Action::OrderMarkToggle: order_list_mark_toggle(); return true;
     case Action::OrderTransposeUp: order_list_transpose_up(); return true;
@@ -1372,7 +1377,7 @@ Action resolve_input_ctx_nav(Ctx ctx, int raw_scancode, int ascii_key, int shift
 }
 
 bool dispatch_order_navigation() {
-    if (editorInfo.editmode != EDIT_ORDERLIST) return false;
+    if (editorInfo.editmode != EditMode::OrderList) return false;
 
     // Vertical layout and editing actions apply to the ImGui order panel.
 
@@ -1402,7 +1407,7 @@ bool dispatch_order_navigation() {
 }
 
 bool dispatch_pattern_navigation() {
-    if (editorInfo.editmode != EDIT_PATTERN) return false;
+    if (editorInfo.editmode != EditMode::Pattern) return false;
 
     // Ctrl+arrow is global song transport. Other Ctrl chords (copy/cut/paste,
     // mark-all, …) are pattern actions and must be handled here.
@@ -1440,7 +1445,7 @@ bool dispatch_pattern_navigation() {
 }
 
 bool dispatch_table_navigation() {
-    if (editorInfo.editmode != EDIT_TABLES) return false;
+    if (editorInfo.editmode != EditMode::Tables) return false;
 
 
     table_use_raw_hex_mode();
@@ -1473,7 +1478,7 @@ bool dispatch_table_navigation() {
 }
 
 bool dispatch_instrument_navigation() {
-    if (editorInfo.editmode != EDIT_INSTRUMENT) return false;
+    if (editorInfo.editmode != EditMode::Instrument) return false;
 
 
     if (gimgui_instr_name_editing()) return false;
@@ -1507,7 +1512,7 @@ bool dispatch_instrument_navigation() {
 }
 
 bool dispatch_names_navigation() {
-    if (editorInfo.editmode != EDIT_NAMES) return false;
+    if (editorInfo.editmode != EditMode::Names) return false;
 
 
     const Action act = resolve_input_ctx(Ctx::Names, rawkey, key, shiftpressed, ctrlpressed);
@@ -1558,13 +1563,13 @@ const char* scancode_label(int sc) {
 
 } // namespace
 
-Ctx context_from_editmode(int editmode) {
+Ctx context_from_editmode(EditMode editmode) {
     switch (editmode) {
-    case EDIT_PATTERN: return Ctx::Pattern;
-    case EDIT_ORDERLIST: return Ctx::Order;
-    case EDIT_INSTRUMENT: return Ctx::Instrument;
-    case EDIT_TABLES: return Ctx::Tables;
-    case EDIT_NAMES: return Ctx::Names;
+    case EditMode::Pattern: return Ctx::Pattern;
+    case EditMode::OrderList: return Ctx::Order;
+    case EditMode::Instrument: return Ctx::Instrument;
+    case EditMode::Tables: return Ctx::Tables;
+    case EditMode::Names: return Ctx::Names;
     default: return Ctx::Global;
     }
 }
@@ -1739,11 +1744,11 @@ bool dispatch_mode_navigation() {
     if (gimgui_help_open()) return true;
 
     switch (editorInfo.editmode) {
-    case EDIT_ORDERLIST: return dispatch_order_navigation();
-    case EDIT_PATTERN: return dispatch_pattern_navigation();
-    case EDIT_TABLES: return dispatch_table_navigation();
-    case EDIT_INSTRUMENT: return dispatch_instrument_navigation();
-    case EDIT_NAMES: return dispatch_names_navigation();
+    case EditMode::OrderList: return dispatch_order_navigation();
+    case EditMode::Pattern: return dispatch_pattern_navigation();
+    case EditMode::Tables: return dispatch_table_navigation();
+    case EditMode::Instrument: return dispatch_instrument_navigation();
+    case EditMode::Names: return dispatch_names_navigation();
     default: return false;
     }
 }
@@ -1760,7 +1765,7 @@ bool dispatch_global(Ctx ctx) {
 }
 
 bool dispatch_pattern_cell_input(int midiNote, const EditorInput* input) {
-    if (editorInfo.editmode != EDIT_PATTERN) return false;
+    if (editorInfo.editmode != EditMode::Pattern) return false;
 
     const EditorInput in = input ? *input : editor_input_snapshot();
     if (!pattern_cell_input(&gtObject, midiNote, &in)) return false;
@@ -1770,7 +1775,7 @@ bool dispatch_pattern_cell_input(int midiNote, const EditorInput* input) {
 }
 
 bool dispatch_instrument_cell_input(const EditorInput* input) {
-    if (editorInfo.editmode != EDIT_INSTRUMENT) return false;
+    if (editorInfo.editmode != EditMode::Instrument) return false;
     if (gimgui_instr_name_editing()) return false;
 
     const EditorInput in = input ? *input : editor_input_snapshot();
@@ -1781,7 +1786,7 @@ bool dispatch_instrument_cell_input(const EditorInput* input) {
 }
 
 bool dispatch_table_cell_input(const EditorInput* input) {
-    if (editorInfo.editmode != EDIT_TABLES) return false;
+    if (editorInfo.editmode != EditMode::Tables) return false;
 
     const EditorInput in = input ? *input : editor_input_snapshot();
     if (!table_cell_input(&gtObject, &in)) return false;
@@ -1793,10 +1798,10 @@ bool dispatch_table_cell_input(const EditorInput* input) {
 bool consume_legacy_hex_input(int hex_at_frame_start) {
     if (hex_at_frame_start < 0) return false;
     switch (editorInfo.editmode) {
-    case EDIT_ORDERLIST:
-    case EDIT_PATTERN:
-    case EDIT_TABLES:
-    case EDIT_INSTRUMENT:
+    case EditMode::OrderList:
+    case EditMode::Pattern:
+    case EditMode::Tables:
+    case EditMode::Instrument:
         hexnybble = -1;
         clear_input();
         return true;

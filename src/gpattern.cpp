@@ -66,7 +66,7 @@ int pattern_note_input(GTOBJECT* gt, int midiNote, const EditorInput* input) {
     int newnote = -1;
     if (jkey && midiNote == -1) {
         switch (keypreset) {
-        case KEY_TRACKER:
+        case KeyPreset::Tracker:
             for (c = 0; c < sizeof(notekeytbl1); c++) {
                 if ((jrawkey == notekeytbl1[c]) && (!editorInfo.epcolumn) && (!shiftOrCtrlPressed)) {
                     newnote = FIRSTNOTE + c + editorInfo.epoctave * 12;
@@ -79,7 +79,7 @@ int pattern_note_input(GTOBJECT* gt, int midiNote, const EditorInput* input) {
             }
             break;
 
-        case KEY_DMC:
+        case KeyPreset::Dmc:
             for (c = 0; c < sizeof(dmckeytbl); c++) {
                 if ((jrawkey == dmckeytbl[c]) && (!editorInfo.epcolumn) && (!shiftOrCtrlPressed)) {
                     newnote = FIRSTNOTE + c + editorInfo.epoctave * 12;
@@ -87,7 +87,7 @@ int pattern_note_input(GTOBJECT* gt, int midiNote, const EditorInput* input) {
             }
             break;
 
-        case KEY_JANKO:
+        case KeyPreset::Janko:
             for (c = 0; c < sizeof(jankokeytbl1); c++) {
                 if ((jrawkey == jankokeytbl1[c]) && (!editorInfo.epcolumn) && (!shiftOrCtrlPressed)) {
                     newnote = FIRSTNOTE + c + editorInfo.epoctave * 12;
@@ -365,7 +365,7 @@ bool pattern_hex_input(GTOBJECT* gt, const EditorInput* input) {
 
     bool applied = false;
 
-    if ((keypreset == KEY_DMC) && (hex >= 0) && (hex <= 7) && (!editorInfo.epcolumn)) {
+    if ((keypreset == KeyPreset::Dmc) && (hex >= 0) && (hex <= 7) && (!editorInfo.epcolumn)) {
         applied             = true;
         int oldbyte         = pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4];
         editorInfo.epoctave = hex;
@@ -714,7 +714,7 @@ void shrinkpattern(GTOBJECT* gt) {
 
     if (pattlen[c] < 2) return;
 
-    if (gt->songinit != PLAY_STOPPED) {
+    if (gt->songinit != PlayMode::Stopped) {
         stopsong(gt);
     }
     for (d = 0; d < nl; d++) {
@@ -746,7 +746,7 @@ void expandpattern(GTOBJECT* gt) {
     if (nl > MAX_PATTROWS) return;
     memset(temp, 0, sizeof temp);
 
-    if (gt->songinit != PLAY_STOPPED) {
+    if (gt->songinit != PlayMode::Stopped) {
         stopsong(gt);
     }
 
@@ -782,7 +782,7 @@ void splitpattern(GTOBJECT* gt) {
     if (editorInfo.eppos == 0) return;
     if (editorInfo.eppos == l) return;
 
-    if (gt->songinit != PLAY_STOPPED) {
+    if (gt->songinit != PlayMode::Stopped) {
         stopsong(gt);
     }
     updateUndoBuffer(UNDO_AREA_CHANNEL_EDITOR_INFO);
@@ -860,7 +860,7 @@ void joinpattern(GTOBJECT* gt) {
 
     if (pattlen[c] + pattlen[d] > MAX_PATTROWS) return;
 
-    if (gt->songinit != PLAY_STOPPED) {
+    if (gt->songinit != PlayMode::Stopped) {
         stopsong(gt);
     }
     updateUndoBuffer(UNDO_AREA_CHANNEL_EDITOR_INFO);
@@ -940,14 +940,14 @@ void joinpattern(GTOBJECT* gt) {
     }
 }
 
-void handleShiftSpace(GTOBJECT* gt, int playChannel, int startPatternPos, int follow, int enableLoop) {
+void handleShiftSpace(GTOBJECT* gt, int playChannel, int startPatternPos, bool follow, bool enable_loop) {
     // If the current patterns in pattern view match the patterns in the order list, sync to song order list
     // (This preserves the previously keyed on instruments)
     // However, if any of the patterns in the pattern editor do not match the order list, use the originan
-    // PLAY_PATTERN option.
+    // PlayMode::Pattern option.
     //
 
-    if (enableLoop) {
+    if (enable_loop) {
 
         for (int c = 0; c < editorInfo.maxSIDChannels; c++) {
             int c2 = getActualChannel(editorInfo.esnum, c); // 0-12
@@ -955,14 +955,14 @@ void handleShiftSpace(GTOBJECT* gt, int playChannel, int startPatternPos, int fo
                 gt->editorUndoInfo.editorInfo[c2].epnum; // pattern number displayed along the top of the pattern
             if (editorInfo.expandOrderListView == 0) {
                 if (pat != songorder[editorInfo.esnum][c2 % 6][gt->editorUndoInfo.editorInfo[c2].espos]) {
-                    initsongpos(editorInfo.esnum, PLAY_PATTERN, editorInfo.eppos, gt);
+                    initsongpos(editorInfo.esnum, PlayMode::Pattern, editorInfo.eppos, gt);
                     followplay = follow;
                     return;
                 }
             }
             else {
                 if (pat != songOrderPatterns[editorInfo.esnum][c2 % 6][gt->editorUndoInfo.editorInfo[c2].espos]) {
-                    initsongpos(editorInfo.esnum, PLAY_PATTERN, editorInfo.eppos, gt);
+                    initsongpos(editorInfo.esnum, PlayMode::Pattern, editorInfo.eppos, gt);
                     followplay = follow;
                     return;
                 }
@@ -974,8 +974,8 @@ void handleShiftSpace(GTOBJECT* gt, int playChannel, int startPatternPos, int fo
     int songPos = gt->editorUndoInfo.editorInfo[playChannel].espos;
 
     //	orderPlayFromPosition(gt, startPatternPos, editorInfo.eseditpos, playChannel, 1);	// editorInfo.eschn
-    orderPlayFromPosition(gt, startPatternPos, songPos, playChannel, 1); // editorInfo.eschn
-    gt->loopEnabledFlag = enableLoop; // Set this AFTER play starts, as init clears it.
+    orderPlayFromPosition(gt, startPatternPos, songPos, playChannel, true); // editorInfo.eschn
+    gt->loopEnabledFlag = enable_loop; // Set this AFTER play starts, as init clears it.
     followplay          = follow;
 }
 
@@ -1049,7 +1049,7 @@ int handlePolyphonicKeyboard(GTOBJECT* gt) {
     if (eamode == 1) return noKeysPressed; // editing ADSR
 
 
-    if (editorInfo.editmode == EDIT_PATTERN) {
+    if (editorInfo.editmode == EditMode::Pattern) {
         for (c = 0; c < SDL_NUM_SCANCODES; c++) {
             newnote = -1;
             if (win_keystate[c]) {
@@ -1267,7 +1267,7 @@ int getNote(int rawkey) {
     newnote = -1;
 
     switch (keypreset) {
-    case KEY_TRACKER:
+    case KeyPreset::Tracker:
         for (c = 0; c < sizeof(notekeytbl1); c++) {
             if (rawkey == notekeytbl1[c]) {
                 newnote = FIRSTNOTE + c + editorInfo.epoctave * 12;
@@ -1280,7 +1280,7 @@ int getNote(int rawkey) {
         }
         break;
 
-    case KEY_DMC:
+    case KeyPreset::Dmc:
         for (c = 0; c < sizeof(dmckeytbl); c++) {
             if (rawkey == dmckeytbl[c]) {
                 newnote = FIRSTNOTE + c + editorInfo.epoctave * 12;
@@ -1288,7 +1288,7 @@ int getNote(int rawkey) {
         }
         break;
 
-    case KEY_JANKO:
+    case KeyPreset::Janko:
         for (c = 0; c < sizeof(jankokeytbl1); c++) {
             if (rawkey == jankokeytbl1[c]) {
                 newnote = FIRSTNOTE + c + editorInfo.epoctave * 12;
@@ -1409,10 +1409,10 @@ void getPlayStartPosition(GTOBJECT* gte, int songNum, int c2, int songPos, int p
     int lastPattPtr = 423423;
 
 
-    initsong(songNum, PLAY_BEGINNING, gte); // JP FEB
+    initsong(songNum, PlayMode::Beginning, gte); // JP FEB
     do {
         playroutine(gte);
-        if (gte->songinit == PLAY_STOPPED) // Error in song data
+        if (gte->songinit == PlayMode::Stopped) // Error in song data
             return;
 
         if ((gte->chn[c2].songptr - 1 == songPos) && (gte->chn[c2].pattptr == patternPos * 4)) found = 1;
@@ -1609,12 +1609,12 @@ void pattern_mark_toggle() {
 }
 
 void pattern_toggle_jam() {
-    if (!shiftOrCtrlPressed) recordmode ^= 1;
+    if (!shiftOrCtrlPressed) recordmode = !recordmode;
 }
 
 void pattern_play_from_cursor(GTOBJECT* gt) {
     int c2 = getActualChannel(editorInfo.esnum, editorInfo.epchn);
-    handleShiftSpace(gt, c2, editorInfo.eppos * 4, 0, 1);
+    handleShiftSpace(gt, c2, editorInfo.eppos * 4, false, true);
 }
 
 void pattern_mute_channel(GTOBJECT* gt, int ch) {

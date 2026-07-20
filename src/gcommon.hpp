@@ -1,77 +1,76 @@
-#ifndef GCOMMON_H
-#define GCOMMON_H
+#pragma once
 
-#define CMD_DONOTHING 0
-#define CMD_PORTAUP 1
-#define CMD_PORTADOWN 2
-#define CMD_TONEPORTA 3
-#define CMD_VIBRATO 4
-#define CMD_SETAD 5
-#define CMD_SETSR 6
-#define CMD_SETWAVE 7
-#define CMD_SETWAVEPTR 8
-#define CMD_SETPULSEPTR 9
-#define CMD_SETFILTERPTR 10
-#define CMD_SETFILTERCTRL 11
-#define CMD_SETFILTERCUTOFF 12
-#define CMD_SETMASTERVOL 13
-#define CMD_FUNKTEMPO 14
-#define CMD_SETTEMPO 15
+#include <cstdint>
 
-#define WTBL 0
-#define PTBL 1
-#define FTBL 2
-#define STBL 3
+constexpr uint8_t CMD_DONOTHING       = 0;
+constexpr uint8_t CMD_PORTAUP         = 1;
+constexpr uint8_t CMD_PORTADOWN       = 2;
+constexpr uint8_t CMD_TONEPORTA       = 3;
+constexpr uint8_t CMD_VIBRATO         = 4;
+constexpr uint8_t CMD_SETAD           = 5;
+constexpr uint8_t CMD_SETSR           = 6;
+constexpr uint8_t CMD_SETWAVE         = 7;
+constexpr uint8_t CMD_SETWAVEPTR      = 8;
+constexpr uint8_t CMD_SETPULSEPTR     = 9;
+constexpr uint8_t CMD_SETFILTERPTR    = 10;
+constexpr uint8_t CMD_SETFILTERCTRL   = 11;
+constexpr uint8_t CMD_SETFILTERCUTOFF = 12;
+constexpr uint8_t CMD_SETMASTERVOL    = 13;
+constexpr uint8_t CMD_FUNKTEMPO       = 14;
+constexpr uint8_t CMD_SETTEMPO        = 15;
 
-#define MAX_FILT 64
-#define MAX_STR 32
-#define MAX_INSTR 64
-#define MAX_CHN 6
-#define MAX_PLAY_CH 12
-#define MAX_PATT 208
-#define MAX_TABLES 4
-#define MAX_TABLELEN 255
-#define MAX_INSTRNAMELEN 16
-#define MAX_PATTROWS 128
-#define MAX_SONGLEN 254
-#define MAX_SONGLEN_EXPANDED 0x800
-#define MAX_SONGS 32
-#define MAX_NOTES 96
-#define MAX_SONG_FILES 16
+constexpr uint8_t WTBL = 0;
+constexpr uint8_t PTBL = 1;
+constexpr uint8_t FTBL = 2;
+constexpr uint8_t STBL = 3;
 
-#define REPEAT 0xd0
-#define TRANSDOWN 0xe0
-#define TRANSUP 0xf0
-#define LOOPSONG 0xff
+constexpr int MAX_FILT             = 64;
+constexpr int MAX_STR              = 32;
+constexpr int MAX_INSTR            = 64;
+constexpr int MAX_CHN              = 6;
+constexpr int MAX_PLAY_CH          = 12;
+constexpr int MAX_PATT             = 208;
+constexpr int MAX_TABLES           = 4;
+constexpr int MAX_TABLELEN         = 255;
+constexpr int MAX_INSTRNAMELEN     = 16;
+constexpr int MAX_PATTROWS         = 128;
+constexpr int MAX_SONGLEN          = 254;
+constexpr int MAX_SONGLEN_EXPANDED = 0x800;
+constexpr int MAX_SONGS            = 32;
+constexpr int MAX_NOTES            = 96;
+constexpr int MAX_SONG_FILES       = 16;
 
-#define ENDPATT 0xff
-#define INSTRCHG 0x00
-#define FX 0x40
-#define FXONLY 0x50
-#define FIRSTNOTE 0x60
-#define LASTNOTE 0xbc
-#define REST 0xbd
-#define KEYOFF 0xbe
-#define KEYON 0xbf
-#define OLDKEYOFF 0x5e
-#define OLDREST 0x5f
+constexpr uint8_t REPEAT    = 0xd0;
+constexpr uint8_t TRANSDOWN = 0xe0;
+constexpr uint8_t TRANSUP   = 0xf0;
+constexpr uint8_t LOOPSONG  = 0xff;
 
-#define WAVEDELAY 0x1
-#define WAVELASTDELAY 0xf
-#define WAVESILENT 0xe0
-#define WAVELASTSILENT 0xef
-#define WAVECMD 0xf0
-#define WAVELASTCMD 0xfe
+constexpr uint8_t ENDPATT   = 0xff;
+constexpr uint8_t INSTRCHG  = 0x00;
+constexpr uint8_t FX        = 0x40;
+constexpr uint8_t FXONLY    = 0x50;
+constexpr uint8_t FIRSTNOTE = 0x60;
+constexpr uint8_t LASTNOTE  = 0xbc;
+constexpr uint8_t REST      = 0xbd;
+constexpr uint8_t KEYOFF    = 0xbe;
+constexpr uint8_t KEYON     = 0xbf;
+constexpr uint8_t OLDKEYOFF = 0x5e;
+constexpr uint8_t OLDREST   = 0x5f;
+
+constexpr uint8_t WAVEDELAY      = 0x1;
+constexpr uint8_t WAVELASTDELAY  = 0xf;
+constexpr uint8_t WAVESILENT     = 0xe0;
+constexpr uint8_t WAVELASTSILENT = 0xef;
+constexpr uint8_t WAVECMD        = 0xf0;
+constexpr uint8_t WAVELASTCMD    = 0xfe;
 
 struct INSTR {
-    unsigned char ad;
-    unsigned char sr;
-    unsigned char ptr[MAX_TABLES];
-    unsigned char vibdelay;
-    unsigned char gatetimer;
-    unsigned char firstwave;
-    unsigned char pan;
-    char          name[MAX_INSTRNAMELEN];
+    uint8_t ad;
+    uint8_t sr;
+    uint8_t ptr[MAX_TABLES];
+    uint8_t vibdelay;
+    uint8_t gatetimer;
+    uint8_t firstwave;
+    uint8_t pan;
+    char    name[MAX_INSTRNAMELEN];
 };
-
-#endif

@@ -164,13 +164,13 @@ int msDelta         = 0;
 
 void displayTableInfo(GTOBJECT* gt) {
     if (editorInfo.etcolumn == lastTableLR && editorInfo.etnum == lastTableNumber &&
-        editorInfo.etpos == lastTableIndex && editorInfo.editmode == lastEditWindow)
+        editorInfo.etpos == lastTableIndex && static_cast<int>(editorInfo.editmode) == lastEditWindow)
         return;
 
     waveformDisplayInfo.displayOnOff = 0;
 
 
-    lastEditWindow  = editorInfo.editmode;
+    lastEditWindow  = static_cast<int>(editorInfo.editmode);
     lastTableIndex  = editorInfo.etpos;
     lastTableLR     = editorInfo.etcolumn;
     lastTableNumber = editorInfo.etnum;
@@ -268,7 +268,7 @@ void displayFilterTableInfo(GTOBJECT* gt) {
 void displayInstrumentInfo(GTOBJECT* gt) {
 
     if (editorInfo.einum == lastInstrumentNumber && editorInfo.eipos == lastInstrumentParam &&
-        editorInfo.editmode == lastEditWindow)
+        static_cast<int>(editorInfo.editmode) == lastEditWindow)
         return;
 
     waveformDisplayInfo.displayOnOff = 0;
@@ -276,7 +276,7 @@ void displayInstrumentInfo(GTOBJECT* gt) {
 
     lastInstrumentNumber = editorInfo.einum;
     lastInstrumentParam  = editorInfo.eipos;
-    lastEditWindow       = editorInfo.editmode;
+    lastEditWindow       = static_cast<int>(editorInfo.editmode);
 
     int param = editorInfo.eipos;
 
@@ -331,7 +331,7 @@ void displayPatternInfo(GTOBJECT* gt) {
 
     if (editorInfo.etnum == lastInfoTableNum && editorInfo.etpos == lastInfoTablePos && c2 == lastInfoPatternCh &&
         gt->editorUndoInfo.editorInfo[c2].epnum == lastInfoPattern && editorInfo.eppos == lastInfoPatternPos &&
-        editorInfo.editmode == lastEditWindow)
+        static_cast<int>(editorInfo.editmode) == lastEditWindow)
         return;
 
 
@@ -343,7 +343,7 @@ void displayPatternInfo(GTOBJECT* gt) {
     lastInfoPatternCh  = c2;
     lastInfoPattern    = gt->editorUndoInfo.editorInfo[c2].epnum;
     lastInfoPatternPos = editorInfo.eppos;
-    lastEditWindow     = editorInfo.editmode;
+    lastEditWindow     = static_cast<int>(editorInfo.editmode);
 
     if (forceInfoLine) {
         forceInfoLine--; // = 0;

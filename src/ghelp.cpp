@@ -111,7 +111,7 @@ constexpr Topic kTopics[] = {
 std::span<const Topic> topics() { return kTopics; }
 
 std::size_t topic_index_for_edit_panel(int edit_panel) {
-    const gtaction::Ctx want = gtaction::context_from_editmode(edit_panel);
+    const gtaction::Ctx want = gtaction::context_from_editmode(static_cast<EditMode>(edit_panel));
     const auto          all  = topics();
     for (std::size_t i = 0; i < all.size(); ++i) {
         if (all[i].kind == Kind::Keybinds && all[i].binds && *all[i].binds == want) return i;

@@ -31,7 +31,7 @@ namespace {
 void fkey_toggle(char* actionList) {
     char parameterToToggle = *actionList;
     actionList++;
-    if (parameterToToggle == FKEY_FOLLOW) followplay = 1 - followplay;
+    if (parameterToToggle == FKEY_FOLLOW) followplay = !followplay;
     else if (parameterToToggle == FKEY_LOOP) transportLoopPattern = 1 - transportLoopPattern;
 }
 
@@ -46,16 +46,16 @@ void fkey_set(char* actionList) {
 }
 
 int check_for_play_in_order_list(GTOBJECT* gt) {
-    if (editorInfo.editmode == EDIT_ORDERLIST) {
+    if (editorInfo.editmode == EditMode::OrderList) {
         orderSelectPatternsFromSelected(gt);
-        orderPlayFromPosition(gt, 0, editorInfo.eseditpos, editorInfo.eschn, 1);
+        orderPlayFromPosition(gt, 0, editorInfo.eseditpos, editorInfo.eschn, true);
         return 1;
     }
     return 0;
 }
 
 void fkey_do_action(GTOBJECT* gt, char action) {
-    if (action == FKEY_PLAY_FROM_START_OF_SONG) orderPlayFromPosition(gt, 0, 0, 0, 1);
+    if (action == FKEY_PLAY_FROM_START_OF_SONG) orderPlayFromPosition(gt, 0, 0, 0, true);
     else if (action == FKEY_PLAY_FROM_START_OF_PATTERN) playFromCurrentPosition(gt, 0);
     else if (action == FKEY_GTULTRA_PLAY_FROM_START_OF_PATTERN) {
         if (check_for_play_in_order_list(gt) == 0) playFromCurrentPosition(gt, 0);
@@ -154,10 +154,10 @@ GTFKEY_ENTRY GTFKeyInfo[] = { { KEY_F1, FKEY_NO_SHIFT, FKEY_NO_CTRL, FKEYS_NONE,
     FKEY_NEXT_MULTIPLIER,
     FKEY_SELECT_INSTRUMENT_OR_TABLE_PANEL
 
-char F5_OriginalGT[] = { FKEY_SET,FKEY_PANEL,EDIT_PATTERN,FKEY_DONE };
+char F5_OriginalGT[] = { FKEY_SET,FKEY_PANEL,EditMode::Pattern,FKEY_DONE };
 char F5_SHIFT_OriginalGT[] = { FKEY_PREVIOUS_MULTIPLIER,FKEY_DONE };
 
-char F6_OriginalGT[] = { FKEY_SET,FKEY_PANEL,EDIT_ORDERLIST,FKEY_DONE };
+char F6_OriginalGT[] = { FKEY_SET,FKEY_PANEL,EditMode::OrderList,FKEY_DONE };
 char F6_SHIFT_OriginalGT[] = { FKEY_NEXT_MULTIPLIER,FKEY_DONE };
 
 char F7_OriginalGT[] = { FKEY_SELECT_INSTRUMENT_OR_TABLE_PANEL,FKEY_DONE };

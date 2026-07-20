@@ -325,7 +325,7 @@ bool table_enter_input(GTOBJECT* gt, const EditorInput* input) {
         }
         switch (table) {
         default:
-            editorInfo.editmode = EDIT_INSTRUMENT;
+            editorInfo.editmode = EditMode::Instrument;
             editorInfo.eipos    = editorInfo.etnum + 2;
             return true;
 
@@ -483,7 +483,7 @@ void tablecommands(GTOBJECT* gt, const EditorInput* input) {
     // Hex nibble entry only; navigation/edits go through the ImGui action layer.
 
     if (hexnybble >= 0) {
-        if (editorInfo.editTableMode == EDIT_TABLE_WAVE && editorInfo.etnum == 0) {
+        if (editorInfo.editTableMode == EditTableMode::Wave && editorInfo.etnum == 0) {
             modifyWaveTableDetailed(hexnybble);
 
             editorInfo.etcolumn++;
@@ -492,7 +492,7 @@ void tablecommands(GTOBJECT* gt, const EditorInput* input) {
             }
             else if (editorInfo.etcolumn == 2) editorInfo.etcolumn = 0;
         }
-        else if (editorInfo.editTableMode == EDIT_TABLE_FILTER) {
+        else if (editorInfo.editTableMode == EditTableMode::Filter) {
             modify_filter_table_detailed(hexnybble);
 
             editorInfo.etcolumn++;
@@ -501,7 +501,7 @@ void tablecommands(GTOBJECT* gt, const EditorInput* input) {
             }
             else if (editorInfo.etcolumn == 2) editorInfo.etcolumn = 0;
         }
-        else if (editorInfo.editTableMode == EDIT_TABLE_PULSE) {
+        else if (editorInfo.editTableMode == EditTableMode::Pulse) {
             modify_pulse_table_detailed(hexnybble);
 
             editorInfo.etcolumn++;
@@ -854,20 +854,20 @@ void deleteinstrtable(int i) {
 }
 
 void gototable(int num, int pos) {
-    if (editorInfo.editmode == EDIT_PATTERN) {
+    if (editorInfo.editmode == EditMode::Pattern) {
         if (num == STBL) {
-            if (editorInfo.editTableMode != EDIT_TABLE_NONE) editorInfo.editTableMode = EDIT_TABLE_WAVE;
+            if (editorInfo.editTableMode != EditTableMode::None) editorInfo.editTableMode = EditTableMode::Wave;
         }
     }
 
-    editorInfo.editmode = EDIT_TABLES;
+    editorInfo.editmode = EditMode::Tables;
     settableview(num, pos);
 }
 
 void settableview(int num, int pos) {
     // If we're focusing on a table, continuefocus on the correct table
-    if (editorInfo.editTableMode != EDIT_TABLE_NONE) {
-        if (num != STBL) editorInfo.editTableMode = num + 1;
+    if (editorInfo.editTableMode != EditTableMode::None) {
+        if (num != STBL) editorInfo.editTableMode = static_cast<EditTableMode>(num + 1);
     }
 
     editorInfo.etnum    = num;
@@ -929,7 +929,7 @@ void exectable(int num, int ptr) {
     // Jump error check
     if ((num != STBL) && (ptr) && (ptr <= MAX_TABLELEN)) {
         if (ltable[num][ptr - 1] == 0xff) {
-            table_error = TYPE_JUMP;
+            table_error = TableError::Jump;
             return;
         }
     }
@@ -939,7 +939,7 @@ void exectable(int num, int ptr) {
         if (!ptr) break;
         // Overflow check
         if ((num != STBL) && (ptr > MAX_TABLELEN)) {
-            table_error = TYPE_OVERFLOW;
+            table_error = TableError::Overflow;
             break;
         }
         // If were already here, exit
@@ -1056,7 +1056,7 @@ void table_optimize() {
 void table_toggle_lock() {
     if (!shiftOrCtrlPressed) return;
 
-    editorInfo.etlock ^= 1;
+    editorInfo.etlock = !editorInfo.etlock;
     validatetableview();
     if (editorInfo.etlock) sprintf(infoTextBuffer, "Table Lock: Enabled");
     else sprintf(infoTextBuffer, "Table Lock: Disabled");

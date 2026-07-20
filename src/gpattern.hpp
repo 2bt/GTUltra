@@ -5,7 +5,23 @@
 #include "gmidi.hpp"
 #include "gplay.hpp"
 
-#define KEYBOARD_POLYPHONY 12
+constexpr int KEYBOARD_POLYPHONY = 12;
+
+enum class EditMode : int {
+    Pattern    = 0,
+    OrderList  = 1,
+    Instrument = 2,
+    Tables     = 3,
+    Names      = 4,
+};
+
+enum class EditTableMode : int {
+    None   = 0,
+    Wave   = 1,
+    Pulse  = 2,
+    Filter = 3,
+    Speed  = 4,
+};
 
 extern int  playingChannelOnKey[KEYBOARD_POLYPHONY];
 extern int  MIDINotesHeld;
@@ -25,14 +41,14 @@ struct EDITOR_INFO {
     unsigned int ntsc;
     unsigned int usefinevib;
 
-    int editmode;
-    int editTableMode;
-    int nameIndex;
-    int mouseTrack;
-    int mouseTrackX;
-    int mouseTrackY;
-    int mouseTrackOriginalValue;
-    int mouseTrackDoUndo;
+    EditMode      editmode;
+    EditTableMode editTableMode;
+    int           nameIndex;
+    int           mouseTrack;
+    int           mouseTrackX;
+    int           mouseTrackY;
+    int           mouseTrackOriginalValue;
+    int           mouseTrackDoUndo;
 
     int cursorX;
     int cursorY;
@@ -66,17 +82,17 @@ struct EDITOR_INFO {
     int eipos;
     int eicolumn;
 
-    int etview[MAX_TABLES];
-    int etnum;
-    int etpos;
-    int etcolumn;
-    int etlock;
-    int etmarknum;
-    int etmarkstart;
-    int etmarkend;
+    int  etview[MAX_TABLES];
+    int  etnum;
+    int  etpos;
+    int  etcolumn;
+    bool etlock;
+    int  etmarknum;
+    int  etmarkstart;
+    int  etmarkend;
 
-    int etDetailedWaveTableColumn;
-    int expandOrderListView;
+    int  etDetailedWaveTableColumn;
+    bool expandOrderListView;
 };
 
 extern EDITOR_INFO editorInfo;
@@ -126,7 +142,7 @@ void pattern_mark_all(GTOBJECT* gt);
 void pattern_auto_pitchbend(GTOBJECT* gt);
 void pattern_portamento_helper(GTOBJECT* gt);
 
-void  handleShiftSpace(GTOBJECT* gt, int playChannel, int startPatternPos, int follow, int enableLoop);
+void  handleShiftSpace(GTOBJECT* gt, int playChannel, int startPatternPos, bool follow, bool enable_loop);
 int   handlePolyphonicKeyboard(GTOBJECT* gt);
 int   handleMIDIPolykeyboard(GTOBJECT* gt, MIDI_MESSAGE midiData);
 int   getNote(int rawkey);

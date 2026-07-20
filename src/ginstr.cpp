@@ -83,7 +83,7 @@ bool instrument_cell_input(GTOBJECT* gt, const EditorInput* input) {
 
     case KEY_U:
         if (in.shift_or_ctrl) {
-            editorInfo.etlock ^= 1;
+            editorInfo.etlock = !editorInfo.etlock;
             validatetableview();
 
             if (editorInfo.etlock) sprintf(infoTextBuffer, "Table Lock: Enabled");
@@ -199,7 +199,7 @@ void gotoinstr(int i) {
     editorInfo.einum = i;
     show_instr_table();
 
-    editorInfo.editmode = EDIT_INSTRUMENT;
+    editorInfo.editmode = EditMode::Instrument;
 }
 
 void nextinstr() {

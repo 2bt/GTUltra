@@ -9,6 +9,8 @@
 // The ImGui UI layer stays SDL-free; only gt2stereo.cpp calls into this module.
 //
 
+#include "gpattern.hpp"
+
 #include <cstdint>
 #include <span>
 #include <string>
@@ -193,7 +195,7 @@ constexpr Chord make_scancode_chord(int scancode, uint32_t mods = 0) {
 
 constexpr Chord kNoChord = 0;
 
-Ctx context_from_editmode(int editmode);
+Ctx context_from_editmode(EditMode editmode);
 
 const char* action_name(Action a);
 const char* action_label(Action a);

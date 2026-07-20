@@ -32,104 +32,84 @@
 #include "gundo.hpp"
 #include "gfkeys.hpp"
 
-#define REMOVE_UNDO 0
+#include <cstdint>
 
-#define EDIT_PATTERN 0
-#define EDIT_ORDERLIST 1
-#define EDIT_INSTRUMENT 2
-#define EDIT_TABLES 3
-#define EDIT_NAMES 4
+constexpr int REMOVE_UNDO = 0;
 
-// For EDITOR_INFO.editTableMode
-#define EDIT_TABLE_NONE 0
-#define EDIT_TABLE_WAVE 1
-#define EDIT_TABLE_PULSE 2
-#define EDIT_TABLE_FILTER 3
-#define EDIT_TABLE_SPEED 4
+enum class KeyPreset : unsigned {
+    Tracker = 0,
+    Dmc     = 1,
+    Janko   = 2,
+};
 
-#define KEY_TRACKER 0
-#define KEY_DMC 1
-#define KEY_JANKO 2
+constexpr int VISIBLEPATTROWS  = 29; // 31
+constexpr int VISIBLEORDERLIST = 11; // 11
+constexpr int VISIBLETABLEROWS = 14;
+constexpr int VISIBLEFILES     = 24;
 
-#define VISIBLEPATTROWS 29  // 31
-#define VISIBLEORDERLIST 11 // 11
-#define VISIBLETABLEROWS 14
-#define VISIBLEFILES 24
-
-#define PGUPDNREPEAT 8
-
+constexpr int PGUPDNREPEAT = 8;
 
 #ifndef GOATTRK2_C
 
-extern char packedsongname[MAX_FILENAME];
-extern int  SIDTracker64ForIPadIsAmazing;
-extern int  autoNextPattern;
-extern char appFileName[MAX_PATHNAME];
-extern int  menu;
-// extern int editmode;
-extern int doExportToWAV;
-extern int recordmode;
-extern int followplay;
-extern int hexnybble;
-extern int stepsize;
-extern int autoadvance;
-extern int defaultpatternlength;
-extern int cursorflash;
-extern int cursorcolortable[];
-extern int exitprogram;
-// extern int editorInfo.eacolumn;
-extern int      eamode;
-extern unsigned keypreset;
-extern unsigned playerversion;
-extern int      fileformat;
-extern int      zeropageadr;
-extern int      playeradr;
-extern int      debugEnabled;
-// extern unsigned editorInfo.sidmodel;
-// extern unsigned editorInfo.multiplier;
-// extern unsigned editorInfo.adparam;
-// extern unsigned editorInfo.ntsc;
-extern unsigned patterndispmode;
-extern unsigned sidaddress;
-// extern unsigned finevibrato;
-// extern unsigned editorInfo.optimizepulse;
-// extern unsigned editorInfo.optimizerealtime;
-// extern unsigned editorInfo.usefinevib;
-extern unsigned      b;
-extern unsigned      mr;
-extern unsigned      writer;
-extern unsigned      hardsid;
-extern unsigned      catweasel;
-extern unsigned      interpolate;
-extern unsigned      hardsidbufinteractive;
-extern unsigned      hardsidbufplayback;
-extern unsigned      customclockrate;
-extern int           leftKeyTicks;
-extern int           leftKeyTicksDelta;
-extern unsigned      monomode;
-extern unsigned      stereoMode;
-extern float         basepitch;
-extern char          configbuf[MAX_PATHNAME];
-extern char          loadedsongfilename[MAX_PATHNAME];
-extern char          wavfilename[MAX_PATHNAME];
-extern char          songfilename[MAX_PATHNAME];
-extern char          songfilter[MAX_FILENAME];
-extern char          wavfilter[MAX_FILENAME];
-extern char          songpath[MAX_PATHNAME];
-extern char          instrfilename[MAX_FILENAME];
-extern char          instrfilter[MAX_FILENAME];
-extern char          instrpath[MAX_PATHNAME];
-extern char          packedpath[MAX_PATHNAME];
-extern const char*   programname;
-extern const char*   notename[];
-extern const char*   notenameTableView[];
-extern char          textbuffer[MAX_PATHNAME];
-extern char          debugTextbuffer[MAX_PATHNAME];
-extern unsigned char hexkeytbl[16];
-extern int           jdebug[16];
-extern char          backupFolderName[MAX_PATHNAME];
-extern char          backupSngFilename[MAX_PATHNAME];
-extern char          fkeysFilename[MAX_PATHNAME];
+extern char        packedsongname[MAX_FILENAME];
+extern int         SIDTracker64ForIPadIsAmazing;
+extern bool        autoNextPattern;
+extern char        appFileName[MAX_PATHNAME];
+extern int         menu;
+extern bool        doExportToWAV;
+extern bool        recordmode;
+extern bool        followplay;
+extern int         hexnybble;
+extern int         stepsize;
+extern int         autoadvance;
+extern int         defaultpatternlength;
+extern int         cursorflash;
+extern int         cursorcolortable[];
+extern bool        exitprogram;
+extern int         eamode;
+extern KeyPreset   keypreset;
+extern unsigned    playerversion;
+extern PackFormat  fileformat;
+extern int         zeropageadr;
+extern int         playeradr;
+extern bool        debugEnabled;
+extern unsigned    patterndispmode;
+extern unsigned    sidaddress;
+extern unsigned    b;
+extern unsigned    mr;
+extern unsigned    writer;
+extern unsigned    hardsid;
+extern unsigned    catweasel;
+extern unsigned    interpolate;
+extern unsigned    hardsidbufinteractive;
+extern unsigned    hardsidbufplayback;
+extern unsigned    customclockrate;
+extern int         leftKeyTicks;
+extern int         leftKeyTicksDelta;
+extern unsigned    monomode;
+extern unsigned    stereoMode;
+extern float       basepitch;
+extern char        configbuf[MAX_PATHNAME];
+extern char        loadedsongfilename[MAX_PATHNAME];
+extern char        wavfilename[MAX_PATHNAME];
+extern char        songfilename[MAX_PATHNAME];
+extern char        songfilter[MAX_FILENAME];
+extern char        wavfilter[MAX_FILENAME];
+extern char        songpath[MAX_PATHNAME];
+extern char        instrfilename[MAX_FILENAME];
+extern char        instrfilter[MAX_FILENAME];
+extern char        instrpath[MAX_PATHNAME];
+extern char        packedpath[MAX_PATHNAME];
+extern const char* programname;
+extern const char* notename[];
+extern const char* notenameTableView[];
+extern char        textbuffer[MAX_PATHNAME];
+extern char        debugTextbuffer[MAX_PATHNAME];
+extern uint8_t     hexkeytbl[16];
+extern int         jdebug[16];
+extern char        backupFolderName[MAX_PATHNAME];
+extern char        backupSngFilename[MAX_PATHNAME];
+extern char        fkeysFilename[MAX_PATHNAME];
 
 extern int patternOrderArray[256];
 extern int patternOrderList[256];
@@ -140,20 +120,14 @@ extern char destBackupFolderName[MAX_FILENAME];
 
 extern int debugTicks;
 
-
-extern int forceSave3ChannelSng;
-extern int normalizeWAV;
-
+extern bool forceSave3ChannelSng;
+extern bool normalizeWAV;
 
 extern float        masterVolume;
 extern unsigned int lmanMode;
-// extern int editorInfo.maxSIDChannels;
-extern char infoTextBuffer[256];
+extern char         infoTextBuffer[256];
 
-extern int SID_StereoPanPositions[4][4];
-// extern int SID2_StereoPanPositions[];
-// extern int SID3_StereoPanPositions[];
-// extern int SID4_StereoPanPositions[];
+extern int  SID_StereoPanPositions[4][4];
 extern char editPan;
 
 extern char transportPolySIDEnabled[4];
@@ -168,22 +142,22 @@ extern unsigned int enablekeyrepeat;
 extern WAVEFORM_INFO waveformDisplayInfo;
 
 extern int          selectedMIDIPort;
-extern int          midiEnabled;
+extern bool         midiEnabled;
 extern unsigned int enableAntiAlias;
 
-extern int useOriginalGTFunctionKeys;
+extern bool useOriginalGTFunctionKeys;
 
 extern float detuneCent;
 extern int   displayingPanel;
 extern int   displayStopped;
 
-extern int useRepeatsWhenCompressing;
-extern int songExported;
-extern int songExportSuccessFlag;
-extern int sidAddr1;
-extern int sidAddr2;
-extern int sidAddr3;
-extern int sidAddr4;
+extern bool useRepeatsWhenCompressing;
+extern bool songExported;
+extern bool songExportSuccessFlag;
+extern int  sidAddr1;
+extern int  sidAddr2;
+extern int  sidAddr3;
+extern int  sidAddr4;
 
 #endif
 

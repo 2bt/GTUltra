@@ -4,6 +4,8 @@
 #include "ginput.hpp"
 #include "gplay.hpp"
 
+#include <cstdint>
+
 extern int instrumentCount[MAX_INSTR];
 
 int  calculateLoopInfo2(int songNum, int channelNum, int startSongPos, GTOBJECT* gtloop);
@@ -15,18 +17,18 @@ void orderPlayFromPosition(GTOBJECT* gt,
                            int       startPatternPos,
                            int       startSongPos,
                            int       focusChannel,
-                           int       enableSIDWrites);
+                           bool      enable_sid_writes);
 void orderSelectPatternsFromSelected(GTOBJECT* gt);
 void updateviewtopos(GTOBJECT* gt);
 void orderlistcommands(GTOBJECT* gt, const EditorInput* input = nullptr);
 void namecommands(GTOBJECT* gt, const EditorInput* input = nullptr);
 void nextsong(GTOBJECT* gt);
 void prevsong(GTOBJECT* gt);
-void songchange(GTOBJECT* gt, int resetEditingPositions);
+void songchange(GTOBJECT* gt, bool reset_editing_positions);
 void orderleft();
 void orderright();
 void deleteorder(GTOBJECT* gt);
-void insertorder(unsigned char byte, GTOBJECT* gt);
+void insertorder(uint8_t byte, GTOBJECT* gt);
 void countInstruments();
 void calculateTotalInstrumentsFromAllPatterns();
 void countInstrumentsInPattern(int pat);
@@ -43,7 +45,7 @@ void orderListCopyMarkedArea();
 void orderListCopyMarkedArea_Expanded();
 void getExpandedSelectedArea(int* x, int* y, int* w, int* h);
 void orderListPasteToCursor(GTOBJECT* gt);
-void orderListPasteToCursor_External(GTOBJECT* gt, int insert, int transposeOnly);
+void orderListPasteToCursor_External(GTOBJECT* gt, bool insert, bool transpose_only);
 void orderListInsert_External(GTOBJECT* gt);
 void orderListInsertRowAtCursor_External(GTOBJECT* gt, int sng, int chn, int row);
 void orderListDeleteRowAtCursor_External(int sng, int chn, int row);

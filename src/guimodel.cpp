@@ -25,7 +25,7 @@ int names_field() { return editorInfo.enpos; }
 void names_set_field(int field) {
     if (field < 0) field = 0;
     if (field > 2) field = 2;
-    editorInfo.editmode  = EDIT_NAMES;
+    editorInfo.editmode  = EditMode::Names;
     editorInfo.enpos     = field;
     editorInfo.nameIndex = field;
 }
@@ -58,8 +58,7 @@ static bool table_row_in_instrument_chain(int t, int row, int ptr) {
             if (rtable[t][ptr] == 0) break;
             ptr = (int)rtable[t][ptr] - 1;
         }
-        else
-            ptr++;
+        else ptr++;
     }
     return false;
 }
@@ -79,8 +78,8 @@ void table_set_cursor(int t, int row, int col) {
     if (col < 0) col = 0;
     if (col > 3) col = 3;
 
-    editorInfo.editmode      = EDIT_TABLES;
-    editorInfo.editTableMode = EDIT_TABLE_NONE; // raw II:LL RR hex (not detailed view)
+    editorInfo.editmode      = EditMode::Tables;
+    editorInfo.editTableMode = EditTableMode::None; // raw II:LL RR hex (not detailed view)
     editorInfo.etnum         = t;
     editorInfo.etpos         = row;
     editorInfo.etcolumn      = col;
@@ -214,7 +213,7 @@ void pattern_set_octave(int v) {
     editorInfo.epoctave = v;
 }
 
-bool pattern_jam_mode() { return recordmode == 0; }
+bool pattern_jam_mode() { return !recordmode; }
 
 bool pattern_record_mode() { return recordmode != 0; }
 
@@ -236,7 +235,7 @@ void pattern_set_step(int v) {
     stepsize = v;
 }
 
-void pattern_toggle_record_mode() { recordmode = 1 - recordmode; }
+void pattern_toggle_record_mode() { recordmode = !recordmode; }
 
 // ---- order list ----
 
@@ -251,24 +250,23 @@ int order_mark_chn_end() { return editorInfo.esmarkchnend; }
 int order_mark_start() { return editorInfo.esmarkstart; }
 int order_mark_end() { return editorInfo.esmarkend; }
 
-bool order_expanded_view() { return editorInfo.expandOrderListView != 0; }
+bool order_expanded_view() { return editorInfo.expandOrderListView; }
 
 bool order_toggle_expanded_view() {
     GTOBJECT* gt = &gtObject;
-    if (editorInfo.expandOrderListView == 1 && validateAllSongs() > 0xff) return false;
+    if (editorInfo.expandOrderListView && validateAllSongs() > 0xff) return false;
 
     const int jc2 = getActualChannel(editorInfo.esnum, editorInfo.eschn);
     stopsong(gt);
     resetSongInfo(gt, jc2);
-    editorInfo.expandOrderListView = 1 - editorInfo.expandOrderListView;
-    if (editorInfo.expandOrderListView == 1) expandAllSongs();
-    else
-        compressAllSongs();
+    editorInfo.expandOrderListView = !editorInfo.expandOrderListView;
+    if (editorInfo.expandOrderListView) expandAllSongs();
+    else compressAllSongs();
 
     editorInfo.esnum = 1;
-    songchange(gt, 1);
+    songchange(gt, true);
     editorInfo.esnum = 0;
-    songchange(gt, 1);
+    songchange(gt, true);
     return true;
 }
 
@@ -367,8 +365,7 @@ OrderCell order_cell(int ch, int row) {
 
         const int tv = transpose & 0x7f;
         if (transpose & 0x80) snprintf(c.trans, sizeof c.trans, "-%01X", tv);
-        else
-            snprintf(c.trans, sizeof c.trans, "+%01X", tv);
+        else snprintf(c.trans, sizeof c.trans, "+%01X", tv);
         c.kind = 1;
         return c;
     }
@@ -391,10 +388,8 @@ OrderCell order_cell(int ch, int row) {
         return c;
     }
     if (v >= TRANSUP) snprintf(c.text, sizeof c.text, "+%X", v & 0xf);
-    else if (v >= TRANSDOWN)
-        snprintf(c.text, sizeof c.text, "-%X", 16 - (v & 0xf));
-    else
-        snprintf(c.text, sizeof c.text, "R%X", (v + 1) & 0xf);
+    else if (v >= TRANSDOWN) snprintf(c.text, sizeof c.text, "-%X", 16 - (v & 0xf));
+    else snprintf(c.text, sizeof c.text, "R%X", (v + 1) & 0xf);
     c.kind = 2;
     return c;
 }
@@ -410,7 +405,7 @@ void order_set_cursor(int ch, int row, int col) {
         if (col < 0) col = 0;
         if (col > 4) col = 4;
 
-        editorInfo.editmode  = EDIT_ORDERLIST;
+        editorInfo.editmode  = EditMode::OrderList;
         editorInfo.eschn     = ch;
         editorInfo.eseditpos = row;
         editorInfo.escolumn  = col;
@@ -428,7 +423,7 @@ void order_set_cursor(int ch, int row, int col) {
     if (col < 0) col = 0;
     if (col > 1) col = 1;
 
-    editorInfo.editmode  = EDIT_ORDERLIST;
+    editorInfo.editmode  = EditMode::OrderList;
     editorInfo.eschn     = ch;
     editorInfo.eseditpos = row;
     editorInfo.escolumn  = col;
@@ -471,11 +466,11 @@ void order_mouse_double_click(int ch, int row, int col) {
 
     order_set_cursor(ch, row, col);
     setMasterLoopChannel(&gtObject, "guimodel_order_dblclk");
-    orderPlayFromPosition(&gtObject, 0, editorInfo.eseditpos, editorInfo.eschn, 1);
+    orderPlayFromPosition(&gtObject, 0, editorInfo.eseditpos, editorInfo.eschn, true);
 }
 
 void order_mouse_mark_begin(int ch, int row) {
-    editorInfo.editmode = EDIT_ORDERLIST;
+    editorInfo.editmode = EditMode::OrderList;
 
     if (order_expanded_view()) {
         if (row >= MAX_SONGLEN_EXPANDED) return;
@@ -542,7 +537,7 @@ void order_set_subtune(int v) {
     if (v > kOrderSubtuneMax) v = kOrderSubtuneMax;
     if (editorInfo.esnum == v) return;
     editorInfo.esnum = v;
-    songchange(&gtObject, 1);
+    songchange(&gtObject, true);
 }
 
 void order_set_song_bank(int bank) {
@@ -583,7 +578,7 @@ void instr_clamp_selection() {
 
 void instr_set_cursor(int inst, int field, int nibble) {
     if (!instr_editable(inst)) return;
-    editorInfo.editmode = EDIT_INSTRUMENT;
+    editorInfo.editmode = EditMode::Instrument;
     editorInfo.einum    = inst;
     if (field == INSTR_FIELD_NAME) {
         editorInfo.eipos    = LAST_INST;
@@ -611,7 +606,7 @@ int instr_pan(int i) { return instr_ok(i) ? instr[i].pan : 0; }
 
 void instr_select(int i) {
     if (!instr_editable(i)) return;
-    editorInfo.editmode = EDIT_INSTRUMENT;
+    editorInfo.editmode = EditMode::Instrument;
     editorInfo.einum    = i;
 }
 
@@ -687,13 +682,12 @@ void transport_play_start() { gtaction::perform(gtaction::Action::PlayFromBeginn
 
 void transport_toggle_play() {
     if (isplaying(&gtObject)) stopsong(&gtObject);
-    else
-        playFromCurrentPosition(&gtObject, editorInfo.eppos);
+    else playFromCurrentPosition(&gtObject, editorInfo.eppos);
 }
 
 void transport_play_pattern() { gtaction::perform(gtaction::Action::PlayPatternMode); }
 void transport_stop() { gtaction::perform(gtaction::Action::Stop); }
-bool transport_playing() { return isplaying(&gtObject) != 0; }
+bool transport_playing() { return isplaying(&gtObject); }
 int  transport_time_min() { return gtObject.timemin; }
 int  transport_time_sec() { return gtObject.timesec; }
 int  transport_total_min() { return gtEditorObject.totalMin; }
@@ -776,8 +770,7 @@ bool player_ntsc() { return editorInfo.ntsc != 0; }
 const char* player_speed_label() {
     static char buf[8];
     if (editorInfo.multiplier == 0) snprintf(buf, sizeof buf, "25Hz");
-    else
-        snprintf(buf, sizeof buf, "%dX", (int)editorInfo.multiplier);
+    else snprintf(buf, sizeof buf, "%dX", (int)editorInfo.multiplier);
     return buf;
 }
 
@@ -790,8 +783,7 @@ void player_speed_combo_label(int index, char* buf, int bufSize) {
     if (index < 0) index = 0;
     if (index > 16) index = 16;
     if (index == 0) snprintf(buf, (size_t)bufSize, "25Hz");
-    else
-        snprintf(buf, (size_t)bufSize, "%dX", index);
+    else snprintf(buf, (size_t)bufSize, "%dX", index);
 }
 
 bool player_set_speed_combo_index(int index) {
@@ -841,12 +833,9 @@ const char* player_pan_summary() {
         v |= SID_StereoPanPositions[sidChips - 1][i];
     }
     if (sidChips == 1) snprintf(buf, sizeof buf, "P1:%01X", v);
-    else if (sidChips == 2)
-        snprintf(buf, sizeof buf, "P2:%02X", v);
-    else if (sidChips == 3)
-        snprintf(buf, sizeof buf, "P3:%03X", v);
-    else
-        snprintf(buf, sizeof buf, "P4:%04X", v);
+    else if (sidChips == 2) snprintf(buf, sizeof buf, "P2:%02X", v);
+    else if (sidChips == 3) snprintf(buf, sizeof buf, "P3:%03X", v);
+    else snprintf(buf, sizeof buf, "P4:%04X", v);
     return buf;
 }
 
@@ -892,11 +881,11 @@ void player_multiplier_next() {
 
 void context_help_refresh() {
     switch (editorInfo.editmode) {
-    case EDIT_PATTERN: displayPatternInfo(&gtObject); break;
-    case EDIT_INSTRUMENT: displayInstrumentInfo(&gtObject); break;
-    case EDIT_TABLES: displayTableInfo(&gtObject); break;
-    case EDIT_ORDERLIST: displayOrderTableInfo(&gtObject); break;
-    case EDIT_NAMES:
+    case EditMode::Pattern: displayPatternInfo(&gtObject); break;
+    case EditMode::Instrument: displayInstrumentInfo(&gtObject); break;
+    case EditMode::Tables: displayTableInfo(&gtObject); break;
+    case EditMode::OrderList: displayOrderTableInfo(&gtObject); break;
+    case EditMode::Names:
         snprintf(infoTextBuffer, sizeof infoTextBuffer, "Song metadata (name, author, copyright)");
         break;
     default: break;
@@ -917,7 +906,7 @@ void pattern_set_cursor(int ch, int row, int col) {
     if (col < 0) col = 0;
     if (col > 5) col = 5;
 
-    editorInfo.editmode = EDIT_PATTERN;
+    editorInfo.editmode = EditMode::Pattern;
     editorInfo.epchn    = ch;
     editorInfo.eppos    = row;
     editorInfo.epcolumn = col;
@@ -947,23 +936,21 @@ void midi_combo_label(int index, char* buf, int bufSize) {
 
     if (index <= 0) {
         if (midi_port_count() == 0) snprintf(buf, (size_t)bufSize, "Off (no ports)");
-        else
-            snprintf(buf, (size_t)bufSize, "Off");
+        else snprintf(buf, (size_t)bufSize, "Off");
         return;
     }
 
     const int port = index - 1;
     char      name[96];
     if (getMidiPortNameInto(port, name, (int)sizeof name)) snprintf(buf, (size_t)bufSize, "%d: %s", port, name);
-    else
-        snprintf(buf, (size_t)bufSize, "%d", port);
+    else snprintf(buf, (size_t)bufSize, "%d", port);
 }
 
 bool midi_set_combo_index(int index) {
     if (index <= 0) {
         setMidiPort(MIDI_PORT_DISABLED);
         selectedMIDIPort = MIDI_PORT_DISABLED;
-        midiEnabled      = 0;
+        midiEnabled      = false;
         return true;
     }
 
@@ -971,12 +958,12 @@ bool midi_set_combo_index(int index) {
     const int opened = setMidiPort(port);
     if (opened == MIDI_PORT_DISABLED) {
         selectedMIDIPort = MIDI_PORT_DISABLED;
-        midiEnabled      = 0;
+        midiEnabled      = false;
         return false;
     }
 
     selectedMIDIPort = opened;
-    midiEnabled      = 1;
+    midiEnabled      = true;
     return true;
 }
 

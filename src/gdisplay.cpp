@@ -35,8 +35,7 @@ int init_for_st64 = 0;
 
 void setSIDTracker64KeyOnStyle() {
     if (SIDTracker64ForIPadIsAmazing != 0) notename[(12 * 8) - 1] = " | ";
-    else
-        notename[(12 * 8) - 1] = "+++";
+    else notename[(12 * 8) - 1] = "+++";
 }
 
 
@@ -46,14 +45,12 @@ void displayupdate(GTOBJECT* gt) {
         cursorflash++;
         cursorflash &= 3;
     }
-    doDisplay((void*)gt);
+    do_display(gt);
 }
 
-int doDisplay(void* gt) {
-    GTOBJECT* gto = (GTOBJECT*)gt;
-    updateDisplayWhenFollowingAndPlaying(gto);
+void do_display(GTOBJECT* gt) {
+    updateDisplayWhenFollowingAndPlaying(gt);
     gfx_present();
-    return 0;
 }
 
 void resettime(GTOBJECT* gt) {

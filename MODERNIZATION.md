@@ -103,4 +103,4 @@ from git history):
 - **Replace `bme`** — **done.** Editor uses C++ `gplatform` (`gwin`, `ggfx`,
   `gaudio`, `gio`, `gendian`); call-site APIs (`win_*` / `gfx_*` / `snd_*` /
   `io_*`) kept for stability. Host tools: `src/tools/datafile.c`, `dat2inc.c`.
-- **Replace `asm`** (6502 assembler) — possibly with a 64-bit assembler.
+- **Replace `asm`** (6502 assembler) — possibly with a ASM64.

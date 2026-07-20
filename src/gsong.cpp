@@ -16,53 +16,53 @@ SNG_INFO songInfo[16];
 // pointer arrays to each element pointer array memcpy((char*)ltable,*ltableArray[n]
 // mallocs for each element buffer
 
-INSTR          instr[MAX_INSTR];
-unsigned char  ltable[MAX_TABLES][MAX_TABLELEN];
-char           d1[DEBUG_PAD_SIZE];
-unsigned char  rtable[MAX_TABLES][MAX_TABLELEN];
-char           d2[DEBUG_PAD_SIZE];
-unsigned char  songorder[MAX_SONGS][MAX_CHN][(MAX_SONGLEN + 2)];
-char           d3[DEBUG_PAD_SIZE];
-unsigned char  songOrderPatterns[MAX_SONGS][MAX_CHN][MAX_SONGLEN_EXPANDED];
-char           d4[DEBUG_PAD_SIZE];
-unsigned short songOrderTranspose[MAX_SONGS][MAX_CHN][MAX_SONGLEN_EXPANDED];
-char           d5[DEBUG_PAD_SIZE];
-unsigned int   songOrderLength[MAX_SONGS][MAX_CHN];
-char           d6[DEBUG_PAD_SIZE];
-unsigned int   songCompressedSize[MAX_SONGS][MAX_CHN];
-char           d7[DEBUG_PAD_SIZE];
-unsigned char  songOrderPatternsCopyPaste[MAX_CHN][MAX_SONGLEN_EXPANDED];
-char           d8[DEBUG_PAD_SIZE];
-unsigned short songOrderTransposeCopyPaste[MAX_CHN][MAX_SONGLEN_EXPANDED];
-char           d9[DEBUG_PAD_SIZE];
-unsigned char  pattern[MAX_PATT][(MAX_PATTROWS * 4 + 4)];
-char           d10[DEBUG_PAD_SIZE];
-char           songname[MAX_STR];
-char           d11[DEBUG_PAD_SIZE];
-char           authorname[MAX_STR];
-char           d12[DEBUG_PAD_SIZE];
-char           copyrightname[MAX_STR];
-char           d13[DEBUG_PAD_SIZE];
-int            pattlen[MAX_PATT];
-char           d14[DEBUG_PAD_SIZE];
-int            songlen[MAX_SONGS][MAX_CHN];
-char           d15[DEBUG_PAD_SIZE];
-unsigned int   detailedTableLValue[MAX_TABLELEN];
-char           d16[DEBUG_PAD_SIZE];
-unsigned char  detailedTableMaxLValue[MAX_TABLELEN];
-char           d17[DEBUG_PAD_SIZE];
-unsigned char  detailedTableMinLValue[MAX_TABLELEN];
-char           d18[DEBUG_PAD_SIZE];
-int            detailedTableBaseLValue[MAX_TABLELEN];
-char           d19[DEBUG_PAD_SIZE];
-unsigned char  detailedTableRValue[MAX_TABLELEN];
-char           d20[DEBUG_PAD_SIZE];
-unsigned char  detailedTableMaxRValue[MAX_TABLELEN];
-char           d21[DEBUG_PAD_SIZE];
-unsigned char  detailedTableMinRValue[MAX_TABLELEN];
-char           d22[DEBUG_PAD_SIZE];
-int            detailedTableBaseRValue[MAX_TABLELEN];
-char           d23[DEBUG_PAD_SIZE];
+INSTR    instr[MAX_INSTR];
+uint8_t  ltable[MAX_TABLES][MAX_TABLELEN];
+char     d1[DEBUG_PAD_SIZE];
+uint8_t  rtable[MAX_TABLES][MAX_TABLELEN];
+char     d2[DEBUG_PAD_SIZE];
+uint8_t  songorder[MAX_SONGS][MAX_CHN][(MAX_SONGLEN + 2)];
+char     d3[DEBUG_PAD_SIZE];
+uint8_t  songOrderPatterns[MAX_SONGS][MAX_CHN][MAX_SONGLEN_EXPANDED];
+char     d4[DEBUG_PAD_SIZE];
+uint16_t songOrderTranspose[MAX_SONGS][MAX_CHN][MAX_SONGLEN_EXPANDED];
+char     d5[DEBUG_PAD_SIZE];
+uint32_t songOrderLength[MAX_SONGS][MAX_CHN];
+char     d6[DEBUG_PAD_SIZE];
+uint32_t songCompressedSize[MAX_SONGS][MAX_CHN];
+char     d7[DEBUG_PAD_SIZE];
+uint8_t  songOrderPatternsCopyPaste[MAX_CHN][MAX_SONGLEN_EXPANDED];
+char     d8[DEBUG_PAD_SIZE];
+uint16_t songOrderTransposeCopyPaste[MAX_CHN][MAX_SONGLEN_EXPANDED];
+char     d9[DEBUG_PAD_SIZE];
+uint8_t  pattern[MAX_PATT][(MAX_PATTROWS * 4 + 4)];
+char     d10[DEBUG_PAD_SIZE];
+char     songname[MAX_STR];
+char     d11[DEBUG_PAD_SIZE];
+char     authorname[MAX_STR];
+char     d12[DEBUG_PAD_SIZE];
+char     copyrightname[MAX_STR];
+char     d13[DEBUG_PAD_SIZE];
+int      pattlen[MAX_PATT];
+char     d14[DEBUG_PAD_SIZE];
+int      songlen[MAX_SONGS][MAX_CHN];
+char     d15[DEBUG_PAD_SIZE];
+uint32_t detailedTableLValue[MAX_TABLELEN];
+char     d16[DEBUG_PAD_SIZE];
+uint8_t  detailedTableMaxLValue[MAX_TABLELEN];
+char     d17[DEBUG_PAD_SIZE];
+uint8_t  detailedTableMinLValue[MAX_TABLELEN];
+char     d18[DEBUG_PAD_SIZE];
+int      detailedTableBaseLValue[MAX_TABLELEN];
+char     d19[DEBUG_PAD_SIZE];
+uint8_t  detailedTableRValue[MAX_TABLELEN];
+char     d20[DEBUG_PAD_SIZE];
+uint8_t  detailedTableMaxRValue[MAX_TABLELEN];
+char     d21[DEBUG_PAD_SIZE];
+uint8_t  detailedTableMinRValue[MAX_TABLELEN];
+char     d22[DEBUG_PAD_SIZE];
+int      detailedTableBaseRValue[MAX_TABLELEN];
+char     d23[DEBUG_PAD_SIZE];
 
 struct CHN_QUICKPLAY {
     CHN chn[MAX_PLAY_CH];
@@ -153,7 +153,7 @@ void init_quick_play() {
     }
 }
 
-void compress_channel(int s, int c, int startIndex, int endIndex, int* p, int* lastTranspose, int validateOnly) {
+void compress_channel(int s, int c, int startIndex, int endIndex, int* p, int* lastTranspose, int validate_only) {
     int repeatCount = 0;
 
     int lastPattern = -1; // songOrderPatterns[s][c][0];
@@ -169,11 +169,11 @@ void compress_channel(int s, int c, int startIndex, int endIndex, int* p, int* l
 
         if (transpose != *lastTranspose) {
             if (repeatCount > 0) {
-                if (validateOnly) writeOffset++;
+                if (validate_only) writeOffset++;
                 else songorder[s][c][writeOffset++] = REPEAT + (repeatCount & 0xf);
             }
             if (lastPattern != -1) {
-                if (validateOnly) writeOffset++;
+                if (validate_only) writeOffset++;
                 else songorder[s][c][writeOffset++] = lastPattern;
             }
             lastPattern = -1;
@@ -189,14 +189,14 @@ void compress_channel(int s, int c, int startIndex, int endIndex, int* p, int* l
                          0x7f); // 1.3.7 fix. Negative transpose was compressed back to repeat values instead
                 else compressedTrans = TRANSUP;
             }
-            if (validateOnly) writeOffset++;
+            if (validate_only) writeOffset++;
             else songorder[s][c][writeOffset++] = compressedTrans;
         }
 
         if (pattern == lastPattern && useRepeatsWhenCompressing != 0) {
             repeatCount++;
             if (repeatCount == 0xf) {
-                if (validateOnly) writeOffset += 2;
+                if (validate_only) writeOffset += 2;
                 else {
                     songorder[s][c][writeOffset++] = REPEAT + (repeatCount & 0xf); // R0 = repeat 16 times..
                     songorder[s][c][writeOffset++] = lastPattern;
@@ -207,11 +207,11 @@ void compress_channel(int s, int c, int startIndex, int endIndex, int* p, int* l
         }
         else {
             if (repeatCount > 0) {
-                if (validateOnly) writeOffset++;
+                if (validate_only) writeOffset++;
                 else songorder[s][c][writeOffset++] = REPEAT + (repeatCount & 0xf);
             }
             if (lastPattern != -1) {
-                if (validateOnly) writeOffset++;
+                if (validate_only) writeOffset++;
                 else songorder[s][c][writeOffset++] = lastPattern;
             }
             lastPattern = pattern;
@@ -220,11 +220,11 @@ void compress_channel(int s, int c, int startIndex, int endIndex, int* p, int* l
     }
 
     if (repeatCount > 0) {
-        if (validateOnly) writeOffset++;
+        if (validate_only) writeOffset++;
         else songorder[s][c][writeOffset++] = REPEAT + (repeatCount & 0xf);
     }
     if (lastPattern != -1) {
-        if (validateOnly) writeOffset++;
+        if (validate_only) writeOffset++;
         else songorder[s][c][writeOffset++] = lastPattern;
     }
 
@@ -365,14 +365,14 @@ int check_for_3_channel_song() {
     return 3; // no pattern data found
 }
 
-int savesong() {
+bool savesong() {
     int   c;
     char  ident[] = { 'G', 'T', 'S', '5' };
     FILE* handle;
     int   amount;
 
-    if (editorInfo.expandOrderListView ==
-        1) // ensure that the compressed data song data is up to date if currently viewing expanded orderlist
+    if (editorInfo.expandOrderListView) // ensure that the compressed data song data is up to date if currently
+                                        // viewing expanded orderlist
         compressAllSongs();
 
     // Determine amount of songs to be saved
@@ -490,12 +490,12 @@ int savesong() {
         int l              = strlen(wavfilename);
         wavfilename[l - 4] = 0;
         strcat(wavfilename, ".wav");
-        return 1;
+        return true;
     }
-    return 0;
+    return false;
 }
 
-int saveinstrument() {
+bool saveinstrument() {
     int   c;
     char  ident[] = { 'G', 'T', 'I', '5' };
     FILE* handle;
@@ -542,9 +542,9 @@ int saveinstrument() {
 int loadedSongCount = 0;
 
 
-int loadsong(GTOBJECT* gt, int gt2relocMode) {
+bool loadsong(GTOBJECT* gt, bool gt2reloc_mode) {
     int           c;
-    int           ok = 0;
+    bool          ok = false;
     char          ident[4];
     unsigned char ID;
 
@@ -553,7 +553,7 @@ int loadsong(GTOBJECT* gt, int gt2relocMode) {
     FILE* handle;
     int   channelstoload = MAX_CHN;
 
-    if (gt2relocMode == 1) {
+    if (gt2reloc_mode) {
         if (editorInfo.maxSIDChannels == 0) editorInfo.maxSIDChannels = channelstoload;
     }
 
@@ -590,8 +590,8 @@ int loadsong(GTOBJECT* gt, int gt2relocMode) {
             int length;
             int amount;
             int loadsize;
-            clearsong(1, 1, 1, 1, 1, gt);
-            ok = 1;
+            clearsong(true, true, true, true, true, gt);
+            ok = true;
 
 
             // Read infotexts
@@ -601,7 +601,7 @@ int loadsong(GTOBJECT* gt, int gt2relocMode) {
 
             // Read songorderlists
             channelstoload = determine_channels(handle);
-            if (gt2relocMode == 1) {
+            if (gt2reloc_mode) {
                 if (editorInfo.maxSIDChannels == 0) editorInfo.maxSIDChannels = channelstoload;
             }
 
@@ -687,10 +687,10 @@ int loadsong(GTOBJECT* gt, int gt2relocMode) {
                 }
             } while (getNext != 0);
 
-            if (gt2relocMode == 0) {
+            if (!gt2reloc_mode) {
                 setSIDTracker64KeyOnStyle();
                 countpatternlengths();
-                songchange(gt, 1);
+                songchange(gt, true);
             }
         }
 
@@ -700,8 +700,8 @@ int loadsong(GTOBJECT* gt, int gt2relocMode) {
             int length;
             int amount;
             int loadsize;
-            clearsong(1, 1, 1, 1, 1, gt);
-            ok = 1;
+            clearsong(true, true, true, true, true, gt);
+            ok = true;
 
             // Read infotexts
             read_exact(handle, songname, sizeof songname);
@@ -710,7 +710,7 @@ int loadsong(GTOBJECT* gt, int gt2relocMode) {
 
             // Read songorderlists
             channelstoload = determine_channels(handle);
-            if (gt2relocMode == 1) {
+            if (gt2reloc_mode) {
                 if (editorInfo.maxSIDChannels == 0) editorInfo.maxSIDChannels = channelstoload;
             }
 
@@ -771,7 +771,7 @@ int loadsong(GTOBJECT* gt, int gt2relocMode) {
                 }
             }
             countpatternlengths();
-            songchange(gt, 1);
+            songchange(gt, true);
         }
         // Goattracker 1.xx import
         if (!memcmp(ident, "GTS!", 4)) {
@@ -790,8 +790,8 @@ int loadsong(GTOBJECT* gt, int gt2relocMode) {
             unsigned char pulse[32], pulseadd[32], pulselimitlow[32], pulselimithigh[32];
             int           filterjumppos[64];
 
-            clearsong(1, 1, 1, 1, 1, gt);
-            ok = 1;
+            clearsong(true, true, true, true, true, gt);
+            ok = true;
 
             // Read infotexts
             read_exact(handle, songname, sizeof songname);
@@ -800,7 +800,7 @@ int loadsong(GTOBJECT* gt, int gt2relocMode) {
 
             // Read songorderlists
             channelstoload = determine_channels(handle);
-            if (gt2relocMode == 1) {
+            if (gt2reloc_mode) {
                 if (editorInfo.maxSIDChannels == 0) editorInfo.maxSIDChannels = channelstoload;
             }
 
@@ -1013,7 +1013,7 @@ int loadsong(GTOBJECT* gt, int gt2relocMode) {
             }
             countpatternlengths();
             fi = highestusedinstr + 1;
-            songchange(gt, 1);
+            songchange(gt, true);
 
             // Read filtertable
             read_exact(handle, filtertable, 256);
@@ -1239,11 +1239,11 @@ int loadsong(GTOBJECT* gt, int gt2relocMode) {
             for (c = 0; c < MAX_PATT; c++) {
                 if (!patt_used[c]) {
                     int d;
-                    int ok = 1;
+                    int ok = true;
                     for (d = 0; d < pattlen[c]; d++) {
                         if ((pattern[c][d * 4] != REST) || (pattern[c][d * 4 + 1] != 0x00) ||
                             (pattern[c][d * 4 + 2] != 0x00) || (pattern[c][d * 4 + 3] != 0x00))
-                            ok = 0;
+                            ok = false;
                     }
 
                     if (ok) {
@@ -1277,7 +1277,7 @@ int loadsong(GTOBJECT* gt, int gt2relocMode) {
                 }
             }
 
-            if (gt2relocMode == 0) songchange(gt, 1);
+            if (!gt2reloc_mode) songchange(gt, true);
         }
     }
 
@@ -1296,7 +1296,7 @@ void loadinstrument(GTOBJECT* gt) {
 
     handle = fopen(instrfilename, "rb");
     if (handle) {
-        if (gt->songinit != PLAY_STOPPED) {
+        if (gt->songinit != PlayMode::Stopped) {
             stopsong(gt);
         }
         read_exact(handle, ident, 4);
@@ -1616,13 +1616,18 @@ void loadinstrument(GTOBJECT* gt) {
     }
 }
 
-void clearsong(int cs, int cp, int ci, int ct, int cn, GTOBJECT* gt) {
+void clearsong(bool      clear_songs,
+               bool      clear_patterns,
+               bool      clear_instruments,
+               bool      clear_tables,
+               bool      clear_names,
+               GTOBJECT* gt) {
     int c;
 
-    if (!(cs | cp | ci | ct | cn)) return;
+    if (!(clear_songs || clear_patterns || clear_instruments || clear_tables || clear_names)) return;
 
 
-    if (gt->songinit != PLAY_STOPPED) {
+    if (gt->songinit != PlayMode::Stopped) {
         stopsong(gt);
     }
 
@@ -1648,7 +1653,7 @@ void clearsong(int cs, int cp, int ci, int ct, int cn, GTOBJECT* gt) {
     init_quick_play();
 
     for (c = 0; c < MAX_CHN; c++) {
-        if (cs) {
+        if (clear_songs) {
             memset(loadedsongfilename, 0, sizeof loadedsongfilename);
             for (int d = 0; d < MAX_SONGS; d++) {
                 memset(&songorder[d][c][0], 0, MAX_SONGLEN + 2);
@@ -1671,7 +1676,7 @@ void clearsong(int cs, int cp, int ci, int ct, int cn, GTOBJECT* gt) {
             }
         }
     }
-    if (cs) {
+    if (clear_songs) {
         editorInfo.esview    = 0;
         editorInfo.eseditpos = 0;
         editorInfo.escolumn  = 0;
@@ -1682,24 +1687,24 @@ void clearsong(int cs, int cp, int ci, int ct, int cn, GTOBJECT* gt) {
         editorInfo.epcolumn  = 0;
         editorInfo.epchn     = 0;
     }
-    if (cn) {
+    if (clear_names) {
         memset(songname, 0, sizeof songname);
         memset(authorname, 0, sizeof authorname);
         memset(copyrightname, 0, sizeof copyrightname);
         editorInfo.enpos = 0;
     }
-    if (cp) {
+    if (clear_patterns) {
         memset(loadedsongfilename, 0, sizeof loadedsongfilename);
         for (c = 0; c < MAX_PATT; c++) clearpattern(c);
     }
-    if (ci) {
+    if (clear_instruments) {
         for (c = 0; c < MAX_INSTR; c++) clearinstr(c);
         memset(&instrcopybuffer, 0, sizeof(INSTR));
         editorInfo.eipos    = 0;
         editorInfo.eicolumn = 0;
         editorInfo.einum    = 1;
     }
-    if (ct == 1) {
+    if (clear_tables) {
         for (c = MAX_TABLES - 1; c >= 0; c--) {
             memset(ltable[c], 0, MAX_TABLELEN);
             memset(rtable[c], 0, MAX_TABLELEN);
@@ -1711,7 +1716,7 @@ void clearsong(int cs, int cp, int ci, int ct, int cn, GTOBJECT* gt) {
     countpatternlengths();
     expandAllSongs(); // Must be called after countpatternlengths()
 
-    if (cs) undoInitAllAreas(gt); // may just reinit no matter what part is getting cleared. ?
+    if (clear_songs) undoInitAllAreas(gt); // may just reinit no matter what part is getting cleared. ?
 }
 
 void countpatternlengths(void) {
@@ -1764,12 +1769,12 @@ void countthispattern(GTOBJECT* gt) {
     songlen[e][c] = d;
 }
 
-int insertpattern(int p, GTOBJECT* gt) {
+bool insertpattern(int p, GTOBJECT* gt) {
     int c, d, e;
 
     findusedpatterns();
-    if (p >= MAX_PATT - 2) return 0;
-    if (patt_used[MAX_PATT - 1]) return 0;
+    if (p >= MAX_PATT - 2) return false;
+    if (patt_used[MAX_PATT - 1]) return false;
 
     // Mark all patterns from this point onwards for undo.
     for (int i = p + 1; i < MAX_PATT - p - 2; i++) {
@@ -1816,7 +1821,7 @@ int insertpattern(int p, GTOBJECT* gt) {
             gt->editorUndoInfo.editorInfo[c2].epnum++;
     }
 
-    return 1;
+    return true;
 }
 
 void deletepattern(int p, GTOBJECT* gt) {
@@ -1944,10 +1949,10 @@ void findduplicatepatterns(GTOBJECT* gt) {
     findusedpatterns();
 }
 
-void optimizeeverything(int oi, int ot, GTOBJECT* gt) {
+void optimizeeverything(bool optimize_instruments, bool optimize_tables, GTOBJECT* gt) {
     int c, d, e;
 
-    if (gt->songinit != PLAY_STOPPED) {
+    if (gt->songinit != PlayMode::Stopped) {
         stopsong(gt);
     }
 
@@ -1967,7 +1972,7 @@ void optimizeeverything(int oi, int ot, GTOBJECT* gt) {
 
     countpatternlengths();
 
-    if (oi) {
+    if (optimize_instruments) {
         for (c = MAX_INSTR - 2; c >= 1; c--) {
             if (!instr_used[c]) {
                 clearinstr(c);
@@ -1986,12 +1991,12 @@ void optimizeeverything(int oi, int ot, GTOBJECT* gt) {
         }
     }
 
-    if (ot) {
+    if (optimize_tables) {
         for (c = 0; c < MAX_TABLES; c++) optimizetable(c);
     }
 }
 
-int mergesong(GTOBJECT* gt) {
+bool mergesong(GTOBJECT* gt) {
     int   c;
     char  ident[4];
     FILE* handle;
@@ -1999,7 +2004,7 @@ int mergesong(GTOBJECT* gt) {
     int   pattbase;
     int   instrbase;
     int   tablebase[MAX_TABLES];
-    int   ok = 0;
+    bool  ok = false;
 
     // Determine amount of patterns & instruments
     countpatternlengths();
@@ -2181,12 +2186,12 @@ int mergesong(GTOBJECT* gt) {
     }
 
 
-    ok = 1;
+    ok = true;
 
 ABORT:
     fclose(handle);
     countpatternlengths();
-    songchange(gt, 1);
+    songchange(gt, true);
     return ok;
 }
 
@@ -2217,14 +2222,14 @@ void compressAllSongs() {
 
 void compressSong(int s) {
     for (int c = 0; c < MAX_CHN; c++) {
-        generateCompressedSongChannel(s, c, 0);
+        generateCompressedSongChannel(s, c, false);
     }
 
     undoInvalidateBuffer(UNDO_AREA_ORDERLIST);
     undoInvalidateBuffer(UNDO_AREA_ORDERLIST_LEN);
 }
 
-int generateCompressedSongChannel(int s, int c, int validateOnly) {
+int generateCompressedSongChannel(int s, int c, bool validate_only) {
     int endIndex  = findFirstEndMarkerIndex(s, c);
     int loopIndex = songOrderTranspose[s][c][endIndex];
 
@@ -2240,7 +2245,13 @@ int generateCompressedSongChannel(int s, int c, int validateOnly) {
     int p             = 0; // index through compressed song data
     int lastTranspose = -1;
 
-    compress_channel(s, c, 0, loopIndex, &p, &lastTranspose, validateOnly); // compress from start to loop position
+    compress_channel(s,
+                     c,
+                     0,
+                     loopIndex,
+                     &p,
+                     &lastTranspose,
+                     validate_only); // compress from start to loop position
 
     int compressedLoopIndex =
         p; // get compressed loop position, so we can store that at the end of the order list.
@@ -2255,8 +2266,8 @@ int generateCompressedSongChannel(int s, int c, int validateOnly) {
                      endIndex,
                      &p,
                      &lastTranspose,
-                     validateOnly); // compress from loop position to end
-    if (!validateOnly) {
+                     validate_only); // compress from loop position to end
+    if (!validate_only) {
         songorder[s][c][p++]     = ENDPATT; // store end marker
         songorder[s][c][p++]     = compressedLoopIndex;
         songlen[s][c]            = p - 2;
@@ -2273,7 +2284,7 @@ void expandAllSongs() {
         for (int c = 0; c < MAX_CHN; c++) {
             clear_expanded_song_channel(s, c);
             generate_expanded_song_channel(s, c);
-            songCompressedSize[s][c] = generateCompressedSongChannel(s, c, 1);
+            songCompressedSize[s][c] = generateCompressedSongChannel(s, c, true);
         }
     }
 
@@ -2286,7 +2297,7 @@ int validateAllSongs() {
     int maxChannelSize = 0;
     for (int s = 0; s < MAX_SONGS; s++) {
         for (int c = 0; c < MAX_CHN; c++) {
-            songCompressedSize[s][c] = generateCompressedSongChannel(s, c, 1);
+            songCompressedSize[s][c] = generateCompressedSongChannel(s, c, true);
             if (songCompressedSize[s][c] > maxChannelSize) maxChannelSize = songCompressedSize[s][c];
         }
     }
@@ -2299,7 +2310,7 @@ void initSngMemory() {
     }
 }
 
-int allocateSngMemory(int sngIndex) {
+bool allocateSngMemory(int sngIndex) {
 
     SNG_INFO* si = &songInfo[sngIndex];
 
@@ -2347,12 +2358,12 @@ int allocateSngMemory(int sngIndex) {
     int highestusedpattern;
     int highestusedinstr;
     */
-    return 1;
+    return true;
 }
 
-int copyCurrentToSngBuffer(GTOBJECT* gt, int sngIndex) {
+bool copyCurrentToSngBuffer(GTOBJECT* gt, int sngIndex) {
     SNG_INFO* si = &songInfo[sngIndex];
-    if (si->authorName == nullptr) return 0;
+    if (si->authorName == nullptr) return false;
 
     si->highestUsedInstr       = highestusedinstr;
     si->highestUsedPattern     = highestusedpattern;
@@ -2424,12 +2435,12 @@ int songlen[MAX_SONGS][MAX_CHN + (DEBUG_PADDING_SIZE_TWICE / 4)];
     */
 
     // Still need to copy song name, author, copyright
-    return 1;
+    return true;
 }
 
-int copySngBufferToCurrent(GTOBJECT* gt, int sngIndex) {
+bool copySngBufferToCurrent(GTOBJECT* gt, int sngIndex) {
     SNG_INFO* si = &songInfo[sngIndex];
-    if (si->authorName == nullptr) return 0;
+    if (si->authorName == nullptr) return false;
 
     highestusedinstr   = si->highestUsedInstr;
     highestusedpattern = si->highestUsedPattern;
@@ -2462,7 +2473,7 @@ int copySngBufferToCurrent(GTOBJECT* gt, int sngIndex) {
     memcpy(&pattlen[0], si->patternLen, sizeof(int) * MAX_PATT);
     memcpy(&songlen[0][0], si->songLen, sizeof(int) * MAX_SONGS * MAX_CHN);
 
-    return 1;
+    return true;
 }
 
 

@@ -25,30 +25,14 @@
 
 namespace {
 
-const std::vector<std::string> kSngFilters = {
-    "GTUltra Songs",
-    "*.sng",
-    "All Files",
-    "*"
-};
+const std::vector<std::string> kSngFilters = { "GTUltra Songs", "*.sng", "All Files", "*" };
 
-const std::vector<std::string> kInsFilters = {
-    "GTUltra Instruments",
-    "*.ins",
-    "All Files",
-    "*"
-};
+const std::vector<std::string> kInsFilters = { "GTUltra Instruments", "*.ins", "All Files", "*" };
 
-const std::vector<std::string> kWavFilters = {
-    "WAV Audio",
-    "*.wav",
-    "All Files",
-    "*"
-};
+const std::vector<std::string> kWavFilters = { "WAV Audio", "*.wav", "All Files", "*" };
 
-const std::vector<std::string> kRelocFilters = {
-    "SID Music", "*.sid", "C64 Program", "*.prg", "Raw Binary", "*.bin", "All Files", "*"
-};
+const std::vector<std::string> kRelocFilters = { "SID Music",  "*.sid", "C64 Program", "*.prg",
+                                                 "Raw Binary", "*.bin", "All Files",   "*" };
 
 template <typename Fn> auto run_modal(Fn&& fn) -> decltype(fn()) {
     win_native_modal_begin();
@@ -99,7 +83,11 @@ void log_save_context(const char* kind, const std::string& default_path) {
     LOG_DEBUG("{} default_path={}", kind, default_path);
     LOG_DEBUG("{} loadedsongfilename={}", kind, loadedsongfilename);
     LOG_DEBUG("{} songfilename={} songpath={}", kind, songfilename, songpath);
-    LOG_DEBUG("{} packedpath={} packedsongname={} fileformat={}", kind, packedpath, packedsongname, fileformat);
+    LOG_DEBUG("{} packedpath={} packedsongname={} fileformat={}",
+              kind,
+              packedpath,
+              packedsongname,
+              static_cast<int>(fileformat));
 }
 
 std::string run_save_dialog(const char*                     kind,
@@ -193,10 +181,10 @@ void sync_instr_paths_from_full_path(const char* full_path) {
     }
 }
 
-const char* extension_for_format(int fmt) {
+const char* extension_for_format(PackFormat fmt) {
     switch (fmt) {
-    case FORMAT_PRG: return ".prg";
-    case FORMAT_BIN: return ".bin";
+    case PackFormat::Prg: return ".prg";
+    case PackFormat::Bin: return ".bin";
     default: return ".sid";
     }
 }
@@ -204,9 +192,9 @@ const char* extension_for_format(int fmt) {
 void set_fileformat_from_path(const char* path) {
     if (!path) return;
     if (const char* dot = strrchr(path, '.')) {
-        if (strcasecmp(dot, ".prg") == 0) fileformat = FORMAT_PRG;
-        else if (strcasecmp(dot, ".bin") == 0) fileformat = FORMAT_BIN;
-        else if (strcasecmp(dot, ".sid") == 0) fileformat = FORMAT_SID;
+        if (strcasecmp(dot, ".prg") == 0) fileformat = PackFormat::Prg;
+        else if (strcasecmp(dot, ".bin") == 0) fileformat = PackFormat::Bin;
+        else if (strcasecmp(dot, ".sid") == 0) fileformat = PackFormat::Sid;
     }
 }
 

@@ -32,10 +32,10 @@ extern char packedsongname[MAX_PATHNAME];
 #endif
 
 // Exported usage maps (see greloc.hpp).
-uint8_t patt_used[MAX_PATT];
-uint8_t instr_used[MAX_INSTR];
-uint8_t table_used[MAX_TABLES][MAX_TABLELEN + 1];
-int     table_error;
+uint8_t    patt_used[MAX_PATT];
+uint8_t    instr_used[MAX_INSTR];
+uint8_t    table_used[MAX_TABLES][MAX_TABLELEN + 1];
+TableError table_error;
 
 namespace {
 
@@ -361,7 +361,7 @@ int pack_pattern(uint8_t* dest, uint8_t* src, int rows) {
         case CMD_SETMASTERVOL:
             nosetmastervol = 0;
             // If no authorinfo being saved, erase timingmarks (not supported)
-            if (!(playerversion & PLAYER_AUTHORINFO)) {
+            if (!(playerversion & player_feature::author_info)) {
                 if (temp1[c * 4 + 3] > 0x0f) {
                     temp1[c * 4 + 2] = 0;
                     temp1[c * 4 + 3] = 0;
@@ -540,7 +540,7 @@ int pack_pattern(uint8_t* dest, uint8_t* src, int rows) {
 
 } // namespace
 
-void relocator(GTOBJECT* gt, int gt2reloc_mode) {
+void relocator(GTOBJECT* gt, bool gt2reloc_mode) {
     // Hoisted so the many `goto PRCLEANUP` statements do not jump across these
     // initializations (ill-formed in C++, harmless in C).
     int sds       = 0;
@@ -553,30 +553,30 @@ void relocator(GTOBJECT* gt, int gt2reloc_mode) {
     uint8_t*  packeddata = nullptr;
     embed::Id player_id  = embed::Id::player;
 
-    int tableerrortype    = TYPE_NONE;
-    int tableerrorcause   = CAUSE_NONE;
-    int tableerrorsource1 = 0;
-    int tableerrorsource2 = 0;
-    int patterns          = 0;
-    int songs             = 0;
-    int instruments       = 0;
-    int numlegato         = 0;
-    int numnohr           = 0;
-    int numnormal         = 0;
-    int freenormal;
-    int freenohr;
-    int freelegato;
-    int transuprange   = 0;
-    int transdownrange = 0;
-    int pattdatasize   = 0;
-    int patttblsize    = 0;
-    int songdatasize   = 0;
-    int songtblsize    = 0;
-    int instrsize      = 0;
-    int wavetblsize    = 0;
-    int pulsetblsize   = 0;
-    int filttblsize    = 0;
-    int speedtblsize   = 0;
+    TableError tableerrortype    = TableError::None;
+    int        tableerrorcause   = CAUSE_NONE;
+    int        tableerrorsource1 = 0;
+    int        tableerrorsource2 = 0;
+    int        patterns          = 0;
+    int        songs             = 0;
+    int        instruments       = 0;
+    int        numlegato         = 0;
+    int        numnohr           = 0;
+    int        numnormal         = 0;
+    int        freenormal;
+    int        freenohr;
+    int        freelegato;
+    int        transuprange   = 0;
+    int        transdownrange = 0;
+    int        pattdatasize   = 0;
+    int        patttblsize    = 0;
+    int        songdatasize   = 0;
+    int        songtblsize    = 0;
+    int        instrsize      = 0;
+    int        wavetblsize    = 0;
+    int        pulsetblsize   = 0;
+    int        filttblsize    = 0;
+    int        speedtblsize   = 0;
 #ifdef GT2RELOC
     int playersize = 0;
 #endif
@@ -639,8 +639,8 @@ void relocator(GTOBJECT* gt, int gt2reloc_mode) {
     }
 
 
-    if (gt2reloc_mode == 0) {
-        if (gt->songinit != PLAY_STOPPED) {
+    if (!gt2reloc_mode) {
+        if (gt->songinit != PlayMode::Stopped) {
             stopsong(gt);
         }
     }
@@ -652,7 +652,7 @@ void relocator(GTOBJECT* gt, int gt2reloc_mode) {
     memset(chnused, 0, sizeof chnused);
     memset(table_used, 0, sizeof table_used);
     memset(tablemap, 0, sizeof tablemap);
-    table_error = 0;
+    table_error = TableError::None;
 
     // Moved to handle data in 0xa000 region issue
     //	membuf_free(&src);
@@ -777,7 +777,7 @@ void relocator(GTOBJECT* gt, int gt2reloc_mode) {
 
             // See which instruments/tablecommands are used
             for (d = 0; d < pattlen[c]; d++) {
-                table_error = 0;
+                table_error = TableError::None;
 
                 if ((pattern[c][d * 4] == KEYOFF) || (pattern[c][d * 4] == KEYON)) nogate = 0;
                 if (pattern[c][d * 4 + 1]) instr_used[pattern[c][d * 4 + 1]] = 1;
@@ -813,7 +813,7 @@ void relocator(GTOBJECT* gt, int gt2reloc_mode) {
                         lastnote        = newfirstnote;
                     }
                 }
-                if ((table_error) && (!tableerrortype)) {
+                if (table_error != TableError::None && tableerrortype == TableError::None) {
                     tableerrortype    = table_error;
                     tableerrorcause   = CAUSE_PATTERN;
                     tableerrorsource1 = c;
@@ -850,10 +850,10 @@ void relocator(GTOBJECT* gt, int gt2reloc_mode) {
             }
             instruments++;
             for (d = 0; d < MAX_TABLES; d++) {
-                table_error = 0;
+                table_error = TableError::None;
                 exectable(d, instr[c].ptr[d]);
                 if (d == STBL) calc_speed_test(instr[c].ptr[d]);
-                if ((table_error) && (!tableerrortype)) {
+                if (table_error != TableError::None && tableerrortype == TableError::None) {
                     tableerrortype    = table_error;
                     tableerrorcause   = CAUSE_INSTRUMENT;
                     tableerrorsource1 = c;
@@ -868,7 +868,7 @@ void relocator(GTOBJECT* gt, int gt2reloc_mode) {
         if (table_used[WTBL][c + 1]) {
             if ((ltable[WTBL][c] >= WAVECMD) && (ltable[WTBL][c] <= WAVELASTCMD)) {
                 d           = -1;
-                table_error = 0;
+                table_error = TableError::None;
 
                 switch (ltable[WTBL][c] - WAVECMD) {
                 case CMD_PORTAUP:
@@ -902,7 +902,7 @@ void relocator(GTOBJECT* gt, int gt2reloc_mode) {
 
                 if (d != -1) exectable(d, rtable[WTBL][c]);
 
-                if ((table_error) && (!tableerrortype)) {
+                if (table_error != TableError::None && tableerrortype == TableError::None) {
                     tableerrortype    = table_error;
                     tableerrorcause   = CAUSE_WAVECMD;
                     tableerrorsource1 = c + 1;
@@ -926,9 +926,9 @@ void relocator(GTOBJECT* gt, int gt2reloc_mode) {
     // Check for table errors
     if (tableerrorcause) {
         switch (tableerrortype) {
-        case TYPE_JUMP: sprintf(textbuffer, "TABLE POINTER POINTS TO A JUMP! "); break;
+        case TableError::Jump: sprintf(textbuffer, "TABLE POINTER POINTS TO A JUMP! "); break;
 
-        case TYPE_OVERFLOW: sprintf(textbuffer, "TABLE EXECUTION OVERFLOWS! "); break;
+        case TableError::Overflow: sprintf(textbuffer, "TABLE EXECUTION OVERFLOWS! "); break;
         }
         switch (tableerrorcause) {
         case CAUSE_PATTERN:
@@ -965,7 +965,7 @@ void relocator(GTOBJECT* gt, int gt2reloc_mode) {
 
 
     // Disable optimizations if necessary
-    if (playerversion & PLAYER_NOOPTIMIZATION) {
+    if (playerversion & player_feature::no_optimization) {
         fixedparams = 0;
         if (!numlegato) numlegato++;
 
@@ -1005,14 +1005,14 @@ void relocator(GTOBJECT* gt, int gt2reloc_mode) {
     }
 
     // Make sure buffering is used if it is needed
-    if ((playerversion & PLAYER_SOUNDEFFECTS) || (playerversion & PLAYER_ZPGHOSTREGS))
-        playerversion |= PLAYER_BUFFERED;
+    if ((playerversion & player_feature::sound_effects) || (playerversion & player_feature::zp_ghost_regs))
+        playerversion |= player_feature::buffered;
 
 
     if (editorInfo.maxSIDChannels == 3) {
         // Sound effect or ghostreg players always use full 3 channels
-        if ((playerversion & PLAYER_SOUNDEFFECTS) || (playerversion & PLAYER_FULLBUFFERED) ||
-            (playerversion & PLAYER_ZPGHOSTREGS))
+        if ((playerversion & player_feature::sound_effects) || (playerversion & player_feature::full_buffered) ||
+            (playerversion & player_feature::zp_ghost_regs))
             channels = 3;
     }
 
@@ -1294,7 +1294,7 @@ void relocator(GTOBJECT* gt, int gt2reloc_mode) {
     if (!nocalculatedspeed) lastnote++; // Calculated speeds need the next frequency value
     if (lastnote > MAX_NOTES - 1) lastnote = MAX_NOTES - 1;
     // For sound effect support, always use the full table
-    if (playerversion & PLAYER_SOUNDEFFECTS) {
+    if (playerversion & player_feature::sound_effects) {
         firstnote = 0;
         lastnote  = MAX_NOTES - 1;
     }
@@ -1318,18 +1318,20 @@ void relocator(GTOBJECT* gt, int gt2reloc_mode) {
         // Insert conditionals
 
         //		insert_define("JPA000FIXDEF", jpA000Fix);
-        insert_define("SOUNDSUPPORT", (playerversion & PLAYER_SOUNDEFFECTS) ? 1 : 0);
-        insert_define("VOLSUPPORT", (playerversion & PLAYER_VOLUME) ? 1 : 0);
-        insert_define("BUFFEREDWRITES", (playerversion & PLAYER_BUFFERED) ? 1 : 0);
-        insert_define("ZPGHOSTREGS", (playerversion & PLAYER_ZPGHOSTREGS) ? 1 : 0);
+        insert_define("SOUNDSUPPORT", (playerversion & player_feature::sound_effects) ? 1 : 0);
+        insert_define("VOLSUPPORT", (playerversion & player_feature::volume) ? 1 : 0);
+        insert_define("BUFFEREDWRITES", (playerversion & player_feature::buffered) ? 1 : 0);
+        insert_define("ZPGHOSTREGS", (playerversion & player_feature::zp_ghost_regs) ? 1 : 0);
         if (editorInfo.maxSIDChannels == 3)
-            insert_define("GHOSTREGS", (playerversion & (PLAYER_ZPGHOSTREGS | PLAYER_FULLBUFFERED)) ? 1 : 0);
+            insert_define("GHOSTREGS",
+                          (playerversion & (player_feature::zp_ghost_regs | player_feature::full_buffered)) ? 1
+                                                                                                            : 0);
         insert_define("FIXEDPARAMS", fixedparams);
         insert_define("SIMPLEPULSE", simplepulse);
         insert_define("PULSEOPTIMIZATION", editorInfo.optimizepulse);
         insert_define("REALTIMEOPTIMIZATION", editorInfo.optimizerealtime);
-        insert_define("NOAUTHORINFO", (playerversion & PLAYER_AUTHORINFO) ? 0 : 1);
-        insert_define("ZPPLAYSID", (playerversion & PLAYER_ZPPLAYSID) ? 1 : 0);
+        insert_define("NOAUTHORINFO", (playerversion & player_feature::author_info) ? 0 : 1);
+        insert_define("ZPPLAYSID", (playerversion & player_feature::zp_play_sid) ? 1 : 0);
         insert_define("NOEFFECTS", noeffects);
         insert_define("NOGATE", nogate);
         insert_define("NOFILTER", nofilter);
@@ -1404,7 +1406,8 @@ void relocator(GTOBJECT* gt, int gt2reloc_mode) {
         // JP Added this (copied from 3channel GoatTracker) 31st March 2022
         // Modify ghostregs to not be zeropage if needed
         //----
-        if ((playerversion & PLAYER_FULLBUFFERED) && (playerversion & PLAYER_ZPGHOSTREGS) == 0) {
+        if ((playerversion & player_feature::full_buffered) &&
+            (playerversion & player_feature::zp_ghost_regs) == 0) {
             int   bufsize = membuf_get_size(&src);
             char* bufdata = (char*)membuf_get(&src);
             int   c;
@@ -1666,7 +1669,7 @@ void relocator(GTOBJECT* gt, int gt2reloc_mode) {
 #endif
 
     // Copy author info
-    if (playerversion & PLAYER_AUTHORINFO) {
+    if (playerversion & player_feature::author_info) {
         for (c = 0; c < 32; c++) {
             packeddata[32 + c] = authorname[c];
             // Convert 0 to space
@@ -1698,10 +1701,10 @@ void relocator(GTOBJECT* gt, int gt2reloc_mode) {
     }
 #endif
 
-    if (fileformat == FORMAT_PRG) {
+    if (fileformat == PackFormat::Prg) {
         fwritele16(songhandle, playeradr);
     }
-    if (fileformat == FORMAT_SID) {
+    if (fileformat == PackFormat::Sid) {
         // See: https://www.hvsc.de/download/C64Music/DOCUMENTS/SID_file_format.txt
 
         // Identification
@@ -1844,7 +1847,7 @@ void relocator(GTOBJECT* gt, int gt2reloc_mode) {
     fwrite(packeddata, packedsize, 1, songhandle);
     fclose(songhandle);
 
-    songExported = 1;
+    songExported = true;
     goto PREXPORTCOMPLETE;
 
 PRCLEANUP:

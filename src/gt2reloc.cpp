@@ -56,55 +56,55 @@ void usage() {
 
 } // namespace
 
-int      songExportSuccessFlag        = 0;
-int      songExported                 = 0;
-int      menu                         = 0;
-int      editmode                     = EDIT_PATTERN;
-int      recordmode                   = 1;
-int      followplay                   = 0;
-int      hexnybble                    = -1;
-int      stepsize                     = 4;
-int      autoadvance                  = 0;
-int      defaultpatternlength         = 64;
-int      cursorflash                  = 0;
-int      cursorcolortable[]           = { 1, 2, 7, 2 };
-int      exitprogram                  = 0;
-int      eacolumn                     = 0;
-int      eamode                       = 0;
-int      displayingPanel              = 0;
-int      displayStopped               = 0;
-int      debugEnabled                 = 0;
-unsigned keypreset                    = KEY_TRACKER;
-unsigned playerversion                = 0;
-int      fileformat                   = FORMAT_PRG;
-int      zeropageadr                  = 0xfc;
-int      playeradr                    = 0x1000;
-unsigned sidmodel                     = 0;
-unsigned multiplier                   = 1;
-unsigned adparam                      = 0x0f00;
-unsigned ntsc                         = 0;
-unsigned patterndispmode              = 0;
-unsigned sidaddress                   = 0xd420d400;
-unsigned finevibrato                  = 1;
-unsigned optimizepulse                = 1;
-unsigned optimizerealtime             = 1;
-unsigned customclockrate              = 0;
-unsigned usefinevib                   = 0;
-unsigned b                            = DEFAULTBUF;
-unsigned mr                           = DEFAULTMIXRATE;
-unsigned writer                       = 0;
-unsigned hardsid                      = 0;
-unsigned catweasel                    = 0;
-unsigned interpolate                  = 0;
-unsigned residdelay                   = 0;
-unsigned hardsidbufinteractive        = 20;
-unsigned hardsidbufplayback           = 400;
-float    basepitch                    = 0.0f;
-int      SIDTracker64ForIPadIsAmazing = 0;
-float    masterVolume                 = 1.0f;
-float    detuneCent                   = 0;
-unsigned monomode                     = 0;
-char     editPan                      = 0;
+bool       songExportSuccessFlag        = false;
+bool       songExported                 = false;
+int        menu                         = 0;
+EditMode   editmode                     = EditMode::Pattern;
+bool       recordmode                   = true;
+bool       followplay                   = false;
+int        hexnybble                    = -1;
+int        stepsize                     = 4;
+int        autoadvance                  = 0;
+int        defaultpatternlength         = 64;
+int        cursorflash                  = 0;
+int        cursorcolortable[]           = { 1, 2, 7, 2 };
+bool       exitprogram                  = false;
+int        eacolumn                     = 0;
+int        eamode                       = 0;
+int        displayingPanel              = 0;
+int        displayStopped               = 0;
+bool       debugEnabled                 = false;
+KeyPreset  keypreset                    = KeyPreset::Tracker;
+unsigned   playerversion                = 0;
+PackFormat fileformat                   = PackFormat::Prg;
+int        zeropageadr                  = 0xfc;
+int        playeradr                    = 0x1000;
+unsigned   sidmodel                     = 0;
+unsigned   multiplier                   = 1;
+unsigned   adparam                      = 0x0f00;
+unsigned   ntsc                         = 0;
+unsigned   patterndispmode              = 0;
+unsigned   sidaddress                   = 0xd420d400;
+unsigned   finevibrato                  = 1;
+unsigned   optimizepulse                = 1;
+unsigned   optimizerealtime             = 1;
+unsigned   customclockrate              = 0;
+unsigned   usefinevib                   = 0;
+unsigned   b                            = DEFAULTBUF;
+unsigned   mr                           = DEFAULTMIXRATE;
+unsigned   writer                       = 0;
+unsigned   hardsid                      = 0;
+unsigned   catweasel                    = 0;
+unsigned   interpolate                  = 0;
+unsigned   residdelay                   = 0;
+unsigned   hardsidbufinteractive        = 20;
+unsigned   hardsidbufplayback           = 400;
+float      basepitch                    = 0.0f;
+int        SIDTracker64ForIPadIsAmazing = 0;
+float      masterVolume                 = 1.0f;
+float      detuneCent                   = 0;
+unsigned   monomode                     = 0;
+char       editPan                      = 0;
 
 int patternOrderArray[256];
 int patternOrderList[256];
@@ -127,19 +127,19 @@ const char* programname = "$VER: GTUltra";
 char textbuffer[MAX_PATHNAME];
 char debugTextbuffer[MAX_PATHNAME];
 
-int             useOriginalGTFunctionKeys = 0;
+bool            useOriginalGTFunctionKeys = false;
 extern GTOBJECT gtObject;
 // GTOBJECT gtObject;
-int           useRepeatsWhenCompressing = 1;
+bool          useRepeatsWhenCompressing = true;
 char          infoTextBuffer[256];
-int           midiEnabled          = 0;
-int           forceSave3ChannelSng = 0;
-int           normalizeWAV         = 0;
+bool          midiEnabled          = false;
+bool          forceSave3ChannelSng = false;
+bool          normalizeWAV         = false;
 int           jdebug[16];
 char          transportLoopPattern = 0;
 char          transportPolySIDEnabled[4]; // 0 = OFF 1 = ON (all OFF = mono)
 WAVEFORM_INFO waveformDisplayInfo;
-int           autoNextPattern = 0;
+bool          autoNextPattern = false;
 int           sidAddr1        = 0xd400;
 int           sidAddr2        = 0xd420;
 int           sidAddr3        = 0xd440;
@@ -198,9 +198,9 @@ int main(int argc, char** argv) {
     programname += sizeof "$VER:";
 
     // Reset channels/song
-    gtObject.songinit = PLAY_STOPPED;
+    gtObject.songinit = PlayMode::Stopped;
     initchannels(&gtObject);
-    clearsong(1, 1, 1, 1, 1, &gtObject);
+    clearsong(true, true, true, true, true, &gtObject);
 
     // get input- and output file names
     if (argc >= 3) {
@@ -221,7 +221,7 @@ int main(int argc, char** argv) {
 
     // Load song
     if (strlen(songfilename)) {
-        loadsong(&gtObject, 1);
+        loadsong(&gtObject, true);
     }
     else {
 
@@ -245,26 +245,26 @@ int main(int argc, char** argv) {
     if (packedsongname[c] == '.') c++;
 
     if (!strcmp(&packedsongname[c], "sid")) {
-        fileformat = FORMAT_SID;
+        fileformat = PackFormat::Sid;
     }
     else if (!strcmp(&packedsongname[c], "prg")) {
-        fileformat = FORMAT_PRG;
+        fileformat = PackFormat::Prg;
     }
     else if (!strcmp(&packedsongname[c], "bin")) {
-        fileformat = FORMAT_BIN;
+        fileformat = PackFormat::Bin;
     }
     else {
-        fileformat = FORMAT_PRG;
+        fileformat = PackFormat::Prg;
     }
 
     SDL_Log("%s Packer/Relocator\n", programname);
     SDL_Log("song file:       %s\n", loadedsongfilename);
     SDL_Log("output file:     %s\n", packedsongname);
     SDL_Log("output format:   ");
-    if (fileformat == FORMAT_SID) {
+    if (fileformat == PackFormat::Sid) {
         SDL_Log("sid\n");
     }
-    else if (fileformat == FORMAT_BIN) {
+    else if (fileformat == PackFormat::Bin) {
         SDL_Log("bin\n");
     }
     else {
@@ -321,63 +321,63 @@ int main(int argc, char** argv) {
                 // 0: Buffered SID-writes
             case 'B':
                 if (argv[c][2] == '1') {
-                    playerversion |= PLAYER_BUFFERED;
+                    playerversion |= player_feature::buffered;
                 }
                 else {
-                    playerversion &= ~PLAYER_BUFFERED;
+                    playerversion &= ~player_feature::buffered;
                 }
                 break;
                 // 1: Sound effect support
             case 'D':
                 if (argv[c][2] == '1') {
-                    playerversion |= PLAYER_SOUNDEFFECTS;
+                    playerversion |= player_feature::sound_effects;
                 }
                 else {
-                    playerversion &= ~PLAYER_SOUNDEFFECTS;
+                    playerversion &= ~player_feature::sound_effects;
                 }
                 break;
                 // 2: Volume change support
             case 'E':
                 if (argv[c][2] == '1') {
-                    playerversion |= PLAYER_VOLUME;
+                    playerversion |= player_feature::volume;
                 }
                 else {
-                    playerversion &= ~PLAYER_VOLUME;
+                    playerversion &= ~player_feature::volume;
                 }
                 break;
                 // 3: Store author-info
             case 'H':
                 if (argv[c][2] == '1') {
-                    playerversion |= PLAYER_AUTHORINFO;
+                    playerversion |= player_feature::author_info;
                 }
                 else {
-                    playerversion &= ~PLAYER_AUTHORINFO;
+                    playerversion &= ~player_feature::author_info;
                 }
                 break;
                 // 4: Use zeropage ghostregs
             case 'C':
                 if (argv[c][2] == '1') {
-                    playerversion |= PLAYER_ZPGHOSTREGS;
+                    playerversion |= player_feature::zp_ghost_regs;
                 }
                 else {
-                    playerversion &= ~PLAYER_ZPGHOSTREGS;
+                    playerversion &= ~player_feature::zp_ghost_regs;
                 }
                 break;
                 // 5: Disable optimization
             case 'I':
                 if (argv[c][2] == '1') {
-                    playerversion &= ~PLAYER_NOOPTIMIZATION;
+                    playerversion &= ~player_feature::no_optimization;
                 }
                 else {
-                    playerversion |= PLAYER_NOOPTIMIZATION;
+                    playerversion |= player_feature::no_optimization;
                 }
                 // 6: Full buffering
             case 'J':
                 if (argv[c][2] == '1') {
-                    playerversion &= ~PLAYER_FULLBUFFERED;
+                    playerversion &= ~player_feature::full_buffered;
                 }
                 else {
-                    playerversion |= PLAYER_FULLBUFFERED;
+                    playerversion |= player_feature::full_buffered;
                 }
                 break;
 
@@ -417,7 +417,7 @@ int main(int argc, char** argv) {
     if (basepitch > 0.0f) calculatefreqtable();
 
     // perform relocation
-    relocator(&gtObject, 1);
+    relocator(&gtObject, true);
 
 #ifdef __WIN32__
     // ENTER key down
@@ -539,7 +539,7 @@ void playUntilEnd2(int songNumber) {
     int       sng = getActualSongNumber(songNumber, 0); // editorInfo.esnum
     GTOBJECT* gte = &gtEditorObject;
 
-    initsong(sng, PLAY_BEGINNING, gte); // JP FEB
+    initsong(sng, PlayMode::Beginning, gte); // JP FEB
     gte->loopEnabledFlag = 0;
 
     //	printf("---- SubSong %x ----\n", songNumber);
@@ -558,7 +558,7 @@ void playUntilEnd2(int songNumber) {
                 patternRemapOrderIndex++;
             }
         }
-        if (gte->songinit == PLAY_STOPPED) // Error in song data
+        if (gte->songinit == PlayMode::Stopped) // Error in song data
         {
             break;
         }

@@ -3,7 +3,7 @@
 #include "gplay.hpp"
 
 // Visible order-list page size (expanded view scroll).
-#define EXTENDEDVISIBLEORDERLIST 13
+constexpr int EXTENDEDVISIBLEORDERLIST = 13;
 
 extern const char* notename[];
 extern const char* notenameTableView[];
@@ -14,7 +14,7 @@ void resettime(GTOBJECT* gt);
 void incrementtime(GTOBJECT* gt);
 void setSongLengthTime(GTOBJECT* gt);
 void setSIDTracker64KeyOnStyle();
-int  doDisplay(void* gt);
+void do_display(GTOBJECT* gt);
 
 void updateDisplayWhenFollowingAndPlaying(GTOBJECT* gt);
 void updateDisplayWhenFollowingAndPlaying_Expanded(GTOBJECT* gt);

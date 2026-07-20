@@ -5,30 +5,34 @@
 
 #include <cstdint>
 
-// Packer output format (fileformat / file dialogs).
-constexpr int FORMAT_SID = 0;
-constexpr int FORMAT_PRG = 1;
-constexpr int FORMAT_BIN = 2;
+enum class PackFormat : int {
+    Sid = 0,
+    Prg = 1,
+    Bin = 2,
+};
 
-// Player feature flags (playerversion bitfield).
-constexpr unsigned PLAYER_BUFFERED       = 8;
-constexpr unsigned PLAYER_SOUNDEFFECTS   = 16;
-constexpr unsigned PLAYER_VOLUME         = 32;
-constexpr unsigned PLAYER_AUTHORINFO     = 64;
-constexpr unsigned PLAYER_ZPGHOSTREGS    = 128;
-constexpr unsigned PLAYER_NOOPTIMIZATION = 256;
-constexpr unsigned PLAYER_ZPPLAYSID      = 512;
-constexpr unsigned PLAYER_FULLBUFFERED   = 1024;
+// Bitflags stored in the unsigned playerversion field.
+namespace player_feature {
+constexpr unsigned buffered        = 8;
+constexpr unsigned sound_effects   = 16;
+constexpr unsigned volume          = 32;
+constexpr unsigned author_info     = 64;
+constexpr unsigned zp_ghost_regs   = 128;
+constexpr unsigned no_optimization = 256;
+constexpr unsigned zp_play_sid     = 512;
+constexpr unsigned full_buffered   = 1024;
+} // namespace player_feature
 
-// table_error codes shared with gtable (marktable / relocator).
-constexpr int TYPE_NONE     = 0;
-constexpr int TYPE_OVERFLOW = 1;
-constexpr int TYPE_JUMP     = 2;
+enum class TableError : int {
+    None     = 0,
+    Overflow = 1,
+    Jump     = 2,
+};
 
 // Usage maps filled by relocator; also read by song/pattern/table editors.
-extern uint8_t patt_used[MAX_PATT];
-extern uint8_t instr_used[MAX_INSTR];
-extern uint8_t table_used[MAX_TABLES][MAX_TABLELEN + 1];
-extern int     table_error;
+extern uint8_t    patt_used[MAX_PATT];
+extern uint8_t    instr_used[MAX_INSTR];
+extern uint8_t    table_used[MAX_TABLES][MAX_TABLELEN + 1];
+extern TableError table_error;
 
-void relocator(GTOBJECT* gt, int gt2reloc_mode);
+void relocator(GTOBJECT* gt, bool gt2reloc_mode);

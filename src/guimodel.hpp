@@ -145,7 +145,7 @@ int  order_selected_row(int ch);  // synced pattern position (espos), -1 if none
 int  order_range_end_row(int ch); // F2 range end (esend), -1 if unset
 int  order_play_row(int ch);      // playback position in order list, -1 if none
 OrderCell order_cell(int ch, int row);
-void      order_set_cursor(int ch, int row, int col); // click -> place cursor (EDIT_ORDERLIST)
+void      order_set_cursor(int ch, int row, int col); // click -> place cursor (EditMode::OrderList)
 void      order_mouse_left(int ch, int row, int col, bool shift_or_ctrl, bool held_drag);
 void      order_mouse_double_click(int ch, int row, int col);
 void      order_mouse_mark_begin(int ch, int row);
@@ -169,7 +169,7 @@ int         instr_vibdelay(int i);
 int         instr_gatetimer(int i);
 int         instr_firstwave(int i);
 int         instr_pan(int i);
-void        instr_select(int i); // click -> select instrument (EDIT_INSTRUMENT)
+void        instr_select(int i); // click -> select instrument (EditMode::Instrument)
 
 // Editable instruments are 01..3F; instrument 00 is hidden and not selectable.
 enum { INSTR_FIRST = 1 };

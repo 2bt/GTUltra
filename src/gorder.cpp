@@ -221,14 +221,14 @@ void orderlistcommands(GTOBJECT* gt, const EditorInput* input) {
             else {
                 int transposeOnly = 0;
                 if (editorInfo.escolumn > 2) transposeOnly++;
-                orderListPasteToCursor_External(gt, 0, transposeOnly);
+                orderListPasteToCursor_External(gt, false, transposeOnly);
             }
         }
         break;
 
     case KEY_I:
         if (shiftOrCtrlPressed) {
-            if (editorInfo.expandOrderListView == 1) orderListPasteToCursor_External(gt, 1, 0);
+            if (editorInfo.expandOrderListView) orderListPasteToCursor_External(gt, true, false);
         }
         break;
 
@@ -342,7 +342,7 @@ void orderlistcommands(GTOBJECT* gt, const EditorInput* input) {
             editorInfo.epcolumn  = 0;
             editorInfo.eppos     = 0;
             editorInfo.epview    = -VISIBLEPATTROWS / 2;
-            editorInfo.editmode  = EDIT_PATTERN;
+            editorInfo.editmode  = EditMode::Pattern;
             if (editorInfo.epchn == editorInfo.epmarkchn) editorInfo.epmarkchn = -1;
         }
         break;
@@ -514,7 +514,7 @@ void namecommands(GTOBJECT* gt, const EditorInput* input) {
 }
 
 // Insert single byte into orderlist
-void insertorder(unsigned char byte, GTOBJECT* gt) {
+void insertorder(uint8_t byte, GTOBJECT* gt) {
     if ((songlen[editorInfo.esnum][editorInfo.eschn] - editorInfo.eseditpos) - 1 >= 0) {
         int len;
         if (songlen[editorInfo.esnum][editorInfo.eschn] < MAX_SONGLEN) {
@@ -646,7 +646,7 @@ void nextsong(GTOBJECT* gt) {
     }
     editorInfo.esnum++;
     if (editorInfo.esnum >= MAX_SONGS) editorInfo.esnum = MAX_SONGS - 1;
-    songchange(gt, 1);
+    songchange(gt, true);
 
     //	if (gt->masterLoopSubSong==-1)
     //		setMasterLoopChannel(gt,"nextsong");
@@ -660,13 +660,13 @@ void prevsong(GTOBJECT* gt) {
 
     editorInfo.esnum--;
     if (editorInfo.esnum < 0) editorInfo.esnum = 0;
-    songchange(gt, 1);
+    songchange(gt, true);
     //	if (gt->masterLoopSubSong == -1)
     //		setMasterLoopChannel(gt, "prevsong");
 }
 
 int  lastSong = -1;
-void songchange(GTOBJECT* gt, int resetEditingPositions) {
+void songchange(GTOBJECT* gt, bool reset_editing_positions) {
     int c;
     int s = editorInfo.esnum / 2; // JP 9 or 12 channel song only
 
@@ -684,11 +684,11 @@ void songchange(GTOBJECT* gt, int resetEditingPositions) {
     if (s != lastSong) {
         lastSong = s;
 
-        if (resetEditingPositions) {
+        if (reset_editing_positions) {
             resetSongInfo(gt, jc2);
         }
 
-        if (gt->songinit != PLAY_STOPPED) {
+        if (gt->songinit != PlayMode::Stopped) {
             stopsong(gt);
         }
 
@@ -877,14 +877,14 @@ int calcStartofInterPatternLoop(int songNum, int channelNum, int startSongPos, G
     if (c2 >= editorInfo.maxSIDChannels) return -1;
 
     gtloop->loopEnabledFlag = 0;
-    initsong(sng, PLAY_BEGINNING, gtloop);
+    initsong(sng, PlayMode::Beginning, gtloop);
 
     gtloop->disableLoopSearch = 1;
 
     do {
         playroutine(gtloop);
 
-        if (gtloop->songinit == PLAY_STOPPED) // Error in song data
+        if (gtloop->songinit == PlayMode::Stopped) // Error in song data
             return -1;
 
     } while (gtloop->chn[c3].songptr <= startSongPos);
@@ -904,7 +904,7 @@ int calcStartofInterPatternLoop(int songNum, int channelNum, int startSongPos, G
 
     do {
         playroutine(gtloop);
-        if (gtloop->songinit == PLAY_STOPPED) // Error in song data
+        if (gtloop->songinit == PlayMode::Stopped) // Error in song data
             return -1;
 
         int lastpattptr = gtloop->chn[c3].pattptr;
@@ -944,7 +944,7 @@ int calculateLoopInfo2(int songNum, int channelNum, int startSongPos, GTOBJECT* 
     if (c3 >= editorInfo.maxSIDChannels) return -1;
 
     gtloop->loopEnabledFlag = 0;
-    initsong(sng, PLAY_BEGINNING, gtloop);
+    initsong(sng, PlayMode::Beginning, gtloop);
     gtloop->disableLoopSearch = 1;
     gtloop->noSIDWrites       = 1;
 
@@ -952,7 +952,7 @@ int calculateLoopInfo2(int songNum, int channelNum, int startSongPos, GTOBJECT* 
 
         playroutine(gtloop);
 
-        if (gtloop->songinit == PLAY_STOPPED) // Error in song data
+        if (gtloop->songinit == PlayMode::Stopped) // Error in song data
             return -1;
 
     } while (gtloop->chn[c3].songptr <= startSongPos);
@@ -981,7 +981,7 @@ int calculateLoopInfo2(int songNum, int channelNum, int startSongPos, GTOBJECT* 
     int quitloop = 0;
     do {
         playroutine(gtloop);
-        if (gtloop->songinit == PLAY_STOPPED) // Error in song data
+        if (gtloop->songinit == PlayMode::Stopped) // Error in song data
             return -1;
 
         if (gtloop->chn[c3].loopCount) // reached end of song and looped?
@@ -1005,7 +1005,7 @@ void playFromCurrentPosition(GTOBJECT *gt, int currentPos)
     gt->loopEnabledFlag = 0;
     gt->interPatternLoopEnabledFlag = 0;
     int c2 = getActualChannel(editorInfo.esnum, editorInfo.epchn);
-    handleShiftSpace(gt, c2, currentPos * 4, 0, 1);
+    handleShiftSpace(gt, c2, currentPos * 4, false, true);
 
     gt->loopEnabledFlag = transportLoopPattern;
     gt->interPatternLoopEnabledFlag = t2;
@@ -1017,7 +1017,8 @@ void orderPlayFromPosition(GTOBJECT* gt,
                            int       startPatternPos,
                            int       startSongPos,
                            int       focusChannel,
-                           int       enableSIDWrites) {
+                           bool      enable_sid_writes) {
+    (void)enable_sid_writes;
 
     //	sprintf(textbuffer, "spp %d ssp %d, fc %d mlc %d", startPatternPos, startSongPos, focusChannel,
     // gt->masterLoopChannel);
@@ -1040,7 +1041,7 @@ void orderPlayFromPosition(GTOBJECT* gt,
     if (c2 >= editorInfo.maxSIDChannels) return;
 
     // printf("play1\n");
-    if (gt->songinit != PLAY_STOPPED) {
+    if (gt->songinit != PlayMode::Stopped) {
         stopsong(gt);
     }
 
@@ -1066,13 +1067,13 @@ void orderPlayFromPosition(GTOBJECT* gt,
         */
     }
 
-    initsong(editorInfo.esnum, PLAY_BEGINNING, gt);
+    initsong(editorInfo.esnum, PlayMode::Beginning, gt);
     gt->loopEnabledFlag   = 0;
     gt->disableLoopSearch = 1;
 
     do {
         playroutine(gt);
-        if (gt->songinit == PLAY_STOPPED) // Error in song data
+        if (gt->songinit == PlayMode::Stopped) // Error in song data
             return;
 
     } while (gt->chn[c2].songptr <= ep);
@@ -1086,7 +1087,7 @@ void orderPlayFromPosition(GTOBJECT* gt,
     if (startPatternPos > 0) {
         while (gt->chn[c2].pattptr < startPatternPos) {
             playroutine(gt);
-            if (gt->songinit == PLAY_STOPPED) // Error in song data
+            if (gt->songinit == PlayMode::Stopped) // Error in song data
                 return;
         };
 
@@ -1139,10 +1140,10 @@ void orderSelectPatternsFromSelected(GTOBJECT* gt) {
 
     if (ep >= 0) {
         GTOBJECT* gte = &gtEditorObject;
-        initsong(sng, PLAY_BEGINNING, gte); // JP FEB
+        initsong(sng, PlayMode::Beginning, gte); // JP FEB
         do {
             playroutine(gte);
-            if (gte->songinit == PLAY_STOPPED) // Error in song data
+            if (gte->songinit == PlayMode::Stopped) // Error in song data
             {
                 return;
             }
@@ -1293,12 +1294,12 @@ void setMasterLoopChannel(GTOBJECT* gt, const char* debugText) {
     //	sprintf(textbuffer, "%x master %s", jdebug[15]++, debugText);
 
     int loopChannel = -1;
-    if (editorInfo.editmode == EDIT_PATTERN) loopChannel = editorInfo.epchn;
-    else if (editorInfo.editmode == EDIT_ORDERLIST) loopChannel = editorInfo.eschn;
+    if (editorInfo.editmode == EditMode::Pattern) loopChannel = editorInfo.epchn;
+    else if (editorInfo.editmode == EditMode::OrderList) loopChannel = editorInfo.eschn;
 
     if (loopChannel >= 0) {
         int c2 = getActualChannel(editorInfo.esnum, loopChannel);
-        if (gt->songinit == PLAY_STOPPED) {
+        if (gt->songinit == PlayMode::Stopped) {
             gt->masterLoopChannel = c2;
             gt->masterLoopSubSong = editorInfo.esnum;
         }
@@ -1420,7 +1421,7 @@ void orderListHandleHexInputExpandedView(GTOBJECT* gt) {
             updateTransposeToPlayingSong(gt);
 
             songCompressedSize[editorInfo.esnum][editorInfo.eschn] =
-                generateCompressedSongChannel(editorInfo.esnum, editorInfo.eschn, 1);
+                generateCompressedSongChannel(editorInfo.esnum, editorInfo.eschn, true);
             return;
         }
     }
@@ -1444,7 +1445,7 @@ void orderListHandleHexInputExpandedView(GTOBJECT* gt) {
             break;
         }
         songCompressedSize[editorInfo.esnum][editorInfo.eschn] =
-            generateCompressedSongChannel(editorInfo.esnum, editorInfo.eschn, 1);
+            generateCompressedSongChannel(editorInfo.esnum, editorInfo.eschn, true);
         return;
     }
 
@@ -1498,7 +1499,7 @@ void orderListHandleHexInputExpandedView(GTOBJECT* gt) {
     }
 
     songCompressedSize[editorInfo.esnum][editorInfo.eschn] =
-        generateCompressedSongChannel(editorInfo.esnum, editorInfo.eschn, 1);
+        generateCompressedSongChannel(editorInfo.esnum, editorInfo.eschn, true);
 
     int index = findFirstEndMarkerIndex(editorInfo.esnum, editorInfo.eschn);
     songOrderLength[editorInfo.esnum][editorInfo.eschn] = index + 1;
@@ -1730,13 +1731,13 @@ void orderListPasteToCursor(GTOBJECT* gt) {
 }
 
 
-void orderListPasteToCursor_External(GTOBJECT* gt, int insert, int transposeOnly) {
+void orderListPasteToCursor_External(GTOBJECT* gt, bool insert, bool transpose_only) {
     if (copyExpandedSongValidFlag == 0) return;
 
     int xd = editorInfo.eschn;
     for (int x = 0; x < copyPasteW; x++) {
         if (insert) {
-            if (!transposeOnly) {
+            if (!transpose_only) {
                 for (int y = 0; y < copyPasteH; y++) {
                     orderListInsertRowAtCursor_External(gt, editorInfo.esnum, xd, editorInfo.eseditpos);
                 }
@@ -1745,11 +1746,11 @@ void orderListPasteToCursor_External(GTOBJECT* gt, int insert, int transposeOnly
 
         int yd = editorInfo.eseditpos;
         for (int y = 0; y < copyPasteH; y++) {
-            if (!transposeOnly) songOrderPatterns[editorInfo.esnum][xd][yd] = songOrderPatternsCopyPaste[x][y];
+            if (!transpose_only) songOrderPatterns[editorInfo.esnum][xd][yd] = songOrderPatternsCopyPaste[x][y];
             songOrderTranspose[editorInfo.esnum][xd][yd] = songOrderTransposeCopyPaste[x][y];
             yd++;
 
-            if (transposeOnly) {
+            if (transpose_only) {
                 if (yd >= songOrderLength[editorInfo.esnum][xd] - 1) break;
             }
             else {
@@ -1759,7 +1760,7 @@ void orderListPasteToCursor_External(GTOBJECT* gt, int insert, int transposeOnly
         int index                             = findFirstEndMarkerIndex(editorInfo.esnum, xd);
         songOrderLength[editorInfo.esnum][xd] = index + 1; // 1.3.8
 
-        songCompressedSize[editorInfo.esnum][xd] = generateCompressedSongChannel(editorInfo.esnum, xd, 1);
+        songCompressedSize[editorInfo.esnum][xd] = generateCompressedSongChannel(editorInfo.esnum, xd, true);
 
         xd++;
         if (xd == MAX_CHN) break;
@@ -1785,7 +1786,7 @@ void orderListInsertRowAtCursor_External(GTOBJECT* gt, int sng, int chn, int row
     if (gt->editorUndoInfo.editorInfo[c2].espos >= row) // 1.3.8 Was chn
         gt->editorUndoInfo.editorInfo[c2].espos++;
 
-    songCompressedSize[sng][chn] = generateCompressedSongChannel(sng, chn, 1);
+    songCompressedSize[sng][chn] = generateCompressedSongChannel(sng, chn, true);
 }
 
 void orderListDeleteRowAtCursor_External(int sng, int chn, int row) {
@@ -1798,7 +1799,7 @@ void orderListDeleteRowAtCursor_External(int sng, int chn, int row) {
     songOrderTranspose[sng][chn][MAX_SONGLEN_EXPANDED - 2] = 0;
     songOrderLength[sng][chn]--;
 
-    songCompressedSize[sng][chn] = generateCompressedSongChannel(sng, chn, 1);
+    songCompressedSize[sng][chn] = generateCompressedSongChannel(sng, chn, true);
 }
 
 
@@ -1943,7 +1944,7 @@ void order_list_transpose_up() {
                 songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos]--;
             updateTransposeToPlayingSong(&gtObject);
             songCompressedSize[editorInfo.esnum][editorInfo.eschn] =
-                generateCompressedSongChannel(editorInfo.esnum, editorInfo.eschn, 1);
+                generateCompressedSongChannel(editorInfo.esnum, editorInfo.eschn, true);
         }
         return;
     }
@@ -1960,7 +1961,7 @@ void order_list_transpose_down() {
             songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] |= 0x80;
             updateTransposeToPlayingSong(&gtObject);
             songCompressedSize[editorInfo.esnum][editorInfo.eschn] =
-                generateCompressedSongChannel(editorInfo.esnum, editorInfo.eschn, 1);
+                generateCompressedSongChannel(editorInfo.esnum, editorInfo.eschn, true);
         }
         return;
     }
@@ -2078,7 +2079,7 @@ int order_go_pattern(GTOBJECT* gt) {
         editorInfo.epcolumn  = 0;
         editorInfo.eppos     = 0;
         editorInfo.epview    = -VISIBLEPATTROWS / 2;
-        editorInfo.editmode  = EDIT_PATTERN;
+        editorInfo.editmode  = EditMode::Pattern;
         if (editorInfo.epchn == editorInfo.epmarkchn) editorInfo.epmarkchn = -1;
     }
     return ret;
