@@ -154,7 +154,7 @@ add_library(gtcore STATIC
     "${SRC}/gfollow.cpp"
     "${SRC}/gfile.cpp"
     "${SRC}/gsound.cpp"
-    "${SRC}/gconsole.cpp"
+    "${SRC}/glegacy_ui.cpp"
     "${SRC}/gsid.cpp"
     "${SRC}/ginfo.cpp"
     "${SRC}/gmidi.cpp"
@@ -208,8 +208,9 @@ add_custom_command(TARGET gtultra POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${CMAKE_CURRENT_SOURCE_DIR}/assets" "$<TARGET_FILE_DIR:gtultra>/assets")
 
-# Standalone relocator/exporter (includes greloc.cpp with GT2RELOC)
-add_executable(gt2reloc "${SRC}/gt2reloc.cpp")
+# Standalone relocator/exporter (includes greloc.cpp with GT2RELOC).
+# gplatform calls gimgui_*; provide empty stubs (no ImGui UI here).
+add_executable(gt2reloc "${SRC}/gt2reloc.cpp" "${SRC}/gimgui_stubs.cpp")
 target_link_libraries(gt2reloc PRIVATE gtcore)
 
 # Small standalone conversion utilities (endian helpers only).

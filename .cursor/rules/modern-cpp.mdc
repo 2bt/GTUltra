@@ -13,6 +13,11 @@ Applies to **new and actively modernized** C++ (e.g. `gplatform`, ImGui UI, help
 - Write modern C++ (C++20 in this project). Prefer RAII, `nullptr`, typed enums, `std::` utilities, and narrow interfaces over C patterns.
 - Use `#pragma once` — no include guards.
 - No `void` parameter lists: write `foo()` not `foo(void)`.
+- Prefer **`underscore_case`** for variables and parameters (`mouse_buttons`, not `mouseButtons` / `mouseb`). Legacy globals may keep old names until touched.
+- In `.cpp` files, prefer an **anonymous namespace** for file-local helpers and state over `static` at namespace scope. (`static` on members / local variables is fine.)
+- After editing C/C++ sources, run **clang-format** on the touched files
+  (`clang-format -i <files>`), using the project-root `.clang-format`
+  (copied from the author's `~/.clang-format`).
 
 ## Functions (especially when porting legacy)
 
@@ -20,7 +25,7 @@ For each legacy function you touch or re-expose:
 
 1. **Where is it used?** Grep call sites; note editor vs tools vs dead.
 2. **Still needed?** Delete or leave unported if unused.
-3. **Improve** naming and types where call-site churn is acceptable (e.g. `bool` returns, `std::string_view`, scoped enums, drop Hungarian / `BME_` noise when renaming a surface you own).
+3. **Improve** naming and types where call-site churn is acceptable (e.g. `bool` returns, `std::string_view`, scoped enums, drop out-params, drop Hungarian / `BME_` noise when renaming a surface you own).
 
 Do not preserve a bad signature only for nostalgia. Temporary stability during a cutover is fine; document and follow up.
 
@@ -31,7 +36,7 @@ Modern code should **avoid new globals**. Legacy globals (`win_*`, `gfx_*`, `snd
 When touching a global:
 
 1. **Track uses** (grep); if non-obvious, add a short comment at the definition listing primary consumers.
-2. **Eliminate low-hanging fruit** when the resulting change is objectively better (e.g. file-local `static`, member of a small owning object, parameter, or return value) and does not explode unrelated call sites.
+2. **Eliminate low-hanging fruit** when the resulting change is objectively better (e.g. anonymous-namespace state, member of a small owning object, parameter, or return value) and does not explode unrelated call sites.
 3. Be practical: a widely read input/frame global can stay until a deliberate platform redesign; do not invent a god-object just to hide `extern`.
 
 ## gplatform note

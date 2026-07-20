@@ -121,7 +121,7 @@ float basepitch = 0.0f;
 float equaldivisionsperoctave = 12.0f;
 int tuningcount = 0;
 double tuning[96];
-extern unsigned bigwindow;
+unsigned bigwindow = 1; // window size tier 1..3 (win_init_editor)
 int checkUndoFlag = 0;
 unsigned int lmanMode = 1;
 unsigned int enablekeyrepeat = 0;
@@ -590,8 +590,7 @@ int main(int argc, char** argv)
 	if (midiEnabled)
 		selectedMIDIPort = initMidi(selectedMIDIPort);
 
-	// Set screenmode
-	if (!initscreen())
+	if (!win_init_editor(bigwindow, (int)enableAntiAlias))
 		return 1;
 
 	// Composite the experimental ImGui layer on top of the legacy editor.
@@ -1100,10 +1099,10 @@ void waitkeymouse(GTOBJECT* gt)
 void waitkeynoupdate(void)
 {
 	// Used by greloc interactive (!autoSave) screens — unreachable from ImGui
-	// Relocate (always autoSave=1). Presents ImGui frame via fliptoscreen.
+	// Relocate (always autoSave=1). Presents ImGui frame via gfx_present.
 	for (;;)
 	{
-		fliptoscreen();
+		gfx_present();
 		getkey();
 		if ((rawkey) || (key)) break;
 		if ((mouseb) && (!prevmouseb)) break;
@@ -1150,10 +1149,7 @@ void docommand(void)
 	const int legacy_hex = hexnybble;
 
 	// "GUI" operation :)
-	int m = mousebDoubleClick;
-	// M6 Phase 2: mousecommands (chargen hit-testing) removed
-	if (m)
-		mousebDoubleClick = 0;
+	// M6: chargen mouse hit-testing removed; ImGui owns pointer input.
 
 	GTUNDO_OBJECT* ed = undoCreateEditorInfo();
 
@@ -1867,28 +1863,9 @@ void setGFXPaletteRGBFromPaletteRGB(int presetIndex, int paletteIndex)
 	int g = paletteRGB[presetIndex][1][paletteIndex];
 	int b = paletteRGB[presetIndex][2][paletteIndex];
 
-	gfx_setPaletteRGB(FIRST_UI_COLOR + paletteIndex, r, g, b);
 	paletteR[FIRST_UI_COLOR + paletteIndex] = r;
 	paletteG[FIRST_UI_COLOR + paletteIndex] = g;
 	paletteB[FIRST_UI_COLOR + paletteIndex] = b;
-
-	//	int r1 = r & 0xf0;
-	//	int g1 = g & 0xf0;
-	//	int b1 = b & 0xf0;
-	//	int r2 = (r << 4) & 0xf0;
-	//	int g2 = (g << 4) & 0xf0;
-	//	int b2 = (b << 4) & 0xf0;
-
-//	gfx_setPaletteRGB(FIRST_UI_COLOR + (paletteIndex * 2), r1, g1, b1);
-//	gfx_setPaletteRGB(FIRST_UI_COLOR + (paletteIndex * 2) + 1, r2, g2, b2);
-
-//	paletteR[FIRST_UI_COLOR + (paletteIndex * 2)] = r1;
-//	paletteG[FIRST_UI_COLOR + (paletteIndex * 2)] = g1;
-//	paletteB[FIRST_UI_COLOR + (paletteIndex * 2)] = b1;
-
-//	paletteR[FIRST_UI_COLOR + (paletteIndex * 2) + 1] = r2;
-//	paletteG[FIRST_UI_COLOR + (paletteIndex * 2) + 1] = g2;
-//	paletteB[FIRST_UI_COLOR + (paletteIndex * 2) + 1] = b2;
 }
 
 

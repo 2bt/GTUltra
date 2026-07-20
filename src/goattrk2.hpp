@@ -16,8 +16,9 @@
 #include "gmidi.hpp"
 
 #include "gcommon.hpp"
-#include "gconsole.hpp"
+#include "glegacy_ui.hpp"
 #include "ginput.hpp"
+#include "gimgui.hpp"
 #include "gplay.hpp"
 #include "gsound.hpp"
 #include "gsid.hpp"

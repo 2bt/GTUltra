@@ -224,7 +224,7 @@ int sound_init(unsigned b, unsigned mr, unsigned writer, unsigned hardsid, unsig
 
 	if (firsttimeinit)
 	{
-		if (!snd_init(mr, SIXTEENBIT | STEREO, b, 1, 0)) return 0;
+		if (!snd_init(mr, SIXTEENBIT | STEREO, b)) return 0;
 		firsttimeinit = 0;
 	}
 

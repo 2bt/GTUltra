@@ -1,21 +1,12 @@
-#ifndef GAUDIO_HPP
-#define GAUDIO_HPP
+#pragma once
 
 #include <SDL.h>
 
-// CHANNEL is defined in gplatform.hpp before this header is included.
+// Custom-mixer SID path used by gsound. Returns false on failure.
+bool snd_init(unsigned mixrate, unsigned mixmode, unsigned bufferlength_ms);
+void snd_setcustommixer(void (*custommixer)(Sint32* dest, unsigned samples));
 
-int snd_init(unsigned mixrate, unsigned mixmode, unsigned bufferlength, unsigned channels, int usedirectsound);
-void snd_uninit(void);
-void snd_setcustommixer(void (*custommixer)(Sint32 *dest, unsigned samples));
-
-extern void (*snd_player)(void);
-extern CHANNEL *snd_channel;
-extern int snd_sndinitted;
-extern int snd_bpmtempo;
-extern int snd_bpmcount;
-extern int snd_channels;
-extern unsigned snd_mixmode;
+// Consumers: gsound (player callback, tempo, mixrate).
+extern void (*snd_player)();
+extern int      snd_bpmtempo;
 extern unsigned snd_mixrate;
-
-#endif
