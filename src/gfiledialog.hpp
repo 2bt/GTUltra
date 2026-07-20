@@ -1,7 +1,7 @@
 #pragma once
 //
 // Native file dialogs for the ImGui UI (portable-file-dialogs).
-// Native file dialogs for the ImGui UI (chargen fileselector removed).
+// Native file dialogs for the ImGui UI.
 //
 
 #include <stddef.h>

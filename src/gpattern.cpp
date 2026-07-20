@@ -297,7 +297,6 @@ int pattern_note_input(GTOBJECT* gt, int midiNote, const EditorInput* input) {
     if (newnote >= 0) {
         edited = 1;
         //		sprintf(textbuffer, "note: %x", newnote);
-        //		printtext(70, 36, 0xe, textbuffer);
 
         if ((recordmode) && (editorInfo.eppos < pattlen[gt->editorUndoInfo.editorInfo[c2].epnum])) {
             pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4] = newnote;
@@ -1052,7 +1051,6 @@ int handlePolyphonicKeyboard(GTOBJECT* gt) {
                             keyNoteDown[c]++;
 
                             // sprintf(textbuffer, "key on %d", c);	////Alloc 0x%x", newMaxUndoSize);
-                            // printtext(75, 16, getColor(CTITLES_FOREGROUND, CGENERAL_BACKGROUND), textbuffer);
                         }
                         continue; // skips the keyoff code below
                     }
@@ -1212,7 +1210,6 @@ int lastFoundChannel = 0;
 int findFreePolyChannel(int note) {
     if (checkMonoMode()) {
         //		sprintf(textbuffer,"ch: %d %d",editorInfo.epchn,getActualChannel(editorInfo.esnum,
-        // editorInfo.epchn)); 		printtext(65, 12, 0xe, textbuffer);
         return getActualChannel(editorInfo.esnum, editorInfo.epchn);
     }
     //		return editorInfo.epchn;

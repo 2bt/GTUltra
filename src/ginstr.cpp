@@ -190,7 +190,6 @@ instr_hex_input:
 			break;
 		}
 		lastEditWindow = -1;	// force redraw of Info bar with updated info
-		setTableBackgroundColours(editorInfo.einum);
 	}
 instr_validate:
 	// Validate instrument parameters
@@ -244,12 +243,10 @@ void previnstr(void)
 	if (editorInfo.einum < 0)
 		editorInfo.einum = 0;
 	showinstrtable();
-	setTableBackgroundColours(editorInfo.einum);
 }
 
 void showinstrtable(void)
 {
-	setTableBackgroundColours(editorInfo.einum);
 
 	if (!editorInfo.etlock)
 	{

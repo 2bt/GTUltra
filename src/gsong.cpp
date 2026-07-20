@@ -125,10 +125,8 @@ void debugCount(char *d,int c)
 	if (e != 0)
 	{
 		sprintf(textbuffer, "memleak %d", c);
-		printtext(60, 17, getColor(CTITLES_FOREGROUND, CGENERAL_BACKGROUND), textbuffer);
+		fprintf(stderr, "%s\n", textbuffer);
 	}
-	sprintf(textbuffer, "memleak %d", c);
-	printtext(60, 17, getColor(CTITLES_FOREGROUND, CGENERAL_BACKGROUND), textbuffer);
 }
 
 int checkFor3ChannelSong()
@@ -172,11 +170,9 @@ int checkFor3ChannelSong()
 					int p = songorder[d][c][i];
 
 					//		sprintf(textbuffer, "echeck. p:%d", p);
-					//		printtext(70, 36, 0xe, textbuffer);
 					if (patternContainsData(p))
 					{
 						//			sprintf(textbuffer, "not empty");
-						//			printtext(86, 36, 0xe, textbuffer);
 						return 6;				// found a pattern that contains data. Save as 6 channel SID
 					}
 				}
@@ -185,7 +181,6 @@ int checkFor3ChannelSong()
 	}
 
 	//	sprintf(textbuffer, "empty");
-	//	printtext(86, 36, 0xe, textbuffer);
 	return 3;	// no pattern data found 
 }
 
@@ -433,7 +428,6 @@ int loadsong(GTOBJECT *gt, int gt2relocMode)
 		if (songfilename[0] == '$')
 		{
 			//			sprintf(textbuffer, "found $");
-			//			printtext(70, 36, 0xe, textbuffer);
 
 			for (int i = 0;i < 2;i++)
 			{
@@ -447,7 +441,6 @@ int loadsong(GTOBJECT *gt, int gt2relocMode)
 			}
 		}
 		//		sprintf(textbuffer, "found $ %d", chCount);
-		//		printtext(70, 36, 0xe, textbuffer);
 
 		if (chCount == 3 || chCount == 6 || chCount == 9 || chCount == 12)
 		{
@@ -2219,7 +2212,6 @@ int mergesong(GTOBJECT *gt)
 	songbase = c + 1;
 
 	//sprintf(textbuffer, "pattbase:%x", pattbase);
-	//printtext(PANEL_NAMES_X, PANEL_NAMES_Y + 3, getColor(CTITLES_FOREGROUND, CGENERAL_BACKGROUND), textbuffer);
 
 
 	for (c = 0; c < MAX_TABLES; c++)

@@ -21,12 +21,6 @@ extern "C" {
 }
 #endif
 
-char* playeroptname[] = { "Buffered SID-writes",   "Sound effect support",   "Volume change support",
-                          "Store author-info",     "Use zeropage ghostregs", "Disable optimization",
-                          "zeropage SID playback", "Full SID buffering"
-
-};
-
 char* tableleftname[] = { "mt_wavetbl", "mt_pulsetimetbl", "mt_filttimetbl", "mt_speedlefttbl" };
 
 char* tablerightname[] = { "mt_notetbl", "mt_pulsespdtbl", "mt_filtspdtbl", "mt_speedrighttbl" };
@@ -92,15 +86,7 @@ extern FILE *STDOUT, *STDERR;
 #define STDERR stderr
 #endif
 extern char packedsongname[MAX_PATHNAME];
-#define clearscreen(c)
-#define fliptoscreen()
-#define waitkeynoupdate()
-#define printtextc(x, y, b) fputs(b, STDERR)
-#define printmainscreen(c)
-#else
-#define fliptoscreen() gfx_present()
 #endif
-
 
 static void reloc_alert(const char* msg) {
 #ifdef GT2RELOC
@@ -111,7 +97,7 @@ static void reloc_alert(const char* msg) {
 #endif
 }
 
-void relocator(GTOBJECT* gt, int gt2relocMode, int autoSave) {
+void relocator(GTOBJECT* gt, int gt2relocMode) {
     // Hoisted so the many `goto PRCLEANUP` statements do not jump across these
     // initializations (ill-formed in C++, harmless in C).
     int sds       = 0;
@@ -121,10 +107,6 @@ void relocator(GTOBJECT* gt, int gt2relocMode, int autoSave) {
     //	char *tempFirstSIDBuffer;		// Used for 9 channel SID creation
     //	int tempSecondSIDOffset;
 
-#ifndef GT2RELOC
-
-    char packedfilter[MAX_FILENAME];
-#endif
     unsigned char* packeddata = NULL;
     char*          playername = "player.s";
 
@@ -155,16 +137,13 @@ void relocator(GTOBJECT* gt, int gt2relocMode, int autoSave) {
     int            playersize     = 0;
     int            packedsize     = 0;
     FILE*          songhandle     = NULL;
-    int            selectdone;
-    int            opt         = 0;
-    unsigned char  speedcode[] = { 0xa2, 0x00, 0x8e, 0x04, 0xdc, 0xa2, 0x00, 0x8e, 0x05, 0xdc };
+    unsigned char  speedcode[]    = { 0xa2, 0x00, 0x8e, 0x04, 0xdc, 0xa2, 0x00, 0x8e, 0x05, 0xdc };
     int            c, d, e;
     unsigned char  patttemp[512];
     unsigned char* songwork  = NULL;
     unsigned char* pattwork  = NULL;
     unsigned char* instrwork = NULL;
 
-    char temppackedsongname[MAX_FILENAME];
 
     channels          = editorInfo.maxSIDChannels;
     fixedparams       = 1;
@@ -214,356 +193,11 @@ void relocator(GTOBJECT* gt, int gt2relocMode, int autoSave) {
     }
 
 
-    int oldfileformat    = fileformat;
-    int oldplayerversion = playerversion;
-    int oldzeropageadr   = zeropageadr;
-    int oldsidAddr1      = sidAddr1;
-    int oldsidAddr2      = sidAddr2;
-    int oldsidAddr3      = sidAddr3;
-    int oldsidAddr4      = sidAddr4;
-
     if (gt2relocMode == 0) {
         if (gt->songinit != PLAY_STOPPED) {
             stopsong(gt);
         }
-
-
-        if (!autoSave) {
-            playerversion = 0;
-
-            // Select playroutine options
-            clearscreen(getColor(1, 0));
-            printblankc(0, 0, getColor(15, 1), MAX_COLUMNS);
-            if (!strlen(loadedsongfilename)) sprintf(textbuffer, "%s Packer/Relocator", programname);
-            else
-                sprintf(textbuffer, "%s Packer/Relocator - %s", programname, loadedsongfilename);
-            textbuffer[MAX_COLUMNS] = 0;
-            printtext(0, 0, getColor(15, 1), textbuffer);
-            printtext(1,
-                      2,
-                      getColor(CTITLE, 0),
-                      "SELECT PLAYROUTINE OPTIONS: (CURSORS=MOVE/CHANGE, ENTER=ACCEPT, ESC=CANCEL)");
-
-            int maxOptions = MAX_OPTIONS;
-            if (editorInfo.maxSIDChannels != 3) {
-                maxOptions -= 1;
-                playerversion &= ~PLAYER_FULLBUFFERED;
-            }
-
-            playerversion |= PLAYER_BUFFERED;
-            playerversion &= ~PLAYER_ZPGHOSTREGS;
-            playerversion &= ~PLAYER_ZPPLAYSID;
-
-            selectdone = 0;
-
-
-            //		int test = 0;
-
-            while (!selectdone) {
-                for (c = 0; c < maxOptions; c++) {
-                    int color = CNORMAL;
-                    if (opt == c) color = CEDIT;
-
-                    printtext(1, 3 + c, getColor(color, 0), playeroptname[c]);
-                    if (playerversion & (PLAYER_BUFFERED << c)) printtext(24, 3 + c, getColor(color, 0), "Yes");
-                    else
-                        printtext(24, 3 + c, getColor(color, 0), "No ");
-                }
-
-                fliptoscreen();
-                waitkeynoupdate();
-
-                if (win_quitted) {
-                    exitprogram = 1;
-                    goto PRCLEANUP;
-                }
-
-                switch (rawkey) {
-                case KEY_LEFT:
-                case KEY_RIGHT:
-                case KEY_SPACE:
-                    playerversion ^= (PLAYER_BUFFERED << opt);
-                    if (opt) {
-                        if ((playerversion & PLAYER_SOUNDEFFECTS) || (playerversion & PLAYER_ZPGHOSTREGS) ||
-                            (playerversion & PLAYER_FULLBUFFERED)) {
-                            //						test++;
-                            playerversion |= PLAYER_BUFFERED;
-                        }
-                    }
-                    else {
-                        if (!(playerversion & PLAYER_BUFFERED)) {
-                            playerversion &= ~PLAYER_SOUNDEFFECTS;
-                            playerversion &= ~PLAYER_ZPGHOSTREGS;
-                            playerversion &= ~PLAYER_FULLBUFFERED;
-                            playerversion &= ~PLAYER_ZPPLAYSID;
-                        }
-                    }
-                    if (!(playerversion & PLAYER_ZPGHOSTREGS)) playerversion &= ~PLAYER_ZPPLAYSID;
-
-                    break;
-
-                case KEY_UP:
-                    opt--;
-                    if (opt < 0) opt = maxOptions - 1;
-                    break;
-
-                case KEY_DOWN:
-                    opt++;
-                    if (opt >= maxOptions) opt = 0;
-                    break;
-
-                case KEY_ESC: selectdone = -1; break;
-
-                case KEY_ENTER: selectdone = 1; break;
-                }
-
-                if (editorInfo.maxSIDChannels != 3) {
-                    playerversion |= PLAYER_BUFFERED;
-                    playerversion &= ~PLAYER_ZPGHOSTREGS;
-                    playerversion &= ~PLAYER_ZPPLAYSID;
-                }
-            }
-            if (selectdone == -1) goto PRCLEANUP;
-
-            int yPos = 10;
-
-            sprintf(textbuffer, "SELECT START ADDRESS: (CURSORS=MOVE, ENTER=ACCEPT, ESC=CANCEL)");
-            printtext(1, yPos++, getColor(15, 0), textbuffer);
-
-            selectdone = 0;
-            while (!selectdone) {
-                sprintf(textbuffer, "$%04X", playeradr);
-                printtext(1, yPos, getColor(10, 0), textbuffer);
-
-                fliptoscreen();
-                waitkeynoupdate();
-
-                if (win_quitted) {
-                    exitprogram = 1;
-                    goto PRCLEANUP;
-                }
-
-                switch (rawkey) {
-                case KEY_LEFT:
-                    playeradr -= 0x0400;
-                    playeradr &= 0xff00;
-                    break;
-
-                case KEY_UP:
-                    playeradr += 0x0100;
-                    playeradr &= 0xff00;
-                    break;
-
-                case KEY_RIGHT:
-                    playeradr += 0x0400;
-                    playeradr &= 0xff00;
-                    break;
-
-                case KEY_DOWN:
-                    playeradr -= 0x0100;
-                    playeradr &= 0xff00;
-                    break;
-
-                case KEY_ESC: selectdone = -1; break;
-
-                case KEY_ENTER: selectdone = 1; break;
-                }
-            }
-
-            if (selectdone == -1) goto PRCLEANUP;
-
-            yPos++;
-
-
-            if (editorInfo.maxSIDChannels > 3) {
-                sprintf(textbuffer, "SELECT SID ADDRESS 2: (CURSORS=MOVE, ENTER=ACCEPT, ESC=CANCEL)");
-                printtext(1, yPos++, getColor(15, 0), textbuffer);
-                selectdone = 0;
-                while (!selectdone) {
-                    sprintf(textbuffer, "$%04X", sidAddr2);
-                    printtext(1, yPos, 10, textbuffer);
-
-                    fliptoscreen();
-                    waitkeynoupdate();
-
-                    if (win_quitted) {
-                        exitprogram = 1;
-                        goto PRCLEANUP;
-                    }
-
-                    switch (rawkey) {
-                    case KEY_LEFT:
-                        if (sidAddr2 > 0xd400) sidAddr2 -= 0x0020;
-                        break;
-
-                    case KEY_RIGHT:
-                        if (sidAddr2 < 0xe000) sidAddr2 += 0x0020;
-                        break;
-
-                    case KEY_ESC: selectdone = -1; break;
-
-                    case KEY_ENTER: selectdone = 1; break;
-                    }
-                }
-
-                if (selectdone == -1) goto PRCLEANUP;
-
-                yPos++;
-
-                sidaddress = sidAddr1;
-                sidaddress |= (sidAddr2 << 16);
-            }
-
-            if (editorInfo.maxSIDChannels > 6) {
-
-                sprintf(textbuffer, "SELECT SID ADDRESS 3: (CURSORS=MOVE, ENTER=ACCEPT, ESC=CANCEL)");
-                printtext(1, yPos++, getColor(15, 0), textbuffer);
-                selectdone = 0;
-                while (!selectdone) {
-                    sprintf(textbuffer, "$%04X", sidAddr3);
-                    printtext(1, yPos, getColor(10, 0), textbuffer);
-
-                    fliptoscreen();
-                    waitkeynoupdate();
-
-                    if (win_quitted) {
-                        exitprogram = 1;
-                        goto PRCLEANUP;
-                    }
-
-
-                    switch (rawkey) {
-                    case KEY_LEFT:
-                        if (sidAddr3 > 0xd400) sidAddr3 -= 0x0020;
-                        break;
-
-
-                    case KEY_RIGHT:
-                        if (sidAddr3 < 0xe000) sidAddr3 += 0x0020;
-                        break;
-
-                    case KEY_ESC: selectdone = -1; break;
-
-                    case KEY_ENTER: selectdone = 1; break;
-                    }
-                }
-
-                if (selectdone == -1) goto PRCLEANUP;
-
-
-                yPos++;
-            }
-
-            if (editorInfo.maxSIDChannels > 9) {
-                sprintf(textbuffer, "SELECT SID ADDRESS 4: (CURSORS=MOVE, ENTER=ACCEPT, ESC=CANCEL)");
-                printtext(1, yPos++, getColor(15, 0), textbuffer);
-                selectdone = 0;
-                while (!selectdone) {
-                    sprintf(textbuffer, "$%04X", sidAddr4);
-                    printtext(1, yPos, getColor(10, 0), textbuffer);
-
-                    fliptoscreen();
-                    waitkeynoupdate();
-
-                    if (win_quitted) {
-                        exitprogram = 1;
-                        goto PRCLEANUP;
-                    }
-
-                    switch (rawkey) {
-                    case KEY_LEFT:
-                        if (sidAddr4 > 0xd400) sidAddr4 -= 0x0020;
-                        break;
-
-                    case KEY_RIGHT:
-                        if (sidAddr4 < 0xe000) sidAddr4 += 0x0020;
-                        break;
-
-                    case KEY_ESC: selectdone = -1; break;
-
-                    case KEY_ENTER: selectdone = 1; break;
-                    }
-                }
-
-                if (selectdone == -1) goto PRCLEANUP;
-
-                yPos++;
-            }
-
-            sprintf(textbuffer, "SELECT ZEROPAGE ADDRESS: (CURSORS=MOVE, ENTER=ACCEPT, ESC=CANCEL)");
-            printtext(1, yPos++, getColor(15, 0), textbuffer);
-
-            selectdone = 0;
-            while (!selectdone) {
-                if (playerversion & PLAYER_ZPGHOSTREGS) {
-                    if (zeropageadr < 0x02) zeropageadr = 0xe5;
-                    if (zeropageadr > 0xe5) zeropageadr = 0x02;
-                }
-                else {
-                    if (zeropageadr < 0x02) zeropageadr = 0xfe;
-                    if (zeropageadr > 0xfe) zeropageadr = 0x02;
-                }
-
-
-                if (!(playerversion & PLAYER_ZPGHOSTREGS)) {
-                    if (zeropageadr < 0x90)
-                        sprintf(textbuffer,
-                                "$%02X-$%02X (Used by BASIC interpreter)    ",
-                                zeropageadr,
-                                zeropageadr + 1);
-                    if ((zeropageadr >= 0x90) && (zeropageadr < 0xfb))
-                        sprintf(textbuffer,
-                                "$%02X-$%02X (Used by KERNAL routines)      ",
-                                zeropageadr,
-                                zeropageadr + 1);
-                    if ((zeropageadr >= 0xfb) && (zeropageadr < 0xfe))
-                        sprintf(textbuffer,
-                                "$%02X-$%02X (Unused)                       ",
-                                zeropageadr,
-                                zeropageadr + 1);
-                    if (zeropageadr >= 0xfe)
-                        sprintf(textbuffer,
-                                "$%02X-$%02X ($FF used by BASIC interpreter)",
-                                zeropageadr,
-                                zeropageadr + 1);
-                }
-                else {
-                    sprintf(textbuffer,
-                            "$%02X-$%02X (ghostregs start at %02X)",
-                            zeropageadr,
-                            zeropageadr + 26,
-                            zeropageadr);
-                }
-
-                printtext(1, yPos, getColor(10, 0), textbuffer);
-
-                fliptoscreen();
-                waitkeynoupdate();
-
-                if (win_quitted) {
-                    exitprogram = 1;
-                    goto PRCLEANUP;
-                }
-
-                switch (rawkey) {
-                case KEY_LEFT: zeropageadr -= 0x10; break;
-
-                case KEY_UP: zeropageadr++; break;
-
-                case KEY_RIGHT: zeropageadr += 0x10; break;
-
-                case KEY_DOWN: zeropageadr--; break;
-
-                case KEY_ESC: selectdone = -1; break;
-
-                case KEY_ENTER: selectdone = 1; break;
-                }
-            }
-
-            if (selectdone == -1) goto PRCLEANUP;
-        }
     }
-
 
     songhandle = NULL;
 
@@ -1616,151 +1250,11 @@ void relocator(GTOBJECT* gt, int gt2relocMode, int autoSave) {
         goto PRCLEANUP;
     }
 #else
-    if (!autoSave) {
-        // Print results
-        clearscreen(getColor(1, 0));
-        printblankc(0, 0, 15 + 16, MAX_COLUMNS);
-        if (!strlen(loadedsongfilename)) sprintf(textbuffer, "%s Packer/Relocator", programname);
-        else
-            sprintf(textbuffer, "%s Packer/Relocator - %s", programname, loadedsongfilename);
-        textbuffer[80] = 0;
-        printtext(0, 0, getColor(0, 15), textbuffer);
-
-        sprintf(textbuffer, "PACKING RESULTS :");
-        printtext(1, 2, getColor(15, 0), textbuffer);
-
-        sprintf(textbuffer, "Playroutine:     %d bytes", playersize);
-        printtext(1, 3, getColor(7, 0), textbuffer);
-        sprintf(textbuffer, "Songtable:       %d bytes", songtblsize);
-        printtext(1, 4, getColor(7, 0), textbuffer);
-        sprintf(textbuffer, "Song-orderlists: %d bytes", songdatasize);
-        printtext(1, 5, getColor(7, 0), textbuffer);
-        sprintf(textbuffer, "Patterntable:    %d bytes", patttblsize);
-        printtext(1, 6, getColor(7, 0), textbuffer);
-        sprintf(textbuffer, "Patterns:        %d bytes", pattdatasize);
-        printtext(1, 7, getColor(7, 0), textbuffer);
-        sprintf(textbuffer, "Instruments:     %d bytes", instrsize);
-        printtext(1, 8, getColor(7, 0), textbuffer);
-        sprintf(textbuffer, "Tables:          %d bytes", wavetblsize + pulsetblsize + filttblsize + speedtblsize);
-        printtext(1, 9, getColor(7, 0), textbuffer);
-        sprintf(textbuffer, "Total size:      %d bytes", packedsize);
-        printtext(1, 11, getColor(7, 0), textbuffer);
-        sprintf(textbuffer, "End address:     $%x ", playeradr + packedsize);
-        printtext(1, 12, getColor(7, 0), textbuffer);
-        fliptoscreen();
-
-
-        // Now ask for fileformat
-        printtext(1,
-                  13,
-                  getColor(CTITLE, 0),
-                  "SELECT FORMAT TO SAVE IN: (CURSORS=MOVE, ENTER=ACCEPT, ESC=CANCEL)");
-
-        selectdone = 0;
-
-        while (!selectdone) {
-            switch (fileformat) {
-            case FORMAT_SID:
-                printtext(1, 14, getColor(CEDIT, 0), "SID - SIDPlay music file format          ");
-                strcpy(packedfilter, "*.sid");
-                break;
-
-            case FORMAT_PRG:
-                printtext(1, 14, getColor(CEDIT, 0), "PRG - C64 native format                  ");
-                strcpy(packedfilter, "*.prg");
-                break;
-
-            case FORMAT_BIN:
-                printtext(1, 14, getColor(CEDIT, 0), "BIN - Raw binary format (no startaddress)");
-                strcpy(packedfilter, "*.bin");
-                break;
-            }
-
-            fliptoscreen();
-            waitkeynoupdate();
-
-            if (win_quitted) {
-                exitprogram = 1;
-                goto PRCLEANUP;
-            }
-
-            switch (rawkey) {
-            case KEY_LEFT:
-            case KEY_DOWN:
-                fileformat--;
-                if (fileformat < FORMAT_SID) fileformat = FORMAT_BIN;
-                break;
-
-            case KEY_RIGHT:
-            case KEY_UP:
-                fileformat++;
-                if (fileformat > FORMAT_BIN) fileformat = FORMAT_SID;
-                break;
-
-            case KEY_ESC: selectdone = -1; break;
-
-            case KEY_ENTER: selectdone = 1; break;
-            }
-        }
-        if (selectdone == -1) {
-            goto PRCLEANUP;
-        }
+    songhandle = fopen(packedsongname, "wb");
+    if (!songhandle) {
+        reloc_alert("Could not open output file for relocator export.");
+        goto PRCLEANUP;
     }
-
-
-    if (!autoSave) {
-        if (!songExported) {
-            // By default, copy loaded song name up to the extension
-            memset(packedsongname, 0, sizeof packedsongname);
-            for (c = 0; c < strlen(loadedsongfilename); c++) {
-                if (loadedsongfilename[c] == '.') break;
-                packedsongname[c] = loadedsongfilename[c];
-            }
-
-            switch (fileformat) {
-            case FORMAT_PRG: strcat(packedsongname, ".prg"); break;
-
-            case FORMAT_BIN: strcat(packedsongname, ".bin"); break;
-
-            case FORMAT_SID: strcat(packedsongname, ".sid"); break;
-            }
-        }
-
-        // Now ask for filename, retry if unsuccessful
-        while (!songhandle) {
-            memcpy(&temppackedsongname, &packedsongname, MAX_FILENAME);
-            if (!fileselector(packedsongname, packedpath, packedfilter, "Save Music+Playroutine", 3, gt, 12, 0)) {
-                memcpy(&packedsongname, &temppackedsongname, MAX_FILENAME);
-                //	clearscreen(getColor(1, 0));
-                //	sprintf(textbuffer, "QUITTED JP = %d", jp);
-                //	printtextc(MAX_ROWS / 2, getColor(CTITLE, 0), textbuffer);
-                //	fliptoscreen();
-                //	waitkeynoupdate();
-
-                goto PRCLEANUP;
-            }
-
-
-            if (strlen(packedsongname) < MAX_FILENAME - 4) {
-                int extfound = 0;
-                for (c = strlen(packedsongname) - 1; c >= 0; c--) {
-                    if (packedsongname[c] == '.') extfound = 1;
-                }
-                if (!extfound) {
-                    switch (fileformat) {
-                    case FORMAT_PRG: strcat(packedsongname, ".prg"); break;
-
-                    case FORMAT_BIN: strcat(packedsongname, ".bin"); break;
-
-                    case FORMAT_SID: strcat(packedsongname, ".sid"); break;
-                    }
-                }
-            }
-            songhandle = fopen(packedsongname, "wb");
-        }
-    }
-    else
-        songhandle = fopen(packedsongname, "wb");
 #endif
 
     if (fileformat == FORMAT_PRG) {
@@ -1922,20 +1416,6 @@ void relocator(GTOBJECT* gt, int gt2relocMode, int autoSave) {
 
 PRCLEANUP:
 
-    if (gt2relocMode == 0 && autoSave == 0) {
-        if (oldfileformat != fileformat || oldplayerversion != playerversion || oldzeropageadr != zeropageadr ||
-            oldsidAddr1 != sidAddr1 || oldsidAddr2 != sidAddr2 || oldsidAddr3 != sidAddr3 ||
-            oldsidAddr4 != sidAddr4) {
-            fileformat    = oldfileformat;
-            playerversion = oldplayerversion;
-            zeropageadr   = oldzeropageadr;
-            sidAddr1      = oldsidAddr1;
-            sidAddr2      = oldsidAddr2;
-            sidAddr3      = oldsidAddr3;
-            sidAddr4      = oldsidAddr4;
-        }
-    }
-
 PREXPORTCOMPLETE:
 
 
@@ -1945,8 +1425,6 @@ PREXPORTCOMPLETE:
     if (pattwork) free(pattwork);
     if (songwork) free(songwork);
     if (instrwork) free(instrwork);
-    // if (gt2relocMode == 0 && autoSave == 0)
-    // printmainscreen(gt);
     key    = 0;
     rawkey = 0;
 }

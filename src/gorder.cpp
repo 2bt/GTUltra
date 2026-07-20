@@ -1204,7 +1204,6 @@ void orderPlayFromPosition(GTOBJECT *gt, int startPatternPos, int startSongPos, 
 {
 
 	//	sprintf(textbuffer, "spp %d ssp %d, fc %d mlc %d", startPatternPos, startSongPos, focusChannel, gt->masterLoopChannel);
-	//	printtext(PANEL_NAMES_X, PANEL_NAMES_Y + 3, 0xe, textbuffer);
 
 		//		int t1 = followplay;
 	int t2 = gt->interPatternLoopEnabledFlag;
@@ -1395,7 +1394,6 @@ void orderSelectPatternsFromSelected(GTOBJECT *gt)
 	int plen = (pattlen[gt->editorUndoInfo.editorInfo[c3].epnum] - 1);	// *4;
 
 //		sprintf(textbuffer, "%x markchan ch %x len %x end %x  ", jdebug[15]++, editorInfo.epmarkchn,plen, editorInfo.epmarkend);
-	//	printtext(70, 12, 0xe, textbuffer);
 
 	if (editorInfo.epmarkchn >= 0)
 	{
@@ -1530,7 +1528,6 @@ void setMasterLoopChannel(GTOBJECT *gt, char *debugText)
 {
 
 	//	sprintf(textbuffer, "%x master %s", jdebug[15]++, debugText);
-	//	printtext(70, 12, 0xe, textbuffer);
 
 	int loopChannel = -1;
 	if (editorInfo.editmode == EDIT_PATTERN)
@@ -1777,7 +1774,6 @@ void orderListHandleHexInputExpandedView(GTOBJECT *gt)
 	songOrderLength[editorInfo.esnum][editorInfo.eschn] = index + 1;
 
 	//sprintf(textbuffer, "j %x, chn %x, songorderLen %x\n", editorInfo.esnum, editorInfo.eschn, (songOrderLength[editorInfo.esnum][editorInfo.eschn] - 1));
-	//printtext(70, 1, 0xe, textbuffer);
 
 	//	songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos]++;
 	return;
@@ -1848,7 +1844,6 @@ int handleEnterInExpandedView(GTOBJECT *gt)
 {
 
 	//	sprintf(textbuffer, "snd %x, chn %x, songorderLen %x\n", editorInfo.esnum, editorInfo.eschn,(songOrderLength[editorInfo.esnum][editorInfo.eschn] - 1));
-	//	printtext(70,1, 0xe, textbuffer);
 
 	if (editorInfo.eseditpos >= songOrderLength[editorInfo.esnum][editorInfo.eschn] - 1)	// 1.3.3
 		return 0;
@@ -2090,7 +2085,6 @@ void orderListInsertRowAtCursor_External(GTOBJECT *gt, int sng, int chn, int row
 	songOrderLength[sng][chn]++;
 
 	//	sprintf(textbuffer, "sng %x, chn %x songorderLen %x\n", sng,chn, (songOrderLength[sng][chn] - 1));
-	//	printtext(70, 1, 0xe, textbuffer);
 
 	int c2 = getActualChannel(sng, chn);	// 0-11
 

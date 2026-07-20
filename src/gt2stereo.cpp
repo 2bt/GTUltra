@@ -54,7 +54,6 @@ int cursorcolortable[] = { 1,2,7,2 };
 int exitprogram = 0;
 //int editorInfo.eacolumn = 0;
 int eamode = 0;
-int paletteChanged = 0;
 int backupTimeSeconds = 30;
 int debugTicks;	// used to measure CPU use when looking to improve performance
 int midiEnabled = 0;
@@ -143,9 +142,6 @@ char songfilter[MAX_FILENAME];
 char songpath[MAX_PATHNAME];
 char instrfilename[MAX_FILENAME];
 char instrfilter[MAX_FILENAME];
-char palettefilter[MAX_FILENAME];
-char palettepath[MAX_FILENAME];
-char paletteFileName[MAX_FILENAME] = { "palette_" };
 char instrpath[MAX_PATHNAME];
 char packedpath[MAX_PATHNAME];
 char charsetFilename[MAX_PATHNAME];
@@ -185,16 +181,9 @@ unsigned char hexkeytbl[] = { '0', '1', '2', '3', '4', '5', '6', '7',
 
 extern unsigned char datafile[];
 
-int currentPalettePreset = 0;
 
 
-unsigned char paletteRGB[MAX_PALETTE_PRESETS][3][MAX_PALETTE_ENTRIES];
-unsigned char paletteLoadRGB[MAX_PALETTE_PRESETS][3][MAX_PALETTE_LOAD_ENTRIES];
 
-unsigned short tableBackgroundColors[MAX_TABLES][MAX_TABLELEN];
-unsigned char paletteR[256];
-unsigned char paletteG[256];
-unsigned char paletteB[256];
 
 //int editorInfo.maxSIDChannels = 3;	//12;
 int gMIDINote = -1;
@@ -300,7 +289,6 @@ int main(int argc, char** argv)
 		getstringparam(configfile, scalatuningfilepath);
 		getparam(configfile, (unsigned int*)&editorInfo.maxSIDChannels);
 		getstringparam(configfile, startPaletteName);
-		//		getparam(configfile, &currentPalettePreset);
 		getfloatparam(configfile, &masterVolume);
 		getfloatparam(configfile, &detuneCent);
 		getparam(configfile, &enablekeyrepeat);
@@ -462,7 +450,7 @@ int main(int argc, char** argv)
 				sscanf(&argv[c][2], "%d", &editorInfo.maxSIDChannels);
 
 			case 'p':
-				sscanf(&argv[c][2], "%d", &currentPalettePreset);
+				// legacy palette preset CLI ignored (ImGui themes)
 
 			case 'v':
 				sscanf(&argv[c][2], "%f", &masterVolume);
@@ -528,19 +516,7 @@ int main(int argc, char** argv)
 		convertInsToPans(i);
 	}
 
-	// Search to see if any of the palettes match the name in the cfg file. If so, use that one
-	currentPalettePreset = 0;
-	for (int i = 0;i < MAX_PALETTE_PRESETS;i++)
-	{
-		if (paletteNames[i] == startPaletteName)
-		{
-			currentPalettePreset = i;
-			break;
-		}
-	}
-
-	//	if (currentPalettePreset >= MAX_PALETTE_PRESETS)
-	//		currentPalettePreset = 0;
+	// startPaletteName is still read/written in cfg for field layout; skins are ImGui guicolors.
 
 	if (editorInfo.maxSIDChannels != 3 && editorInfo.maxSIDChannels != 6 && editorInfo.maxSIDChannels != 9 && editorInfo.maxSIDChannels != 12)
 		editorInfo.maxSIDChannels = 6;
@@ -673,7 +649,6 @@ int main(int argc, char** argv)
 			loadedSongFlag = 1;
 			undoInitAllAreas(&gtObject);	// recreate undo buffers, using the loaded song as the original info
 			countInstruments();
-			setTableBackgroundColours(editorInfo.einum);
 		}
 
 		playUntilEnd(editorInfo.esnum);	// Get length of time of loaded or empty song
@@ -699,7 +674,7 @@ int main(int argc, char** argv)
 #endif
 
 	// Start editor mainloop
-	printmainscreen(&gtObject);
+	gfx_present();
 
 	//	SDL_Thread* threadID = SDL_CreateThread(doDisplay, "DisplayThread", (void*)&gtObject);
 
@@ -719,7 +694,6 @@ int main(int argc, char** argv)
 
 
 		//	sprintf(textbuffer, "jpdebug %d", jdebug[0]);	//, specialnotenames[0], specialnotenames[1]);
-		//	printtext(70, 36, 0xe, textbuffer);
 	}
 
 	//SDL_WaitThread(threadID, NULL);
@@ -740,13 +714,6 @@ int main(int argc, char** argv)
 	#endif
 
 	*/
-	//	paletteChanged = 0;	// JP TEST TO REMOVE SAVE
-	//	if (paletteChanged)
-	//	{
-	//		configfile = fopen("gtskins.bin", "wb");		// wb write binary. wt = write text
-	//		if (configfile)
-	//		{
-	//			fwrite(&paletteRGB, MAX_PALETTE_PRESETS * 3 * MAX_PALETTE_ENTRIES, 1, configfile);
 	//			fclose(configfile);
 	//		}
 	//	}
@@ -868,7 +835,7 @@ int main(int argc, char** argv)
 			specialnotenames,
 			scalatuningfilepath,
 			editorInfo.maxSIDChannels,
-			paletteNames[currentPalettePreset].c_str(),
+			startPaletteName, // cfg field kept for layout; skins are ImGui guicolors
 			masterVolume,
 			detuneCent,
 			enablekeyrepeat,
@@ -1096,20 +1063,6 @@ void waitkeymouse(GTOBJECT* gt)
 	converthex();
 }
 
-void waitkeynoupdate(void)
-{
-	// Used by greloc interactive (!autoSave) screens — unreachable from ImGui
-	// Relocate (always autoSave=1). Presents ImGui frame via gfx_present.
-	for (;;)
-	{
-		gfx_present();
-		getkey();
-		if ((rawkey) || (key)) break;
-		if ((mouseb) && (!prevmouseb)) break;
-		if (win_quitted) break;
-	}
-}
-
 void converthex()
 {
 	int c;
@@ -1138,7 +1091,6 @@ void docommand(void)
 	//int i = 0;
 	//	for (int i = 0; i < SDL_GetNumAudioDrivers(); ++i) {
 	//		sprintf(textbuffer, "Audio driver %d: %s\n", i,  SDL_GetAudioDriver(0));
-	//		printtext(70, 36, 0xe, textbuffer);
 	//	}
 
 	int c2;
@@ -1298,7 +1250,6 @@ int load(GTOBJECT* gt, char* dragDropFileName)
 		loadedSongFlag = 1;
 		undoInitAllAreas(&gtObject);
 		countInstruments();
-		setTableBackgroundColours(editorInfo.einum);
 		expandAllSongs();
 	}
 	key = 0;
@@ -1814,165 +1765,6 @@ void readscalatuningfile()
 	}
 }
 
-/*
-Foreground / Background for each column display for editing palette RGB
-For each entry, the RGB for index 0-n will set the paletteRGB entry (likey with an offset).
-So, modifying RGB for index 0 will set the CPATTERN_BACKGROUND1. modifying for index 1 will set CPATTERN_FOREGROUND1
-*/
-
-void initPaletteDisplay()
-{
-	setSkin(currentPalettePreset);	// set the actual gfx_ palette colours (using the loaded gtskin.bin file)
-}
-
-void setSkin(int palettePreset)
-{
-	for (int i = 0;i < MAX_PALETTE_ENTRIES;i++)
-	{
-		setGFXPaletteRGBFromPaletteRGB(palettePreset, i);
-	}
-}
-
-void setPaletteRGB(int presetIndex, int paletteIndex, int r, int g, int b)
-{
-	paletteRGB[presetIndex][0][paletteIndex] = r;
-	paletteRGB[presetIndex][1][paletteIndex] = g;
-	paletteRGB[presetIndex][2][paletteIndex] = b;
-
-	setGFXPaletteRGBFromPaletteRGB(presetIndex, paletteIndex);
-}
-
-int isMatchingRGB(int presetIndex, int color)
-{
-	int c1 = color & 0xff;
-	int c2 = (color >> 8) & 0xff;
-
-	for (int i = 0;i < 3;i++)
-	{
-		if ((paletteR[c1] != paletteR[c2]) || (paletteG[c1] != paletteG[c2]) || (paletteB[c1] != paletteB[c2]))
-		{
-			return 0;
-		}
-	}
-	return 1;
-}
-
-void setGFXPaletteRGBFromPaletteRGB(int presetIndex, int paletteIndex)
-{
-	int r = paletteRGB[presetIndex][0][paletteIndex];
-	int g = paletteRGB[presetIndex][1][paletteIndex];
-	int b = paletteRGB[presetIndex][2][paletteIndex];
-
-	paletteR[FIRST_UI_COLOR + paletteIndex] = r;
-	paletteG[FIRST_UI_COLOR + paletteIndex] = g;
-	paletteB[FIRST_UI_COLOR + paletteIndex] = b;
-}
-
-
-int highlightTableBuffer[MAX_TABLELEN];
-
-
-void setTableBackgroundColours(int currentInstrument)
-{
-
-	for (int t = 0;t < MAX_TABLES;t++)
-	{
-		int alternateTableColor = 0;
-		int needNewTable = 1;
-		int startTableOffset;
-		int instrumentTablePtr = instr[currentInstrument].ptr[t];
-		instrumentTablePtr--;
-
-		highlightInstrument(t, instrumentTablePtr);
-
-		for (int i = 0;i < MAX_TABLELEN;i++)
-		{
-
-			if (needNewTable)
-			{
-				startTableOffset = i;
-				needNewTable = 0;
-			}
-
-			//		int foundEnd = 0;
-			if (t != 3)		// not the speed table?
-			{
-
-				if (ltable[t][i] == 0xff)	// end marker?
-				{
-					setTableColour(instrumentTablePtr, t, startTableOffset, i, getColor(CTABLE_FOREGROUND1 + (alternateTableColor * 2), CTABLE_BACKGROUND1 + (alternateTableColor * 2)));
-					alternateTableColor = 1 - alternateTableColor;
-					needNewTable = 1;
-				}
-			}
-			else
-			{
-				if (ltable[t][i] != 0 || rtable[t][i] != 0)	// end marker?
-				{
-					setTableColour(instrumentTablePtr, t, startTableOffset, i, getColor(CTABLE_FOREGROUND1 + (alternateTableColor * 2), CTABLE_BACKGROUND1 + (alternateTableColor * 2)));
-					needNewTable = 1;
-				}
-			}
-
-		}
-
-		setTableColour(instrumentTablePtr, t, startTableOffset, MAX_TABLELEN - 1, getColor(CTABLE_UNUSED_FOREGROUND, CTABLE_UNUSED_BACKGROUND));
-
-		if (instrumentTablePtr < startTableOffset)	// Valid table data
-			highlightInstrument(t, instrumentTablePtr);
-	}
-}
-
-
-
-void highlightInstrument(int t, int instrumentTablePtr)
-{
-	for (int i = 0;i < MAX_TABLELEN;i++)
-	{
-		highlightTableBuffer[i] = 0;
-	}
-
-	if (instrumentTablePtr < 0)
-		return;
-
-	if (t == 3)
-	{
-		highlightTableBuffer[instrumentTablePtr] = 1;
-		return;
-	}
-	for (int i = 0;i < MAX_TABLELEN;i++)
-	{
-		if (highlightTableBuffer[instrumentTablePtr] == 1)
-			return;	// we've looped to a previously played table slot
-
-		highlightTableBuffer[instrumentTablePtr] = 1;
-		if ((ltable[t][instrumentTablePtr] == 0xff))
-		{
-			if ((rtable[t][instrumentTablePtr] == 0))
-				break;
-			else
-				instrumentTablePtr = rtable[t][instrumentTablePtr] - 1;
-		}
-		else
-			instrumentTablePtr++;
-	}
-
-}
-
-void setTableColour(int instrumentTablePtr, int t, int startTableOffset, int endTableOffset, int color)
-{
-	for (int j = startTableOffset;j <= endTableOffset;j++)
-	{
-		if (highlightTableBuffer[j])
-		{
-			//			color &= 0xff;
-			color = CTABLE_SELECTED_INSTRUMENT_FOREGROUND;
-			color |= (CTABLE_SELECTED_INSTRUMENT_BACKGROUND << 8);
-		}
-		tableBackgroundColors[t][j] = color;
-	}
-}
-
 // Used to get time of overall length of song
 // Either when first channel hits an END SONG or when last channel has looped
 
@@ -2274,7 +2066,6 @@ void restorePatternDisplayInfo(GTOBJECT* gt)
 				editorInfo.epview = -VISIBLEPATTROWS / 2;
 				//				jdebug[10]++;
 				//				sprintf(textbuffer, "out of range: %d", jdebug[10]);
-				//				printtext(70, 36, 0xe, textbuffer);
 			}
 		}
 
@@ -2300,7 +2091,6 @@ void nextSongPos(GTOBJECT* gt)
 		if (gt->editorUndoInfo.editorInfo[ac].espos < len - 1)
 		{
 			//			sprintf(textbuffer, "%d ac %d c3 %d esp %d sn %d sl %d", jcc++, ac, c3, gt->editorUndoInfo.editorInfo[ac].espos, songNum, songlen[songNum][c3]);
-			//			printtext(60, 36, 0xe, textbuffer);
 
 			backupPatternDisplayInfo(gt);	// V1.2.2 - keep pattern editing position when selecting a new song pos
 
@@ -2676,7 +2466,6 @@ void handleLoadPath(GTOBJECT* gt, const char* path, int merge)
 		loadedSongFlag = 1;
 		undoInitAllAreas(&gtObject);
 		countInstruments();
-		setTableBackgroundColours(editorInfo.einum);
 		expandAllSongs();
 
 		songExported = 0;

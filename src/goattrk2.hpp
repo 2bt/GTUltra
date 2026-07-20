@@ -12,11 +12,9 @@
 
 #include "gplatform.hpp"
 
-
 #include "gmidi.hpp"
 
 #include "gcommon.hpp"
-#include "glegacy_ui.hpp"
 #include "ginput.hpp"
 #include "gimgui.hpp"
 #include "gplay.hpp"
@@ -33,7 +31,6 @@
 #include "gtable.hpp"
 #include "ginfo.hpp"
 #include "gundo.hpp"
-#include "gpalette.hpp"
 #include "gtabledisplay.hpp"
 #include "gfkeys.hpp"
 
@@ -45,7 +42,7 @@
 #define EDIT_TABLES 3
 #define EDIT_NAMES 4
 
-//For EDITOR_INFO.editTableMode
+// For EDITOR_INFO.editTableMode
 #define EDIT_TABLE_NONE 0
 #define EDIT_TABLE_WAVE 1
 #define EDIT_TABLE_PULSE 2
@@ -56,26 +53,23 @@
 #define KEY_DMC 1
 #define KEY_JANKO 2
 
-#define VISIBLEPATTROWS 29	//31
-#define VISIBLEORDERLIST 11	// 11
+#define VISIBLEPATTROWS 29  // 31
+#define VISIBLEORDERLIST 11 // 11
 #define VISIBLETABLEROWS 14
 #define VISIBLEFILES 24
 
 #define PGUPDNREPEAT 8
 
-#define MAX_PALETTE_ENTRIES 0x100-FIRST_UI_COLOR-1 //	255 - 32 for first valid palette (FIRST_UI_COLOR). 255 = WHITE for cursor
-#define MAX_PALETTE_LOAD_ENTRIES 64
-#define MAX_PALETTE_PRESETS 16
 
 
 #ifndef GOATTRK2_C
 
- extern char packedsongname[MAX_FILENAME];
-extern int SIDTracker64ForIPadIsAmazing;
-extern int autoNextPattern;
+extern char packedsongname[MAX_FILENAME];
+extern int  SIDTracker64ForIPadIsAmazing;
+extern int  autoNextPattern;
 extern char appFileName[MAX_PATHNAME];
-extern int menu;
-//extern int editmode;
+extern int  menu;
+// extern int editmode;
 extern int doExportToWAV;
 extern int recordmode;
 extern int followplay;
@@ -86,64 +80,61 @@ extern int defaultpatternlength;
 extern int cursorflash;
 extern int cursorcolortable[];
 extern int exitprogram;
-//extern int editorInfo.eacolumn;
-extern int eamode;
+// extern int editorInfo.eacolumn;
+extern int      eamode;
 extern unsigned keypreset;
 extern unsigned playerversion;
-extern int fileformat;
-extern int zeropageadr;
-extern int playeradr;
-extern int debugEnabled;
-//extern unsigned editorInfo.sidmodel;
-//extern unsigned editorInfo.multiplier;
-//extern unsigned editorInfo.adparam;
-//extern unsigned editorInfo.ntsc;
+extern int      fileformat;
+extern int      zeropageadr;
+extern int      playeradr;
+extern int      debugEnabled;
+// extern unsigned editorInfo.sidmodel;
+// extern unsigned editorInfo.multiplier;
+// extern unsigned editorInfo.adparam;
+// extern unsigned editorInfo.ntsc;
 extern unsigned patterndispmode;
 extern unsigned sidaddress;
-//extern unsigned finevibrato;
-//extern unsigned editorInfo.optimizepulse;
-//extern unsigned editorInfo.optimizerealtime;
-//extern unsigned editorInfo.usefinevib;
-extern unsigned b;
-extern unsigned mr;
-extern unsigned writer;
-extern unsigned hardsid;
-extern unsigned catweasel;
-extern unsigned interpolate;
-extern unsigned hardsidbufinteractive;
-extern unsigned hardsidbufplayback;
-extern unsigned customclockrate;
-extern int leftKeyTicks;
-extern int leftKeyTicksDelta;
-extern unsigned monomode;
-extern unsigned stereoMode;
-extern float basepitch;
-extern char configbuf[MAX_PATHNAME];
-extern char loadedsongfilename[MAX_PATHNAME];
-extern char wavfilename[MAX_PATHNAME];
-extern char songfilename[MAX_PATHNAME];
-extern char songfilter[MAX_FILENAME];
-extern char wavfilter[MAX_FILENAME];
-extern char songpath[MAX_PATHNAME];
-extern char instrfilename[MAX_FILENAME];
-extern char instrfilter[MAX_FILENAME];
-extern char instrpath[MAX_PATHNAME];
-extern char packedpath[MAX_PATHNAME];
-extern char *programname;
-extern const char *notename[];
-extern const char *notenameTableView[];
-extern char textbuffer[MAX_PATHNAME];
-extern char debugTextbuffer[MAX_PATHNAME];
+// extern unsigned finevibrato;
+// extern unsigned editorInfo.optimizepulse;
+// extern unsigned editorInfo.optimizerealtime;
+// extern unsigned editorInfo.usefinevib;
+extern unsigned      b;
+extern unsigned      mr;
+extern unsigned      writer;
+extern unsigned      hardsid;
+extern unsigned      catweasel;
+extern unsigned      interpolate;
+extern unsigned      hardsidbufinteractive;
+extern unsigned      hardsidbufplayback;
+extern unsigned      customclockrate;
+extern int           leftKeyTicks;
+extern int           leftKeyTicksDelta;
+extern unsigned      monomode;
+extern unsigned      stereoMode;
+extern float         basepitch;
+extern char          configbuf[MAX_PATHNAME];
+extern char          loadedsongfilename[MAX_PATHNAME];
+extern char          wavfilename[MAX_PATHNAME];
+extern char          songfilename[MAX_PATHNAME];
+extern char          songfilter[MAX_FILENAME];
+extern char          wavfilter[MAX_FILENAME];
+extern char          songpath[MAX_PATHNAME];
+extern char          instrfilename[MAX_FILENAME];
+extern char          instrfilter[MAX_FILENAME];
+extern char          instrpath[MAX_PATHNAME];
+extern char          packedpath[MAX_PATHNAME];
+extern char*         programname;
+extern const char*   notename[];
+extern const char*   notenameTableView[];
+extern char          textbuffer[MAX_PATHNAME];
+extern char          debugTextbuffer[MAX_PATHNAME];
 extern unsigned char hexkeytbl[16];
 extern unsigned char datafile[];
-extern char charsetFilename[MAX_PATHNAME];
-extern int jdebug[16];
-extern char palettefilter[MAX_FILENAME];
-extern char palettepath[MAX_FILENAME];
-extern char paletteFileName[MAX_FILENAME];
-extern char backupFolderName[MAX_PATHNAME];
-extern char backupSngFilename[MAX_PATHNAME];
-extern char fkeysFilename[MAX_PATHNAME];
+extern char          charsetFilename[MAX_PATHNAME];
+extern int           jdebug[16];
+extern char          backupFolderName[MAX_PATHNAME];
+extern char          backupSngFilename[MAX_PATHNAME];
+extern char          fkeysFilename[MAX_PATHNAME];
 
 extern int patternOrderArray[256];
 extern int patternOrderList[256];
@@ -158,24 +149,16 @@ extern int debugTicks;
 extern int forceSave3ChannelSng;
 extern int normalizeWAV;
 
-//unsigned short paletteUIDisplay[MAX_PALETTE_ENTRIES];
-extern unsigned char paletteLoadRGB[MAX_PALETTE_PRESETS][3][MAX_PALETTE_LOAD_ENTRIES];
 
-extern float masterVolume;
-extern unsigned int lmanMode;
-extern unsigned char paletteRGB[MAX_PALETTE_PRESETS][3][MAX_PALETTE_ENTRIES];
-extern int currentPalettePreset;
-extern short tableBackgroundColors[MAX_TABLES][MAX_TABLELEN];
-extern unsigned char paletteR[256];
-extern unsigned char paletteG[256];
-extern unsigned char paletteB[256];
-//extern int editorInfo.maxSIDChannels;
+extern float         masterVolume;
+extern unsigned int  lmanMode;
+// extern int editorInfo.maxSIDChannels;
 extern char infoTextBuffer[256];
 
 extern int SID_StereoPanPositions[4][4];
-//extern int SID2_StereoPanPositions[];
-//extern int SID3_StereoPanPositions[];
-//extern int SID4_StereoPanPositions[];
+// extern int SID2_StereoPanPositions[];
+// extern int SID3_StereoPanPositions[];
+// extern int SID4_StereoPanPositions[];
 extern char editPan;
 
 extern int patternRemapOrderIndex;
@@ -189,18 +172,17 @@ extern char transportFollowPlay;
 
 extern unsigned int enablekeyrepeat;
 
-extern char paletteChanged;
 extern WAVEFORM_INFO waveformDisplayInfo;
 
-extern int selectedMIDIPort;
-extern int midiEnabled;
+extern int          selectedMIDIPort;
+extern int          midiEnabled;
 extern unsigned int enableAntiAlias;
 
 extern int useOriginalGTFunctionKeys;
 
 extern float detuneCent;
-extern int displayingPanel;
-extern int displayStopped;
+extern int   displayingPanel;
+extern int   displayStopped;
 
 extern int useRepeatsWhenCompressing;
 extern int songExported;
@@ -212,66 +194,57 @@ extern int sidAddr4;
 
 #endif
 
-void getparam(FILE *handle,  unsigned int *value);
-void getfloatparam(FILE *handle, float *value);
-void getstringparam(FILE *handle, char *value);
-void waitkey(GTOBJECT *gt);
-void editor_frame_update(GTOBJECT *gt);
-void waitkeymouse(GTOBJECT *gt);
-void waitkeynoupdate(void); // leftover for greloc !autoSave UI (unreachable from ImGui)
+void getparam(FILE* handle, unsigned int* value);
+void getfloatparam(FILE* handle, float* value);
+void getstringparam(FILE* handle, char* value);
+void waitkey(GTOBJECT* gt);
+void editor_frame_update(GTOBJECT* gt);
+void waitkeymouse(GTOBJECT* gt);
 void converthex(void);
 void docommand(void);
-void generalcommands(GTOBJECT *gt);
-int load(GTOBJECT *gt, char *dragDropFileName);
-void clear(GTOBJECT *gt);
-int prevmultiplier(void);
-int nextmultiplier(void);
-void editadsr(GTOBJECT *gt);
+void generalcommands(GTOBJECT* gt);
+int  load(GTOBJECT* gt, char* dragDropFileName);
+void clear(GTOBJECT* gt);
+int  prevmultiplier(void);
+int  nextmultiplier(void);
+void editadsr(GTOBJECT* gt);
 void calculatefreqtable(void);
 void setspecialnotenames(void);
 void readscalatuningfile(void);
-void setPaletteRGB(int presetIndex, int paletteIndex, int r, int g, int b);
-void initPaletteDisplay();
-void setGFXPaletteRGBFromPaletteRGB(int presetIndex, int paletteIndex);
-void setSkin(int palettePreset);
-int isMatchingRGB(int presetIndex, int color);
-void setTableColour(int instrumentTablePtr, int t, int startTableOffset, int endTableOffset, int color);
-void setTableBackgroundColours(int currentInstrument);
-void highlightInstrument(int t, int instrumentTablePtr);
-int quickSave();
+int  quickSave();
 void playUntilEnd(int songNumber);
 void playUntilEnd2(int songNumber);
 void initRemapArrays();
 
-void handleSIDChannelCountChange(GTOBJECT *gt);
-void nextSongPos(GTOBJECT *gt);
-void previousSongPos(GTOBJECT *gt, int songDffset);
-void setSongToBeginning(GTOBJECT *gt);
-void playFromCurrentPosition(GTOBJECT *gt, int currentPos);
-void ModifyTrackGetOriginalValue();
-int HzToSIDFreq(float hz);
+void  handleSIDChannelCountChange(GTOBJECT* gt);
+void  nextSongPos(GTOBJECT* gt);
+void  previousSongPos(GTOBJECT* gt, int songDffset);
+void  setSongToBeginning(GTOBJECT* gt);
+void  playFromCurrentPosition(GTOBJECT* gt, int currentPos);
+void  ModifyTrackGetOriginalValue();
+int   HzToSIDFreq(float hz);
 float noteToHz(int note);
 float centToHz(int cent);
-void detunePitchTable();
-void handlePressRewind(int doubleClick, GTOBJECT *gt);
-void createFilename(char *filePath, char *newfileName, char *filename);
-void backupPatternDisplayInfo(GTOBJECT *gt);
-void restorePatternDisplayInfo(GTOBJECT *gt);
-void reInitSID();
-void validateStereoMode();
-void editSIDPan(GTOBJECT *gt);
-void convertInsToPans(int sidChips);
-void convertPansToInts(int sidChips);
-void saveBackupSong();
-int createBackupFolder();
-int copyBackupFile(char *sourceName, char *destName);
-int replacechar(char *str, char orig, char rep);
-void handleLoad(GTOBJECT *gt, char *dragdropfile);
-void handleLoadPath(GTOBJECT *gt, const char *path, int merge);
-int saveSongAtPath(GTOBJECT *gt, const char *path);
-void stopScreenDisplay();
-void restartScreenDisplay();
-void ExportAsPCM(int songNumber, int doNormalize, GTOBJECT *gt);
-void playUntilEnd(int songNumber);
+void  detunePitchTable();
+void  handlePressRewind(int doubleClick, GTOBJECT* gt);
+void  createFilename(char* filePath, char* newfileName, char* filename);
+void  backupPatternDisplayInfo(GTOBJECT* gt);
+void  restorePatternDisplayInfo(GTOBJECT* gt);
+void  reInitSID();
+void  validateStereoMode();
+void  editSIDPan(GTOBJECT* gt);
+void  convertInsToPans(int sidChips);
+void  convertPansToInts(int sidChips);
+void  saveBackupSong();
+int   createBackupFolder();
+int   copyBackupFile(char* sourceName, char* destName);
+int   replacechar(char* str, char orig, char rep);
+void  handleLoad(GTOBJECT* gt, char* dragdropfile);
+void  handleLoadPath(GTOBJECT* gt, const char* path, int merge);
+int   saveSongAtPath(GTOBJECT* gt, const char* path);
+void  stopScreenDisplay();
+void  restartScreenDisplay();
+void  ExportAsPCM(int songNumber, int doNormalize, GTOBJECT* gt);
+void  playUntilEnd(int songNumber);
 
 #endif

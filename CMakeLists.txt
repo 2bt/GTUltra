@@ -154,13 +154,11 @@ add_library(gtcore STATIC
     "${SRC}/gfollow.cpp"
     "${SRC}/gfile.cpp"
     "${SRC}/gsound.cpp"
-    "${SRC}/glegacy_ui.cpp"
     "${SRC}/gsid.cpp"
     "${SRC}/ginfo.cpp"
     "${SRC}/gmidi.cpp"
     "${SRC}/gundo.cpp"
     "${SRC}/RtMidi.cpp"
-    "${SRC}/gpalette.cpp"
     "${SRC}/gfkeys.cpp"
     "${SRC}/ginput.cpp")
 # Project headers are quote-includes under src/; gplatform PUBLIC adds ${SRC}.

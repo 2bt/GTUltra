@@ -395,13 +395,6 @@ void displayPatternInfo(GTOBJECT *gt)
 	}
 	infoWaitMS = 0;
 
-	if (transportLoopPatternSelectArea)
-	{
-		sprintf(textbuffer, "%x hit loop %x %x   ", jdebug[15]++, editorInfo.editmode, lastEditWindow);
-		printtext(70, 12, 0xe, textbuffer);
-
-	}
-
 	if (editorInfo.etnum == lastInfoTableNum && editorInfo.etpos == lastInfoTablePos && c2 == lastInfoPatternCh && gt->editorUndoInfo.editorInfo[c2].epnum == lastInfoPattern && editorInfo.eppos == lastInfoPatternPos && editorInfo.editmode == lastEditWindow)
 		return;
 

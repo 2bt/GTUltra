@@ -581,7 +581,6 @@ void JPSoundMixer(Sint32 *dest, unsigned samples)
 
 
 	//	sprintf(textbuffer, "sid %d", sid_debug());
-	//	printtext(70, 14, 0xe, textbuffer);
 
 
 	//	int tick = SDL_GetTicks();

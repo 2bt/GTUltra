@@ -1023,7 +1023,7 @@ bool handle_global_action(Action act) {
             LOG_DEBUG("Relocate: export");
             char path[MAX_PATHNAME];
             if (gtfile::save_relocated(path, sizeof path)) {
-                relocator(gt, 0, 1);
+                relocator(gt, 0);
                 sprintf(infoTextBuffer, "Song Exported:%s", packedsongname);
                 LOG_INFO("exported to {}", packedsongname);
             }
@@ -1110,7 +1110,7 @@ bool handle_global_action(Action act) {
     case Action::FastRelocate:
         if (songExported) {
             LOG_DEBUG("FastRelocate to {}", packedsongname);
-            relocator(gt, 0, 1);
+            relocator(gt, 0);
             sprintf(infoTextBuffer, "Song Exported:%s", packedsongname);
             LOG_INFO("re-exported to {}", packedsongname);
         }

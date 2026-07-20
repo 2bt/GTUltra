@@ -350,8 +350,8 @@ int undoValidateUndoAreas(GTUNDO_OBJECT *editorSettings)
 						int diff = memcmp(gArea->undoObject->dest, gArea->undoObject->data, gArea->undoObject->size);
 						if (diff)
 						{
-							sprintf(textbuffer, "%d memleak: i:%d a:%d s:%d", memLeakCount, i, gArea->undoAreaType, gArea->undoAreaSubIndex);	//Alloc 0x%x", newMaxUndoSize);
-							printtext(75, 17, getColor(CTITLES_FOREGROUND, CGENERAL_BACKGROUND), textbuffer);
+							fprintf(stderr, "%d undo mismatch: i:%d a:%d s:%d\n",
+							        memLeakCount, i, gArea->undoAreaType, gArea->undoAreaSubIndex);
 							memLeakCount++;
 						}
 					}
@@ -480,7 +480,6 @@ int quickAddObjectToList(char *m, GTUNDO_AREA *gArea)
 		debugCurrentUndoBufferSize = newMaxUndoSize;
 
 		//	sprintf(textbuffer, "Alloc 0x%x", newMaxUndoSize);
-		//	printtext(70, 1, getColor(CTITLES_FOREGROUND, CGENERAL_BACKGROUND), textbuffer);
 
 		char **newUndoList = malloc((sizeof(char*)) * newMaxUndoSize);
 		memcpy(newUndoList, undoList, (sizeof(char*)) * maxUndoSize);
@@ -556,7 +555,6 @@ void undoAddEditorSettingsToList()
 	if (memcmp(&editorInfo, undoEditorInfoBackup->data, sizeof(EDITOR_INFO)))
 	{
 		//		sprintf(textbuffer, "d%d", dcount++);
-		//		printtext(75, 1, 0xe, textbuffer);
 
 		undoCounter++;	// we can use this to know if anything has been modified in the editor
 
@@ -574,7 +572,6 @@ void undoAddEditorSettingsToList()
 		undoFreeUndoObject(undoEditorInfoBackup);
 
 		//		sprintf(textbuffer, "same");
-			//	printtext(75, 1, 0xe, textbuffer);
 
 	}
 }
@@ -586,7 +583,6 @@ int undoPerform(GTOBJECT *gt)
 		return 0;
 
 	//	sprintf(textbuffer, "                   ", currentUndoPosition, undoCounter);
-		//printtext(80, 1, 0xe, textbuffer);
 
 	GTUNDO_OBJECT *gu;
 
@@ -626,7 +622,6 @@ int undoPerform(GTOBJECT *gt)
 
 
 	//sprintf(debugTextbuffer, "undo pos %d (%d undos)", currentUndoPosition, undoCounter);
-	//printtext(80, 1, 0xe, debugTextbuffer);
 
 	// These need to be in their own routine, called on init, load and here.
 
@@ -661,7 +656,6 @@ void refreshVariables()
 	countInstruments();
 
 	validateAllSongs();
-	setTableBackgroundColours(editorInfo.einum);
 
 	playUntilEnd(editorInfo.esnum);
 }

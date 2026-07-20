@@ -295,7 +295,6 @@ void tablecommands(GTOBJECT *gt, const EditorInput *input)
 	}
 
 	validatetableview();
-	setTableBackgroundColours(editorInfo.einum);
 }
 
 void deletetable(int num, int pos)

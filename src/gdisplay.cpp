@@ -30,76 +30,62 @@ const char* notenameTableView[] = {
 };
 
 char timechar[] = { ':', ' ' };
-int UIUnderline = 0;
-int initForST64 = 0;
-char debugtext[256];
+int  initForST64 = 0;
 
-void setSIDTracker64KeyOnStyle()
-{
-	if (SIDTracker64ForIPadIsAmazing != 0)
-		notename[(12 * 8) - 1] = " | ";
-	else
-		notename[(12 * 8) - 1] = "+++";
+void setSIDTracker64KeyOnStyle() {
+    if (SIDTracker64ForIPadIsAmazing != 0) notename[(12 * 8) - 1] = " | ";
+    else
+        notename[(12 * 8) - 1] = "+++";
 }
 
-void printmainscreen(GTOBJECT* gt)
-{
-	(void)gt;
-	// M6 Phase 3: ImGui-first present (no chargen blit).
-	gfx_present();
+
+void displayupdate(GTOBJECT* gt) {
+    if (cursorflashdelay >= 6) {
+        cursorflashdelay %= 6;
+        cursorflash++;
+        cursorflash &= 3;
+    }
+    doDisplay((void*)gt);
 }
 
-void displayupdate(GTOBJECT* gt)
-{
-	if (cursorflashdelay >= 6) {
-		cursorflashdelay %= 6;
-		cursorflash++;
-		cursorflash &= 3;
-	}
-	doDisplay((void*)gt);
+int doDisplay(void* gt) {
+    GTOBJECT* gto = (GTOBJECT*)gt;
+    updateDisplayWhenFollowingAndPlaying(gto);
+    gfx_present();
+    return 0;
 }
 
-int doDisplay(void* gt)
-{
-	GTOBJECT* gto = (GTOBJECT*)gt;
-	updateDisplayWhenFollowingAndPlaying(gto);
-	gfx_present();
-	return 0;
+void resettime(GTOBJECT* gt) {
+    gt->timemin   = 0;
+    gt->timesec   = 0;
+    gt->timeframe = 0;
 }
 
-void resettime(GTOBJECT* gt)
-{
-	gt->timemin = 0;
-	gt->timesec = 0;
-	gt->timeframe = 0;
+void setSongLengthTime(GTOBJECT* gt) {
+    gt->totalFrame = gt->timeframe;
+    gt->totalSec   = gt->timesec;
+    gt->totalMin   = gt->timemin;
 }
 
-void setSongLengthTime(GTOBJECT* gt)
-{
-	gt->totalFrame = gt->timeframe;
-	gt->totalSec = gt->timesec;
-	gt->totalMin = gt->timemin;
-}
-
-void incrementtime(GTOBJECT* gt)
-{
-	gt->timeframe++;
-	if (!editorInfo.ntsc) {
-		if (((editorInfo.multiplier) && (gt->timeframe >= PALFRAMERATE * editorInfo.multiplier))
-		    || ((!editorInfo.multiplier) && (gt->timeframe >= PALFRAMERATE / 2))) {
-			gt->timeframe = 0;
-			gt->timesec++;
-		}
-	} else {
-		if (((editorInfo.multiplier) && (gt->timeframe >= NTSCFRAMERATE * editorInfo.multiplier))
-		    || ((!editorInfo.multiplier) && (gt->timeframe >= NTSCFRAMERATE / 2))) {
-			gt->timeframe = 0;
-			gt->timesec++;
-		}
-	}
-	if (gt->timesec == 60) {
-		gt->timesec = 0;
-		gt->timemin++;
-		gt->timemin %= 60;
-	}
+void incrementtime(GTOBJECT* gt) {
+    gt->timeframe++;
+    if (!editorInfo.ntsc) {
+        if (((editorInfo.multiplier) && (gt->timeframe >= PALFRAMERATE * editorInfo.multiplier)) ||
+            ((!editorInfo.multiplier) && (gt->timeframe >= PALFRAMERATE / 2))) {
+            gt->timeframe = 0;
+            gt->timesec++;
+        }
+    }
+    else {
+        if (((editorInfo.multiplier) && (gt->timeframe >= NTSCFRAMERATE * editorInfo.multiplier)) ||
+            ((!editorInfo.multiplier) && (gt->timeframe >= NTSCFRAMERATE / 2))) {
+            gt->timeframe = 0;
+            gt->timesec++;
+        }
+    }
+    if (gt->timesec == 60) {
+        gt->timesec = 0;
+        gt->timemin++;
+        gt->timemin %= 60;
+    }
 }

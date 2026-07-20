@@ -753,7 +753,6 @@ void playroutine(GTOBJECT *gt)
 										if (c == 0)
 										{
 											//	sprintf(textbuffer, "+ %x", cptr->freq);
-											//	printtext(60 + jpd, 36, 0xe, textbuffer);
 											jpd += 5;
 											jpd %= 30;
 										}
@@ -1253,16 +1252,6 @@ void playroutine(GTOBJECT *gt)
 		incrementtime(gt);
 
 
-	/*
-	jdebug[15]++;
-
-	if (gtObject.interPatternLoopEnabledFlag && gt->disableLoopSearch == 0)	// && gt->loopEnabledFlag)
-	{
-		sprintf(textbuffer, "interloop %x %x", jdebug[15], useOriginalGTFunctionKeys);
-		printtext(70, 12, 0xe, textbuffer);
-	}
-	*/
-
 	if (gt->noSIDWrites == 0 && gt->loopEnabledFlag  && gt->disableLoopSearch == 0 && gtObject.interPatternLoopEnabledFlag && transportLoopPatternSelectArea)
 	{
 		if (gt->chn[gt->masterLoopChannel].advance)	// V1.3.6
@@ -1356,7 +1345,6 @@ void playroutine(GTOBJECT *gt)
 				{
 					int plen = (pattlen[gt->chn[c3].pattnum] - 1);	// *4;
 	//				sprintf(textbuffer, "%x hit loop %x  ", jdebug[15]++, editorInfo.epmarkchn);
-		//			printtext(70, 12, 0xe, textbuffer);
 
 					if (editorInfo.epmarkend > plen || editorInfo.epmarkstart > plen)
 					{
@@ -1369,7 +1357,6 @@ void playroutine(GTOBJECT *gt)
 				int markEnd = editorInfo.epmarkend;
 
 				//	sprintf(textbuffer, "%x hit loop %x %x %x  ", jdebug[15]++, markStart, markEnd, plen);
-				//	printtext(70, 12, 0xe, textbuffer);
 
 				if (markStart != markEnd && editorInfo.epmarkchn >= 0)// 1.1.7 FIX (only check for inter-pattern looping if area is selected) 3/5/2022
 				{
@@ -1408,8 +1395,6 @@ void playroutine(GTOBJECT *gt)
 				gt->chn[gt->masterLoopChannel].songLoopPtr = gt->chn[gt->masterLoopChannel].songptr;
 
 				//		sprintf(textbuffer, "end song %x mlc %x ec %x em %x %d", gt->chn[gt->masterLoopChannel].songLoopPtr, gt->masterLoopChannel, editorInfo.epchn, editorInfo.editmode, jpd++);
-				//		printtext(PANEL_NAMES_X + 24, PANEL_NAMES_Y + 3, 0xe, textbuffer);
-						//	printtext(70, 36, 0xe, textbuffer);
 				calculateLoopInfo2(gt->psnum, gt->masterLoopChannel, gt->chn[gt->masterLoopChannel].songptr - 1, &gtLoopObject);
 				gtObject.loopEnabledFlag = 1;
 			}
