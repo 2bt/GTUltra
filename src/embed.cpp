@@ -7,7 +7,7 @@
 
 namespace {
 
-constexpr std::array<embed::Blob, static_cast<std::size_t>(embed::Id::count)> k_blobs = { {
+constexpr std::array<embed::Blob, static_cast<size_t>(embed::Id::count)> k_blobs = { {
     { k_bytes_player_s, k_size_player_s },
     { k_bytes_altplayer_s, k_size_altplayer_s },
     { k_bytes_player3_s, k_size_player3_s },
@@ -20,14 +20,14 @@ constexpr std::array<embed::Blob, static_cast<std::size_t>(embed::Id::count)> k_
     { k_bytes_font_otf, k_size_font_otf },
 } };
 
-static_assert(k_blobs.size() == static_cast<std::size_t>(embed::Id::count));
+static_assert(k_blobs.size() == static_cast<size_t>(embed::Id::count));
 
 } // namespace
 
 namespace embed {
 
 Blob const& get(Id id) {
-    auto i = static_cast<std::size_t>(id);
+    auto i = static_cast<size_t>(id);
     assert(i < k_blobs.size());
     return k_blobs[i];
 }

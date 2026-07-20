@@ -68,7 +68,7 @@ void pump_events() {
         case SDL_QUIT: win_quitted = 1; break;
         case SDL_TEXTINPUT: win_asciikey = static_cast<uint8_t>(event.text.text[0]); break;
         case SDL_KEYDOWN:
-            if (!(event.key.repeat && !key_repeat)) {
+            if (!event.key.repeat || key_repeat) {
                 unsigned keynum = event.key.keysym.scancode;
                 if (keynum < SDL_NUM_SCANCODES) {
                     win_keytable[keynum] = 1;
@@ -137,8 +137,8 @@ bool win_init_editor(unsigned scale, int enable_anti_alias) {
     return true;
 }
 
-void win_enableKeyRepeat() { key_repeat = 1; }
-void win_disableKeyRepeat() { key_repeat = 0; }
+void win_enable_key_repeat() { key_repeat = 1; }
+void win_disable_key_repeat() { key_repeat = 0; }
 
 int win_getspeed(int framerate) {
     int frametime = 10000 / framerate;
@@ -155,17 +155,17 @@ int win_getspeed(int framerate) {
     return frames;
 }
 
-void win_setmousemode(int mode) {
-    mouse_mode = mode;
-    win_reapply_mousemode();
-}
-
 void win_reapply_mousemode() {
     switch (mouse_mode) {
     case MOUSE_ALWAYS_VISIBLE: SDL_ShowCursor(SDL_ENABLE); break;
     case MOUSE_FULLSCREEN_HIDDEN: SDL_ShowCursor(win_fullscreen ? SDL_DISABLE : SDL_ENABLE); break;
     case MOUSE_ALWAYS_HIDDEN: SDL_ShowCursor(SDL_DISABLE); break;
     }
+}
+
+void win_setmousemode(int mode) {
+    mouse_mode = mode;
+    win_reapply_mousemode();
 }
 
 void win_native_modal_begin() {

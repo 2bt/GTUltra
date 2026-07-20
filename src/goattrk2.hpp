@@ -1,5 +1,4 @@
-#ifndef GOATTRK2_H
-#define GOATTRK2_H
+#pragma once
 
 #include <unistd.h>
 #include <stdio.h>
@@ -31,7 +30,6 @@
 #include "gtable.hpp"
 #include "ginfo.hpp"
 #include "gundo.hpp"
-#include "gtabledisplay.hpp"
 #include "gfkeys.hpp"
 
 #define REMOVE_UNDO 0
@@ -59,7 +57,6 @@
 #define VISIBLEFILES 24
 
 #define PGUPDNREPEAT 8
-
 
 
 #ifndef GOATTRK2_C
@@ -148,8 +145,8 @@ extern int forceSave3ChannelSng;
 extern int normalizeWAV;
 
 
-extern float         masterVolume;
-extern unsigned int  lmanMode;
+extern float        masterVolume;
+extern unsigned int lmanMode;
 // extern int editorInfo.maxSIDChannels;
 extern char infoTextBuffer[256];
 
@@ -158,8 +155,6 @@ extern int SID_StereoPanPositions[4][4];
 // extern int SID3_StereoPanPositions[];
 // extern int SID4_StereoPanPositions[];
 extern char editPan;
-
-extern int patternRemapOrderIndex;
 
 extern char transportPolySIDEnabled[4];
 extern char transportLoopPattern;
@@ -198,51 +193,40 @@ void getstringparam(FILE* handle, char* value);
 void waitkey(GTOBJECT* gt);
 void editor_frame_update(GTOBJECT* gt);
 void waitkeymouse(GTOBJECT* gt);
-void converthex(void);
-void docommand(void);
+void converthex();
+void docommand();
 void generalcommands(GTOBJECT* gt);
 int  load(GTOBJECT* gt, char* dragDropFileName);
 void clear(GTOBJECT* gt);
-int  prevmultiplier(void);
-int  nextmultiplier(void);
+int  prevmultiplier();
+int  nextmultiplier();
 void editadsr(GTOBJECT* gt);
-void calculatefreqtable(void);
-void setspecialnotenames(void);
-void readscalatuningfile(void);
+void calculatefreqtable();
+void setspecialnotenames();
+void readscalatuningfile();
 int  quickSave();
 void playUntilEnd(int songNumber);
 void playUntilEnd2(int songNumber);
 void initRemapArrays();
 
-void  handleSIDChannelCountChange(GTOBJECT* gt);
-void  nextSongPos(GTOBJECT* gt);
-void  previousSongPos(GTOBJECT* gt, int songDffset);
-void  setSongToBeginning(GTOBJECT* gt);
-void  playFromCurrentPosition(GTOBJECT* gt, int currentPos);
-void  ModifyTrackGetOriginalValue();
-int   HzToSIDFreq(float hz);
-float noteToHz(int note);
-float centToHz(int cent);
-void  detunePitchTable();
-void  handlePressRewind(int doubleClick, GTOBJECT* gt);
-void  createFilename(char* filePath, char* newfileName, const char* filename);
-void  backupPatternDisplayInfo(GTOBJECT* gt);
-void  restorePatternDisplayInfo(GTOBJECT* gt);
-void  reInitSID();
-void  validateStereoMode();
-void  editSIDPan(GTOBJECT* gt);
-void  convertInsToPans(int sidChips);
-void  convertPansToInts(int sidChips);
-void  saveBackupSong();
-int   createBackupFolder();
-int   copyBackupFile(char* sourceName, char* destName);
-int   replacechar(char* str, char orig, char rep);
-void  handleLoad(GTOBJECT* gt, char* dragdropfile);
-void  handleLoadPath(GTOBJECT* gt, const char* path, int merge);
-int   saveSongAtPath(GTOBJECT* gt, const char* path);
-void  stopScreenDisplay();
-void  restartScreenDisplay();
-void  ExportAsPCM(int songNumber, int doNormalize, GTOBJECT* gt);
-void  playUntilEnd(int songNumber);
-
-#endif
+void handleSIDChannelCountChange(GTOBJECT* gt);
+void nextSongPos(GTOBJECT* gt);
+void previousSongPos(GTOBJECT* gt, int songDffset);
+void playFromCurrentPosition(GTOBJECT* gt, int currentPos);
+void handlePressRewind(int doubleClick, GTOBJECT* gt);
+void createFilename(char* filePath, char* newfileName, const char* filename);
+void backupPatternDisplayInfo(GTOBJECT* gt);
+void restorePatternDisplayInfo(GTOBJECT* gt);
+void reInitSID();
+void validateStereoMode();
+void editSIDPan(GTOBJECT* gt);
+void convertInsToPans(int sidChips);
+void convertPansToInts(int sidChips);
+void saveBackupSong();
+int  createBackupFolder();
+int  replacechar(char* str, char orig, char rep);
+void handleLoadPath(GTOBJECT* gt, const char* path, int merge);
+int  saveSongAtPath(GTOBJECT* gt, const char* path);
+void stopScreenDisplay();
+void restartScreenDisplay();
+void ExportAsPCM(int songNumber, int doNormalize, GTOBJECT* gt);

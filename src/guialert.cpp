@@ -4,32 +4,31 @@
 
 #include "guialert.hpp"
 
+#include "gwin.hpp"
 #include "log.hpp"
 
 #include <SDL.h>
 
-extern SDL_Window* win_window;
+namespace {
 
-static void gt_ui_message(Uint32 flags, const char* title, const char* message)
-{
+void gt_ui_message(Uint32 flags, const char* title, const char* message) {
     if (!message) message = "(no message)";
-    if (flags & SDL_MESSAGEBOX_ERROR)
-        LOG_ERROR("{}", message);
+    if (flags & SDL_MESSAGEBOX_ERROR) LOG_ERROR("{}", message);
     else if (flags & SDL_MESSAGEBOX_WARNING)
         LOG_WARN("{}", message);
     else
         LOG_INFO("{}", message);
 
-    if (win_window)
-        SDL_ShowSimpleMessageBox(flags, title, message, win_window);
+    if (win_window) SDL_ShowSimpleMessageBox(flags, title, message, win_window);
 }
+
+} // namespace
 
 void gt_ui_error(const char* message) { gt_ui_message(SDL_MESSAGEBOX_ERROR, "GTUltra", message); }
 void gt_ui_warn(const char* message) { gt_ui_message(SDL_MESSAGEBOX_WARNING, "GTUltra", message); }
 void gt_ui_info(const char* message) { gt_ui_message(SDL_MESSAGEBOX_INFORMATION, "GTUltra", message); }
 
-bool gt_ui_confirm(const char* message)
-{
+bool gt_ui_confirm(const char* message) {
     if (!message) message = "Continue?";
     LOG_INFO("confirm: {}", message);
 

@@ -9,8 +9,8 @@ bool win_init_editor(unsigned scale, int enable_anti_alias);
 int  win_getspeed(int framerate);
 void win_setmousemode(int mode);
 void win_reapply_mousemode();
-void win_enableKeyRepeat();
-void win_disableKeyRepeat();
+void win_enable_key_repeat();
+void win_disable_key_repeat();
 void win_native_modal_begin();
 void win_native_modal_end();
 

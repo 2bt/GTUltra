@@ -1,18 +1,4 @@
-#ifndef GSOUND_H
-#define GSOUND_H
-
-#ifdef GSOUND_C
-
-#ifdef __WIN32__
-#include <winioctl.h>
-#else
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <sys/ioctl.h>
-#include "cwsid.hpp"
-#endif
-
-#endif
+#pragma once
 
 #define MINMIXRATE 11025
 #define MAXMIXRATE 48000
@@ -26,20 +12,27 @@
 #define NTSCFRAMERATE 60
 #define NTSCCLOCKRATE 1022727
 
-#define MIXBUFFERSIZE 65536	//16384	//65536
+#define MIXBUFFERSIZE 65536
 
 extern int bypassPlayRoutine;
 extern int largestExportValue;
 
-int sound_init(unsigned b, unsigned mr, unsigned writer, unsigned hardsid, unsigned m, unsigned ntsc, unsigned multiplier, unsigned catweasel, unsigned interpolate, unsigned customclockrate);
-void sound_uninit(void);
-void sound_suspend(void);
-void sound_flush(void);
+int  sound_init(unsigned b,
+                unsigned mr,
+                unsigned writer,
+                unsigned hardsid,
+                unsigned m,
+                unsigned ntsc,
+                unsigned multiplier,
+                unsigned catweasel,
+                unsigned interpolate,
+                unsigned customclockrate);
+void sound_uninit();
+void sound_suspend();
+void sound_flush();
 
 void ExportCloseFileHandle();
 void GenerateExportFileName();
-void ExportSIDToPCMFile(int samples,int doNormalize);
+void ExportSIDToPCMFile(int samples, int doNormalize);
 void OpenExportFileNameForWriting();
 void convertRAWToWAV(int doNormalize);
-
-#endif

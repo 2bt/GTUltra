@@ -23,7 +23,7 @@ enum class Id {
 
 struct Blob {
     const uint8_t* data;
-    std::size_t    size;
+    size_t         size;
 };
 
 Blob const& get(Id id);

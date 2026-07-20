@@ -53,23 +53,24 @@ constexpr float kBaseUIFontPx  = 18.0f;
 constexpr float kMinUIFontPx   = 10.0f;
 constexpr float kMaxUIFontPx   = 48.0f;
 float           g_font_size_px = kBaseUIFontPx;
+// Instrument-name editing (per-row InputText, like song metadata fields).
+int  g_instr_name_edit        = -1; // instrument index 1..3F, or -1
+int  g_instr_name_want_focus  = -1; // one-shot keyboard-focus request
+bool g_instr_name_item_active = false;
 
-void gimgui_open_help() {
-    if (g_show_help) {
-        g_show_help = false;
-        return;
-    }
-    g_show_help       = true;
-    g_help_tab        = (int)gthelp::topic_index_for_edit_panel((int)gtui::edit_panel());
-    g_help_select_tab = true;
-    ++g_help_tab_bar_id;
-}
+// Song metadata field focus (0=name, 1=author, 2=copyright).
+int  g_song_field_edit        = -1; // field in text-edit mode, or -1 for selection only
+int  g_song_field_want_focus  = -1; // one-shot keyboard-focus request (like instr name)
+bool g_song_field_item_active = false;
 
-void gimgui_close_help() { g_show_help = false; }
+bool gimgui_song_field_editing() { return g_song_field_item_active; }
 
-bool gimgui_help_open() { return g_show_help; }
+bool gimgui_instr_name_editing() { return g_instr_name_item_active; }
 
-static void gimgui_draw_help_notes(std::span<const std::string_view> notes) {
+namespace {
+
+
+void gimgui_draw_help_notes(std::span<const std::string_view> notes) {
     if (notes.empty()) return;
     for (std::string_view line : notes) ImGui::TextWrapped("%.*s", (int)line.size(), line.data());
     ImGui::Spacing();
@@ -78,7 +79,7 @@ static void gimgui_draw_help_notes(std::span<const std::string_view> notes) {
 }
 
 // Keycap-style chip so alternate bindings are not joined with "/" (looks like the slash key).
-static void gimgui_draw_key_chip(const char* label, bool warn = false) {
+void gimgui_draw_key_chip(const char* label, bool warn = false) {
     const ImVec2 pad(6.0f, 2.0f);
     const ImVec2 text = ImGui::CalcTextSize(label);
     const ImVec2 size(text.x + pad.x * 2.0f, text.y + pad.y * 2.0f);
@@ -94,7 +95,7 @@ static void gimgui_draw_key_chip(const char* label, bool warn = false) {
     ImGui::Dummy(size);
 }
 
-static void gimgui_draw_help_keybinds(gtaction::Ctx ctx) {
+void gimgui_draw_help_keybinds(gtaction::Ctx ctx) {
     const auto rows      = gtaction::binding_rows_for(ctx);
     const auto conflicts = gtaction::conflicts_for(ctx);
 
@@ -119,8 +120,7 @@ static void gimgui_draw_help_keybinds(gtaction::Ctx ctx) {
                 }
                 const bool win = (i + 1 == cf.claimants.size());
                 if (win) ImGui::Text("%s", gtaction::action_label(cf.claimants[i]));
-                else
-                    ImGui::TextDisabled("%s", gtaction::action_label(cf.claimants[i]));
+                else ImGui::TextDisabled("%s", gtaction::action_label(cf.claimants[i]));
                 if (i + 1 < cf.claimants.size()) ImGui::SameLine(0.0f, 0.0f);
             }
         }
@@ -147,7 +147,7 @@ static void gimgui_draw_help_keybinds(gtaction::Ctx ctx) {
             for (std::size_t i = 0; i < row.chords.size(); ++i) {
                 if (i) ImGui::SameLine(0.0f, 6.0f);
                 const std::string label = gtaction::format_chord(row.chords[i]);
-                const bool        warn  = conflict_chords.count(row.chords[i]) > 0;
+                const bool        warn  = conflict_chords.contains(row.chords[i]);
                 gimgui_draw_key_chip(label.c_str(), warn);
             }
             ImGui::TableNextColumn();
@@ -158,7 +158,7 @@ static void gimgui_draw_help_keybinds(gtaction::Ctx ctx) {
 }
 
 // Split "Label — body" or "Label: body" (short labels only) for reference prose.
-static bool gimgui_help_split_labeled(std::string_view line, std::string_view* label, std::string_view* body) {
+bool gimgui_help_split_labeled(std::string_view line, std::string_view* label, std::string_view* body) {
     constexpr std::string_view kEmDash = " \xE2\x80\x94 "; // " — "
     const std::size_t          em      = line.find(kEmDash);
     if (em != std::string_view::npos && em > 0 && em < 40) {
@@ -176,7 +176,7 @@ static bool gimgui_help_split_labeled(std::string_view line, std::string_view* l
     return false;
 }
 
-static void gimgui_draw_help_reference_line(std::string_view line) {
+void gimgui_draw_help_reference_line(std::string_view line) {
     // "Command 0XY: …" → chip + wrapped description
     constexpr std::string_view kCmd = "Command ";
     if (line.size() > kCmd.size() && line.substr(0, kCmd.size()) == kCmd) {
@@ -220,11 +220,11 @@ static void gimgui_draw_help_reference_line(std::string_view line) {
     ImGui::Spacing();
 }
 
-static void gimgui_draw_help_reference(std::span<const std::string_view> lines) {
+void gimgui_draw_help_reference(std::span<const std::string_view> lines) {
     for (std::string_view line : lines) gimgui_draw_help_reference_line(line);
 }
 
-static void gimgui_draw_help_topic_body(const gthelp::Topic& topic) {
+void gimgui_draw_help_topic_body(const gthelp::Topic& topic) {
     ImGui::PushStyleColor(ImGuiCol_Text, ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled));
     ImGui::TextUnformatted(topic.title.data(), topic.title.data() + topic.title.size());
     ImGui::PopStyleColor();
@@ -239,7 +239,7 @@ static void gimgui_draw_help_topic_body(const gthelp::Topic& topic) {
     }
 }
 
-static void gimgui_draw_help_window() {
+void gimgui_draw_help_window() {
     g_help_hovered = false;
     if (g_show_help) ImGui::OpenPopup("Help");
 
@@ -281,38 +281,6 @@ static void gimgui_draw_help_window() {
     ImGui::EndPopup();
 }
 
-// Instrument-name editing (per-row InputText, like song metadata fields).
-int  g_instr_name_edit        = -1; // instrument index 1..3F, or -1
-int  g_instr_name_want_focus  = -1; // one-shot keyboard-focus request
-bool g_instr_name_item_active = false;
-
-// Song metadata field focus (0=name, 1=author, 2=copyright).
-int  g_song_field_edit        = -1; // field in text-edit mode, or -1 for selection only
-int  g_song_field_want_focus  = -1; // one-shot keyboard-focus request (like instr name)
-bool g_song_field_item_active = false;
-
-void gimgui_instr_name_begin(int inst) {
-    if (inst < gtui::INSTR_FIRST) return;
-    g_instr_name_edit       = inst;
-    g_instr_name_want_focus = inst;
-}
-
-void gimgui_song_field_begin(int field) {
-    if (field < 0 || field > 2) return;
-    g_song_field_edit       = field;
-    g_song_field_want_focus = field;
-}
-
-void gimgui_song_field_end() {
-    g_song_field_edit       = -1;
-    g_song_field_want_focus = -1;
-}
-
-bool gimgui_song_field_editing() { return g_song_field_item_active; }
-
-bool gimgui_instr_name_editing() { return g_instr_name_item_active; }
-
-namespace {
 
 constexpr ImGuiWindowFlags kNoNavWindowFlags =
     ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
@@ -440,18 +408,18 @@ using GridMouseFn =
     std::function<void(int row, float localX, ImGuiMouseButton button, bool double_click, bool dragging)>;
 
 template <class HeaderDraw, class DrawRow, class OnClick>
-void gimgui_grid_body(const char* id,
-                      int         rows,
-                      float       rowW,
-                      float       lineH,
-                      int         followRow,
-                      HeaderDraw  headerDraw,
-                      float       headerBandH,
-                      DrawRow     drawRow,
-                      OnClick     onClick,
-                      bool        h_scroll     = true,
-                      int*        out_view_row = nullptr,
-                      GridMouseFn onGridMouse  = nullptr) {
+void gimgui_grid_body(const char*        id,
+                      int                rows,
+                      float              rowW,
+                      float              lineH,
+                      int                followRow,
+                      HeaderDraw         headerDraw,
+                      float              headerBandH,
+                      DrawRow            drawRow,
+                      OnClick            onClick,
+                      bool               h_scroll      = true,
+                      int*               out_view_row  = nullptr,
+                      const GridMouseFn* on_grid_mouse = nullptr) {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
     ImGui::BeginChild(id, ImVec2(0, 0), false, kNoNavWindowFlags);
 
@@ -503,24 +471,24 @@ void gimgui_grid_body(const char* id,
         const bool      inRows        = r >= 0 && r < rows;
         constexpr float kHoldDelaySec = 24.f / 60.f; // legacy HOLDDELAY @ 60 Hz
 
-        if (onGridMouse) {
+        if (on_grid_mouse) {
             if (inRows) {
                 if (ImGui::IsMouseDoubleClicked(ImGuiMouseButton_Left))
-                    onGridMouse(r, localX, ImGuiMouseButton_Left, true, false);
+                    (*on_grid_mouse)(r, localX, ImGuiMouseButton_Left, true, false);
                 else if (ImGui::IsMouseClicked(ImGuiMouseButton_Left))
-                    onGridMouse(r, localX, ImGuiMouseButton_Left, false, false);
+                    (*on_grid_mouse)(r, localX, ImGuiMouseButton_Left, false, false);
                 else if (ImGui::IsMouseDown(ImGuiMouseButton_Left) && io.MouseDownDuration[0] >= kHoldDelaySec)
-                    onGridMouse(r, localX, ImGuiMouseButton_Left, false, true);
+                    (*on_grid_mouse)(r, localX, ImGuiMouseButton_Left, false, true);
                 else if (ImGui::IsMouseClicked(ImGuiMouseButton_Right))
-                    onGridMouse(r, localX, ImGuiMouseButton_Right, false, false);
+                    (*on_grid_mouse)(r, localX, ImGuiMouseButton_Right, false, false);
                 else if (ImGui::IsMouseDown(ImGuiMouseButton_Right) &&
                          !ImGui::IsMouseClicked(ImGuiMouseButton_Right))
-                    onGridMouse(r, localX, ImGuiMouseButton_Right, false, true);
+                    (*on_grid_mouse)(r, localX, ImGuiMouseButton_Right, false, true);
                 else if (ImGui::IsMouseClicked(ImGuiMouseButton_Middle))
-                    onGridMouse(r, localX, ImGuiMouseButton_Middle, false, false);
+                    (*on_grid_mouse)(r, localX, ImGuiMouseButton_Middle, false, false);
                 else if (ImGui::IsMouseDown(ImGuiMouseButton_Middle) &&
                          !ImGui::IsMouseClicked(ImGuiMouseButton_Middle))
-                    onGridMouse(r, localX, ImGuiMouseButton_Middle, false, true);
+                    (*on_grid_mouse)(r, localX, ImGuiMouseButton_Middle, false, true);
             }
         }
         else if (inRows && ImGui::IsMouseClicked(ImGuiMouseButton_Left)) {
@@ -544,17 +512,17 @@ void gimgui_grid_body(const char* id,
 }
 
 template <class DrawRow, class OnClick>
-void gimgui_grid_body(const char* id,
-                      int         rows,
-                      float       rowW,
-                      float       lineH,
-                      int         followRow,
-                      DrawRow     drawRow,
-                      OnClick     onClick,
-                      bool        h_scroll     = true,
-                      int*        out_view_row = nullptr,
-                      GridMouseFn onGridMouse  = nullptr) {
-    gimgui_grid_body(id, rows, rowW, lineH, followRow, [](ImDrawList*, float, float) {}, 0.0f, drawRow, onClick, h_scroll, out_view_row, onGridMouse);
+void gimgui_grid_body(const char*        id,
+                      int                rows,
+                      float              rowW,
+                      float              lineH,
+                      int                followRow,
+                      DrawRow            drawRow,
+                      OnClick            onClick,
+                      bool               h_scroll      = true,
+                      int*               out_view_row  = nullptr,
+                      const GridMouseFn* on_grid_mouse = nullptr) {
+    gimgui_grid_body(id, rows, rowW, lineH, followRow, [](ImDrawList*, float, float) {}, 0.0f, drawRow, onClick, h_scroll, out_view_row, on_grid_mouse);
 }
 
 constexpr ImVec2 kChromeWindowPadBase(8.0f, 4.0f);
@@ -799,10 +767,10 @@ bool gimgui_begin_panel(const char* title, ImVec2 pos, ImVec2 size) {
     return true;
 }
 
-void gimgui_end_panel(void) { ImGui::End(); }
+void gimgui_end_panel() { ImGui::End(); }
 
 // Record which editor panel the pointer is over (for hover-targeted wheel).
-static void gimgui_note_panel_hover(gtui::EditPanel panel) {
+void gimgui_note_panel_hover(gtui::EditPanel panel) {
     if (ImGui::IsWindowHovered(ImGuiHoveredFlags_RootAndChildWindows)) g_hovered_edit_panel = (int)panel;
 }
 
@@ -883,12 +851,9 @@ void gimgui_draw_tables(ImVec2 pos, ImVec2 size) {
                 const int off = (int)(localX / charW);
                 int       col;
                 if (off <= 3) col = 0;
-                else if (off == 4)
-                    col = 1;
-                else if (off <= 6)
-                    col = 2;
-                else
-                    col = 3;
+                else if (off == 4) col = 1;
+                else if (off <= 6) col = 2;
+                else col = 3;
                 gtui::table_set_cursor(t, r, col);
             },
             false,
@@ -1200,12 +1165,10 @@ void gimgui_draw_orderlist(ImVec2 pos, ImVec2 size) {
 
         const bool mod = io.KeyShift || io.KeyCtrl;
         if (btn == ImGuiMouseButton_Left && dbl) gtui::order_mouse_double_click(c, r, off);
-        else if (btn == ImGuiMouseButton_Left)
-            gtui::order_mouse_left(c, r, off, mod, drag);
+        else if (btn == ImGuiMouseButton_Left) gtui::order_mouse_left(c, r, off, mod, drag);
         else if (btn == ImGuiMouseButton_Right || btn == ImGuiMouseButton_Middle) {
             if (drag) gtui::order_mouse_mark_drag(c, r);
-            else
-                gtui::order_mouse_mark_begin(c, r);
+            else gtui::order_mouse_mark_begin(c, r);
         }
     };
     gimgui_grid_body(
@@ -1225,8 +1188,7 @@ void gimgui_draw_orderlist(ImVec2 pos, ImVec2 size) {
                     const int total   = expanded ? gtui::order_compressed_size(c) : 0;
                     const int payload = expanded ? gtui::order_compressed_payload_size(c) : gtui::order_length(c);
                     if (expanded && total > 0xff) snprintf(hbuf, sizeof hbuf, "**");
-                    else
-                        snprintf(hbuf, sizeof hbuf, "%02X", payload);
+                    else snprintf(hbuf, sizeof hbuf, "%02X", payload);
                     const ImU32 sizeCol = (expanded && total > 0xff)    ? cSizeBad
                                           : (expanded && total >= 0xf0) ? cSizeBad
                                                                         : cMuted;
@@ -1256,9 +1218,7 @@ void gimgui_draw_orderlist(ImVec2 pos, ImVec2 size) {
                 if (panelActive && r == curRow && c == curChn) {
                     float cs;
                     if (expanded) {
-                        if (curCol < 2) cs = cx + (float)curCol * charW;
-                        else
-                            cs = cx + (float)curCol * charW;
+                        cs = cx + (float)curCol * charW;
                     }
                     else if (cell.kind != 3) {
                         cs = cx + (curCol < 0 ? 0 : (curCol > 1 ? 1 : curCol)) * charW;
@@ -1298,7 +1258,7 @@ void gimgui_draw_orderlist(ImVec2 pos, ImVec2 size) {
         [](int, float) {},
         true,
         nullptr,
-        orderMouse);
+        &orderMouse);
 
     gimgui_note_panel_hover(gtui::EditPanelOrder);
     gimgui_end_panel();
@@ -1588,7 +1548,6 @@ void gimgui_draw_transport_bar(ImVec2 pos, ImVec2 size) {
     ImGui::End();
 }
 
-} // namespace
 
 // Load the bundled monospace font from the embed catalog. Falls back to ImGui default.
 void gimgui_load_font_at(float sizePx) {
@@ -1645,7 +1604,7 @@ void gimgui_reload_font() {
 }
 
 // Mouse wheel → cursor row/field for the panel under the pointer.
-static void gimgui_dispatch_mouse_wheel() {
+void gimgui_dispatch_mouse_wheel() {
     if (!g_imgui_ready) return;
     if (g_show_help) return; // modal Help owns input
 
@@ -1686,6 +1645,42 @@ static void gimgui_dispatch_mouse_wheel() {
     io.MouseWheel  = 0.f;
     io.MouseWheelH = 0.f;
 }
+
+
+} // namespace
+
+void gimgui_open_help() {
+    if (g_show_help) {
+        g_show_help = false;
+        return;
+    }
+    g_show_help       = true;
+    g_help_tab        = (int)gthelp::topic_index_for_edit_panel((int)gtui::edit_panel());
+    g_help_select_tab = true;
+    ++g_help_tab_bar_id;
+}
+
+void gimgui_close_help() { g_show_help = false; }
+
+bool gimgui_help_open() { return g_show_help; }
+
+void gimgui_instr_name_begin(int inst) {
+    if (inst < gtui::INSTR_FIRST) return;
+    g_instr_name_edit       = inst;
+    g_instr_name_want_focus = inst;
+}
+
+void gimgui_song_field_begin(int field) {
+    if (field < 0 || field > 2) return;
+    g_song_field_edit       = field;
+    g_song_field_want_focus = field;
+}
+
+void gimgui_song_field_end() {
+    g_song_field_edit       = -1;
+    g_song_field_want_focus = -1;
+}
+
 
 void gimgui_render() {
     if (!g_imgui_ready) return;

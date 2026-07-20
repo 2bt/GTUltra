@@ -25,6 +25,37 @@
 #include "goattrk2.hpp"
 #include "gplatform.hpp"
 
+namespace {
+
+void usage() {
+    SDL_Log("Usage: GTULTRA RELOC <songname> <outfile> [options]\n");
+    SDL_Log("Options:\n");
+    SDL_Log("-Axx Set ADSR parameter for hardrestart in hex. DEFAULT=0F00\n");
+    SDL_Log("-Bx  enable/disable buffered SID writes. DEFAULT=disabled\n");
+    SDL_Log("-Cx  enable/disable zeropage ghost registers. DEFAULT=disabled\n");
+    SDL_Log("-Dx  enable/disable sound effect support. DEFAULT=disabled\n");
+    SDL_Log("-Ex  enable/disable volume change support. DEFAULT=disabled\n");
+    SDL_Log("-Fxx Set custom SID clock cycles per second (0 = use PAL/NTSC default)\n");
+    SDL_Log("-Gxx Set pitch of A-4 in Hz (0 = use default frequencytable, close to 440Hz)\n");
+    SDL_Log("-Hx  enable/disable storing of author info. DEFAULT=disabled\n");
+    SDL_Log("-Ix  enable/disable optimizations. DEFAULT=enabled\n");
+    SDL_Log("-Jx  enable/disable full buffering. DEFAULT=disabled\n");
+    SDL_Log("-Lxx SID memory location in hex for 2 SID Chips (2nd, 1st..). DEFAULT=D420D400\n");
+    SDL_Log("-N   Use NTSC timing\n");
+    SDL_Log("-Oxx Set pulseoptimization/skipping (0 = off, 1 = on) DEFAULT=on\n");
+    SDL_Log("-P   Use PAL timing (DEFAULT)\n");
+    SDL_Log("-Rxx Set realtime-effect optimization/skipping (0 = off, 1 = on) DEFAULT=on\n");
+    SDL_Log("-Sxx Set speed multiplier (0 for 25Hz, 1 for 1x, 2 for 2x etc.) DEFAULT=1\n");
+    SDL_Log("-Tx  Enable/disable SidTracker64 mode (0 = off, 1 = on) DEFAULT=off\n");
+    SDL_Log("-Ux  Set SID channel count (3,6,9,12) DEFAULT=3\n");
+    SDL_Log("-Vxx Set finevibrato conversion (0 = off, 1 = on) DEFAULT=on\n");
+    SDL_Log("-Wxx player memory location highbyte in hex. DEFAULT=1000\n");
+    SDL_Log("-Zxx zeropage memory location in hex. DEFAULT=FC\n");
+    SDL_Log("-?   Show options\n");
+}
+
+} // namespace
+
 int      songExportSuccessFlag        = 0;
 int      songExported                 = 0;
 int      menu                         = 0;
@@ -79,18 +110,18 @@ int patternOrderArray[256];
 int patternOrderList[256];
 int patternRemapOrderIndex;
 
-char  configbuf[MAX_PATHNAME];
-char  loadedsongfilename[MAX_FILENAME];
-char  wavfilename[MAX_PATHNAME];
-char  songfilename[MAX_FILENAME];
-char  songfilter[MAX_FILENAME];
-char  wavfilter[MAX_FILENAME];
-char  songpath[MAX_PATHNAME];
-char  instrfilename[MAX_FILENAME];
-char  instrfilter[MAX_FILENAME];
-char  instrpath[MAX_PATHNAME];
-char  packedpath[MAX_PATHNAME];
-char  packedsongname[MAX_PATHNAME];
+char        configbuf[MAX_PATHNAME];
+char        loadedsongfilename[MAX_FILENAME];
+char        wavfilename[MAX_PATHNAME];
+char        songfilename[MAX_FILENAME];
+char        songfilter[MAX_FILENAME];
+char        wavfilter[MAX_FILENAME];
+char        songpath[MAX_PATHNAME];
+char        instrfilename[MAX_FILENAME];
+char        instrfilter[MAX_FILENAME];
+char        instrpath[MAX_PATHNAME];
+char        packedpath[MAX_PATHNAME];
+char        packedsongname[MAX_PATHNAME];
 const char* programname = "$VER: GTUltra";
 
 char textbuffer[MAX_PATHNAME];
@@ -114,13 +145,13 @@ int           sidAddr2        = 0xd420;
 int           sidAddr3        = 0xd440;
 int           sidAddr4        = 0xd460;
 
-char          fkeysFilename[MAX_PATHNAME];
-int           selectedMIDIPort = 0;
+char fkeysFilename[MAX_PATHNAME];
+int  selectedMIDIPort = 0;
 
-int                  debugTicks; // used to measure CPU use when looking to improve performance
-char                 appFileName[MAX_PATHNAME];
-unsigned int         enablekeyrepeat = 0;
-unsigned int         enableAntiAlias = 1;
+int          debugTicks; // used to measure CPU use when looking to improve performance
+char         appFileName[MAX_PATHNAME];
+unsigned int enablekeyrepeat = 0;
+unsigned int enableAntiAlias = 1;
 
 int SID_StereoPanPositions[4][4] = {
     { 7, 0, 0, 0 },
@@ -144,33 +175,6 @@ FILE *STDOUT, *STDERR;
 
 void Log(void* userdata, int category, SDL_LogPriority priority, const char* message) {
     SDL_Log("[Log] %s", message);
-}
-
-void usage(void) {
-    SDL_Log("Usage: GTULTRA RELOC <songname> <outfile> [options]\n");
-    SDL_Log("Options:\n");
-    SDL_Log("-Axx Set ADSR parameter for hardrestart in hex. DEFAULT=0F00\n");
-    SDL_Log("-Bx  enable/disable buffered SID writes. DEFAULT=disabled\n");
-    SDL_Log("-Cx  enable/disable zeropage ghost registers. DEFAULT=disabled\n");
-    SDL_Log("-Dx  enable/disable sound effect support. DEFAULT=disabled\n");
-    SDL_Log("-Ex  enable/disable volume change support. DEFAULT=disabled\n");
-    SDL_Log("-Fxx Set custom SID clock cycles per second (0 = use PAL/NTSC default)\n");
-    SDL_Log("-Gxx Set pitch of A-4 in Hz (0 = use default frequencytable, close to 440Hz)\n");
-    SDL_Log("-Hx  enable/disable storing of author info. DEFAULT=disabled\n");
-    SDL_Log("-Ix  enable/disable optimizations. DEFAULT=enabled\n");
-    SDL_Log("-Jx  enable/disable full buffering. DEFAULT=disabled\n");
-    SDL_Log("-Lxx SID memory location in hex for 2 SID Chips (2nd, 1st..). DEFAULT=D420D400\n");
-    SDL_Log("-N   Use NTSC timing\n");
-    SDL_Log("-Oxx Set pulseoptimization/skipping (0 = off, 1 = on) DEFAULT=on\n");
-    SDL_Log("-P   Use PAL timing (DEFAULT)\n");
-    SDL_Log("-Rxx Set realtime-effect optimization/skipping (0 = off, 1 = on) DEFAULT=on\n");
-    SDL_Log("-Sxx Set speed multiplier (0 for 25Hz, 1 for 1x, 2 for 2x etc.) DEFAULT=1\n");
-    SDL_Log("-Tx  Enable/disable SidTracker64 mode (0 = off, 1 = on) DEFAULT=off\n");
-    SDL_Log("-Ux  Set SID channel count (3,6,9,12) DEFAULT=3\n");
-    SDL_Log("-Vxx Set finevibrato conversion (0 = off, 1 = on) DEFAULT=on\n");
-    SDL_Log("-Wxx player memory location highbyte in hex. DEFAULT=1000\n");
-    SDL_Log("-Zxx zeropage memory location in hex. DEFAULT=FC\n");
-    SDL_Log("-?   Show options\n");
 }
 
 int main(int argc, char** argv) {
@@ -427,12 +431,11 @@ int main(int argc, char** argv) {
 }
 
 
-void getparam(FILE* handle, unsigned* value) {
+void getparam(FILE* handle, unsigned int* value) {
     char* configptr;
 
     for (;;) {
-        if (feof(handle)) return;
-        fgets(configbuf, MAX_PATHNAME, handle);
+        if (!fgets(configbuf, MAX_PATHNAME, handle)) return;
         if ((configbuf[0]) && (configbuf[0] != ';') && (configbuf[0] != ' ') && (configbuf[0] != 13) &&
             (configbuf[0] != 10))
             break;
@@ -453,8 +456,7 @@ void getparam(FILE* handle, unsigned* value) {
                 *value *= 16;
                 *value += h;
             }
-            else
-                break;
+            else break;
         }
     }
     else {
@@ -469,8 +471,7 @@ void getparam(FILE* handle, unsigned* value) {
                 *value *= 10;
                 *value += d;
             }
-            else
-                break;
+            else break;
         }
     }
 }
@@ -479,8 +480,7 @@ void getfloatparam(FILE* handle, float* value) {
     char* configptr;
 
     for (;;) {
-        if (feof(handle)) return;
-        fgets(configbuf, MAX_PATHNAME, handle);
+        if (!fgets(configbuf, MAX_PATHNAME, handle)) return;
         if ((configbuf[0]) && (configbuf[0] != ';') && (configbuf[0] != ' ') && (configbuf[0] != 13) &&
             (configbuf[0] != 10))
             break;

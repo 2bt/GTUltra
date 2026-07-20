@@ -2,11 +2,9 @@
 // GOATTRACKER ULTRA MIDI
 //
 
-#define GMIDI_C
-
-#include <iostream>
 #include <cstdlib>
 #include <cstring>
+#include <iostream>
 #include <signal.h>
 
 #ifdef _WIN32
@@ -17,152 +15,100 @@
 
 #include "gmidi.hpp"
 
-bool done;
-RtMidiIn *midiin = nullptr;
+namespace {
 
-bool portOpen = false;
+bool      done     = false;
+RtMidiIn* midiin   = nullptr;
+bool      portOpen = false;
 
-static int applyMidiPort(int midiPort)
-{
-	if (!midiin)
-		midiin = new RtMidiIn();
+unsigned char msg[4096];
+int           test = 0;
 
-	if (midiPort == MIDI_PORT_DISABLED)
-	{
-		if (portOpen)
-		{
-			midiin->closePort();
-			portOpen = false;
-		}
-		return MIDI_PORT_DISABLED;
-	}
+int apply_midi_port(int midiPort) {
+    if (!midiin) midiin = new RtMidiIn();
 
-	unsigned int nPorts = midiin->getPortCount();
-	if (nPorts == 0)
-	{
-		if (portOpen)
-		{
-			midiin->closePort();
-			portOpen = false;
-		}
-		return MIDI_PORT_DISABLED;
-	}
+    if (midiPort == MIDI_PORT_DISABLED) {
+        if (portOpen) {
+            midiin->closePort();
+            portOpen = false;
+        }
+        return MIDI_PORT_DISABLED;
+    }
 
-	if (midiPort < 0 || (unsigned int)midiPort >= nPorts)
-		midiPort = 0;
+    unsigned int nPorts = midiin->getPortCount();
+    if (nPorts == 0) {
+        if (portOpen) {
+            midiin->closePort();
+            portOpen = false;
+        }
+        return MIDI_PORT_DISABLED;
+    }
 
-	if (portOpen)
-		midiin->closePort();
+    if (midiPort < 0 || (unsigned int)midiPort >= nPorts) midiPort = 0;
 
-	midiin->openPort((unsigned int)midiPort);
-	midiin->ignoreTypes(false, false, false);
-	portOpen = true;
+    if (portOpen) midiin->closePort();
 
-	return midiPort;
+    midiin->openPort((unsigned int)midiPort);
+    midiin->ignoreTypes(false, false, false);
+    portOpen = true;
+
+    return midiPort;
 }
 
-int initMidi(int midiPort)
-{
-	return applyMidiPort(midiPort);
+} // namespace
+
+int initMidi(int midiPort) { return apply_midi_port(midiPort); }
+
+int setMidiPort(int midiPort) { return apply_midi_port(midiPort); }
+
+int checkForMidiInput(MIDI_MESSAGE* m, int midiPort) {
+    m->size = 0;
+    if (portOpen) {
+        int nDevices = midiin->getPortCount();
+        if (nDevices) {
+            std::vector<unsigned char> message;
+            midiin->getMessage(&message);
+            m->message = msg;
+            m->size    = (int)message.size();
+
+            for (int i = 0; i < m->size; i++) msg[i] = message[i];
+        }
+        else {
+            portOpen = false;
+            midiin->closePort();
+        }
+        return nDevices;
+    }
+
+    if (!midiin) midiin = new RtMidiIn();
+
+    unsigned int nPorts = midiin->getPortCount();
+    if (nPorts > 0) {
+        midiin->openPort(midiPort);
+        midiin->ignoreTypes(false, false, false);
+        portOpen = true;
+        return 1;
+    }
+    return test;
 }
 
-int setMidiPort(int midiPort)
-{
-	return applyMidiPort(midiPort);
+unsigned int getPortCount() {
+    if (!midiin) midiin = new RtMidiIn();
+    return midiin->getPortCount();
 }
 
-char unsigned msg[4096];
+int getMidiPortNameInto(int portNumber, char* buf, int bufSize) {
+    if (!buf || bufSize <= 0) return 0;
 
-int test = 0;
-int checkForMidiInput(MIDI_MESSAGE *m,int midiPort)
-{
-	m->size = 0;
-	if (portOpen)
-	{
-		int nDevices = midiin->getPortCount();
-		if (nDevices)
-		{
+    buf[0] = '\0';
+    if (!midiin) midiin = new RtMidiIn();
 
-			std::vector<unsigned char> message;
-			//int nBytes, i;
-			//double stamp;
-
-			midiin->getMessage(&message);
-			m->message = (unsigned char*)&msg;
-			m->size = message.size();
-
-			for (int i = 0;i < m->size;i++)
-			{
-				msg[i] = (unsigned char)message[i];
-			}
-		}
-		else
-		{
-			portOpen = false;
-			midiin->closePort();
-		}
-		return nDevices;	// nDevices;
-	}
-	else
-	{
-		if (!midiin)
-			midiin = new RtMidiIn();
-
-		unsigned int nPorts = midiin->getPortCount();
-		if (nPorts > 0)
-		{
-			midiin->openPort(midiPort);
-			midiin->ignoreTypes(false, false, false);
-			portOpen = true;
-			return 1;
-		}
-		return test;
-	}
-	return 999;
-
+    try {
+        std::string str = midiin->getPortName(portNumber);
+        snprintf(buf, (size_t)bufSize, "%s", str.c_str());
+        return 1;
+    }
+    catch (RtMidiError& error) {
+        return 0;
+    }
 }
-
-unsigned int getPortCount()
-{
-	if (!midiin)
-		midiin = new RtMidiIn();
-	return midiin->getPortCount();
-}
-
-char* getPortName(int portNumber)
-{
-	std::string str;
-	try {
-		if (!midiin)
-			midiin = new RtMidiIn();
-		str = midiin->getPortName(portNumber);
-	}
-	catch (RtMidiError &error) {
-		return NULL;
-	}
-
-	char * writable = new char[str.size() + 1];
-	std::copy(str.begin(), str.end(), writable);
-	writable[str.size()] = '\0'; // don't forget the terminating 0
-	return writable;
-}
-
-int getMidiPortNameInto(int portNumber, char* buf, int bufSize)
-{
-	if (!buf || bufSize <= 0)
-		return 0;
-
-	buf[0] = '\0';
-	if (!midiin)
-		midiin = new RtMidiIn();
-
-	try {
-		std::string str = midiin->getPortName(portNumber);
-		snprintf(buf, (size_t)bufSize, "%s", str.c_str());
-		return 1;
-	}
-	catch (RtMidiError &error) {
-		return 0;
-	}
-}
-

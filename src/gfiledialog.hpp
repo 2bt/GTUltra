@@ -1,12 +1,10 @@
 #pragma once
 //
 // Native file dialogs for the ImGui UI (portable-file-dialogs).
-// Native file dialogs for the ImGui UI.
 //
 
-#include <stddef.h>
+#include <cstddef>
 
-#ifdef __cplusplus
 namespace gtfile {
 
 // Song load (F10). merge=true matches legacy Shift/Ctrl+load (mergesong).
@@ -26,4 +24,3 @@ bool export_wav(char* out_path, size_t out_size);
 bool save_relocated(char* out_path, size_t out_size);
 
 } // namespace gtfile
-#endif

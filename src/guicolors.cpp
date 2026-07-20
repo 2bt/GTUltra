@@ -15,9 +15,9 @@ struct GuiColorDef {
     uint8_t      r, g, b, a;
 };
 
-static ImU32 g_colors[(unsigned)GuiColorRole::Count];
+ImU32 g_colors[(unsigned)GuiColorRole::Count];
 
-static const GuiColorDef kDefaultColors[] = {
+const GuiColorDef kDefaultColors[] = {
     { GuiColorRole::AppBackground, "app_background", "App background", 30, 30, 30, 255 },
     { GuiColorRole::PanelHeaderBg, "panel_header_bg", "Panel header", 46, 46, 46, 255 },
     { GuiColorRole::PanelHeaderBgActive, "panel_header_bg_active", "Panel header (active)", 58, 50, 44, 255 },
@@ -57,7 +57,7 @@ static const GuiColorDef kDefaultColors[] = {
     { GuiColorRole::Error, "error", "Error", 215, 85, 85, 255 },
 };
 
-static ImVec4 to_vec4(GuiColorRole role) {
+ImVec4 to_vec4(GuiColorRole role) {
     const ImU32 c = color(role);
     return ImVec4(((c >> IM_COL32_R_SHIFT) & 0xFF) / 255.0f,
                   ((c >> IM_COL32_G_SHIFT) & 0xFF) / 255.0f,
@@ -65,8 +65,12 @@ static ImVec4 to_vec4(GuiColorRole role) {
                   ((c >> IM_COL32_A_SHIFT) & 0xFF) / 255.0f);
 }
 
-static ImVec4 lerp_rgb(const ImVec4& a, const ImVec4& b, float t) {
+ImVec4 lerp_rgb(const ImVec4& a, const ImVec4& b, float t) {
     return ImVec4(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, a.z + (b.z - a.z) * t, a.w + (b.w - a.w) * t);
+}
+
+void reset_defaults() {
+    for (const GuiColorDef& d : kDefaultColors) g_colors[(unsigned)d.role] = IM_COL32(d.r, d.g, d.b, d.a);
 }
 
 static_assert(sizeof(kDefaultColors) / sizeof(kDefaultColors[0]) == (unsigned)GuiColorRole::Count,
@@ -74,11 +78,7 @@ static_assert(sizeof(kDefaultColors) / sizeof(kDefaultColors[0]) == (unsigned)Gu
 
 } // namespace
 
-void gui_colors_reset_defaults() {
-    for (const GuiColorDef& d : kDefaultColors) g_colors[(unsigned)d.role] = IM_COL32(d.r, d.g, d.b, d.a);
-}
-
-void gui_colors_init() { gui_colors_reset_defaults(); }
+void gui_colors_init() { reset_defaults(); }
 
 ImU32 color(GuiColorRole role) {
     const unsigned i = (unsigned)role;
@@ -88,18 +88,6 @@ ImU32 color(GuiColorRole role) {
 
 ImU32 color_a(GuiColorRole role, uint8_t alpha) {
     return (color(role) & 0x00FFFFFFu) | ((ImU32)alpha << IM_COL32_A_SHIFT);
-}
-
-const char* color_role_name(GuiColorRole role) {
-    const unsigned i = (unsigned)role;
-    if (i >= (unsigned)GuiColorRole::Count) return "";
-    return kDefaultColors[i].name;
-}
-
-const char* color_role_label(GuiColorRole role) {
-    const unsigned i = (unsigned)role;
-    if (i >= (unsigned)GuiColorRole::Count) return "";
-    return kDefaultColors[i].label;
 }
 
 void gui_colors_apply_imgui_style() {

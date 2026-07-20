@@ -1,62 +1,64 @@
-#ifndef GORDER_H
-#define GORDER_H
+#pragma once
 
-#ifndef GORDER_C
+#include "gcommon.hpp"
+#include "ginput.hpp"
+#include "gplay.hpp"
 
 extern int instrumentCount[MAX_INSTR];
-#endif
 
-int calculateLoopInfo2(int songNum, int channelNum, int startSongPos, GTOBJECT *gtloop);
-int addOrRemoveInterPatternLoop();
-int calculateLoopInfo(int startPatternPos, int testForRemoveLoop);
-int calcStartofInterPatternLoop(int songNum, int channelNum, int startSongPos, GTOBJECT *gtloop);
-void setMasterLoopChannel(GTOBJECT *gt, const char *debugText);
+int  calculateLoopInfo2(int songNum, int channelNum, int startSongPos, GTOBJECT* gtloop);
+int  addOrRemoveInterPatternLoop();
+int  calcStartofInterPatternLoop(int songNum, int channelNum, int startSongPos, GTOBJECT* gtloop);
+void setMasterLoopChannel(GTOBJECT* gt, const char* debugText);
 
-void orderPlayFromPosition(GTOBJECT *gt, int startPatternPos, int startSongPos, int focusChannel, int enableSIDWrites);
-void orderSelectPatternsFromSelected(GTOBJECT *gt);
-void updateviewtopos(GTOBJECT *gt);
-void orderlistcommands(GTOBJECT *gt, const EditorInput *input = nullptr);
-void namecommands(GTOBJECT *gt, const EditorInput *input = nullptr);
-void nextsong(GTOBJECT *gt);
-void prevsong(GTOBJECT *gt);
-void songchange(GTOBJECT *gt, int resetEditingPositions);
-void orderleft(void);
-void orderright(void);
-void deleteorder(GTOBJECT *gt);
-void insertorder(unsigned char byte, GTOBJECT *gt);
+void orderPlayFromPosition(GTOBJECT* gt,
+                           int       startPatternPos,
+                           int       startSongPos,
+                           int       focusChannel,
+                           int       enableSIDWrites);
+void orderSelectPatternsFromSelected(GTOBJECT* gt);
+void updateviewtopos(GTOBJECT* gt);
+void orderlistcommands(GTOBJECT* gt, const EditorInput* input = nullptr);
+void namecommands(GTOBJECT* gt, const EditorInput* input = nullptr);
+void nextsong(GTOBJECT* gt);
+void prevsong(GTOBJECT* gt);
+void songchange(GTOBJECT* gt, int resetEditingPositions);
+void orderleft();
+void orderright();
+void deleteorder(GTOBJECT* gt);
+void insertorder(unsigned char byte, GTOBJECT* gt);
 void countInstruments();
 void calculateTotalInstrumentsFromAllPatterns();
 void countInstrumentsInPattern(int pat);
-void resetOrderView(GTOBJECT *gt);
-void orderListHandleHexInputExpandedView(GTOBJECT *gt);
-void orderListHandleHexInputOriginalView(GTOBJECT *gt);
-void resetSongInfo(GTOBJECT *gt, int jc2);
-int findFirstEndMarkerIndex(int sng, int chn);
-void updateTransposeToPlayingSong(GTOBJECT *gt);
-int handleEnterInCompressedView(GTOBJECT *gt);
-int handleEnterInExpandedView(GTOBJECT *gt);
-void initEditorSongInfo(GTOBJECT *gt);
+void resetOrderView(GTOBJECT* gt);
+void orderListHandleHexInputExpandedView(GTOBJECT* gt);
+void orderListHandleHexInputOriginalView(GTOBJECT* gt);
+void resetSongInfo(GTOBJECT* gt, int jc2);
+int  findFirstEndMarkerIndex(int sng, int chn);
+void updateTransposeToPlayingSong(GTOBJECT* gt);
+int  handleEnterInCompressedView(GTOBJECT* gt);
+int  handleEnterInExpandedView(GTOBJECT* gt);
+void initEditorSongInfo(GTOBJECT* gt);
 void orderListCopyMarkedArea();
 void orderListCopyMarkedArea_Expanded();
-void getExpandedSelectedArea(int *x, int *y, int *w, int *h);
-void orderListPasteToCursor(GTOBJECT *gt);
-void orderListPasteToCursor_External(GTOBJECT *gt, int insert, int transposeOnly);
-void orderListInsert_External(GTOBJECT *gt);
-void orderListInsertRowAtCursor_External(GTOBJECT *gt, int sng, int chn, int row);
-void orderListDeleteRowAtCursor_External(int sng,int chn, int row);
+void getExpandedSelectedArea(int* x, int* y, int* w, int* h);
+void orderListPasteToCursor(GTOBJECT* gt);
+void orderListPasteToCursor_External(GTOBJECT* gt, int insert, int transposeOnly);
+void orderListInsert_External(GTOBJECT* gt);
+void orderListInsertRowAtCursor_External(GTOBJECT* gt, int sng, int chn, int row);
+void orderListDeleteRowAtCursor_External(int sng, int chn, int row);
 void orderListDelete_External();
-void order_list_insert(GTOBJECT *gt);
-void order_list_delete(GTOBJECT *gt);
-void order_list_cut(GTOBJECT *gt);
-void order_list_mark_toggle(void);
-void order_list_transpose_up(void);
-void order_list_transpose_down(void);
-void order_list_insert_repeat(void);
-void order_list_swap_channel(GTOBJECT *gt, int targetCh);
-void order_col_left_expanded(GTOBJECT *gt);
-void order_col_right_expanded(GTOBJECT *gt);
-int order_go_pattern(GTOBJECT *gt);
-void order_select_patterns(GTOBJECT *gt);
-void order_play_range_start(GTOBJECT *gt);
-void order_play_range_end(GTOBJECT *gt);
-#endif
+void order_list_insert(GTOBJECT* gt);
+void order_list_delete(GTOBJECT* gt);
+void order_list_cut(GTOBJECT* gt);
+void order_list_mark_toggle();
+void order_list_transpose_up();
+void order_list_transpose_down();
+void order_list_insert_repeat();
+void order_list_swap_channel(GTOBJECT* gt, int targetCh);
+void order_col_left_expanded(GTOBJECT* gt);
+void order_col_right_expanded(GTOBJECT* gt);
+int  order_go_pattern(GTOBJECT* gt);
+void order_select_patterns(GTOBJECT* gt);
+void order_play_range_start(GTOBJECT* gt);
+void order_play_range_end(GTOBJECT* gt);

@@ -9,7 +9,7 @@
 // The ImGui UI layer stays SDL-free; only gt2stereo.cpp calls into this module.
 //
 
-#include <stdint.h>
+#include <cstdint>
 #include <span>
 #include <string>
 #include <string_view>
@@ -204,7 +204,7 @@ std::string format_chord(Chord chord);
 // Join alternate chords for one action. separator defaults to a middle dot so it
 // is not confused with the "/" key.
 std::string format_chord_list(std::span<const Chord> chords,
-                              std::string_view separator = " \xC2\xB7 "); // " · "
+                              std::string_view       separator = " \xC2\xB7 "); // " · "
 
 // Effective bindings for a context (defaults + runtime overrides).
 // One entry per chord; the same action may appear multiple times.
@@ -239,9 +239,9 @@ bool perform(Action act);
 // Per-frame input dispatch (gt2stereo.cpp).
 bool dispatch_mode_navigation();
 bool dispatch_global(Ctx ctx);
-bool dispatch_pattern_cell_input(int midiNote, const EditorInput *input = nullptr);
-bool dispatch_instrument_cell_input(const EditorInput *input = nullptr);
-bool dispatch_table_cell_input(const EditorInput *input = nullptr);
+bool dispatch_pattern_cell_input(int midiNote, const EditorInput* input = nullptr);
+bool dispatch_instrument_cell_input(const EditorInput* input = nullptr);
+bool dispatch_table_cell_input(const EditorInput* input = nullptr);
 bool consume_legacy_hex_input(int hex_at_frame_start);
 
 // Runtime keymap overrides (M7 TOML / rebind UI).

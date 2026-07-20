@@ -3,8 +3,6 @@
 // Keeps present/follow-play, song timer helpers, and note-name tables.
 //
 
-#define GDISPLAY_C
-
 #include "goattrk2.hpp"
 #include "gimgui.hpp"
 #include "gfollow.hpp"
@@ -30,7 +28,10 @@ const char* notenameTableView[] = {
 };
 
 char timechar[] = { ':', ' ' };
-int  initForST64 = 0;
+
+namespace {
+int init_for_st64 = 0;
+} // namespace
 
 void setSIDTracker64KeyOnStyle() {
     if (SIDTracker64ForIPadIsAmazing != 0) notename[(12 * 8) - 1] = " | ";

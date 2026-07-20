@@ -30,14 +30,10 @@ namespace gtaction {
 
 namespace {
 
-void clear_input() {
-    editor_input_clear();
-}
+void clear_input() { editor_input_clear(); }
 
-static bool instrument_file_context()
-{
-    return editorInfo.einum &&
-           (editorInfo.editmode == EDIT_INSTRUMENT || editorInfo.editmode == EDIT_TABLES);
+bool instrument_file_context() {
+    return editorInfo.einum && (editorInfo.editmode == EDIT_INSTRUMENT || editorInfo.editmode == EDIT_TABLES);
 }
 
 struct ActionMeta {
@@ -53,194 +49,194 @@ struct Binding {
 };
 
 const ActionMeta kActionMeta[] = {
-    { Action::Save,                     "Save",                     "Save song" },
-    { Action::Undo,                     "Undo",                     "Undo" },
-    { Action::Cancel,                   "Cancel",                   "Cancel" },
-    { Action::Clear,                    "Clear",                    "Clear song" },
-    { Action::Help,                     "Help",                     "Help" },
-    { Action::EditModeNext,             "EditModeNext",             "Next edit mode" },
-    { Action::EditModePrev,             "EditModePrev",             "Previous edit mode" },
-    { Action::EditModePattern,          "EditModePattern",          "Pattern editor" },
-    { Action::EditModeOrder,            "EditModeOrder",            "Order list" },
-    { Action::EditModeInstrument,       "EditModeInstrument",       "Instrument editor" },
-    { Action::EditModeTables,           "EditModeTables",           "Table editor" },
-    { Action::EditModeNames,            "EditModeNames",            "Song metadata" },
-    { Action::PlaySongStart,            "PlaySongStart",            "Play from song start" },
-    { Action::PlayPatternStart,         "PlayPatternStart",         "Play from pattern start" },
-    { Action::PlayCurrent,              "PlayCurrent",              "Play from cursor" },
-    { Action::Stop,                     "Stop",                     "Stop playback" },
-    { Action::PlayFromBeginning,        "PlayFromBeginning",        "Play from beginning" },
-    { Action::PlayPatternMode,          "PlayPatternMode",          "Play pattern" },
-    { Action::ToggleFollow,             "ToggleFollow",             "Toggle follow mode" },
-    { Action::ToggleLoop,               "ToggleLoop",               "Toggle pattern loop" },
-    { Action::SongPosNext,              "SongPosNext",              "Next song position" },
-    { Action::SongPosPrev,              "SongPosPrev",              "Previous song position" },
-    { Action::Relocate,                 "Relocate",                 "Open relocator" },
-    { Action::LoadSong,                 "LoadSong",                 "Load song" },
-    { Action::SaveSong,                 "SaveSong",                 "Save song" },
-    { Action::OctaveUp,                 "OctaveUp",                 "Octave up" },
-    { Action::OctaveDown,               "OctaveDown",               "Octave down" },
-    { Action::PrevInstr,                "PrevInstr",                "Previous instrument" },
-    { Action::NextInstr,                "NextInstr",                "Next instrument" },
-    { Action::OrderRowUp,               "OrderRowUp",               "Order list: previous row" },
-    { Action::OrderRowDown,             "OrderRowDown",             "Order list: next row" },
-    { Action::OrderColLeft,             "OrderColLeft",             "Order list: previous nibble" },
-    { Action::OrderColRight,            "OrderColRight",            "Order list: next nibble" },
-    { Action::OrderPageUp,              "OrderPageUp",              "Order list: page up" },
-    { Action::OrderPageDown,            "OrderPageDown",            "Order list: page down" },
-    { Action::OrderHome,                "OrderHome",                "Order list: first row" },
-    { Action::OrderEnd,                 "OrderEnd",                 "Order list: last row" },
-    { Action::OrderInsert,              "OrderInsert",              "Order list: insert row" },
-    { Action::OrderDelete,              "OrderDelete",              "Order list: delete row" },
-    { Action::OrderGoPattern,           "OrderGoPattern",           "Order list: go to pattern" },
-    { Action::OrderSelectPatterns,      "OrderSelectPatterns",      "Order list: sync all channels" },
-    { Action::OrderCopy,                "OrderCopy",                "Order list: copy" },
-    { Action::OrderCut,                 "OrderCut",                 "Order list: cut" },
-    { Action::OrderPaste,               "OrderPaste",               "Order list: paste" },
-    { Action::OrderInsertPaste,         "OrderInsertPaste",         "Order list: insert-paste (expanded)" },
-    { Action::OrderMarkToggle,          "OrderMarkToggle",          "Order list: mark all/none" },
-    { Action::OrderTransposeUp,         "OrderTransposeUp",         "Order list: transpose up" },
-    { Action::OrderTransposeDown,       "OrderTransposeDown",       "Order list: transpose down" },
-    { Action::OrderInsertRepeat,        "OrderInsertRepeat",        "Order list: insert repeat" },
-    { Action::OrderSubtunePrev,         "OrderSubtunePrev",         "Order list: previous subtune" },
-    { Action::OrderSubtuneNext,         "OrderSubtuneNext",         "Order list: next subtune" },
-    { Action::OrderPlayRangeStart,      "OrderPlayRangeStart",      "Order list: play range start" },
-    { Action::OrderPlayRangeEnd,        "OrderPlayRangeEnd",        "Order list: play range end" },
-    { Action::PatternRowUp,             "PatternRowUp",             "Pattern: previous row" },
-    { Action::PatternRowDown,           "PatternRowDown",           "Pattern: next row" },
-    { Action::PatternColLeft,           "PatternColLeft",           "Pattern: previous column" },
-    { Action::PatternColRight,          "PatternColRight",          "Pattern: next column" },
-    { Action::PatternPageUp,            "PatternPageUp",            "Pattern: page up" },
-    { Action::PatternPageDown,          "PatternPageDown",          "Pattern: page down" },
-    { Action::PatternHome,              "PatternHome",              "Pattern: first row" },
-    { Action::PatternEnd,               "PatternEnd",               "Pattern: last row" },
-    { Action::PatternPrev,              "PatternPrev",              "Pattern: previous pattern" },
-    { Action::PatternNext,              "PatternNext",              "Pattern: next pattern" },
-    { Action::PatternInsert,            "PatternInsert",            "Pattern: insert row" },
-    { Action::PatternDelete,            "PatternDelete",            "Pattern: delete row" },
-    { Action::PatternCopy,              "PatternCopy",              "Pattern: copy" },
-    { Action::PatternCut,               "PatternCut",               "Pattern: cut" },
-    { Action::PatternPaste,             "PatternPaste",             "Pattern: paste" },
-    { Action::PatternMarkToggle,        "PatternMarkToggle",        "Pattern: mark all/none" },
-    { Action::PatternShrink,            "PatternShrink",            "Pattern: shrink" },
-    { Action::PatternExpand,            "PatternExpand",            "Pattern: expand" },
-    { Action::PatternJoin,              "PatternJoin",              "Pattern: join" },
-    { Action::PatternSplit,             "PatternSplit",             "Pattern: split" },
-    { Action::PatternToggleJam,         "PatternToggleJam",         "Pattern: toggle jam mode" },
-    { Action::PatternPlayFromCursor,    "PatternPlayFromCursor",    "Pattern: play from cursor" },
-    { Action::PatternChnNext,           "PatternChnNext",           "Pattern: next channel" },
-    { Action::PatternChnPrev,           "PatternChnPrev",           "Pattern: previous channel" },
+    { Action::Save, "Save", "Save song" },
+    { Action::Undo, "Undo", "Undo" },
+    { Action::Cancel, "Cancel", "Cancel" },
+    { Action::Clear, "Clear", "Clear song" },
+    { Action::Help, "Help", "Help" },
+    { Action::EditModeNext, "EditModeNext", "Next edit mode" },
+    { Action::EditModePrev, "EditModePrev", "Previous edit mode" },
+    { Action::EditModePattern, "EditModePattern", "Pattern editor" },
+    { Action::EditModeOrder, "EditModeOrder", "Order list" },
+    { Action::EditModeInstrument, "EditModeInstrument", "Instrument editor" },
+    { Action::EditModeTables, "EditModeTables", "Table editor" },
+    { Action::EditModeNames, "EditModeNames", "Song metadata" },
+    { Action::PlaySongStart, "PlaySongStart", "Play from song start" },
+    { Action::PlayPatternStart, "PlayPatternStart", "Play from pattern start" },
+    { Action::PlayCurrent, "PlayCurrent", "Play from cursor" },
+    { Action::Stop, "Stop", "Stop playback" },
+    { Action::PlayFromBeginning, "PlayFromBeginning", "Play from beginning" },
+    { Action::PlayPatternMode, "PlayPatternMode", "Play pattern" },
+    { Action::ToggleFollow, "ToggleFollow", "Toggle follow mode" },
+    { Action::ToggleLoop, "ToggleLoop", "Toggle pattern loop" },
+    { Action::SongPosNext, "SongPosNext", "Next song position" },
+    { Action::SongPosPrev, "SongPosPrev", "Previous song position" },
+    { Action::Relocate, "Relocate", "Open relocator" },
+    { Action::LoadSong, "LoadSong", "Load song" },
+    { Action::SaveSong, "SaveSong", "Save song" },
+    { Action::OctaveUp, "OctaveUp", "Octave up" },
+    { Action::OctaveDown, "OctaveDown", "Octave down" },
+    { Action::PrevInstr, "PrevInstr", "Previous instrument" },
+    { Action::NextInstr, "NextInstr", "Next instrument" },
+    { Action::OrderRowUp, "OrderRowUp", "Order list: previous row" },
+    { Action::OrderRowDown, "OrderRowDown", "Order list: next row" },
+    { Action::OrderColLeft, "OrderColLeft", "Order list: previous nibble" },
+    { Action::OrderColRight, "OrderColRight", "Order list: next nibble" },
+    { Action::OrderPageUp, "OrderPageUp", "Order list: page up" },
+    { Action::OrderPageDown, "OrderPageDown", "Order list: page down" },
+    { Action::OrderHome, "OrderHome", "Order list: first row" },
+    { Action::OrderEnd, "OrderEnd", "Order list: last row" },
+    { Action::OrderInsert, "OrderInsert", "Order list: insert row" },
+    { Action::OrderDelete, "OrderDelete", "Order list: delete row" },
+    { Action::OrderGoPattern, "OrderGoPattern", "Order list: go to pattern" },
+    { Action::OrderSelectPatterns, "OrderSelectPatterns", "Order list: sync all channels" },
+    { Action::OrderCopy, "OrderCopy", "Order list: copy" },
+    { Action::OrderCut, "OrderCut", "Order list: cut" },
+    { Action::OrderPaste, "OrderPaste", "Order list: paste" },
+    { Action::OrderInsertPaste, "OrderInsertPaste", "Order list: insert-paste (expanded)" },
+    { Action::OrderMarkToggle, "OrderMarkToggle", "Order list: mark all/none" },
+    { Action::OrderTransposeUp, "OrderTransposeUp", "Order list: transpose up" },
+    { Action::OrderTransposeDown, "OrderTransposeDown", "Order list: transpose down" },
+    { Action::OrderInsertRepeat, "OrderInsertRepeat", "Order list: insert repeat" },
+    { Action::OrderSubtunePrev, "OrderSubtunePrev", "Order list: previous subtune" },
+    { Action::OrderSubtuneNext, "OrderSubtuneNext", "Order list: next subtune" },
+    { Action::OrderPlayRangeStart, "OrderPlayRangeStart", "Order list: play range start" },
+    { Action::OrderPlayRangeEnd, "OrderPlayRangeEnd", "Order list: play range end" },
+    { Action::PatternRowUp, "PatternRowUp", "Pattern: previous row" },
+    { Action::PatternRowDown, "PatternRowDown", "Pattern: next row" },
+    { Action::PatternColLeft, "PatternColLeft", "Pattern: previous column" },
+    { Action::PatternColRight, "PatternColRight", "Pattern: next column" },
+    { Action::PatternPageUp, "PatternPageUp", "Pattern: page up" },
+    { Action::PatternPageDown, "PatternPageDown", "Pattern: page down" },
+    { Action::PatternHome, "PatternHome", "Pattern: first row" },
+    { Action::PatternEnd, "PatternEnd", "Pattern: last row" },
+    { Action::PatternPrev, "PatternPrev", "Pattern: previous pattern" },
+    { Action::PatternNext, "PatternNext", "Pattern: next pattern" },
+    { Action::PatternInsert, "PatternInsert", "Pattern: insert row" },
+    { Action::PatternDelete, "PatternDelete", "Pattern: delete row" },
+    { Action::PatternCopy, "PatternCopy", "Pattern: copy" },
+    { Action::PatternCut, "PatternCut", "Pattern: cut" },
+    { Action::PatternPaste, "PatternPaste", "Pattern: paste" },
+    { Action::PatternMarkToggle, "PatternMarkToggle", "Pattern: mark all/none" },
+    { Action::PatternShrink, "PatternShrink", "Pattern: shrink" },
+    { Action::PatternExpand, "PatternExpand", "Pattern: expand" },
+    { Action::PatternJoin, "PatternJoin", "Pattern: join" },
+    { Action::PatternSplit, "PatternSplit", "Pattern: split" },
+    { Action::PatternToggleJam, "PatternToggleJam", "Pattern: toggle jam mode" },
+    { Action::PatternPlayFromCursor, "PatternPlayFromCursor", "Pattern: play from cursor" },
+    { Action::PatternChnNext, "PatternChnNext", "Pattern: next channel" },
+    { Action::PatternChnPrev, "PatternChnPrev", "Pattern: previous channel" },
     { Action::PatternToggleAutoAdvance, "PatternToggleAutoAdvance", "Pattern: cycle autoadvance" },
-    { Action::PatternCmdCopy,           "PatternCmdCopy",           "Pattern: copy command" },
-    { Action::PatternCmdPaste,          "PatternCmdPaste",          "Pattern: paste command" },
-    { Action::PatternInvert,            "PatternInvert",            "Pattern: invert rows" },
-    { Action::PatternTransposeUp,       "PatternTransposeUp",       "Pattern: transpose up" },
-    { Action::PatternTransposeDown,     "PatternTransposeDown",     "Pattern: transpose down" },
-    { Action::PatternOctaveUp,          "PatternOctaveUp",          "Pattern: octave up" },
-    { Action::PatternOctaveDown,        "PatternOctaveDown",        "Pattern: octave down" },
-    { Action::PatternStepSizeUp,        "PatternStepSizeUp",        "Pattern: increase step size" },
-    { Action::PatternStepSizeDown,      "PatternStepSizeDown",      "Pattern: decrease step size" },
-    { Action::PatternMarkAll,           "PatternMarkAll",           "Pattern: mark all rows" },
-    { Action::PatternAutoPitchbend,     "PatternAutoPitchbend",     "Pattern: auto pitchbend" },
-    { Action::PatternPortamentoHelper,  "PatternPortamentoHelper",  "Pattern: portamento helper" },
-    { Action::TableRowUp,               "TableRowUp",               "Table: previous row" },
-    { Action::TableRowDown,             "TableRowDown",             "Table: next row" },
-    { Action::TableColLeft,             "TableColLeft",             "Table: previous nibble" },
-    { Action::TableColRight,            "TableColRight",            "Table: next nibble" },
-    { Action::TablePageUp,              "TablePageUp",              "Table: page up" },
-    { Action::TablePageDown,            "TablePageDown",            "Table: page down" },
-    { Action::TableHome,                "TableHome",                "Table: first row" },
-    { Action::TableEnd,                 "TableEnd",                 "Table: last row" },
-    { Action::TableInsert,              "TableInsert",              "Table: insert row" },
-    { Action::TableDelete,              "TableDelete",              "Table: delete row" },
-    { Action::TableCopy,                "TableCopy",                "Table: copy" },
-    { Action::TableCut,                 "TableCut",                 "Table: cut" },
-    { Action::TablePaste,               "TablePaste",               "Table: paste" },
-    { Action::TableOptimize,            "TableOptimize",            "Table: optimize" },
-    { Action::TableToggleLock,          "TableToggleLock",          "Table: toggle lock" },
-    { Action::TableTestNote,            "TableTestNote",            "Table: test note" },
-    { Action::TableReleaseNote,         "TableReleaseNote",         "Table: release note" },
-    { Action::TableNegate,              "TableNegate",              "Table: negate value" },
-    { Action::TableConvertNote,         "TableConvertNote",         "Table: convert note" },
-    { Action::InstrRowUp,               "InstrRowUp",               "Instrument: previous" },
-    { Action::InstrRowDown,             "InstrRowDown",             "Instrument: next" },
-    { Action::InstrColLeft,             "InstrColLeft",             "Instrument: previous field" },
-    { Action::InstrColRight,            "InstrColRight",            "Instrument: next field" },
-    { Action::InstrPageUp,              "InstrPageUp",              "Instrument: page up" },
-    { Action::InstrPageDown,            "InstrPageDown",            "Instrument: page down" },
-    { Action::InstrHome,                "InstrHome",                "Instrument: first" },
-    { Action::InstrEnd,                 "InstrEnd",                 "Instrument: last" },
-    { Action::NamesFieldNext,           "NamesFieldNext",           "Song info: next field" },
-    { Action::NamesFieldPrev,           "NamesFieldPrev",           "Song info: previous field" },
-    { Action::NamesFieldEdit,           "NamesFieldEdit",           "Song info: edit field" },
-    { Action::ToggleSIDTracker64,       "ToggleSIDTracker64",       "Toggle SIDTracker64 mode" },
-    { Action::PrevMultiplier,           "PrevMultiplier",           "Previous speed multiplier" },
-    { Action::NextMultiplier,           "NextMultiplier",           "Next speed multiplier" },
-    { Action::ToggleAdsrOrPan,          "ToggleAdsrOrPan",          "Toggle ADSR / pan edit" },
-    { Action::ToggleSidModel,           "ToggleSidModel",           "Toggle SID model" },
-    { Action::CycleStereoMode,          "CycleStereoMode",          "Cycle stereo mode" },
-    { Action::FastRelocate,             "FastRelocate",             "Fast relocate export" },
-    { Action::SaveWav,                  "SaveWav",                  "Save WAV" },
-    { Action::SongRewind,               "SongRewind",               "Rewind song position" },
+    { Action::PatternCmdCopy, "PatternCmdCopy", "Pattern: copy command" },
+    { Action::PatternCmdPaste, "PatternCmdPaste", "Pattern: paste command" },
+    { Action::PatternInvert, "PatternInvert", "Pattern: invert rows" },
+    { Action::PatternTransposeUp, "PatternTransposeUp", "Pattern: transpose up" },
+    { Action::PatternTransposeDown, "PatternTransposeDown", "Pattern: transpose down" },
+    { Action::PatternOctaveUp, "PatternOctaveUp", "Pattern: octave up" },
+    { Action::PatternOctaveDown, "PatternOctaveDown", "Pattern: octave down" },
+    { Action::PatternStepSizeUp, "PatternStepSizeUp", "Pattern: increase step size" },
+    { Action::PatternStepSizeDown, "PatternStepSizeDown", "Pattern: decrease step size" },
+    { Action::PatternMarkAll, "PatternMarkAll", "Pattern: mark all rows" },
+    { Action::PatternAutoPitchbend, "PatternAutoPitchbend", "Pattern: auto pitchbend" },
+    { Action::PatternPortamentoHelper, "PatternPortamentoHelper", "Pattern: portamento helper" },
+    { Action::TableRowUp, "TableRowUp", "Table: previous row" },
+    { Action::TableRowDown, "TableRowDown", "Table: next row" },
+    { Action::TableColLeft, "TableColLeft", "Table: previous nibble" },
+    { Action::TableColRight, "TableColRight", "Table: next nibble" },
+    { Action::TablePageUp, "TablePageUp", "Table: page up" },
+    { Action::TablePageDown, "TablePageDown", "Table: page down" },
+    { Action::TableHome, "TableHome", "Table: first row" },
+    { Action::TableEnd, "TableEnd", "Table: last row" },
+    { Action::TableInsert, "TableInsert", "Table: insert row" },
+    { Action::TableDelete, "TableDelete", "Table: delete row" },
+    { Action::TableCopy, "TableCopy", "Table: copy" },
+    { Action::TableCut, "TableCut", "Table: cut" },
+    { Action::TablePaste, "TablePaste", "Table: paste" },
+    { Action::TableOptimize, "TableOptimize", "Table: optimize" },
+    { Action::TableToggleLock, "TableToggleLock", "Table: toggle lock" },
+    { Action::TableTestNote, "TableTestNote", "Table: test note" },
+    { Action::TableReleaseNote, "TableReleaseNote", "Table: release note" },
+    { Action::TableNegate, "TableNegate", "Table: negate value" },
+    { Action::TableConvertNote, "TableConvertNote", "Table: convert note" },
+    { Action::InstrRowUp, "InstrRowUp", "Instrument: previous" },
+    { Action::InstrRowDown, "InstrRowDown", "Instrument: next" },
+    { Action::InstrColLeft, "InstrColLeft", "Instrument: previous field" },
+    { Action::InstrColRight, "InstrColRight", "Instrument: next field" },
+    { Action::InstrPageUp, "InstrPageUp", "Instrument: page up" },
+    { Action::InstrPageDown, "InstrPageDown", "Instrument: page down" },
+    { Action::InstrHome, "InstrHome", "Instrument: first" },
+    { Action::InstrEnd, "InstrEnd", "Instrument: last" },
+    { Action::NamesFieldNext, "NamesFieldNext", "Song info: next field" },
+    { Action::NamesFieldPrev, "NamesFieldPrev", "Song info: previous field" },
+    { Action::NamesFieldEdit, "NamesFieldEdit", "Song info: edit field" },
+    { Action::ToggleSIDTracker64, "ToggleSIDTracker64", "Toggle SIDTracker64 mode" },
+    { Action::PrevMultiplier, "PrevMultiplier", "Previous speed multiplier" },
+    { Action::NextMultiplier, "NextMultiplier", "Next speed multiplier" },
+    { Action::ToggleAdsrOrPan, "ToggleAdsrOrPan", "Toggle ADSR / pan edit" },
+    { Action::ToggleSidModel, "ToggleSidModel", "Toggle SID model" },
+    { Action::CycleStereoMode, "CycleStereoMode", "Cycle stereo mode" },
+    { Action::FastRelocate, "FastRelocate", "Fast relocate export" },
+    { Action::SaveWav, "SaveWav", "Save WAV" },
+    { Action::SongRewind, "SongRewind", "Rewind song position" },
 };
 
 // Default keymap. Context-specific entries override Global for the same chord.
 const Binding kBindings[] = {
     // Global file / session
-    { Action::Save,               Ctx::Global, make_scancode_chord(KEY_S, Ctrl) },
-    { Action::Undo,               Ctx::Global, make_scancode_chord(KEY_Z, Ctrl) },
-    { Action::Cancel,             Ctx::Global, make_scancode_chord(KEY_ESC) },
-    { Action::Clear,              Ctx::Global, make_scancode_chord(KEY_ESC, Shift) },
-    { Action::Help,               Ctx::Global, make_scancode_chord(KEY_F12) },
+    { Action::Save, Ctx::Global, make_scancode_chord(KEY_S, Ctrl) },
+    { Action::Undo, Ctx::Global, make_scancode_chord(KEY_Z, Ctrl) },
+    { Action::Cancel, Ctx::Global, make_scancode_chord(KEY_ESC) },
+    { Action::Clear, Ctx::Global, make_scancode_chord(KEY_ESC, Shift) },
+    { Action::Help, Ctx::Global, make_scancode_chord(KEY_F12) },
     { Action::ToggleSIDTracker64, Ctx::Global, make_scancode_chord(KEY_F12, Shift) },
     { Action::ToggleSIDTracker64, Ctx::Global, make_scancode_chord(KEY_F12, Ctrl) },
 
     // Edit mode (Tab cycle — rebindable via set_binding() / M7 keymap)
-    { Action::EditModeNext,       Ctx::Global, make_scancode_chord(KEY_TAB) },
-    { Action::EditModePrev,       Ctx::Global, make_scancode_chord(KEY_TAB, Shift) },
-    { Action::EditModePattern,    Ctx::Global, make_scancode_chord(KEY_F5) },
-    { Action::EditModeOrder,      Ctx::Global, make_scancode_chord(KEY_F6) },
+    { Action::EditModeNext, Ctx::Global, make_scancode_chord(KEY_TAB) },
+    { Action::EditModePrev, Ctx::Global, make_scancode_chord(KEY_TAB, Shift) },
+    { Action::EditModePattern, Ctx::Global, make_scancode_chord(KEY_F5) },
+    { Action::EditModeOrder, Ctx::Global, make_scancode_chord(KEY_F6) },
     { Action::EditModeInstrument, Ctx::Global, make_scancode_chord(KEY_F7) },
-    { Action::EditModeNames,      Ctx::Global, make_scancode_chord(KEY_F8) },
-    { Action::PrevMultiplier,     Ctx::Global, make_scancode_chord(KEY_F5, Shift) },
-    { Action::NextMultiplier,     Ctx::Global, make_scancode_chord(KEY_F6, Shift) },
-    { Action::ToggleAdsrOrPan,    Ctx::Global, make_scancode_chord(KEY_F7, Shift) },
-    { Action::ToggleSidModel,     Ctx::Global, make_scancode_chord(KEY_F8, Shift) },
-    { Action::PrevMultiplier,     Ctx::Global, make_scancode_chord(KEY_F5, Ctrl) },
-    { Action::NextMultiplier,     Ctx::Global, make_scancode_chord(KEY_F6, Ctrl) },
-    { Action::ToggleAdsrOrPan,    Ctx::Global, make_scancode_chord(KEY_F7, Ctrl) },
-    { Action::ToggleSidModel,     Ctx::Global, make_scancode_chord(KEY_F8, Ctrl) },
+    { Action::EditModeNames, Ctx::Global, make_scancode_chord(KEY_F8) },
+    { Action::PrevMultiplier, Ctx::Global, make_scancode_chord(KEY_F5, Shift) },
+    { Action::NextMultiplier, Ctx::Global, make_scancode_chord(KEY_F6, Shift) },
+    { Action::ToggleAdsrOrPan, Ctx::Global, make_scancode_chord(KEY_F7, Shift) },
+    { Action::ToggleSidModel, Ctx::Global, make_scancode_chord(KEY_F8, Shift) },
+    { Action::PrevMultiplier, Ctx::Global, make_scancode_chord(KEY_F5, Ctrl) },
+    { Action::NextMultiplier, Ctx::Global, make_scancode_chord(KEY_F6, Ctrl) },
+    { Action::ToggleAdsrOrPan, Ctx::Global, make_scancode_chord(KEY_F7, Ctrl) },
+    { Action::ToggleSidModel, Ctx::Global, make_scancode_chord(KEY_F8, Ctrl) },
 
     // Transport — handler reads shift/ctrl for variant behaviour
-    { Action::PlaySongStart,    Ctx::Global, make_scancode_chord(KEY_F1) },
-    { Action::PlaySongStart,    Ctx::Global, make_scancode_chord(KEY_F1, Shift) },
+    { Action::PlaySongStart, Ctx::Global, make_scancode_chord(KEY_F1) },
+    { Action::PlaySongStart, Ctx::Global, make_scancode_chord(KEY_F1, Shift) },
     { Action::PlayPatternStart, Ctx::Global, make_scancode_chord(KEY_F2) },
     { Action::PlayPatternStart, Ctx::Global, make_scancode_chord(KEY_F2, Shift) },
-    { Action::PlayCurrent,      Ctx::Global, make_scancode_chord(KEY_F3) },
-    { Action::PlayCurrent,      Ctx::Global, make_scancode_chord(KEY_F3, Shift) },
-    { Action::Stop,             Ctx::Global, make_scancode_chord(KEY_F4) },
-    { Action::Stop,             Ctx::Global, make_scancode_chord(KEY_F4, Shift) },
+    { Action::PlayCurrent, Ctx::Global, make_scancode_chord(KEY_F3) },
+    { Action::PlayCurrent, Ctx::Global, make_scancode_chord(KEY_F3, Shift) },
+    { Action::Stop, Ctx::Global, make_scancode_chord(KEY_F4) },
+    { Action::Stop, Ctx::Global, make_scancode_chord(KEY_F4, Shift) },
 
-    { Action::Relocate,        Ctx::Global, make_scancode_chord(KEY_F9) },
+    { Action::Relocate, Ctx::Global, make_scancode_chord(KEY_F9) },
     { Action::CycleStereoMode, Ctx::Global, make_scancode_chord(KEY_F9, Shift) },
-    { Action::FastRelocate,    Ctx::Global, make_scancode_chord(KEY_F9, Ctrl) },
-    { Action::LoadSong,        Ctx::Global, make_scancode_chord(KEY_F10) },
-    { Action::SaveSong,        Ctx::Global, make_scancode_chord(KEY_F11) },
-    { Action::SaveWav,         Ctx::Global, make_scancode_chord(KEY_F11, Shift) },
-    { Action::SaveWav,         Ctx::Global, make_scancode_chord(KEY_F11, Ctrl) },
+    { Action::FastRelocate, Ctx::Global, make_scancode_chord(KEY_F9, Ctrl) },
+    { Action::LoadSong, Ctx::Global, make_scancode_chord(KEY_F10) },
+    { Action::SaveSong, Ctx::Global, make_scancode_chord(KEY_F11) },
+    { Action::SaveWav, Ctx::Global, make_scancode_chord(KEY_F11, Shift) },
+    { Action::SaveWav, Ctx::Global, make_scancode_chord(KEY_F11, Ctrl) },
 
     // Octave / instrument (legacy switch(key) shortcuts)
-    { Action::OctaveUp,   Ctx::Global, make_chord('*') },
+    { Action::OctaveUp, Ctx::Global, make_chord('*') },
     { Action::OctaveDown, Ctx::Global, make_chord('/') },
     { Action::OctaveDown, Ctx::Global, make_chord('\'') },
-    { Action::OctaveUp,   Ctx::Global, make_scancode_chord(KEY_KPMULTIPLY) },
+    { Action::OctaveUp, Ctx::Global, make_scancode_chord(KEY_KPMULTIPLY) },
     { Action::OctaveDown, Ctx::Global, make_scancode_chord(KEY_KPDIVIDE) },
-    { Action::PrevInstr,  Ctx::Global, make_chord('?') },
-    { Action::PrevInstr,  Ctx::Global, make_chord('-') },
-    { Action::PrevInstr,  Ctx::Global, make_chord('<') },
-    { Action::NextInstr,  Ctx::Global, make_chord('+') },
-    { Action::NextInstr,  Ctx::Global, make_chord('_') },
-    { Action::NextInstr,  Ctx::Global, make_chord('>') },
+    { Action::PrevInstr, Ctx::Global, make_chord('?') },
+    { Action::PrevInstr, Ctx::Global, make_chord('-') },
+    { Action::PrevInstr, Ctx::Global, make_chord('<') },
+    { Action::NextInstr, Ctx::Global, make_chord('+') },
+    { Action::NextInstr, Ctx::Global, make_chord('_') },
+    { Action::NextInstr, Ctx::Global, make_chord('>') },
 
     // Song position (legacy ';' / ':' keys)
     { Action::SongPosPrev, Ctx::Global, make_scancode_chord(KEY_SEMICOLON) },
@@ -249,134 +245,134 @@ const Binding kBindings[] = {
     { Action::SongPosNext, Ctx::Global, make_chord(':') },
 
     // Song transport (Ctrl+arrow)
-    { Action::SongRewind,  Ctx::Global, make_scancode_chord(KEY_LEFT, Ctrl) },
+    { Action::SongRewind, Ctx::Global, make_scancode_chord(KEY_LEFT, Ctrl) },
     { Action::SongPosNext, Ctx::Global, make_scancode_chord(KEY_RIGHT, Ctrl) },
 
     // Order list — ImGui vertical layout
-    { Action::OrderRowUp,          Ctx::Order, make_scancode_chord(KEY_UP) },
-    { Action::OrderRowDown,        Ctx::Order, make_scancode_chord(KEY_DOWN) },
-    { Action::OrderColLeft,        Ctx::Order, make_scancode_chord(KEY_LEFT) },
-    { Action::OrderColRight,       Ctx::Order, make_scancode_chord(KEY_RIGHT) },
-    { Action::OrderPageUp,         Ctx::Order, make_scancode_chord(KEY_PGUP) },
-    { Action::OrderPageDown,       Ctx::Order, make_scancode_chord(KEY_PGDN) },
-    { Action::OrderHome,           Ctx::Order, make_scancode_chord(KEY_HOME) },
-    { Action::OrderEnd,            Ctx::Order, make_scancode_chord(KEY_END) },
-    { Action::OrderInsert,         Ctx::Order, make_scancode_chord(KEY_INS) },
-    { Action::OrderInsert,         Ctx::Order, make_scancode_chord(KEY_DEL, Shift) },
-    { Action::OrderDelete,         Ctx::Order, make_scancode_chord(KEY_DEL) },
-    { Action::OrderGoPattern,      Ctx::Order, make_scancode_chord(KEY_ENTER) },
+    { Action::OrderRowUp, Ctx::Order, make_scancode_chord(KEY_UP) },
+    { Action::OrderRowDown, Ctx::Order, make_scancode_chord(KEY_DOWN) },
+    { Action::OrderColLeft, Ctx::Order, make_scancode_chord(KEY_LEFT) },
+    { Action::OrderColRight, Ctx::Order, make_scancode_chord(KEY_RIGHT) },
+    { Action::OrderPageUp, Ctx::Order, make_scancode_chord(KEY_PGUP) },
+    { Action::OrderPageDown, Ctx::Order, make_scancode_chord(KEY_PGDN) },
+    { Action::OrderHome, Ctx::Order, make_scancode_chord(KEY_HOME) },
+    { Action::OrderEnd, Ctx::Order, make_scancode_chord(KEY_END) },
+    { Action::OrderInsert, Ctx::Order, make_scancode_chord(KEY_INS) },
+    { Action::OrderInsert, Ctx::Order, make_scancode_chord(KEY_DEL, Shift) },
+    { Action::OrderDelete, Ctx::Order, make_scancode_chord(KEY_DEL) },
+    { Action::OrderGoPattern, Ctx::Order, make_scancode_chord(KEY_ENTER) },
     { Action::OrderSelectPatterns, Ctx::Order, make_scancode_chord(KEY_ENTER, Shift) },
     { Action::OrderSelectPatterns, Ctx::Order, make_scancode_chord(KEY_ENTER, Ctrl) },
-    { Action::OrderCopy,           Ctx::Order, make_scancode_chord(KEY_C, Shift) },
-    { Action::OrderCopy,           Ctx::Order, make_scancode_chord(KEY_C, Ctrl) },
-    { Action::OrderCut,            Ctx::Order, make_scancode_chord(KEY_X, Shift) },
-    { Action::OrderCut,            Ctx::Order, make_scancode_chord(KEY_X, Ctrl) },
-    { Action::OrderPaste,          Ctx::Order, make_scancode_chord(KEY_V, Shift) },
-    { Action::OrderPaste,          Ctx::Order, make_scancode_chord(KEY_V, Ctrl) },
-    { Action::OrderInsertPaste,    Ctx::Order, make_chord('i', Ctrl) },
-    { Action::OrderMarkToggle,     Ctx::Order, make_scancode_chord(KEY_L, Shift) },
-    { Action::OrderTransposeUp,    Ctx::Order, make_chord('+') },
-    { Action::OrderTransposeDown,  Ctx::Order, make_chord('-') },
-    { Action::OrderInsertRepeat,   Ctx::Order, make_chord('R') },
-    { Action::OrderInsertRepeat,   Ctx::Order, make_chord('r') },
-    { Action::OrderSubtunePrev,    Ctx::Order, make_chord('<') },
-    { Action::OrderSubtunePrev,    Ctx::Order, make_chord('[') },
-    { Action::OrderSubtunePrev,    Ctx::Order, make_chord('(') },
-    { Action::OrderSubtuneNext,    Ctx::Order, make_chord('>') },
-    { Action::OrderSubtuneNext,    Ctx::Order, make_chord(']') },
-    { Action::OrderSubtuneNext,    Ctx::Order, make_chord(')') },
+    { Action::OrderCopy, Ctx::Order, make_scancode_chord(KEY_C, Shift) },
+    { Action::OrderCopy, Ctx::Order, make_scancode_chord(KEY_C, Ctrl) },
+    { Action::OrderCut, Ctx::Order, make_scancode_chord(KEY_X, Shift) },
+    { Action::OrderCut, Ctx::Order, make_scancode_chord(KEY_X, Ctrl) },
+    { Action::OrderPaste, Ctx::Order, make_scancode_chord(KEY_V, Shift) },
+    { Action::OrderPaste, Ctx::Order, make_scancode_chord(KEY_V, Ctrl) },
+    { Action::OrderInsertPaste, Ctx::Order, make_chord('i', Ctrl) },
+    { Action::OrderMarkToggle, Ctx::Order, make_scancode_chord(KEY_L, Shift) },
+    { Action::OrderTransposeUp, Ctx::Order, make_chord('+') },
+    { Action::OrderTransposeDown, Ctx::Order, make_chord('-') },
+    { Action::OrderInsertRepeat, Ctx::Order, make_chord('R') },
+    { Action::OrderInsertRepeat, Ctx::Order, make_chord('r') },
+    { Action::OrderSubtunePrev, Ctx::Order, make_chord('<') },
+    { Action::OrderSubtunePrev, Ctx::Order, make_chord('[') },
+    { Action::OrderSubtunePrev, Ctx::Order, make_chord('(') },
+    { Action::OrderSubtuneNext, Ctx::Order, make_chord('>') },
+    { Action::OrderSubtuneNext, Ctx::Order, make_chord(']') },
+    { Action::OrderSubtuneNext, Ctx::Order, make_chord(')') },
     { Action::OrderPlayRangeStart, Ctx::Order, make_scancode_chord(KEY_SPACE) },
     { Action::OrderPlayRangeStart, Ctx::Order, make_scancode_chord(KEY_SPACE, Shift) },
-    { Action::OrderPlayRangeEnd,   Ctx::Order, make_scancode_chord(KEY_BACKSPACE) },
-    { Action::OrderPlayRangeEnd,   Ctx::Order, make_scancode_chord(KEY_BACKSPACE, Shift) },
+    { Action::OrderPlayRangeEnd, Ctx::Order, make_scancode_chord(KEY_BACKSPACE) },
+    { Action::OrderPlayRangeEnd, Ctx::Order, make_scancode_chord(KEY_BACKSPACE, Shift) },
 
     // Pattern editor — unmodified arrow keys
-    { Action::PatternRowUp,             Ctx::Pattern, make_scancode_chord(KEY_UP) },
-    { Action::PatternRowDown,           Ctx::Pattern, make_scancode_chord(KEY_DOWN) },
-    { Action::PatternColLeft,           Ctx::Pattern, make_scancode_chord(KEY_LEFT) },
-    { Action::PatternColRight,          Ctx::Pattern, make_scancode_chord(KEY_RIGHT) },
-    { Action::PatternPageUp,            Ctx::Pattern, make_scancode_chord(KEY_PGUP) },
-    { Action::PatternPageDown,          Ctx::Pattern, make_scancode_chord(KEY_PGDN) },
-    { Action::PatternHome,              Ctx::Pattern, make_scancode_chord(KEY_HOME) },
-    { Action::PatternEnd,               Ctx::Pattern, make_scancode_chord(KEY_END) },
-    { Action::PatternPrev,              Ctx::Pattern, make_scancode_chord(KEY_LEFT, Shift) },
-    { Action::PatternNext,              Ctx::Pattern, make_scancode_chord(KEY_RIGHT, Shift) },
-    { Action::PatternPrev,              Ctx::Pattern, make_chord('<') },
-    { Action::PatternPrev,              Ctx::Pattern, make_chord('[') },
-    { Action::PatternPrev,              Ctx::Pattern, make_chord('(') },
-    { Action::PatternNext,              Ctx::Pattern, make_chord('>') },
-    { Action::PatternNext,              Ctx::Pattern, make_chord(']') },
-    { Action::PatternNext,              Ctx::Pattern, make_chord(')') },
-    { Action::PatternInsert,            Ctx::Pattern, make_scancode_chord(KEY_INS) },
-    { Action::PatternInsert,            Ctx::Pattern, make_scancode_chord(KEY_DEL, Shift) },
-    { Action::PatternDelete,            Ctx::Pattern, make_scancode_chord(KEY_DEL) },
-    { Action::PatternCopy,              Ctx::Pattern, make_scancode_chord(KEY_C, Shift) },
-    { Action::PatternCopy,              Ctx::Pattern, make_scancode_chord(KEY_C, Ctrl) },
-    { Action::PatternCut,               Ctx::Pattern, make_scancode_chord(KEY_X, Shift) },
-    { Action::PatternCut,               Ctx::Pattern, make_scancode_chord(KEY_X, Ctrl) },
-    { Action::PatternPaste,             Ctx::Pattern, make_scancode_chord(KEY_V, Shift) },
-    { Action::PatternPaste,             Ctx::Pattern, make_scancode_chord(KEY_V, Ctrl) },
-    { Action::PatternMarkToggle,        Ctx::Pattern, make_scancode_chord(KEY_L, Shift) },
-    { Action::PatternShrink,            Ctx::Pattern, make_scancode_chord(KEY_O, Shift) },
-    { Action::PatternExpand,            Ctx::Pattern, make_scancode_chord(KEY_P, Shift) },
-    { Action::PatternJoin,              Ctx::Pattern, make_scancode_chord(KEY_J, Shift) },
-    { Action::PatternSplit,             Ctx::Pattern, make_scancode_chord(KEY_K, Shift) },
-    { Action::PatternToggleJam,         Ctx::Pattern, make_scancode_chord(KEY_SPACE) },
-    { Action::PatternPlayFromCursor,    Ctx::Pattern, make_scancode_chord(KEY_SPACE, Shift) },
-    { Action::PatternChnNext,           Ctx::Pattern, make_scancode_chord(KEY_APOST2) },
-    { Action::PatternChnPrev,           Ctx::Pattern, make_scancode_chord(KEY_APOST2, Shift) },
+    { Action::PatternRowUp, Ctx::Pattern, make_scancode_chord(KEY_UP) },
+    { Action::PatternRowDown, Ctx::Pattern, make_scancode_chord(KEY_DOWN) },
+    { Action::PatternColLeft, Ctx::Pattern, make_scancode_chord(KEY_LEFT) },
+    { Action::PatternColRight, Ctx::Pattern, make_scancode_chord(KEY_RIGHT) },
+    { Action::PatternPageUp, Ctx::Pattern, make_scancode_chord(KEY_PGUP) },
+    { Action::PatternPageDown, Ctx::Pattern, make_scancode_chord(KEY_PGDN) },
+    { Action::PatternHome, Ctx::Pattern, make_scancode_chord(KEY_HOME) },
+    { Action::PatternEnd, Ctx::Pattern, make_scancode_chord(KEY_END) },
+    { Action::PatternPrev, Ctx::Pattern, make_scancode_chord(KEY_LEFT, Shift) },
+    { Action::PatternNext, Ctx::Pattern, make_scancode_chord(KEY_RIGHT, Shift) },
+    { Action::PatternPrev, Ctx::Pattern, make_chord('<') },
+    { Action::PatternPrev, Ctx::Pattern, make_chord('[') },
+    { Action::PatternPrev, Ctx::Pattern, make_chord('(') },
+    { Action::PatternNext, Ctx::Pattern, make_chord('>') },
+    { Action::PatternNext, Ctx::Pattern, make_chord(']') },
+    { Action::PatternNext, Ctx::Pattern, make_chord(')') },
+    { Action::PatternInsert, Ctx::Pattern, make_scancode_chord(KEY_INS) },
+    { Action::PatternInsert, Ctx::Pattern, make_scancode_chord(KEY_DEL, Shift) },
+    { Action::PatternDelete, Ctx::Pattern, make_scancode_chord(KEY_DEL) },
+    { Action::PatternCopy, Ctx::Pattern, make_scancode_chord(KEY_C, Shift) },
+    { Action::PatternCopy, Ctx::Pattern, make_scancode_chord(KEY_C, Ctrl) },
+    { Action::PatternCut, Ctx::Pattern, make_scancode_chord(KEY_X, Shift) },
+    { Action::PatternCut, Ctx::Pattern, make_scancode_chord(KEY_X, Ctrl) },
+    { Action::PatternPaste, Ctx::Pattern, make_scancode_chord(KEY_V, Shift) },
+    { Action::PatternPaste, Ctx::Pattern, make_scancode_chord(KEY_V, Ctrl) },
+    { Action::PatternMarkToggle, Ctx::Pattern, make_scancode_chord(KEY_L, Shift) },
+    { Action::PatternShrink, Ctx::Pattern, make_scancode_chord(KEY_O, Shift) },
+    { Action::PatternExpand, Ctx::Pattern, make_scancode_chord(KEY_P, Shift) },
+    { Action::PatternJoin, Ctx::Pattern, make_scancode_chord(KEY_J, Shift) },
+    { Action::PatternSplit, Ctx::Pattern, make_scancode_chord(KEY_K, Shift) },
+    { Action::PatternToggleJam, Ctx::Pattern, make_scancode_chord(KEY_SPACE) },
+    { Action::PatternPlayFromCursor, Ctx::Pattern, make_scancode_chord(KEY_SPACE, Shift) },
+    { Action::PatternChnNext, Ctx::Pattern, make_scancode_chord(KEY_APOST2) },
+    { Action::PatternChnPrev, Ctx::Pattern, make_scancode_chord(KEY_APOST2, Shift) },
     { Action::PatternToggleAutoAdvance, Ctx::Pattern, make_scancode_chord(KEY_Z, Shift) },
-    { Action::PatternCmdCopy,           Ctx::Pattern, make_scancode_chord(KEY_E, Shift) },
-    { Action::PatternCmdPaste,          Ctx::Pattern, make_scancode_chord(KEY_R, Shift) },
-    { Action::PatternInvert,            Ctx::Pattern, make_scancode_chord(KEY_I, Shift) },
-    { Action::PatternTransposeUp,       Ctx::Pattern, make_scancode_chord(KEY_Q, Shift) },
-    { Action::PatternTransposeDown,     Ctx::Pattern, make_scancode_chord(KEY_A, Shift) },
-    { Action::PatternOctaveUp,          Ctx::Pattern, make_scancode_chord(KEY_W, Shift) },
-    { Action::PatternOctaveDown,        Ctx::Pattern, make_scancode_chord(KEY_S, Shift) },
-    { Action::PatternStepSizeUp,        Ctx::Pattern, make_scancode_chord(KEY_M, Shift) },
-    { Action::PatternStepSizeDown,      Ctx::Pattern, make_scancode_chord(KEY_N, Shift) },
-    { Action::PatternMarkAll,           Ctx::Pattern, make_scancode_chord(KEY_A, Ctrl) },
-    { Action::PatternAutoPitchbend,     Ctx::Pattern, make_scancode_chord(KEY_Y, Shift) },
-    { Action::PatternPortamentoHelper,  Ctx::Pattern, make_scancode_chord(KEY_H, Shift) },
+    { Action::PatternCmdCopy, Ctx::Pattern, make_scancode_chord(KEY_E, Shift) },
+    { Action::PatternCmdPaste, Ctx::Pattern, make_scancode_chord(KEY_R, Shift) },
+    { Action::PatternInvert, Ctx::Pattern, make_scancode_chord(KEY_I, Shift) },
+    { Action::PatternTransposeUp, Ctx::Pattern, make_scancode_chord(KEY_Q, Shift) },
+    { Action::PatternTransposeDown, Ctx::Pattern, make_scancode_chord(KEY_A, Shift) },
+    { Action::PatternOctaveUp, Ctx::Pattern, make_scancode_chord(KEY_W, Shift) },
+    { Action::PatternOctaveDown, Ctx::Pattern, make_scancode_chord(KEY_S, Shift) },
+    { Action::PatternStepSizeUp, Ctx::Pattern, make_scancode_chord(KEY_M, Shift) },
+    { Action::PatternStepSizeDown, Ctx::Pattern, make_scancode_chord(KEY_N, Shift) },
+    { Action::PatternMarkAll, Ctx::Pattern, make_scancode_chord(KEY_A, Ctrl) },
+    { Action::PatternAutoPitchbend, Ctx::Pattern, make_scancode_chord(KEY_Y, Shift) },
+    { Action::PatternPortamentoHelper, Ctx::Pattern, make_scancode_chord(KEY_H, Shift) },
 
     // SID tables — ImGui four-column layout
-    { Action::TableRowUp,       Ctx::Tables, make_scancode_chord(KEY_UP) },
-    { Action::TableRowDown,     Ctx::Tables, make_scancode_chord(KEY_DOWN) },
-    { Action::TableColLeft,     Ctx::Tables, make_scancode_chord(KEY_LEFT) },
-    { Action::TableColRight,    Ctx::Tables, make_scancode_chord(KEY_RIGHT) },
-    { Action::TablePageUp,      Ctx::Tables, make_scancode_chord(KEY_PGUP) },
-    { Action::TablePageDown,    Ctx::Tables, make_scancode_chord(KEY_PGDN) },
-    { Action::TableHome,        Ctx::Tables, make_scancode_chord(KEY_HOME) },
-    { Action::TableEnd,         Ctx::Tables, make_scancode_chord(KEY_END) },
-    { Action::TableInsert,      Ctx::Tables, make_scancode_chord(KEY_INS) },
-    { Action::TableDelete,      Ctx::Tables, make_scancode_chord(KEY_DEL) },
-    { Action::TableCopy,        Ctx::Tables, make_scancode_chord(KEY_C, Shift) },
-    { Action::TableCopy,        Ctx::Tables, make_scancode_chord(KEY_C, Ctrl) },
-    { Action::TableCut,         Ctx::Tables, make_scancode_chord(KEY_X, Shift) },
-    { Action::TableCut,         Ctx::Tables, make_scancode_chord(KEY_X, Ctrl) },
-    { Action::TablePaste,       Ctx::Tables, make_scancode_chord(KEY_V, Shift) },
-    { Action::TablePaste,       Ctx::Tables, make_scancode_chord(KEY_V, Ctrl) },
-    { Action::TableOptimize,    Ctx::Tables, make_scancode_chord(KEY_O, Shift) },
-    { Action::TableToggleLock,  Ctx::Tables, make_scancode_chord(KEY_U, Shift) },
-    { Action::TableTestNote,    Ctx::Tables, make_scancode_chord(KEY_SPACE) },
+    { Action::TableRowUp, Ctx::Tables, make_scancode_chord(KEY_UP) },
+    { Action::TableRowDown, Ctx::Tables, make_scancode_chord(KEY_DOWN) },
+    { Action::TableColLeft, Ctx::Tables, make_scancode_chord(KEY_LEFT) },
+    { Action::TableColRight, Ctx::Tables, make_scancode_chord(KEY_RIGHT) },
+    { Action::TablePageUp, Ctx::Tables, make_scancode_chord(KEY_PGUP) },
+    { Action::TablePageDown, Ctx::Tables, make_scancode_chord(KEY_PGDN) },
+    { Action::TableHome, Ctx::Tables, make_scancode_chord(KEY_HOME) },
+    { Action::TableEnd, Ctx::Tables, make_scancode_chord(KEY_END) },
+    { Action::TableInsert, Ctx::Tables, make_scancode_chord(KEY_INS) },
+    { Action::TableDelete, Ctx::Tables, make_scancode_chord(KEY_DEL) },
+    { Action::TableCopy, Ctx::Tables, make_scancode_chord(KEY_C, Shift) },
+    { Action::TableCopy, Ctx::Tables, make_scancode_chord(KEY_C, Ctrl) },
+    { Action::TableCut, Ctx::Tables, make_scancode_chord(KEY_X, Shift) },
+    { Action::TableCut, Ctx::Tables, make_scancode_chord(KEY_X, Ctrl) },
+    { Action::TablePaste, Ctx::Tables, make_scancode_chord(KEY_V, Shift) },
+    { Action::TablePaste, Ctx::Tables, make_scancode_chord(KEY_V, Ctrl) },
+    { Action::TableOptimize, Ctx::Tables, make_scancode_chord(KEY_O, Shift) },
+    { Action::TableToggleLock, Ctx::Tables, make_scancode_chord(KEY_U, Shift) },
+    { Action::TableTestNote, Ctx::Tables, make_scancode_chord(KEY_SPACE) },
     { Action::TableReleaseNote, Ctx::Tables, make_scancode_chord(KEY_SPACE, Shift) },
-    { Action::TableNegate,      Ctx::Tables, make_scancode_chord(KEY_N, Shift) },
+    { Action::TableNegate, Ctx::Tables, make_scancode_chord(KEY_N, Shift) },
     { Action::TableConvertNote, Ctx::Tables, make_scancode_chord(KEY_R, Shift) },
 
     // Instrument list — ImGui grid layout
-    { Action::InstrRowUp,    Ctx::Instrument, make_scancode_chord(KEY_UP) },
-    { Action::InstrRowDown,  Ctx::Instrument, make_scancode_chord(KEY_DOWN) },
-    { Action::InstrColLeft,  Ctx::Instrument, make_scancode_chord(KEY_LEFT) },
+    { Action::InstrRowUp, Ctx::Instrument, make_scancode_chord(KEY_UP) },
+    { Action::InstrRowDown, Ctx::Instrument, make_scancode_chord(KEY_DOWN) },
+    { Action::InstrColLeft, Ctx::Instrument, make_scancode_chord(KEY_LEFT) },
     { Action::InstrColRight, Ctx::Instrument, make_scancode_chord(KEY_RIGHT) },
-    { Action::InstrPageUp,   Ctx::Instrument, make_scancode_chord(KEY_PGUP) },
+    { Action::InstrPageUp, Ctx::Instrument, make_scancode_chord(KEY_PGUP) },
     { Action::InstrPageDown, Ctx::Instrument, make_scancode_chord(KEY_PGDN) },
-    { Action::InstrHome,     Ctx::Instrument, make_scancode_chord(KEY_HOME) },
-    { Action::InstrEnd,      Ctx::Instrument, make_scancode_chord(KEY_END) },
+    { Action::InstrHome, Ctx::Instrument, make_scancode_chord(KEY_HOME) },
+    { Action::InstrEnd, Ctx::Instrument, make_scancode_chord(KEY_END) },
 
     // Song metadata (names panel)
-    { Action::NamesFieldNext,  Ctx::Names, make_scancode_chord(KEY_DOWN) },
-    { Action::NamesFieldPrev,  Ctx::Names, make_scancode_chord(KEY_UP) },
-    { Action::NamesFieldEdit,  Ctx::Names, make_scancode_chord(KEY_ENTER) },
+    { Action::NamesFieldNext, Ctx::Names, make_scancode_chord(KEY_DOWN) },
+    { Action::NamesFieldPrev, Ctx::Names, make_scancode_chord(KEY_UP) },
+    { Action::NamesFieldEdit, Ctx::Names, make_scancode_chord(KEY_ENTER) },
 };
 
 std::vector<Binding> g_overrides;
@@ -428,12 +424,12 @@ void order_sync_view() {
     }
 }
 
-static void order_begin_shift_mark() {
+void order_begin_shift_mark() {
     if (editorInfo.esmarkchn == -1 || editorInfo.esmarkchn != editorInfo.eschn ||
         editorInfo.eseditpos != editorInfo.esmarkend) {
         editorInfo.esmarkchn    = editorInfo.eschn;
         editorInfo.esmarkchnend = editorInfo.eschn;
-        editorInfo.esmarkstart  = editorInfo.esmarkend = editorInfo.eseditpos;
+        editorInfo.esmarkstart = editorInfo.esmarkend = editorInfo.eseditpos;
     }
 }
 
@@ -507,7 +503,8 @@ void order_col_left(GTOBJECT* gt) {
     if (shiftOrCtrlPressed) {
         editorInfo.esmarkchn    = -1;
         editorInfo.esmarkchnend = -1;
-    } else if (editorInfo.eschn != oldCh) {
+    }
+    else if (editorInfo.eschn != oldCh) {
         editorInfo.esmarkchn    = -1;
         editorInfo.esmarkchnend = -1;
     }
@@ -538,7 +535,8 @@ void order_col_right(GTOBJECT* gt) {
     if (shiftOrCtrlPressed) {
         editorInfo.esmarkchn    = -1;
         editorInfo.esmarkchnend = -1;
-    } else if (editorInfo.eschn != oldCh) {
+    }
+    else if (editorInfo.eschn != oldCh) {
         editorInfo.esmarkchn    = -1;
         editorInfo.esmarkchnend = -1;
     }
@@ -546,8 +544,7 @@ void order_col_right(GTOBJECT* gt) {
 }
 
 int order_max_row() {
-    if (editorInfo.expandOrderListView)
-        return (int)songOrderLength[editorInfo.esnum][editorInfo.eschn];
+    if (editorInfo.expandOrderListView) return (int)songOrderLength[editorInfo.esnum][editorInfo.eschn];
     return songlen[editorInfo.esnum][editorInfo.eschn] + 1;
 }
 
@@ -555,10 +552,11 @@ void order_page_up(GTOBJECT* gt) {
     if (editorInfo.expandOrderListView) {
         editorInfo.eseditpos -= EXTENDEDVISIBLEORDERLIST;
         if (editorInfo.eseditpos < 0) editorInfo.eseditpos = 0;
-    } else if (editorInfo.eseditpos > VISIBLEORDERLIST) {
+    }
+    else if (editorInfo.eseditpos > VISIBLEORDERLIST) {
         editorInfo.eseditpos -= VISIBLEORDERLIST;
-    } else
-        editorInfo.eseditpos = 0;
+    }
+    else editorInfo.eseditpos = 0;
 
     if (shiftOrCtrlPressed) editorInfo.esmarkend = editorInfo.eseditpos;
 
@@ -570,7 +568,8 @@ void order_page_down(GTOBJECT* gt) {
     if (editorInfo.expandOrderListView) {
         editorInfo.eseditpos += EXTENDEDVISIBLEORDERLIST;
         if (editorInfo.eseditpos > 0x7ff) editorInfo.eseditpos = 0x7ff;
-    } else {
+    }
+    else {
         const int maxRow = order_max_row();
         editorInfo.eseditpos += VISIBLEORDERLIST;
         if (editorInfo.eseditpos > maxRow) editorInfo.eseditpos = maxRow;
@@ -592,22 +591,19 @@ void order_nav_home(GTOBJECT* gt) {
 void order_nav_end(GTOBJECT* gt) {
     if (editorInfo.expandOrderListView)
         editorInfo.eseditpos = (int)songOrderLength[editorInfo.esnum][editorInfo.eschn];
-    else
-        editorInfo.eseditpos = order_max_row();
+    else editorInfo.eseditpos = order_max_row();
     if (shiftOrCtrlPressed) editorInfo.esmarkend = editorInfo.eseditpos;
     order_sync_view();
     (void)gt;
 }
 
-static void table_use_raw_hex_mode() {
-    editorInfo.editTableMode = EDIT_TABLE_NONE;
-}
+void table_use_raw_hex_mode() { editorInfo.editTableMode = EDIT_TABLE_NONE; }
 
 // Preserve the on-screen row when stepping across table columns (legacy
 // etview[] tracks each column's scroll offset).
-static void table_step_adjacent(int dir) {
-    const int old_t    = editorInfo.etnum;
-    const int vis_row  = editorInfo.etpos - editorInfo.etview[old_t];
+void table_step_adjacent(int dir) {
+    const int old_t   = editorInfo.etnum;
+    const int vis_row = editorInfo.etpos - editorInfo.etview[old_t];
 
     if (dir < 0) {
         editorInfo.etcolumn = 3;
@@ -626,7 +622,7 @@ static void table_step_adjacent(int dir) {
     validatetableview();
 }
 
-static void table_finish_nav() { validatetableview(); }
+void table_finish_nav() { validatetableview(); }
 
 void table_col_left(GTOBJECT* gt) {
     disableEnterToReturnToLastPos = 1;
@@ -676,23 +672,20 @@ void table_nav_end(GTOBJECT* gt) {
 
 void instr_row_up(GTOBJECT* gt) {
     if (editorInfo.einum > gtui::INSTR_FIRST) editorInfo.einum--;
-    else
-        editorInfo.einum = MAX_INSTR - 1;
+    else editorInfo.einum = MAX_INSTR - 1;
     (void)gt;
 }
 
 void instr_row_down(GTOBJECT* gt) {
     if (editorInfo.einum < MAX_INSTR - 1) editorInfo.einum++;
-    else
-        editorInfo.einum = gtui::INSTR_FIRST;
+    else editorInfo.einum = gtui::INSTR_FIRST;
     (void)gt;
 }
 
 void instr_page_up(GTOBJECT* gt) {
     int step = VISIBLETABLEROWS;
     if (editorInfo.einum > step + gtui::INSTR_FIRST - 1) editorInfo.einum -= step;
-    else
-        editorInfo.einum = gtui::INSTR_FIRST;
+    else editorInfo.einum = gtui::INSTR_FIRST;
     (void)gt;
 }
 
@@ -714,9 +707,9 @@ void instr_nav_end(GTOBJECT* gt) {
 }
 
 // Column order matches the grid: Name, AD, SR, …, PN.
-static int instr_vis_field(int vis) { return (vis == 0) ? gtui::INSTR_FIELD_NAME : vis - 1; }
+int instr_vis_field(int vis) { return (vis == 0) ? gtui::INSTR_FIELD_NAME : vis - 1; }
 
-static int instr_field_vis(int field) { return (field == gtui::INSTR_FIELD_NAME) ? 0 : field + 1; }
+int instr_field_vis(int field) { return (field == gtui::INSTR_FIELD_NAME) ? 0 : field + 1; }
 
 void instr_col_right(GTOBJECT* gt) {
     const int field = (editorInfo.eipos >= LAST_INST) ? gtui::INSTR_FIELD_NAME : editorInfo.eipos;
@@ -781,8 +774,7 @@ void transport_on_f1(GTOBJECT* gt) {
     }
     else {
         if (shiftpressed) orderPlayFromPosition(gt, 0, 0, 0, 1);
-        else
-            playFromCurrentPosition(gt, 0);
+        else playFromCurrentPosition(gt, 0);
     }
 }
 
@@ -790,8 +782,7 @@ void transport_on_f2(GTOBJECT* gt) {
 
     if (SIDTracker64ForIPadIsAmazing != 0) {
         if (shiftOrCtrlPressed) followplay = 1 - followplay;
-        else
-            playFromCurrentPosition(gt, 0);
+        else playFromCurrentPosition(gt, 0);
     }
     else if (useOriginalGTFunctionKeys) {
         playFromCurrentPosition(gt, 0);
@@ -858,7 +849,7 @@ void edit_octave_down() {
     if (editorInfo.epoctave > 0) editorInfo.epoctave--;
 }
 
-static void instr_clamp_after_global_step() {
+void instr_clamp_after_global_step() {
     if (editorInfo.editmode != EDIT_INSTRUMENT) return;
     gtui::instr_clamp_selection();
 }
@@ -891,8 +882,7 @@ bool handle_global_action(Action act) {
     GTOBJECT* gt = &gtObject;
 
     // Help modal: only Cancel (dismiss) and Help (toggle) may run; swallow the rest.
-    if (gimgui_help_open() && act != Action::Cancel && act != Action::Help)
-        return true;
+    if (gimgui_help_open() && act != Action::Cancel && act != Action::Help) return true;
 
     switch (act) {
     case Action::Save: {
@@ -905,7 +895,8 @@ bool handle_global_action(Action act) {
             if (instrument_file_context()) {
                 char path[MAX_PATHNAME];
                 if (gtfile::save_instrument(path, sizeof path)) saveinstrument();
-            } else {
+            }
+            else {
                 int s = quickSave();
                 if (s) sprintf(infoTextBuffer, "quick save: %d", s);
                 else {
@@ -917,9 +908,7 @@ bool handle_global_action(Action act) {
         return true;
     }
 
-    case Action::Undo:
-        undoPerform(gt);
-        return true;
+    case Action::Undo: undoPerform(gt); return true;
 
     case Action::Cancel:
         if (gimgui_help_open()) gimgui_close_help();
@@ -929,9 +918,7 @@ bool handle_global_action(Action act) {
         if (shiftOrCtrlPressed) clear(gt);
         return true;
 
-    case Action::Help:
-        gimgui_open_help();
-        return true;
+    case Action::Help: gimgui_open_help(); return true;
 
     case Action::EditModeNext:
         if (!shiftOrCtrlPressed) {
@@ -952,11 +939,9 @@ bool handle_global_action(Action act) {
     case Action::EditModePattern:
         if (!shiftOrCtrlPressed) {
             if (editorInfo.editmode == EDIT_ORDERLIST) {
-                if (!order_go_pattern(gt))
-                    editorInfo.editmode = EDIT_PATTERN;
+                if (!order_go_pattern(gt)) editorInfo.editmode = EDIT_PATTERN;
             }
-            else
-                editorInfo.editmode = EDIT_PATTERN;
+            else editorInfo.editmode = EDIT_PATTERN;
         }
         return true;
 
@@ -970,15 +955,14 @@ bool handle_global_action(Action act) {
                 editorInfo.editmode = EDIT_TABLES;
                 table_use_raw_hex_mode();
             }
-            else
-                editorInfo.editmode = EDIT_INSTRUMENT;
+            else editorInfo.editmode = EDIT_INSTRUMENT;
             disableEnterToReturnToLastPos = 1;
         }
         return true;
 
     case Action::EditModeTables:
         if (!shiftOrCtrlPressed) {
-            editorInfo.editmode           = EDIT_TABLES;
+            editorInfo.editmode = EDIT_TABLES;
             table_use_raw_hex_mode();
             disableEnterToReturnToLastPos = 1;
         }
@@ -1016,8 +1000,7 @@ bool handle_global_action(Action act) {
         if (editorInfo.expandOrderListView) {
             int maxSize = validateAllSongs();
             if (maxSize > 0xff) ok = 0;
-            else
-                compressAllSongs();
+            else compressAllSongs();
         }
         if (ok) {
             LOG_DEBUG("Relocate: export");
@@ -1036,7 +1019,8 @@ bool handle_global_action(Action act) {
         char path[MAX_PATHNAME];
         if (instrument_file_context()) {
             if (gtfile::open_instrument(path, sizeof path)) loadinstrument(gt);
-        } else {
+        }
+        else {
             const bool merge = shiftOrCtrlPressed != 0;
             if (gtfile::open_song(path, sizeof path, merge)) handleLoadPath(gt, path, merge);
         }
@@ -1053,7 +1037,8 @@ bool handle_global_action(Action act) {
             char path[MAX_PATHNAME];
             if (instrument_file_context()) {
                 if (gtfile::save_instrument(path, sizeof path)) saveinstrument();
-            } else if (gtfile::save_song(path, sizeof path)) {
+            }
+            else if (gtfile::save_song(path, sizeof path)) {
                 saveSongAtPath(gt, path);
             }
         }
@@ -1072,8 +1057,7 @@ bool handle_global_action(Action act) {
         SIDTracker64ForIPadIsAmazing = 1 - SIDTracker64ForIPadIsAmazing;
         setSIDTracker64KeyOnStyle();
         if (!SIDTracker64ForIPadIsAmazing) sprintf(infoTextBuffer, "SIDTracker64 Mode: Disabled");
-        else
-            sprintf(infoTextBuffer, "SIDTracker64 Mode: Enabled");
+        else sprintf(infoTextBuffer, "SIDTracker64 Mode: Enabled");
         forceInfoLine = 1;
         return true;
 
@@ -1083,8 +1067,7 @@ bool handle_global_action(Action act) {
 
     case Action::ToggleAdsrOrPan:
         if (!editPan) editadsr(gt);
-        else
-            editSIDPan(gt);
+        else editSIDPan(gt);
         return true;
 
     case Action::ToggleSidModel:
@@ -1148,24 +1131,12 @@ bool handle_pattern_action(Action act) {
     case Action::PatternEnd: pattern_nav_end(gt); return true;
     case Action::PatternPrev: prevpattern(gt); return true;
     case Action::PatternNext: nextpattern(gt); return true;
-    case Action::PatternInsert:
-        pattern_list_insert(gt);
-        return true;
-    case Action::PatternDelete:
-        pattern_list_delete(gt);
-        return true;
-    case Action::PatternCopy:
-        pattern_copy_or_cut(gt, 0);
-        return true;
-    case Action::PatternCut:
-        pattern_copy_or_cut(gt, 1);
-        return true;
-    case Action::PatternPaste:
-        pattern_paste(gt);
-        return true;
-    case Action::PatternMarkToggle:
-        pattern_mark_toggle();
-        return true;
+    case Action::PatternInsert: pattern_list_insert(gt); return true;
+    case Action::PatternDelete: pattern_list_delete(gt); return true;
+    case Action::PatternCopy: pattern_copy_or_cut(gt, 0); return true;
+    case Action::PatternCut: pattern_copy_or_cut(gt, 1); return true;
+    case Action::PatternPaste: pattern_paste(gt); return true;
+    case Action::PatternMarkToggle: pattern_mark_toggle(); return true;
     case Action::PatternShrink:
         if (shiftOrCtrlPressed) shrinkpattern(gt);
         return true;
@@ -1178,57 +1149,23 @@ bool handle_pattern_action(Action act) {
     case Action::PatternSplit:
         if (shiftOrCtrlPressed) splitpattern(gt);
         return true;
-    case Action::PatternToggleJam:
-        pattern_toggle_jam();
-        return true;
-    case Action::PatternPlayFromCursor:
-        pattern_play_from_cursor(gt);
-        return true;
-    case Action::PatternChnNext:
-        pattern_chn_next(gt);
-        return true;
-    case Action::PatternChnPrev:
-        pattern_chn_prev(gt);
-        return true;
-    case Action::PatternToggleAutoAdvance:
-        pattern_toggle_autoadvance();
-        return true;
-    case Action::PatternCmdCopy:
-        pattern_cmd_copy(gt);
-        return true;
-    case Action::PatternCmdPaste:
-        pattern_cmd_paste(gt);
-        return true;
-    case Action::PatternInvert:
-        pattern_invert(gt);
-        return true;
-    case Action::PatternTransposeUp:
-        pattern_transpose_up(gt);
-        return true;
-    case Action::PatternTransposeDown:
-        pattern_transpose_down(gt);
-        return true;
-    case Action::PatternOctaveUp:
-        pattern_octave_up(gt);
-        return true;
-    case Action::PatternOctaveDown:
-        pattern_octave_down(gt);
-        return true;
-    case Action::PatternStepSizeUp:
-        pattern_step_size_up();
-        return true;
-    case Action::PatternStepSizeDown:
-        pattern_step_size_down();
-        return true;
-    case Action::PatternMarkAll:
-        pattern_mark_all(gt);
-        return true;
-    case Action::PatternAutoPitchbend:
-        pattern_auto_pitchbend(gt);
-        return true;
-    case Action::PatternPortamentoHelper:
-        pattern_portamento_helper(gt);
-        return true;
+    case Action::PatternToggleJam: pattern_toggle_jam(); return true;
+    case Action::PatternPlayFromCursor: pattern_play_from_cursor(gt); return true;
+    case Action::PatternChnNext: pattern_chn_next(gt); return true;
+    case Action::PatternChnPrev: pattern_chn_prev(gt); return true;
+    case Action::PatternToggleAutoAdvance: pattern_toggle_autoadvance(); return true;
+    case Action::PatternCmdCopy: pattern_cmd_copy(gt); return true;
+    case Action::PatternCmdPaste: pattern_cmd_paste(gt); return true;
+    case Action::PatternInvert: pattern_invert(gt); return true;
+    case Action::PatternTransposeUp: pattern_transpose_up(gt); return true;
+    case Action::PatternTransposeDown: pattern_transpose_down(gt); return true;
+    case Action::PatternOctaveUp: pattern_octave_up(gt); return true;
+    case Action::PatternOctaveDown: pattern_octave_down(gt); return true;
+    case Action::PatternStepSizeUp: pattern_step_size_up(); return true;
+    case Action::PatternStepSizeDown: pattern_step_size_down(); return true;
+    case Action::PatternMarkAll: pattern_mark_all(gt); return true;
+    case Action::PatternAutoPitchbend: pattern_auto_pitchbend(gt); return true;
+    case Action::PatternPortamentoHelper: pattern_portamento_helper(gt); return true;
     default: return false;
     }
 }
@@ -1245,12 +1182,8 @@ bool handle_table_action(Action act) {
         tabledown();
         table_finish_nav();
         return true;
-    case Action::TableColLeft:
-        table_col_left(gt);
-        return true;
-    case Action::TableColRight:
-        table_col_right(gt);
-        return true;
+    case Action::TableColLeft: table_col_left(gt); return true;
+    case Action::TableColRight: table_col_right(gt); return true;
     case Action::TablePageUp:
         table_page_up(gt);
         table_finish_nav();
@@ -1267,39 +1200,17 @@ bool handle_table_action(Action act) {
         table_nav_end(gt);
         table_finish_nav();
         return true;
-    case Action::TableInsert:
-        table_list_insert(gt);
-        return true;
-    case Action::TableDelete:
-        table_list_delete(gt);
-        return true;
-    case Action::TableCopy:
-        table_copy_or_cut(0);
-        return true;
-    case Action::TableCut:
-        table_copy_or_cut(1);
-        return true;
-    case Action::TablePaste:
-        table_paste();
-        return true;
-    case Action::TableOptimize:
-        table_optimize();
-        return true;
-    case Action::TableToggleLock:
-        table_toggle_lock();
-        return true;
-    case Action::TableTestNote:
-        table_test_note(gt);
-        return true;
-    case Action::TableReleaseNote:
-        table_release_note(gt);
-        return true;
-    case Action::TableNegate:
-        table_negate_value();
-        return true;
-    case Action::TableConvertNote:
-        table_convert_note();
-        return true;
+    case Action::TableInsert: table_list_insert(gt); return true;
+    case Action::TableDelete: table_list_delete(gt); return true;
+    case Action::TableCopy: table_copy_or_cut(0); return true;
+    case Action::TableCut: table_copy_or_cut(1); return true;
+    case Action::TablePaste: table_paste(); return true;
+    case Action::TableOptimize: table_optimize(); return true;
+    case Action::TableToggleLock: table_toggle_lock(); return true;
+    case Action::TableTestNote: table_test_note(gt); return true;
+    case Action::TableReleaseNote: table_release_note(gt); return true;
+    case Action::TableNegate: table_negate_value(); return true;
+    case Action::TableConvertNote: table_convert_note(); return true;
     default: return false;
     }
 }
@@ -1319,7 +1230,7 @@ bool handle_instrument_action(Action act) {
     }
 }
 
-static void names_field_step(int delta) {
+void names_field_step(int delta) {
     gimgui_song_field_end();
     int f = editorInfo.enpos + delta;
     if (f > 2) f = 0;
@@ -1330,15 +1241,9 @@ static void names_field_step(int delta) {
 
 bool handle_names_action(Action act) {
     switch (act) {
-    case Action::NamesFieldNext:
-        names_field_step(1);
-        return true;
-    case Action::NamesFieldPrev:
-        names_field_step(-1);
-        return true;
-    case Action::NamesFieldEdit:
-        gimgui_song_field_begin(editorInfo.enpos);
-        return true;
+    case Action::NamesFieldNext: names_field_step(1); return true;
+    case Action::NamesFieldPrev: names_field_step(-1); return true;
+    case Action::NamesFieldEdit: gimgui_song_field_begin(editorInfo.enpos); return true;
     default: return false;
     }
 }
@@ -1348,12 +1253,8 @@ bool handle_order_action(Action act) {
     switch (act) {
     case Action::OrderRowUp: order_row_up(gt); return true;
     case Action::OrderRowDown: order_row_down(gt); return true;
-    case Action::OrderColLeft:
-        order_col_left(gt);
-        return true;
-    case Action::OrderColRight:
-        order_col_right(gt);
-        return true;
+    case Action::OrderColLeft: order_col_left(gt); return true;
+    case Action::OrderColRight: order_col_right(gt); return true;
     case Action::OrderPageUp: order_page_up(gt); return true;
     case Action::OrderPageDown: order_page_down(gt); return true;
     case Action::OrderHome: order_nav_home(gt); return true;
@@ -1362,72 +1263,48 @@ bool handle_order_action(Action act) {
         if (editorInfo.expandOrderListView) {
             orderListInsert_External(gt);
             playUntilEnd(editorInfo.esnum);
-        } else
-            order_list_insert(gt);
+        }
+        else order_list_insert(gt);
         return true;
     case Action::OrderDelete:
         if (editorInfo.expandOrderListView) {
             orderListDelete_External();
             playUntilEnd(editorInfo.esnum);
-        } else
-            order_list_delete(gt);
+        }
+        else order_list_delete(gt);
         return true;
-    case Action::OrderGoPattern:
-        order_go_pattern(gt);
-        return true;
-    case Action::OrderSelectPatterns:
-        order_select_patterns(gt);
-        return true;
+    case Action::OrderGoPattern: order_go_pattern(gt); return true;
+    case Action::OrderSelectPatterns: order_select_patterns(gt); return true;
     case Action::OrderCopy:
-        if (editorInfo.expandOrderListView == 0)
-            orderListCopyMarkedArea();
-        else
-            orderListCopyMarkedArea_Expanded();
+        if (editorInfo.expandOrderListView == 0) orderListCopyMarkedArea();
+        else orderListCopyMarkedArea_Expanded();
         return true;
     case Action::OrderCut:
         if (editorInfo.expandOrderListView) {
             orderListCopyMarkedArea_Expanded();
             orderListDelete_External();
             playUntilEnd(editorInfo.esnum);
-        } else
-            order_list_cut(gt);
+        }
+        else order_list_cut(gt);
         return true;
     case Action::OrderPaste:
-        if (editorInfo.expandOrderListView == 0)
-            orderListPasteToCursor(gt);
+        if (editorInfo.expandOrderListView == 0) orderListPasteToCursor(gt);
         else {
             int transposeOnly = editorInfo.escolumn > 2 ? 1 : 0;
             orderListPasteToCursor_External(gt, 0, transposeOnly);
         }
         return true;
     case Action::OrderInsertPaste:
-        if (editorInfo.expandOrderListView)
-            orderListPasteToCursor_External(gt, 1, 0);
+        if (editorInfo.expandOrderListView) orderListPasteToCursor_External(gt, 1, 0);
         return true;
-    case Action::OrderMarkToggle:
-        order_list_mark_toggle();
-        return true;
-    case Action::OrderTransposeUp:
-        order_list_transpose_up();
-        return true;
-    case Action::OrderTransposeDown:
-        order_list_transpose_down();
-        return true;
-    case Action::OrderInsertRepeat:
-        order_list_insert_repeat();
-        return true;
-    case Action::OrderSubtunePrev:
-        prevsong(gt);
-        return true;
-    case Action::OrderSubtuneNext:
-        nextsong(gt);
-        return true;
-    case Action::OrderPlayRangeStart:
-        order_play_range_start(gt);
-        return true;
-    case Action::OrderPlayRangeEnd:
-        order_play_range_end(gt);
-        return true;
+    case Action::OrderMarkToggle: order_list_mark_toggle(); return true;
+    case Action::OrderTransposeUp: order_list_transpose_up(); return true;
+    case Action::OrderTransposeDown: order_list_transpose_down(); return true;
+    case Action::OrderInsertRepeat: order_list_insert_repeat(); return true;
+    case Action::OrderSubtunePrev: prevsong(gt); return true;
+    case Action::OrderSubtuneNext: nextsong(gt); return true;
+    case Action::OrderPlayRangeStart: order_play_range_start(gt); return true;
+    case Action::OrderPlayRangeEnd: order_play_range_end(gt); return true;
     default: return false;
     }
 }
@@ -1472,7 +1349,7 @@ Action resolve_input_ctx(Ctx ctx, int raw_scancode, int ascii_key, int shift, in
     return Action::None;
 }
 
-static bool is_nav_arrow_key(int raw_scancode) {
+bool is_nav_arrow_key(int raw_scancode) {
     switch (raw_scancode) {
     case KEY_UP:
     case KEY_DOWN:
@@ -1514,7 +1391,7 @@ bool dispatch_order_navigation() {
     case KEY_LEFT:
     case KEY_RIGHT:
     case KEY_PGUP:
-    case KEY_PGDN: win_enableKeyRepeat(); break;
+    case KEY_PGDN: win_enable_key_repeat(); break;
     default: break;
     }
 
@@ -1552,7 +1429,7 @@ bool dispatch_pattern_navigation() {
     case KEY_PGUP:
     case KEY_PGDN:
     case KEY_INS:
-    case KEY_DEL: win_enableKeyRepeat(); break;
+    case KEY_DEL: win_enable_key_repeat(); break;
     default: break;
     }
 
@@ -1585,7 +1462,7 @@ bool dispatch_table_navigation() {
     case KEY_PGUP:
     case KEY_PGDN:
     case KEY_INS:
-    case KEY_DEL: win_enableKeyRepeat(); break;
+    case KEY_DEL: win_enable_key_repeat(); break;
     default: break;
     }
 
@@ -1619,7 +1496,7 @@ bool dispatch_instrument_navigation() {
     case KEY_LEFT:
     case KEY_RIGHT:
     case KEY_PGUP:
-    case KEY_PGDN: win_enableKeyRepeat(); break;
+    case KEY_PGDN: win_enable_key_repeat(); break;
     default: break;
     }
 
@@ -1637,10 +1514,8 @@ bool dispatch_names_navigation() {
     if (act == Action::None) return false;
 
     if (gimgui_song_field_editing()) {
-        if (act == Action::NamesFieldNext || act == Action::NamesFieldPrev)
-            gimgui_song_field_end();
-        else
-            return false;
+        if (act == Action::NamesFieldNext || act == Action::NamesFieldPrev) gimgui_song_field_end();
+        else return false;
     }
 
     if (!handle_names_action(act)) return false;
@@ -1650,50 +1525,7 @@ bool dispatch_names_navigation() {
 }
 
 
-} // namespace
-
-Ctx context_from_editmode(int editmode) {
-    switch (editmode) {
-    case EDIT_PATTERN: return Ctx::Pattern;
-    case EDIT_ORDERLIST: return Ctx::Order;
-    case EDIT_INSTRUMENT: return Ctx::Instrument;
-    case EDIT_TABLES: return Ctx::Tables;
-    case EDIT_NAMES: return Ctx::Names;
-    default: return Ctx::Global;
-    }
-}
-
-bool set_binding(Action action, Ctx ctx, Chord chord) {
-    if (action == Action::None || chord == kNoChord) return false;
-
-    for (auto it = g_overrides.begin(); it != g_overrides.end();) {
-        if ((it->action == action && it->ctx == ctx) || (it->ctx == ctx && it->chord == chord))
-            it = g_overrides.erase(it);
-        else
-            ++it;
-    }
-
-    g_overrides.push_back({ action, ctx, chord });
-    return true;
-}
-
-bool clear_binding(Action action, Ctx ctx) {
-    bool removed = false;
-    for (auto it = g_overrides.begin(); it != g_overrides.end();) {
-        if (it->action == action && it->ctx == ctx) {
-            it      = g_overrides.erase(it);
-            removed = true;
-        }
-        else {
-            ++it;
-        }
-    }
-    return removed;
-}
-
-void reset_bindings() { g_overrides.clear(); }
-
-static const char* scancode_label(int sc) {
+const char* scancode_label(int sc) {
     // Prefer short tracker-style names over SDL's verbose ones.
     switch (sc) {
     case KEY_ESC: return "Esc";
@@ -1716,14 +1548,56 @@ static const char* scancode_label(int sc) {
     case KEY_KPDIVIDE: return "Keypad/";
     case KEY_SEMICOLON: return ";";
     case KEY_COLON: return ".";
-    default:
-        break;
+    default: break;
     }
     if (const char* n = SDL_GetScancodeName((SDL_Scancode)sc)) {
         if (n[0]) return n;
     }
     return "?";
 }
+
+} // namespace
+
+Ctx context_from_editmode(int editmode) {
+    switch (editmode) {
+    case EDIT_PATTERN: return Ctx::Pattern;
+    case EDIT_ORDERLIST: return Ctx::Order;
+    case EDIT_INSTRUMENT: return Ctx::Instrument;
+    case EDIT_TABLES: return Ctx::Tables;
+    case EDIT_NAMES: return Ctx::Names;
+    default: return Ctx::Global;
+    }
+}
+
+bool set_binding(Action action, Ctx ctx, Chord chord) {
+    if (action == Action::None || chord == kNoChord) return false;
+
+    for (auto it = g_overrides.begin(); it != g_overrides.end();) {
+        if ((it->action == action && it->ctx == ctx) || (it->ctx == ctx && it->chord == chord))
+            it = g_overrides.erase(it);
+        else ++it;
+    }
+
+    g_overrides.push_back({ action, ctx, chord });
+    return true;
+}
+
+bool clear_binding(Action action, Ctx ctx) {
+    bool removed = false;
+    for (auto it = g_overrides.begin(); it != g_overrides.end();) {
+        if (it->action == action && it->ctx == ctx) {
+            it      = g_overrides.erase(it);
+            removed = true;
+        }
+        else {
+            ++it;
+        }
+    }
+    return removed;
+}
+
+void reset_bindings() { g_overrides.clear(); }
+
 
 std::string format_chord(Chord chord) {
     std::string s;
@@ -1734,9 +1608,11 @@ std::string format_chord(Chord chord) {
     const unsigned key = chord & 0xffffu;
     if (chord & Scancode) {
         s += scancode_label((int)key);
-    } else if (key >= 32 && key < 127) {
+    }
+    else if (key >= 32 && key < 127) {
         s += static_cast<char>(key);
-    } else {
+    }
+    else {
         char buf[16];
         snprintf(buf, sizeof buf, "0x%X", key);
         s += buf;
@@ -1755,11 +1631,11 @@ std::string format_chord_list(std::span<const Chord> chords, std::string_view se
 
 std::vector<BindingEntry> bindings_for(Ctx ctx) {
     // Chord → action (overrides win). Preserve first-seen chord order.
-    std::vector<Chord> order;
+    std::vector<Chord>                order;
     std::unordered_map<Chord, Action> eff;
 
     auto consider = [&](Chord c, Action a) {
-        if (eff.find(c) == eff.end()) order.push_back(c);
+        if (!eff.contains(c)) order.push_back(c);
         eff[c] = a;
     };
 
@@ -1777,7 +1653,7 @@ std::vector<BindingEntry> bindings_for(Ctx ctx) {
 }
 
 std::vector<BindingRow> binding_rows_for(Ctx ctx) {
-    std::vector<BindingRow> rows;
+    std::vector<BindingRow>       rows;
     std::map<Action, std::size_t> index;
 
     for (const BindingEntry& e : bindings_for(ctx)) {
@@ -1785,7 +1661,8 @@ std::vector<BindingRow> binding_rows_for(Ctx ctx) {
         if (it == index.end()) {
             index[e.action] = rows.size();
             rows.push_back({ e.action, { e.chord } });
-        } else {
+        }
+        else {
             rows[it->second].chords.push_back(e.chord);
         }
     }
@@ -1793,7 +1670,7 @@ std::vector<BindingRow> binding_rows_for(Ctx ctx) {
 }
 
 std::vector<ChordConflict> conflicts_for(Ctx ctx) {
-    std::vector<Chord>                         order;
+    std::vector<Chord>                             order;
     std::unordered_map<Chord, std::vector<Action>> claims;
 
     auto consider = [&](Chord c, Action a) {
@@ -1882,7 +1759,7 @@ bool dispatch_global(Ctx ctx) {
     return true;
 }
 
-bool dispatch_pattern_cell_input(int midiNote, const EditorInput *input) {
+bool dispatch_pattern_cell_input(int midiNote, const EditorInput* input) {
     if (editorInfo.editmode != EDIT_PATTERN) return false;
 
     const EditorInput in = input ? *input : editor_input_snapshot();
@@ -1892,7 +1769,7 @@ bool dispatch_pattern_cell_input(int midiNote, const EditorInput *input) {
     return true;
 }
 
-bool dispatch_instrument_cell_input(const EditorInput *input) {
+bool dispatch_instrument_cell_input(const EditorInput* input) {
     if (editorInfo.editmode != EDIT_INSTRUMENT) return false;
     if (gimgui_instr_name_editing()) return false;
 
@@ -1903,7 +1780,7 @@ bool dispatch_instrument_cell_input(const EditorInput *input) {
     return true;
 }
 
-bool dispatch_table_cell_input(const EditorInput *input) {
+bool dispatch_table_cell_input(const EditorInput* input) {
     if (editorInfo.editmode != EDIT_TABLES) return false;
 
     const EditorInput in = input ? *input : editor_input_snapshot();
@@ -1955,9 +1832,7 @@ bool perform(Action act) {
     case Action::OrderSubtunePrev:
     case Action::OrderSubtuneNext:
     case Action::OrderPlayRangeStart:
-    case Action::OrderPlayRangeEnd:
-        ok = handle_order_action(act);
-        break;
+    case Action::OrderPlayRangeEnd: ok = handle_order_action(act); break;
     case Action::PatternRowUp:
     case Action::PatternRowDown:
     case Action::PatternColLeft:
@@ -1994,9 +1869,7 @@ bool perform(Action act) {
     case Action::PatternStepSizeDown:
     case Action::PatternMarkAll:
     case Action::PatternAutoPitchbend:
-    case Action::PatternPortamentoHelper:
-        ok = handle_pattern_action(act);
-        break;
+    case Action::PatternPortamentoHelper: ok = handle_pattern_action(act); break;
     case Action::TableRowUp:
     case Action::TableRowDown:
     case Action::TableColLeft:
@@ -2015,9 +1888,7 @@ bool perform(Action act) {
     case Action::TableTestNote:
     case Action::TableReleaseNote:
     case Action::TableNegate:
-    case Action::TableConvertNote:
-        ok = handle_table_action(act);
-        break;
+    case Action::TableConvertNote: ok = handle_table_action(act); break;
     case Action::InstrRowUp:
     case Action::InstrRowDown:
     case Action::InstrColLeft:
@@ -2025,17 +1896,11 @@ bool perform(Action act) {
     case Action::InstrPageUp:
     case Action::InstrPageDown:
     case Action::InstrHome:
-    case Action::InstrEnd:
-        ok = handle_instrument_action(act);
-        break;
+    case Action::InstrEnd: ok = handle_instrument_action(act); break;
     case Action::NamesFieldNext:
     case Action::NamesFieldPrev:
-    case Action::NamesFieldEdit:
-        ok = handle_names_action(act);
-        break;
-    default:
-        ok = handle_global_action(act);
-        break;
+    case Action::NamesFieldEdit: ok = handle_names_action(act); break;
+    default: ok = handle_global_action(act); break;
     }
 
     return ok;

@@ -1,14 +1,13 @@
-#ifndef GDISPLAY_H
-#define GDISPLAY_H
+#pragma once
+
+#include "gplay.hpp"
 
 // Visible order-list page size (expanded view scroll).
 #define EXTENDEDVISIBLEORDERLIST 13
 
-#ifndef GDISPLAY_C
 extern const char* notename[];
 extern const char* notenameTableView[];
 extern char        timechar[];
-#endif
 
 void displayupdate(GTOBJECT* gt);
 void resettime(GTOBJECT* gt);
@@ -20,5 +19,3 @@ int  doDisplay(void* gt);
 void updateDisplayWhenFollowingAndPlaying(GTOBJECT* gt);
 void updateDisplayWhenFollowingAndPlaying_Expanded(GTOBJECT* gt);
 void updateDisplayWhenFollowingAndPlaying_Compressed(GTOBJECT* gt);
-
-#endif

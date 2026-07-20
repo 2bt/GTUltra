@@ -2,26 +2,34 @@
 // GTUltra pattern editor
 //
 
-#define GPATTERN_C
-
 #include "gimgui.hpp"
 #include "goattrk2.hpp"
+#include "gpattern.hpp"
 
 
-unsigned char notekeytbl1[] = { KEY_Z, KEY_S, KEY_X, KEY_D, KEY_C,     KEY_V, KEY_G,    KEY_B,
-                                KEY_H, KEY_N, KEY_J, KEY_M, KEY_COMMA, KEY_L, KEY_COLON };
+unsigned char notekeytbl1[] = {
+    KEY_Z, KEY_S, KEY_X, KEY_D, KEY_C,     KEY_V, KEY_G,     KEY_B,
+    KEY_H, KEY_N, KEY_J, KEY_M, KEY_COMMA, KEY_L, KEY_COLON,
+};
 
-unsigned char notekeytbl2[] = { KEY_Q, KEY_2, KEY_W, KEY_3, KEY_E, KEY_R, KEY_5, KEY_T, KEY_6,
-                                KEY_Y, KEY_7, KEY_U, KEY_I, KEY_9, KEY_O, KEY_0, KEY_P };
+unsigned char notekeytbl2[] = {
+    KEY_Q, KEY_2, KEY_W, KEY_3, KEY_E, KEY_R, KEY_5, KEY_T, KEY_6,
+    KEY_Y, KEY_7, KEY_U, KEY_I, KEY_9, KEY_O, KEY_0, KEY_P,
+};
 
-unsigned char dmckeytbl[] = { KEY_A, KEY_W, KEY_S, KEY_E, KEY_D, KEY_F, KEY_T, KEY_G,
-                              KEY_Y, KEY_H, KEY_U, KEY_J, KEY_K, KEY_O, KEY_L, KEY_P };
+unsigned char dmckeytbl[] = {
+    KEY_A, KEY_W, KEY_S, KEY_E, KEY_D, KEY_F, KEY_T, KEY_G, KEY_Y, KEY_H, KEY_U, KEY_J, KEY_K, KEY_O, KEY_L, KEY_P,
+};
 
-unsigned char jankokeytbl1[] = { KEY_Z, KEY_S, KEY_X, KEY_D, KEY_C, KEY_F,     KEY_V, KEY_G,    KEY_B,
-                                 KEY_H, KEY_N, KEY_J, KEY_M, KEY_K, KEY_COMMA, KEY_L, KEY_COLON };
+unsigned char jankokeytbl1[] = {
+    KEY_Z, KEY_S, KEY_X, KEY_D, KEY_C, KEY_F,     KEY_V, KEY_G,     KEY_B,
+    KEY_H, KEY_N, KEY_J, KEY_M, KEY_K, KEY_COMMA, KEY_L, KEY_COLON,
+};
 
-unsigned char jankokeytbl2[] = { KEY_Q, KEY_2, KEY_W, KEY_3, KEY_E, KEY_4, KEY_R, KEY_5, KEY_T, KEY_6,
-                                 KEY_Y, KEY_7, KEY_U, KEY_8, KEY_I, KEY_9, KEY_O, KEY_0, KEY_P };
+unsigned char jankokeytbl2[] = {
+    KEY_Q, KEY_2, KEY_W, KEY_3, KEY_E, KEY_4, KEY_R, KEY_5, KEY_T, KEY_6,
+    KEY_Y, KEY_7, KEY_U, KEY_8, KEY_I, KEY_9, KEY_O, KEY_0, KEY_P,
+};
 
 unsigned char patterncopybuffer[MAX_PATTROWS * 4 + 4];
 unsigned char cmdcopybuffer[MAX_PATTROWS * 4 + 4];
@@ -35,6 +43,8 @@ int         disableEnterToReturnToLastPos;
 
 // Pattern cell editing (notes + hex nybbles). Shared by the legacy editor and the
 // ImGui action layer (M4).
+namespace {
+
 enum PatternNoteResult { PATTERN_NOTE_NONE = 0, PATTERN_NOTE_EDITED = 1, PATTERN_NOTE_NAVIGATED = 2 };
 
 int pattern_note_input(GTOBJECT* gt, int midiNote, const EditorInput* input) {
@@ -91,8 +101,7 @@ int pattern_note_input(GTOBJECT* gt, int midiNote, const EditorInput* input) {
             break;
         }
     }
-    else
-        newnote = midiNote;
+    else newnote = midiNote;
 
     if (newnote > LASTNOTE) newnote = -1;
     if ((jrawkey == KEY_BACKSPACE) && (!editorInfo.epcolumn)) {
@@ -112,8 +121,7 @@ int pattern_note_input(GTOBJECT* gt, int midiNote, const EditorInput* input) {
         case 0:
             if (SIDTracker64ForIPadIsAmazing == 0) {
                 if (shiftOrCtrlPressed) newnote = KEYON;
-                else
-                    newnote = KEYOFF;
+                else newnote = KEYOFF;
             }
             else {
                 if (pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4] == REST)
@@ -311,12 +319,10 @@ int pattern_note_input(GTOBJECT* gt, int midiNote, const EditorInput* input) {
                             int           i2 = index * 4;
                             unsigned char jc = pattern[gt->editorUndoInfo.editorInfo[c2].epnum][i2];
                             if (jc == REST) pattern[gt->editorUndoInfo.editorInfo[c2].epnum][i2] = KEYON;
-                            else
-                                forceQuit = 1;
+                            else forceQuit = 1;
                             index--;
                         }
-                        else
-                            forceQuit = 1;
+                        else forceQuit = 1;
                     };
                 }
             }
@@ -431,6 +437,22 @@ bool pattern_hex_input(GTOBJECT* gt, const EditorInput* input) {
     return applied;
 }
 
+int pattern_max_channels() {
+    if (editorInfo.maxSIDChannels == 3 || (editorInfo.maxSIDChannels == 9 && (editorInfo.esnum & 1))) return 3;
+    return 6;
+}
+
+int check_mono_mode() {
+    for (int i = 0; i < 4; i++) {
+        if (transportPolySIDEnabled[i]) return 0;
+    }
+    return 1;
+}
+
+int last_found_channel = 0;
+
+} // namespace
+
 bool pattern_cell_input(GTOBJECT* gt, int midiNote, const EditorInput* input) {
     const int note_r = pattern_note_input(gt, midiNote, input);
     if (note_r == PATTERN_NOTE_NAVIGATED) return true;
@@ -507,12 +529,6 @@ int patternup(GTOBJECT* gt) {
 }
 
 
-static int pattern_max_channels() {
-    if (editorInfo.maxSIDChannels == 3 || (editorInfo.maxSIDChannels == 9 && (editorInfo.esnum & 1))) return 3;
-    return 6;
-}
-
-
 void pattern_col_right(GTOBJECT* gt) {
     int c2 = getActualChannel(editorInfo.esnum, editorInfo.epchn);
 
@@ -578,15 +594,13 @@ void pattern_nav_up(GTOBJECT* gt) {
 
         if (editorInfo.expandOrderListView == 0)
             songPat = songorder[editorInfo.esnum][c3][gt->editorUndoInfo.editorInfo[c2].espos];
-        else
-            songPat = songOrderPatterns[editorInfo.esnum][c3][gt->editorUndoInfo.editorInfo[c2].espos];
+        else songPat = songOrderPatterns[editorInfo.esnum][c3][gt->editorUndoInfo.editorInfo[c2].espos];
 
         if (songPat == gt->editorUndoInfo.editorInfo[c2].epnum) {
             if (gt->editorUndoInfo.editorInfo[c2].espos == 0) {
                 if (editorInfo.expandOrderListView == 0)
                     gt->editorUndoInfo.editorInfo[c2].espos = songlen[editorInfo.esnum][c3];
-                else
-                    gt->editorUndoInfo.editorInfo[c2].espos = songOrderLength[editorInfo.esnum][c3];
+                else gt->editorUndoInfo.editorInfo[c2].espos = songOrderLength[editorInfo.esnum][c3];
             }
 
             editorInfo.eseditpos = gt->editorUndoInfo.editorInfo[c2].espos - 1;
@@ -612,8 +626,7 @@ void pattern_nav_down(GTOBJECT* gt) {
 
         if (editorInfo.expandOrderListView == 0)
             songPat = songorder[editorInfo.esnum][c3][gt->editorUndoInfo.editorInfo[c2].espos];
-        else
-            songPat = songOrderPatterns[editorInfo.esnum][c3][gt->editorUndoInfo.editorInfo[c2].espos];
+        else songPat = songOrderPatterns[editorInfo.esnum][c3][gt->editorUndoInfo.editorInfo[c2].espos];
 
         if (songPat == gt->editorUndoInfo.editorInfo[c2].epnum) {
             if (editorInfo.expandOrderListView == 0) {
@@ -915,8 +928,8 @@ void joinpattern(GTOBJECT* gt) {
 
         findusedpatterns();
         {
-            int del1 = pattused[c];
-            int del2 = pattused[d];
+            int del1 = patt_used[c];
+            int del2 = patt_used[d];
 
             if (!del1) {
                 deletepattern(c, gt);
@@ -1068,7 +1081,7 @@ int handlePolyphonicKeyboard(GTOBJECT* gt) {
         sprintf(&keyOffsetText[0], "                        ");
 
         if (!noKeysPressed) {
-            win_disableKeyRepeat(); // key pressed. So disable key repeat for jam mode
+            win_disable_key_repeat(); // key pressed. So disable key repeat for jam mode
         }
     }
 
@@ -1152,8 +1165,7 @@ void calculateNoteOffsets() {
             noteOffsets[noteHeldLength] = note - firstNote;
 
             if (c == 0) sprintf(&keyOffsetText[c + 6], " %02X   ", noteOffsets[noteHeldLength]);
-            else
-                sprintf(&keyOffsetText[c + 6], ",%02X   ", noteOffsets[noteHeldLength]);
+            else sprintf(&keyOffsetText[c + 6], ",%02X   ", noteOffsets[noteHeldLength]);
 
             noteList[noteIndex++] = note - FIRSTNOTE;
             c += 3;
@@ -1199,16 +1211,8 @@ int findNote(int lowestNote) {
     return note;
 }
 
-int checkMonoMode() {
-    for (int i = 0; i < 4; i++) {
-        if (transportPolySIDEnabled[i]) return 0;
-    }
-    return 1; // All SID chips disabled for poly playback. So play mono on selected editor channel
-}
-
-int lastFoundChannel = 0;
 int findFreePolyChannel(int note) {
-    if (checkMonoMode()) {
+    if (check_mono_mode()) {
         //		sprintf(textbuffer,"ch: %d %d",editorInfo.epchn,getActualChannel(editorInfo.esnum,
         return getActualChannel(editorInfo.esnum, editorInfo.epchn);
     }
@@ -1224,13 +1228,13 @@ int findFreePolyChannel(int note) {
         }
     }
 
-    int c = lastFoundChannel;
+    int c = last_found_channel;
     // Find a free channel
     for (int i = 0; i < KEYBOARD_POLYPHONY; i++) {
         if (transportPolySIDEnabled[c / 3]) {
             if (playingChannelOnKey[c] == -1) {
-                lastFoundChannel = c + 1;
-                lastFoundChannel %= KEYBOARD_POLYPHONY;
+                last_found_channel = c + 1;
+                last_found_channel %= KEYBOARD_POLYPHONY;
                 return c;
             }
         }
@@ -1250,8 +1254,8 @@ int findFreePolyChannel(int note) {
         }
     }
 
-    lastFoundChannel = oldestChannel + 1;
-    lastFoundChannel %= KEYBOARD_POLYPHONY;
+    last_found_channel = oldestChannel + 1;
+    last_found_channel %= KEYBOARD_POLYPHONY;
     return oldestChannel;
 }
 
@@ -1432,8 +1436,7 @@ void clearKeyOns(GTOBJECT* gt, int c2, int i2) {
             pattern[gt->editorUndoInfo.editorInfo[c2].epnum][i2] = REST;
             i2 += 4;
             if ((i2 / 4) > pattlen[gt->editorUndoInfo.editorInfo[c2].epnum]) forceQuit = 1;
-            else if (pattern[gt->editorUndoInfo.editorInfo[c2].epnum][i2] != KEYON)
-                forceQuit = 1;
+            else if (pattern[gt->editorUndoInfo.editorInfo[c2].epnum][i2] != KEYON) forceQuit = 1;
         };
     }
 }
@@ -1593,7 +1596,7 @@ void pattern_paste(GTOBJECT* gt) {
     }
 }
 
-void pattern_mark_toggle(void) {
+void pattern_mark_toggle() {
     int       c2 = getActualChannel(editorInfo.esnum, editorInfo.epchn);
     GTOBJECT* gt = &gtObject;
 
@@ -1602,11 +1605,10 @@ void pattern_mark_toggle(void) {
         editorInfo.epmarkstart = 0;
         editorInfo.epmarkend   = pattlen[gt->editorUndoInfo.editorInfo[c2].epnum] - 1;
     }
-    else
-        editorInfo.epmarkchn = -1;
+    else editorInfo.epmarkchn = -1;
 }
 
-void pattern_toggle_jam(void) {
+void pattern_toggle_jam() {
     if (!shiftOrCtrlPressed) recordmode ^= 1;
 }
 
@@ -1619,7 +1621,7 @@ void pattern_mute_channel(GTOBJECT* gt, int ch) {
     if (ch >= 0 && ch <= 5) mutechannel(ch, gt);
 }
 
-void pattern_toggle_autoadvance(void) {
+void pattern_toggle_autoadvance() {
     if (!shiftpressed || ctrlpressed) return;
 
     autoadvance++;
@@ -1627,10 +1629,8 @@ void pattern_toggle_autoadvance(void) {
     forceInfoLine++;
 
     if (autoadvance == 0) sprintf(infoTextBuffer, "AutoAdvance:ALL (NOTES & VALUES)");
-    else if (autoadvance == 1)
-        sprintf(infoTextBuffer, "AutoAdvance:NOTES ONLY");
-    else if (autoadvance == 2)
-        sprintf(infoTextBuffer, "AutoAdvance:OFF");
+    else if (autoadvance == 1) sprintf(infoTextBuffer, "AutoAdvance:NOTES ONLY");
+    else if (autoadvance == 2) sprintf(infoTextBuffer, "AutoAdvance:OFF");
 }
 
 void pattern_cmd_copy(GTOBJECT* gt) {
@@ -1861,13 +1861,13 @@ void pattern_octave_down(GTOBJECT* gt) {
     pattern_transpose_octave_inner(gt, -12);
 }
 
-void pattern_step_size_up(void) {
+void pattern_step_size_up() {
     if (!shiftOrCtrlPressed) return;
     stepsize++;
     if (stepsize > MAX_PATTROWS) stepsize = MAX_PATTROWS;
 }
 
-void pattern_step_size_down(void) {
+void pattern_step_size_down() {
     if (!shiftOrCtrlPressed) return;
     stepsize--;
     if (stepsize < 2) stepsize = 2;
@@ -1907,8 +1907,7 @@ void pattern_portamento_helper(GTOBJECT* gt) {
     case CMD_TONEPORTA:
         if (pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4 + 2] == CMD_TONEPORTA)
             c = editorInfo.eppos - 1;
-        else
-            c = editorInfo.eppos;
+        else c = editorInfo.eppos;
         for (; c >= 0; c--) {
             if ((pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4] >= FIRSTNOTE) &&
                 (pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4] <= LASTNOTE)) {
