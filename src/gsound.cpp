@@ -13,6 +13,7 @@
 #endif
 
 #include "goattrk2.hpp"
+#include "gendian.hpp"
 
 #include <vector>
 

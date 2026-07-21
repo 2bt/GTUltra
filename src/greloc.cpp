@@ -4,6 +4,7 @@
 
 #include "goattrk2.hpp"
 #include "embed.hpp"
+#include "gendian.hpp"
 
 #include <cstdint>
 #include <cstdio>

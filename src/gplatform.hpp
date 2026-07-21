@@ -126,8 +126,6 @@
 #define KEY_KPEQUALS SDL_SCANCODE_KP_EQUALS
 #define KEY_KPPERIOD SDL_SCANCODE_KP_PERIOD
 
-#include "gendian.hpp"
-
 // --- Audio (SDL custom-mixer SID path, used by gsound) -------------------
 bool snd_init(unsigned mixrate, unsigned mixmode, unsigned bufferlength_ms);
 void snd_set_custom_mixer(void (*custom_mixer)(Sint32* dest, unsigned samples));
