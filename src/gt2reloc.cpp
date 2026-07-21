@@ -131,14 +131,12 @@ bool            useOriginalGTFunctionKeys = false;
 extern GTOBJECT gtObject;
 // GTOBJECT gtObject;
 bool          useRepeatsWhenCompressing = true;
-char          infoTextBuffer[256];
 bool          midiEnabled          = false;
 bool          forceSave3ChannelSng = false;
 bool          normalizeWAV         = false;
 int           jdebug[16];
 char          transportLoopPattern = 0;
 char          transportPolySIDEnabled[4]; // 0 = OFF 1 = ON (all OFF = mono)
-WAVEFORM_INFO waveformDisplayInfo;
 bool          autoNextPattern = false;
 int           sidAddr1        = 0xd400;
 int           sidAddr2        = 0xd420;

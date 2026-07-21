@@ -691,9 +691,6 @@ void songchange(GTOBJECT* gt, bool reset_editing_positions) {
         if (gt->songinit != PlayMode::Stopped) {
             stopsong(gt);
         }
-
-        lastInfoPatternCh = -1; // force text
-        displayPatternInfo(gt);
     }
 
     if ((editorInfo.maxSIDChannels == 3) || (editorInfo.maxSIDChannels == 9 && (editorInfo.esnum & 1))) {

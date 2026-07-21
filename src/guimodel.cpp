@@ -12,8 +12,10 @@
 #include "gplay.hpp"
 
 #include <algorithm>
+#include <cstdarg>
 #include <cstdio>
 #include <cstring>
+#include <string>
 
 namespace gtui {
 
@@ -879,20 +881,65 @@ void player_multiplier_next() {
     player_settings_edit([] { nextmultiplier(); });
 }
 
-void context_help_refresh() {
-    switch (editorInfo.editmode) {
-    case EditMode::Pattern: displayPatternInfo(&gtObject); break;
-    case EditMode::Instrument: displayInstrumentInfo(&gtObject); break;
-    case EditMode::Tables: displayTableInfo(&gtObject); break;
-    case EditMode::OrderList: displayOrderTableInfo(&gtObject); break;
-    case EditMode::Names:
-        snprintf(infoTextBuffer, sizeof infoTextBuffer, "Song metadata (name, author, copyright)");
-        break;
-    default: break;
-    }
+namespace {
+
+// Transient status message ("" = none). Set by editor actions (save, export,
+// mode toggles) via set_status(); shown by context_help() in place of the
+// cursor-cell description until the user navigates away.
+std::string g_help;          // cursor-cell description, rebuilt each refresh
+std::string g_status;
+long long   g_status_sig = 0; // cursor signature captured when the status was set
+
+// Small hash of the edit cursor. When it changes, the user has navigated, so
+// the transient status is dropped and normal context help resumes. This
+// replaces the legacy forceInfoLine skip-counter that lived inside ginfo.
+long long cursor_signature() {
+    long long h    = static_cast<int>(editorInfo.editmode);
+    auto      mix  = [&](int v) { h = h * 131 + v; };
+    mix(editorInfo.eppos);
+    mix(editorInfo.epchn);
+    mix(editorInfo.esnum);
+    mix(editorInfo.eseditpos);
+    mix(editorInfo.eschn);
+    mix(editorInfo.einum);
+    mix(editorInfo.eipos);
+    mix(editorInfo.etnum);
+    mix(editorInfo.etpos);
+    mix(editorInfo.etcolumn);
+    return h;
 }
 
-const char* context_help() { return infoTextBuffer; }
+} // namespace
+
+void set_status(const char* fmt, ...) {
+    char    buf[256];
+    va_list ap;
+    va_start(ap, fmt);
+    vsnprintf(buf, sizeof buf, fmt, ap);
+    va_end(ap);
+    g_status     = buf;
+    g_status_sig = cursor_signature();
+}
+
+void context_help_refresh() {
+    // While the poly keyboard is being played, the info line shows the live
+    // note offsets (keyOffsetText) instead of cursor help or status.
+    if (checkAnyPolyPlaying()) {
+        calculateNoteOffsets();
+        return;
+    }
+
+    if (!g_status.empty() && cursor_signature() != g_status_sig) g_status.clear();
+
+    if (editorInfo.editmode == EditMode::Names) g_help = "Song metadata (name, author, copyright)";
+    else g_help = ginfo::describe(gtObject);
+}
+
+const char* context_help() {
+    if (checkAnyPolyPlaying()) return keyOffsetText;
+    if (!g_status.empty()) return g_status.c_str();
+    return g_help.c_str();
+}
 
 void pattern_set_cursor(int ch, int row, int col) {
     int chans = pattern_channels();

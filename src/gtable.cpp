@@ -7,6 +7,7 @@
 #include "goattrk2.hpp"
 #include "gtable.hpp"
 #include "gimgui.hpp"
+#include "guimodel.hpp"
 
 unsigned char ltablecopybuffer[MAX_TABLELEN];
 unsigned char rtablecopybuffer[MAX_TABLELEN];
@@ -1058,9 +1059,7 @@ void table_toggle_lock() {
 
     editorInfo.etlock = !editorInfo.etlock;
     validatetableview();
-    if (editorInfo.etlock) sprintf(infoTextBuffer, "Table Lock: Enabled");
-    else sprintf(infoTextBuffer, "Table Lock: Disabled");
-    forceInfoLine = 1;
+    gtui::set_status("Table Lock: %s", editorInfo.etlock ? "Enabled" : "Disabled");
 }
 
 void table_test_note(GTOBJECT* gt) {

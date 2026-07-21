@@ -1,5 +1,12 @@
 // Empty ImGui shims for binaries that link gtcore but have no UI (gt2reloc).
 #include "gimgui.hpp"
+#include "guimodel.hpp"
+
+// gtcore's song/table/undo code reports transient status via gtui::set_status.
+// The relocator has no info line, so the messages are dropped.
+namespace gtui {
+void set_status(const char*, ...) {}
+} // namespace gtui
 
 void gimgui_init() {}
 void gimgui_shutdown() {}

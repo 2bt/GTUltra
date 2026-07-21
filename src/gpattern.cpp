@@ -5,6 +5,7 @@
 #include "gimgui.hpp"
 #include "goattrk2.hpp"
 #include "gpattern.hpp"
+#include "guimodel.hpp"
 
 
 unsigned char notekeytbl1[] = {
@@ -1131,15 +1132,11 @@ void initPolyKeyboard() {
     }
 }
 
-bool clearPolyChannel(int i, GTOBJECT* gt) {
-
+void clearPolyChannel(int i, GTOBJECT* gt) {
     if (playingChannelOnKey[i] != -1) {
         releasenote(playingGTChannel[i], gt);
         playingChannelOnKey[i] = -1;
-        clearInfoLine          = true;
     }
-
-    return clearInfoLine; // Used to clear Info if any keys were pressed and are now not
 }
 
 
@@ -1626,11 +1623,10 @@ void pattern_toggle_autoadvance() {
 
     autoadvance++;
     if (autoadvance > 2) autoadvance = 0;
-    forceInfoLine++;
 
-    if (autoadvance == 0) sprintf(infoTextBuffer, "AutoAdvance:ALL (NOTES & VALUES)");
-    else if (autoadvance == 1) sprintf(infoTextBuffer, "AutoAdvance:NOTES ONLY");
-    else if (autoadvance == 2) sprintf(infoTextBuffer, "AutoAdvance:OFF");
+    if (autoadvance == 0) gtui::set_status("AutoAdvance:ALL (NOTES & VALUES)");
+    else if (autoadvance == 1) gtui::set_status("AutoAdvance:NOTES ONLY");
+    else if (autoadvance == 2) gtui::set_status("AutoAdvance:OFF");
 }
 
 void pattern_cmd_copy(GTOBJECT* gt) {

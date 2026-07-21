@@ -257,9 +257,12 @@ void player_toggle_sidtracker64();
 void player_multiplier_prev();
 void player_multiplier_next();
 
-// ---- contextual help (legacy infoTextBuffer) ----
-void        context_help_refresh(); // update from cursor / edit mode
-const char* context_help();
+// ---- contextual help (info bar) ----
+void        context_help_refresh(); // rebuild from cursor / edit mode
+const char* context_help();         // current info-line text (help / status / jam)
+// Transient status message (save/export/toggle feedback), printf-style. Shown
+// by context_help() in place of the cursor description until the user navigates.
+void set_status(const char* fmt, ...);
 
 // ---- MIDI input (transport-bar combo) ----
 enum { MIDI_PORT_DISABLED = 9999 };

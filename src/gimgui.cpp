@@ -725,7 +725,7 @@ void gimgui_draw_player_status_bar(ImVec2 pos, ImVec2 size) {
     ImGui::End();
 }
 
-// Context-sensitive decode of the cell under the cursor (legacy infoTextBuffer).
+// Context-sensitive decode of the cell under the cursor (gtui::context_help).
 // Same chrome row height as player/transport bars; room for context buttons later.
 void gimgui_draw_context_help(ImVec2 pos, ImVec2 size) {
     gtui::context_help_refresh();

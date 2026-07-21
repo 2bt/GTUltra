@@ -160,7 +160,6 @@ char startPaletteName[MAX_PATHNAME];
 
 char debugTextbuffer[MAX_PATHNAME];
 char textbuffer[MAX_PATHNAME];
-char infoTextBuffer[256];
 
 char transportPolySIDEnabled[4]; // 0 = OFF 1 = ON (all OFF = mono)
 char transportLoopPattern           = 0;
@@ -183,8 +182,6 @@ int gMIDINote = -1;
 int loadedSongFlag = 0;
 
 int jdebug[16];
-
-WAVEFORM_INFO waveformDisplayInfo;
 
 
 int main(int argc, char** argv) {
@@ -498,8 +495,6 @@ int main(int argc, char** argv) {
     // Composite the experimental ImGui layer on top of the legacy editor.
     gimgui_init();
 
-    waveformDisplayInfo.displayOnOff = false;
-
     initPolyKeyboard();
     // Reset channels/song
     initchannels(&gtObject);
@@ -799,6 +794,12 @@ int forceKeys = 1;
 
 int backupSongTimer = 0;
 
+// Frame timing for the auto-backup interval (was shared via ginfo).
+namespace {
+int      msDelta = 0;
+uint32_t lastMS  = 0;
+} // namespace
+
 void handleLoad(GTOBJECT* gt, char* dragdropfile);
 
 // Per-frame editor upkeep decoupled from the input-wait loop (M3). Polls SDL
@@ -905,22 +906,9 @@ void editor_frame_update(GTOBJECT* gt) {
                 for (int i = 0; i < KEYBOARD_POLYPHONY; i++) {
                     clearPolyChannel(i, gt);
                 }
-                if (clearInfoLine) {
-                    clearInfoLine = false;
-                    if (editorInfo.editmode == EditMode::Pattern) {
-                        lastInfoPatternCh = -1; // force text
-                        displayPatternInfo(gt);
-                    }
-                    else {
-                        sprintf(&keyOffsetText[0], "                        ");
-                        sprintf(infoTextBuffer, keyOffsetText);
-                    }
-                }
             }
-            else {
-                calculateNoteOffsets();
-                sprintf(infoTextBuffer, keyOffsetText);
-            }
+            // The info line (cursor help / status / live note offsets) is
+            // refreshed by gtui::context_help_refresh() during the ImGui draw.
         }
     }
 }
@@ -1018,7 +1006,6 @@ void docommand(void) {
             const EditorInput in = editor_input_snapshot();
             if (!gtaction::dispatch_global(gtaction::Ctx::Order)) orderlistcommands(gt, &in);
         }
-        displayOrderTableInfo(gt);
         break;
 
     case EditMode::Instrument:
@@ -1028,7 +1015,6 @@ void docommand(void) {
             const EditorInput in = editor_input_snapshot();
             if (!gtaction::dispatch_instrument_cell_input(&in)) instrumentcommands(gt, &in);
         }
-        displayInstrumentInfo(gt);
         break;
 
     case EditMode::Tables:
@@ -1037,7 +1023,6 @@ void docommand(void) {
             const EditorInput in = editor_input_snapshot();
             if (!gtaction::dispatch_table_cell_input(&in)) tablecommands(gt, &in);
         }
-        displayTableInfo(gt);
         break;
 
     case EditMode::Pattern:
@@ -1078,7 +1063,6 @@ void docommand(void) {
             gtaction::dispatch_pattern_cell_input(gMIDINote, &in);
         }
 
-        displayPatternInfo(gt);
         countInstrumentsInPattern(gt->editorUndoInfo.editorInfo[c2].epnum);
         calculateTotalInstrumentsFromAllPatterns();
         break;

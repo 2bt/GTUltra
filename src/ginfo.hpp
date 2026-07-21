@@ -2,29 +2,14 @@
 
 #include "gplay.hpp"
 
-#include <cstdint>
+#include <string>
 
-struct WAVEFORM_INFO {
-    bool     displayOnOff;
-    int      value;
-    uint8_t* destAddress;
-};
+namespace ginfo {
 
-// Shared with the editor frame / other panels (force or clear the info line).
-extern bool clearInfoLine;
-extern int  forceInfoLine;     // countdown: skip that many info-line refreshes
-extern int  lastEditWindow;    // last EditMode as int; -1 forces redraw
-extern int  lastInfoPatternCh; // channel; -1 forces redraw
+// Decode the editor cell under the cursor into a one-line description.
+// Pure: reads editor state (editorInfo + song tables), returns the text.
+// Handles the data edit modes (Pattern / Instrument / Tables / OrderList);
+// returns "" for modes it does not describe.
+std::string describe(const GTOBJECT& gt);
 
-// Frame timing written by the main loop; consumed when refreshing pattern info.
-extern int      msDelta;
-extern uint32_t lastMS;
-
-void displayPatternInfo(GTOBJECT* gt);
-void displayInstrumentInfo(GTOBJECT* gt);
-void displayTableInfo(GTOBJECT* gt);
-void displayWaveTableInfo(GTOBJECT* gt);
-void displayPulseTableInfo(GTOBJECT* gt);
-void displayFilterTableInfo(GTOBJECT* gt);
-void displaySpeedTableInfo(GTOBJECT* gt);
-void displayOrderTableInfo(GTOBJECT* gt);
+} // namespace ginfo

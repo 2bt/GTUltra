@@ -125,7 +125,6 @@ extern bool normalizeWAV;
 
 extern float        masterVolume;
 extern unsigned int lmanMode;
-extern char         infoTextBuffer[256];
 
 extern int  SID_StereoPanPositions[4][4];
 extern char editPan;
@@ -138,8 +137,6 @@ extern char transportPlay;
 extern char transportFollowPlay;
 
 extern unsigned int enablekeyrepeat;
-
-extern WAVEFORM_INFO waveformDisplayInfo;
 
 extern int          selectedMIDIPort;
 extern bool         midiEnabled;

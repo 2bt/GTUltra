@@ -6,6 +6,7 @@
 
 #include "goattrk2.hpp"
 #include "gsong.hpp"
+#include "guimodel.hpp"
 
 #define DEBUG_PAD_SIZE 32
 
@@ -2060,12 +2061,7 @@ bool mergesong(GTOBJECT* gt) {
             channelstoload = determine_channels(handle);
             amount         = fread8(handle);
             if (amount + songbase > MAX_SONGS) {
-                forceInfoLine++;
-                sprintf(infoTextBuffer,
-                        "Merge Fail. subsong (base:$%x size:$%x max:$%x)",
-                        songbase,
-                        amount,
-                        MAX_SONGS);
+                gtui::set_status("Merge Fail. subsong (base:$%x size:$%x max:$%x)", songbase, amount, MAX_SONGS);
                 goto ABORT;
             }
 
@@ -2084,12 +2080,7 @@ bool mergesong(GTOBJECT* gt) {
             // Read instruments
             amount = fread8(handle);
             if (amount + instrbase > MAX_INSTR) {
-                forceInfoLine++;
-                sprintf(infoTextBuffer,
-                        "Merge Fail. Instr count (base:$%x size:$%x max:$%x)",
-                        instrbase,
-                        amount,
-                        MAX_INSTR);
+                gtui::set_status("Merge Fail. Instr count (base:$%x size:$%x max:$%x)", instrbase, amount, MAX_INSTR);
                 goto ABORT;
             }
             nextInstr = amount + instrbase;
@@ -2114,12 +2105,7 @@ bool mergesong(GTOBJECT* gt) {
             for (c = 0; c < MAX_TABLES; c++) {
                 loadsize = fread8(handle);
                 if (loadsize + tablebase[c] > MAX_TABLELEN) {
-                    forceInfoLine++;
-                    sprintf(infoTextBuffer,
-                            "Merge Fail. table %d size (base:$%x size:$%x )",
-                            c,
-                            tablebase[c],
-                            loadsize);
+                    gtui::set_status("Merge Fail. table %d size (base:$%x size:$%x )", c, tablebase[c], loadsize);
                     goto ABORT;
                 }
                 nextTable[c] = loadsize + tablebase[c] + 1;
@@ -2143,12 +2129,7 @@ bool mergesong(GTOBJECT* gt) {
             // Read patterns
             amount = fread8(handle);
             if (amount + pattbase > MAX_PATT) {
-                forceInfoLine++;
-                sprintf(infoTextBuffer,
-                        "Merge Fail. Patt count (base:$%x size:$%x max:$%x)",
-                        pattbase,
-                        amount,
-                        MAX_PATT);
+                gtui::set_status("Merge Fail. Patt count (base:$%x size:$%x max:$%x)", pattbase, amount, MAX_PATT);
                 goto ABORT;
             }
             nextPatt = amount + pattbase;
@@ -2173,15 +2154,13 @@ bool mergesong(GTOBJECT* gt) {
                 }
             }
 
-            forceInfoLine = 3;
-            sprintf(infoTextBuffer,
-                    "Merge OK. Patt:%x Inst:%x wt:%x pt:%x ft:%x st:%x",
-                    nextPatt,
-                    nextInstr + 1,
-                    nextTable[0],
-                    nextTable[1],
-                    nextTable[2],
-                    nextTable[3]);
+            gtui::set_status("Merge OK. Patt:%x Inst:%x wt:%x pt:%x ft:%x st:%x",
+                             nextPatt,
+                             nextInstr + 1,
+                             nextTable[0],
+                             nextTable[1],
+                             nextTable[2],
+                             nextTable[3]);
         }
     }
 

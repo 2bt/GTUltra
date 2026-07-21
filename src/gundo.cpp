@@ -4,12 +4,13 @@
 
 #include "goattrk2.hpp"
 #include "gundo.hpp"
+#include "guimodel.hpp"
 
 namespace {
 
 void undo_display() {
     if (REMOVE_UNDO) return;
-    sprintf(infoTextBuffer, "undo buffer size:%d        ", undoBufferSize);
+    gtui::set_status("undo buffer size:%d", undoBufferSize);
 }
 
 } // namespace

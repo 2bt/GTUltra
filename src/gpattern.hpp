@@ -147,7 +147,7 @@ int   handlePolyphonicKeyboard(GTOBJECT* gt);
 int   handleMIDIPolykeyboard(GTOBJECT* gt, MIDI_MESSAGE midiData);
 int   getNote(int rawkey);
 int   findFreePolyChannel(int note);
-bool  clearPolyChannel(int c, GTOBJECT* gt);
+void  clearPolyChannel(int c, GTOBJECT* gt);
 void  calculateNoteOffsets();
 int   findNote(int lowestNote);
 void  autoPitchbendToNextNote(GTOBJECT* gt);

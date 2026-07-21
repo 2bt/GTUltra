@@ -5,6 +5,7 @@
 #include "goattrk2.hpp"
 #include "gimgui.hpp"
 #include "ginstr.hpp"
+#include "guimodel.hpp"
 
 namespace {
 
@@ -86,9 +87,7 @@ bool instrument_cell_input(GTOBJECT* gt, const EditorInput* input) {
             editorInfo.etlock = !editorInfo.etlock;
             validatetableview();
 
-            if (editorInfo.etlock) sprintf(infoTextBuffer, "Table Lock: Enabled");
-            else sprintf(infoTextBuffer, "Table Lock: Disabled");
-            forceInfoLine = 1;
+            gtui::set_status("Table Lock: %s", editorInfo.etlock ? "Enabled" : "Disabled");
             return true;
         }
         break;
@@ -172,7 +171,6 @@ void instrumentcommands(GTOBJECT* gt, const EditorInput* input) {
             }
             break;
         }
-        lastEditWindow = -1; // force redraw of Info bar with updated info
     }
     // Validate instrument parameters
     if (editorInfo.einum) {
@@ -205,7 +203,7 @@ void gotoinstr(int i) {
 void nextinstr() {
     editorInfo.einum++;
 
-    sprintf(infoTextBuffer, "instr:%d", editorInfo.einum);
+    gtui::set_status("instr:%d", editorInfo.einum);
 
     if (editorInfo.einum >= MAX_INSTR) editorInfo.einum = MAX_INSTR - 1;
     show_instr_table();

@@ -901,7 +901,7 @@ bool handle_global_action(Action act) {
             }
             else {
                 int s = quickSave();
-                if (s) sprintf(infoTextBuffer, "quick save: %d", s);
+                if (s) gtui::set_status("quick save: %d", s);
                 else {
                     char path[MAX_PATHNAME];
                     if (gtfile::save_song(path, sizeof path)) saveSongAtPath(gt, path);
@@ -1012,7 +1012,7 @@ bool handle_global_action(Action act) {
             char path[MAX_PATHNAME];
             if (gtfile::save_relocated(path, sizeof path)) {
                 relocator(gt, false);
-                sprintf(infoTextBuffer, "Song Exported:%s", packedsongname);
+                gtui::set_status("Song Exported:%s", packedsongname);
                 LOG_INFO("exported to {}", packedsongname);
             }
         }
@@ -1061,9 +1061,7 @@ bool handle_global_action(Action act) {
     case Action::ToggleSIDTracker64:
         SIDTracker64ForIPadIsAmazing = 1 - SIDTracker64ForIPadIsAmazing;
         setSIDTracker64KeyOnStyle();
-        if (!SIDTracker64ForIPadIsAmazing) sprintf(infoTextBuffer, "SIDTracker64 Mode: Disabled");
-        else sprintf(infoTextBuffer, "SIDTracker64 Mode: Enabled");
-        forceInfoLine = 1;
+        gtui::set_status("SIDTracker64 Mode: %s", SIDTracker64ForIPadIsAmazing ? "Enabled" : "Disabled");
         return true;
 
     case Action::PrevMultiplier: prevmultiplier(); return true;
@@ -1099,7 +1097,7 @@ bool handle_global_action(Action act) {
         if (songExported) {
             LOG_DEBUG("FastRelocate to {}", packedsongname);
             relocator(gt, false);
-            sprintf(infoTextBuffer, "Song Exported:%s", packedsongname);
+            gtui::set_status("Song Exported:%s", packedsongname);
             LOG_INFO("re-exported to {}", packedsongname);
         }
         return true;
