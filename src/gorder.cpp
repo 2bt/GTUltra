@@ -8,6 +8,18 @@
 
 namespace {
 
+// gorder-local helpers (definitions further down are wrapped in this same
+// anonymous namespace); forward-declared here because orderlistcommands()
+// above uses several of them before their definitions.
+void orderleft();
+void orderright();
+void orderListHandleHexInputOriginalView(GTOBJECT* gt);
+void updateTransposeToPlayingSong(GTOBJECT* gt);
+void orderListHandleHexInputExpandedView(GTOBJECT* gt);
+int  handleEnterInCompressedView(GTOBJECT* gt);
+int  handleEnterInExpandedView(GTOBJECT* gt);
+void getExpandedSelectedArea(int* x, int* y, int* w, int* h);
+
 int order_expanded_max_channels() {
     if ((editorInfo.maxSIDChannels == 3) || (editorInfo.maxSIDChannels == 9 && (editorInfo.esnum & 1))) return 3;
     return 6;
@@ -574,6 +586,8 @@ void deleteorder(GTOBJECT* gt) {
     }
 }
 
+namespace {
+
 void orderleft() {
     if ((shift_or_ctrl_pressed) && (editorInfo.eseditpos < songlen[editorInfo.esnum][editorInfo.eschn])) {
         if ((editorInfo.esmarkchn != editorInfo.eschn) || (editorInfo.eseditpos != editorInfo.esmarkend)) {
@@ -628,6 +642,8 @@ void orderright() {
         }
     }
 }
+
+} // namespace
 
 void nextsong(GTOBJECT* gt) {
 
@@ -1208,6 +1224,8 @@ void setMasterLoopChannel(GTOBJECT* gt, const char* debugText) {
 }
 
 
+namespace {
+
 void orderListHandleHexInputOriginalView(GTOBJECT* gt) {
     if (editorInfo.eseditpos != songlen[editorInfo.esnum][editorInfo.eschn]) {
         switch (editorInfo.escolumn) {
@@ -1398,6 +1416,8 @@ void orderListHandleHexInputExpandedView(GTOBJECT* gt) {
     return;
 }
 
+} // namespace
+
 int findFirstEndMarkerIndex(int sng, int chn) {
     for (int i = 0; i < MAX_SONGLEN_EXPANDED; i++) {
         if (songOrderPatterns[sng][chn][i] == 0xff) return i;
@@ -1405,6 +1425,8 @@ int findFirstEndMarkerIndex(int sng, int chn) {
     return MAX_SONGLEN_EXPANDED - 1;
 }
 
+
+namespace {
 
 int handleEnterInCompressedView(GTOBJECT* gt) {
     if (editorInfo.eseditpos >= songlen[editorInfo.esnum][editorInfo.eschn]) return 0;
@@ -1449,6 +1471,8 @@ int handleEnterInExpandedView(GTOBJECT* gt) {
     }
     return 1;
 }
+
+} // namespace
 
 
 void orderListCopyMarkedArea() {
@@ -1515,6 +1539,8 @@ void orderListCopyMarkedArea_Expanded() {
     }
 }
 
+namespace {
+
 void getExpandedSelectedArea(int* x, int* y, int* w, int* h) {
     int tx, ty, tw, th;
 
@@ -1548,6 +1574,8 @@ void getExpandedSelectedArea(int* x, int* y, int* w, int* h) {
     *w = tw;
     *h = th;
 }
+
+} // namespace
 
 
 void orderListPasteToCursor(GTOBJECT* gt) {
