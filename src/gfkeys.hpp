@@ -12,5 +12,5 @@ struct GTFKEY_ENTRY {
     char* actionList;
 };
 
-int fkeys_check(GTOBJECT* gt, int rawkey);
+int fkeys_check(GTOBJECT* gt, int scancode);
 int fkeys_loadCFG();

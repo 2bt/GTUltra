@@ -436,19 +436,19 @@ void order_begin_shift_mark() {
 
 void order_row_up(GTOBJECT* gt) {
     if (editorInfo.expandOrderListView) {
-        if (shiftOrCtrlPressed) order_begin_shift_mark();
+        if (shift_or_ctrl_pressed) order_begin_shift_mark();
         if (editorInfo.eseditpos > 0) {
             editorInfo.eseditpos--;
-            if (shiftOrCtrlPressed) editorInfo.esmarkend = editorInfo.eseditpos;
+            if (shift_or_ctrl_pressed) editorInfo.esmarkend = editorInfo.eseditpos;
         }
         order_sync_view();
         return;
     }
 
-    if (shiftOrCtrlPressed) order_begin_shift_mark();
+    if (shift_or_ctrl_pressed) order_begin_shift_mark();
     if (editorInfo.eseditpos > 0) {
         editorInfo.eseditpos--;
-        if (shiftOrCtrlPressed) {
+        if (shift_or_ctrl_pressed) {
             editorInfo.esmarkend = editorInfo.eseditpos;
             if (editorInfo.esmarkend == editorInfo.esmarkstart) editorInfo.esmarkchn = -1;
         }
@@ -459,19 +459,19 @@ void order_row_up(GTOBJECT* gt) {
 
 void order_row_down(GTOBJECT* gt) {
     if (editorInfo.expandOrderListView) {
-        if (shiftOrCtrlPressed) order_begin_shift_mark();
+        if (shift_or_ctrl_pressed) order_begin_shift_mark();
         if (editorInfo.eseditpos < 0x7ff) {
             editorInfo.eseditpos++;
-            if (shiftOrCtrlPressed) editorInfo.esmarkend = editorInfo.eseditpos;
+            if (shift_or_ctrl_pressed) editorInfo.esmarkend = editorInfo.eseditpos;
         }
         order_sync_view();
         return;
     }
 
-    if (shiftOrCtrlPressed) order_begin_shift_mark();
+    if (shift_or_ctrl_pressed) order_begin_shift_mark();
     if (editorInfo.eseditpos < songlen[editorInfo.esnum][editorInfo.eschn] + 1) {
         editorInfo.eseditpos++;
-        if (shiftOrCtrlPressed) {
+        if (shift_or_ctrl_pressed) {
             editorInfo.esmarkend = editorInfo.eseditpos;
             if (editorInfo.esmarkend == editorInfo.esmarkstart) editorInfo.esmarkchn = -1;
         }
@@ -501,7 +501,7 @@ void order_col_left(GTOBJECT* gt) {
 
     order_clamp_cursor_to_channel();
 
-    if (shiftOrCtrlPressed) {
+    if (shift_or_ctrl_pressed) {
         editorInfo.esmarkchn    = -1;
         editorInfo.esmarkchnend = -1;
     }
@@ -533,7 +533,7 @@ void order_col_right(GTOBJECT* gt) {
 
     order_clamp_cursor_to_channel();
 
-    if (shiftOrCtrlPressed) {
+    if (shift_or_ctrl_pressed) {
         editorInfo.esmarkchn    = -1;
         editorInfo.esmarkchnend = -1;
     }
@@ -559,7 +559,7 @@ void order_page_up(GTOBJECT* gt) {
     }
     else editorInfo.eseditpos = 0;
 
-    if (shiftOrCtrlPressed) editorInfo.esmarkend = editorInfo.eseditpos;
+    if (shift_or_ctrl_pressed) editorInfo.esmarkend = editorInfo.eseditpos;
 
     order_sync_view();
     (void)gt;
@@ -576,7 +576,7 @@ void order_page_down(GTOBJECT* gt) {
         if (editorInfo.eseditpos > maxRow) editorInfo.eseditpos = maxRow;
     }
 
-    if (shiftOrCtrlPressed) editorInfo.esmarkend = editorInfo.eseditpos;
+    if (shift_or_ctrl_pressed) editorInfo.esmarkend = editorInfo.eseditpos;
 
     order_sync_view();
     (void)gt;
@@ -584,7 +584,7 @@ void order_page_down(GTOBJECT* gt) {
 
 void order_nav_home(GTOBJECT* gt) {
     editorInfo.eseditpos = 0;
-    if (shiftOrCtrlPressed) editorInfo.esmarkend = editorInfo.eseditpos;
+    if (shift_or_ctrl_pressed) editorInfo.esmarkend = editorInfo.eseditpos;
     order_sync_view();
     (void)gt;
 }
@@ -593,7 +593,7 @@ void order_nav_end(GTOBJECT* gt) {
     if (editorInfo.expandOrderListView)
         editorInfo.eseditpos = (int)songOrderLength[editorInfo.esnum][editorInfo.eschn];
     else editorInfo.eseditpos = order_max_row();
-    if (shiftOrCtrlPressed) editorInfo.esmarkend = editorInfo.eseditpos;
+    if (shift_or_ctrl_pressed) editorInfo.esmarkend = editorInfo.eseditpos;
     order_sync_view();
     (void)gt;
 }
@@ -634,7 +634,7 @@ void table_col_left(GTOBJECT* gt) {
     if (editorInfo.etcolumn < 0) table_step_adjacent(-1);
     else table_finish_nav();
 
-    if (shiftpressed && editorInfo.etnum != old_t) editorInfo.etmarknum = -1;
+    if (shift_pressed && editorInfo.etnum != old_t) editorInfo.etmarknum = -1;
     (void)gt;
 }
 
@@ -647,7 +647,7 @@ void table_col_right(GTOBJECT* gt) {
     if (editorInfo.etcolumn > 3) table_step_adjacent(+1);
     else table_finish_nav();
 
-    if (shiftpressed && editorInfo.etnum != old_t) editorInfo.etmarknum = -1;
+    if (shift_pressed && editorInfo.etnum != old_t) editorInfo.etmarknum = -1;
     (void)gt;
 }
 
@@ -770,11 +770,11 @@ void transport_on_f1(GTOBJECT* gt) {
 
     if (useOriginalGTFunctionKeys) {
         transportLoopPattern = 0;
-        followplay           = shiftOrCtrlPressed;
+        followplay           = shift_or_ctrl_pressed;
         orderPlayFromPosition(gt, 0, 0, 0, true);
     }
     else {
-        if (shiftpressed) orderPlayFromPosition(gt, 0, 0, 0, true);
+        if (shift_pressed) orderPlayFromPosition(gt, 0, 0, 0, true);
         else playFromCurrentPosition(gt, 0);
     }
 }
@@ -782,16 +782,16 @@ void transport_on_f1(GTOBJECT* gt) {
 void transport_on_f2(GTOBJECT* gt) {
 
     if (SIDTracker64ForIPadIsAmazing != 0) {
-        if (shiftOrCtrlPressed) followplay = !followplay;
+        if (shift_or_ctrl_pressed) followplay = !followplay;
         else playFromCurrentPosition(gt, 0);
     }
     else if (useOriginalGTFunctionKeys) {
         playFromCurrentPosition(gt, 0);
         transportLoopPattern = 0;
-        followplay           = shiftOrCtrlPressed;
+        followplay           = shift_or_ctrl_pressed;
     }
     else {
-        if (shiftOrCtrlPressed) {
+        if (shift_or_ctrl_pressed) {
             followplay = !followplay;
         }
         else {
@@ -810,11 +810,11 @@ void transport_on_f3(GTOBJECT* gt) {
 
     if (useOriginalGTFunctionKeys && SIDTracker64ForIPadIsAmazing == 0) {
         transportLoopPattern = 1;
-        followplay           = shiftOrCtrlPressed;
+        followplay           = shift_or_ctrl_pressed;
         playFromCurrentPosition(gt, 0);
     }
     else {
-        if (shiftOrCtrlPressed) {
+        if (shift_or_ctrl_pressed) {
             transportLoopPattern = 1 - transportLoopPattern;
         }
         else if (editorInfo.editmode == EditMode::OrderList) {
@@ -828,7 +828,7 @@ void transport_on_f3(GTOBJECT* gt) {
 }
 
 void transport_on_f4(GTOBJECT* gt) {
-    if (shiftOrCtrlPressed) {
+    if (shift_or_ctrl_pressed) {
         mutechannel(editorInfo.epchn, gt);
         return;
     }
@@ -918,13 +918,13 @@ bool handle_global_action(Action act) {
         return true;
 
     case Action::Clear:
-        if (shiftOrCtrlPressed) clear(gt);
+        if (shift_or_ctrl_pressed) clear(gt);
         return true;
 
     case Action::Help: gimgui_open_help(); return true;
 
     case Action::EditModeNext:
-        if (!shiftOrCtrlPressed) {
+        if (!shift_or_ctrl_pressed) {
             int mode = static_cast<int>(editorInfo.editmode) + 1;
             if (mode > static_cast<int>(EditMode::Names)) mode = static_cast<int>(EditMode::Pattern);
             editorInfo.editmode = static_cast<EditMode>(mode);
@@ -933,7 +933,7 @@ bool handle_global_action(Action act) {
         return true;
 
     case Action::EditModePrev:
-        if (shiftOrCtrlPressed) {
+        if (shift_or_ctrl_pressed) {
             int mode = static_cast<int>(editorInfo.editmode) - 1;
             if (mode < static_cast<int>(EditMode::Pattern)) mode = static_cast<int>(EditMode::Names);
             editorInfo.editmode = static_cast<EditMode>(mode);
@@ -942,7 +942,7 @@ bool handle_global_action(Action act) {
         return true;
 
     case Action::EditModePattern:
-        if (!shiftOrCtrlPressed) {
+        if (!shift_or_ctrl_pressed) {
             if (editorInfo.editmode == EditMode::OrderList) {
                 if (!order_go_pattern(gt)) editorInfo.editmode = EditMode::Pattern;
             }
@@ -951,11 +951,11 @@ bool handle_global_action(Action act) {
         return true;
 
     case Action::EditModeOrder:
-        if (!shiftOrCtrlPressed) editorInfo.editmode = EditMode::OrderList;
+        if (!shift_or_ctrl_pressed) editorInfo.editmode = EditMode::OrderList;
         return true;
 
     case Action::EditModeInstrument:
-        if (!shiftOrCtrlPressed) {
+        if (!shift_or_ctrl_pressed) {
             if (editorInfo.editmode == EditMode::Instrument) {
                 editorInfo.editmode = EditMode::Tables;
                 table_use_raw_hex_mode();
@@ -966,7 +966,7 @@ bool handle_global_action(Action act) {
         return true;
 
     case Action::EditModeTables:
-        if (!shiftOrCtrlPressed) {
+        if (!shift_or_ctrl_pressed) {
             editorInfo.editmode = EditMode::Tables;
             table_use_raw_hex_mode();
             disableEnterToReturnToLastPos = 1;
@@ -974,7 +974,7 @@ bool handle_global_action(Action act) {
         return true;
 
     case Action::EditModeNames:
-        if (!shiftOrCtrlPressed) {
+        if (!shift_or_ctrl_pressed) {
             editorInfo.editmode = EditMode::Names;
             gimgui_song_field_end();
         }
@@ -1026,7 +1026,7 @@ bool handle_global_action(Action act) {
             if (gtfile::open_instrument(path, sizeof path)) loadinstrument(gt);
         }
         else {
-            const bool merge = shiftOrCtrlPressed != 0;
+            const bool merge = shift_or_ctrl_pressed != 0;
             if (gtfile::open_song(path, sizeof path, merge)) handleLoadPath(gt, path, merge);
         }
         return true;
@@ -1141,16 +1141,16 @@ bool handle_pattern_action(Action act) {
     case Action::PatternPaste: pattern_paste(gt); return true;
     case Action::PatternMarkToggle: pattern_mark_toggle(); return true;
     case Action::PatternShrink:
-        if (shiftOrCtrlPressed) shrinkpattern(gt);
+        if (shift_or_ctrl_pressed) shrinkpattern(gt);
         return true;
     case Action::PatternExpand:
-        if (shiftOrCtrlPressed) expandpattern(gt);
+        if (shift_or_ctrl_pressed) expandpattern(gt);
         return true;
     case Action::PatternJoin:
-        if (shiftOrCtrlPressed) joinpattern(gt);
+        if (shift_or_ctrl_pressed) joinpattern(gt);
         return true;
     case Action::PatternSplit:
-        if (shiftOrCtrlPressed) splitpattern(gt);
+        if (shift_or_ctrl_pressed) splitpattern(gt);
         return true;
     case Action::PatternToggleJam: pattern_toggle_jam(); return true;
     case Action::PatternPlayFromCursor: pattern_play_from_cursor(gt); return true;
@@ -1379,16 +1379,16 @@ bool dispatch_order_navigation() {
 
     // Vertical layout and editing actions apply to the ImGui order panel.
 
-    if (shiftpressed && !ctrlpressed && rawkey >= SDL_SCANCODE_1 && rawkey <= SDL_SCANCODE_6) {
-        order_list_swap_channel(&gtObject, rawkey - SDL_SCANCODE_1);
+    if (shift_pressed && !ctrl_pressed && scancode >= SDL_SCANCODE_1 && scancode <= SDL_SCANCODE_6) {
+        order_list_swap_channel(&gtObject, scancode - SDL_SCANCODE_1);
         clear_input();
         return true;
     }
 
-    const Action act = resolve_input_ctx_nav(Ctx::Order, rawkey, key, shiftpressed, ctrlpressed);
+    const Action act = resolve_input_ctx_nav(Ctx::Order, scancode, ascii_key, shift_pressed, ctrl_pressed);
     if (act == Action::None) return false;
 
-    switch (rawkey) {
+    switch (scancode) {
     case SDL_SCANCODE_UP:
     case SDL_SCANCODE_DOWN:
     case SDL_SCANCODE_LEFT:
@@ -1409,22 +1409,22 @@ bool dispatch_pattern_navigation() {
 
     // Ctrl+arrow is global song transport. Other Ctrl chords (copy/cut/paste,
     // mark-all, …) are pattern actions and must be handled here.
-    if (ctrlpressed) {
-        const Action act = resolve_input_ctx(Ctx::Pattern, rawkey, key, shiftpressed, ctrlpressed);
+    if (ctrl_pressed) {
+        const Action act = resolve_input_ctx(Ctx::Pattern, scancode, ascii_key, shift_pressed, ctrl_pressed);
         if (act == Action::None) return false;
     }
 
-    if (shiftpressed && !ctrlpressed && rawkey >= SDL_SCANCODE_1 && rawkey <= SDL_SCANCODE_6) {
-        pattern_mute_channel(&gtObject, rawkey - SDL_SCANCODE_1);
+    if (shift_pressed && !ctrl_pressed && scancode >= SDL_SCANCODE_1 && scancode <= SDL_SCANCODE_6) {
+        pattern_mute_channel(&gtObject, scancode - SDL_SCANCODE_1);
         clear_input();
         return true;
     }
 
-    const Action act = resolve_input_ctx_nav(Ctx::Pattern, rawkey, key, shiftpressed, ctrlpressed);
+    const Action act = resolve_input_ctx_nav(Ctx::Pattern, scancode, ascii_key, shift_pressed, ctrl_pressed);
     if (act == Action::None) return false;
 
 
-    switch (rawkey) {
+    switch (scancode) {
     case SDL_SCANCODE_UP:
     case SDL_SCANCODE_DOWN:
     case SDL_SCANCODE_LEFT:
@@ -1449,15 +1449,15 @@ bool dispatch_table_navigation() {
     table_use_raw_hex_mode();
 
     // Ctrl+arrow is global song transport; clipboard Ctrl chords stay here.
-    if (ctrlpressed) {
-        const Action act = resolve_input_ctx(Ctx::Tables, rawkey, key, shiftpressed, ctrlpressed);
+    if (ctrl_pressed) {
+        const Action act = resolve_input_ctx(Ctx::Tables, scancode, ascii_key, shift_pressed, ctrl_pressed);
         if (act == Action::None) return false;
     }
 
-    const Action act = resolve_input_ctx_nav(Ctx::Tables, rawkey, key, shiftpressed, ctrlpressed);
+    const Action act = resolve_input_ctx_nav(Ctx::Tables, scancode, ascii_key, shift_pressed, ctrl_pressed);
     if (act == Action::None) return false;
 
-    switch (rawkey) {
+    switch (scancode) {
     case SDL_SCANCODE_UP:
     case SDL_SCANCODE_DOWN:
     case SDL_SCANCODE_LEFT:
@@ -1481,19 +1481,19 @@ bool dispatch_instrument_navigation() {
 
     if (gimgui_instr_name_editing()) return false;
 
-    if (ctrlpressed) return false;
+    if (ctrl_pressed) return false;
 
     // Enter on the name field opens the ImGui editor (replaces legacy editstring).
-    if (rawkey == SDL_SCANCODE_RETURN && editorInfo.einum >= gtui::INSTR_FIRST && editorInfo.eipos >= LAST_INST) {
+    if (scancode == SDL_SCANCODE_RETURN && editorInfo.einum >= gtui::INSTR_FIRST && editorInfo.eipos >= LAST_INST) {
         gimgui_instr_name_begin(editorInfo.einum);
         clear_input();
         return true;
     }
 
-    const Action act = resolve_input_ctx(Ctx::Instrument, rawkey, key, shiftpressed, ctrlpressed);
+    const Action act = resolve_input_ctx(Ctx::Instrument, scancode, ascii_key, shift_pressed, ctrl_pressed);
     if (act == Action::None) return false;
 
-    switch (rawkey) {
+    switch (scancode) {
     case SDL_SCANCODE_UP:
     case SDL_SCANCODE_DOWN:
     case SDL_SCANCODE_LEFT:
@@ -1513,7 +1513,7 @@ bool dispatch_names_navigation() {
     if (editorInfo.editmode != EditMode::Names) return false;
 
 
-    const Action act = resolve_input_ctx(Ctx::Names, rawkey, key, shiftpressed, ctrlpressed);
+    const Action act = resolve_input_ctx(Ctx::Names, scancode, ascii_key, shift_pressed, ctrl_pressed);
     if (act == Action::None) return false;
 
     if (gimgui_song_field_editing()) {
@@ -1753,7 +1753,7 @@ bool dispatch_mode_navigation() {
 
 bool dispatch_global(Ctx ctx) {
 
-    const Action act = resolve_input(ctx, rawkey, key, shiftpressed, ctrlpressed);
+    const Action act = resolve_input(ctx, scancode, ascii_key, shift_pressed, ctrl_pressed);
     if (act == Action::None) return false;
 
     if (!handle_global_action(act)) return false;

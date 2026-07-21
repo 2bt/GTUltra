@@ -145,7 +145,7 @@ void pattern_portamento_helper(GTOBJECT* gt);
 void  handleShiftSpace(GTOBJECT* gt, int playChannel, int startPatternPos, bool follow, bool enable_loop);
 int   handlePolyphonicKeyboard(GTOBJECT* gt);
 int   handleMIDIPolykeyboard(GTOBJECT* gt, MIDI_MESSAGE midiData);
-int   getNote(int rawkey);
+int   getNote(int scancode);
 int   findFreePolyChannel(int note);
 void  clearPolyChannel(int c, GTOBJECT* gt);
 void  calculateNoteOffsets();

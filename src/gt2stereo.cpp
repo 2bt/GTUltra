@@ -583,11 +583,11 @@ int main(int argc, char** argv) {
 
 #if 0
 	initsong(editorInfo.esnum, PlayMode::Beginning, &gtObject);
-	followplay = shiftOrCtrlPressed;
+	followplay = shift_or_ctrl_pressed;
 	while (!exitprogram)
 	{
 		//waitkeymouse(&gtObject);
-		if (key)
+		if (ascii_key)
 		{
 			// Shutdown sound output now
 			sound_uninit();
@@ -776,7 +776,7 @@ void waitkey(GTOBJECT* gt) {
             displayupdate(gt);
         }
         getkey();
-        if ((rawkey) || (key)) break;
+        if ((scancode) || (ascii_key)) break;
         if (win_quitted) break;
     }
 
@@ -854,8 +854,8 @@ void editor_frame_update(GTOBJECT* gt) {
             keyDown = SDL_SCANCODE_RIGHT;
         }
 
-        if (win_mousewheel < 0) rawkey = keyDown;
-        else rawkey = keyUp;
+        if (win_mousewheel < 0) scancode = keyDown;
+        else scancode = keyUp;
 
         win_mousewheel = 0;
     }
@@ -877,8 +877,8 @@ void editor_frame_update(GTOBJECT* gt) {
                     {
                         gMIDINote =
                             midiNote + FIRSTNOTE; // editing pattern data and have received keyon from MIDI device
-                        key    = 0;
-                        rawkey = 0;
+                        ascii_key    = 0;
+                        scancode = 0;
                         handleMIDIPolykeyboard(&gtObject, midiMessage);
                         return;
                     }
@@ -922,10 +922,10 @@ void waitkeymouse(GTOBJECT* gt) {
 
         editor_frame_update(gt);
 
-        if (mouseb) break;
-        if (prevmouseb) break; // Handle modifying values when hold / dragging. We've released the mouse
+        if (mouse_buttons) break;
+        if (prev_mouse_buttons) break; // Handle modifying values when hold / dragging. We've released the mouse
 
-        if ((rawkey) || (key)) break;
+        if ((scancode) || (ascii_key)) break;
         if (win_quitted) break;
 
         win_enable_key_repeat();
@@ -938,9 +938,9 @@ void converthex() {
 
     hexnybble = -1;
     for (c = 0; c < 16; c++) {
-        if (tolower(key) == hexkeytbl[c]) {
+        if (tolower(ascii_key) == hexkeytbl[c]) {
             if (c >= 10) {
-                if (!shiftOrCtrlPressed) hexnybble = c;
+                if (!shift_or_ctrl_pressed) hexnybble = c;
             }
             else {
                 hexnybble = c;
@@ -1057,7 +1057,7 @@ void docommand(void) {
         //	undoAreaSetCheckForChange(UNDO_AREA_CHANNEL_EDITOR_INFO, c2, UNDO_AREA_DIRTY_CHECK);
 
         // if gMIDINote!=-1, then use this as input instead of QWERTY note input
-        // Also, if this is the case, set key and rawkey=0 so that only note input is recognised - just in case..
+        // Also, if this is the case, set ascii_key and scancode=0 so that only note input is recognised - just in case..
         if (!gtaction::dispatch_mode_navigation()) {
             const EditorInput in = editor_input_snapshot();
             gtaction::dispatch_pattern_cell_input(gMIDINote, &in);
@@ -1105,8 +1105,8 @@ int load(GTOBJECT* gt, char* dragDropFileName) {
         countInstruments();
         expandAllSongs();
     }
-    key    = 0;
-    rawkey = 0;
+    ascii_key    = 0;
+    scancode = 0;
     return ok;
 }
 
@@ -1123,8 +1123,8 @@ void clear(GTOBJECT* gt) {
     if (gt_ui_confirm("Optimize everything?")) {
         optimizeeverything(true, true, &gtObject);
         countpatternlengths();
-        key    = 0;
-        rawkey = 0;
+        ascii_key    = 0;
+        scancode = 0;
         return;
     }
 
@@ -1140,8 +1140,8 @@ void clear(GTOBJECT* gt) {
     }
     clearsong(cs != 0, cp != 0, ci != 0, ct != 0, cn != 0, &gtObject);
 
-    key    = 0;
-    rawkey = 0;
+    ascii_key    = 0;
+    scancode = 0;
     (void)gt;
 }
 
@@ -1176,8 +1176,8 @@ void editSIDPan(GTOBJECT* gt) {
 
         if (win_quitted) {
             exitprogram = true;
-            key         = 0;
-            rawkey      = 0;
+            ascii_key         = 0;
+            scancode      = 0;
             return;
         }
 
@@ -1188,17 +1188,17 @@ void editSIDPan(GTOBJECT* gt) {
             editorInfo.eacolumn++;
         }
 
-        switch (rawkey) {
+        switch (scancode) {
 
         case SDL_SCANCODE_F7:
-            if (!shiftOrCtrlPressed) break;
+            if (!shift_or_ctrl_pressed) break;
 
         case SDL_SCANCODE_ESCAPE:
         case SDL_SCANCODE_RETURN:
         case SDL_SCANCODE_TAB:
             eamode = 0;
-            key    = 0;
-            rawkey = 0;
+            ascii_key    = 0;
+            scancode = 0;
             return;
 
         case SDL_SCANCODE_BACKSPACE:
@@ -1210,7 +1210,7 @@ void editSIDPan(GTOBJECT* gt) {
         if (editorInfo.eacolumn < 0) editorInfo.eacolumn = sidChips - 1;
         editorInfo.eacolumn %= sidChips;
 
-        if ((mouseb) && (!prevmouseb)) {
+        if ((mouse_buttons) && (!prev_mouse_buttons)) {
             eamode = 0;
             return;
         }
@@ -1227,8 +1227,8 @@ void editadsr(GTOBJECT* gt) {
 
         if (win_quitted) {
             exitprogram = true;
-            key         = 0;
-            rawkey      = 0;
+            ascii_key         = 0;
+            scancode      = 0;
             return;
         }
 
@@ -1262,22 +1262,22 @@ void editadsr(GTOBJECT* gt) {
             undoAddEditorSettingsToList();
         }
 
-        switch (rawkey) {
+        switch (scancode) {
 
         case SDL_SCANCODE_Z:
-            if (!ctrlpressed) break;
+            if (!ctrl_pressed) break;
             undoPerform(gt);
             break;
 
         case SDL_SCANCODE_F7:
-            if (!shiftOrCtrlPressed) break;
+            if (!shift_or_ctrl_pressed) break;
 
         case SDL_SCANCODE_ESCAPE:
         case SDL_SCANCODE_RETURN:
         case SDL_SCANCODE_TAB:
             eamode = 0;
-            key    = 0;
-            rawkey = 0;
+            ascii_key    = 0;
+            scancode = 0;
             return;
 
         case SDL_SCANCODE_BACKSPACE:
@@ -1289,7 +1289,7 @@ void editadsr(GTOBJECT* gt) {
 
         editorInfo.eacolumn &= 3;
 
-        if ((mouseb) && (!prevmouseb)) {
+        if ((mouse_buttons) && (!prev_mouse_buttons)) {
             eamode = 0;
             return;
         }
@@ -2167,8 +2167,8 @@ void handleLoadPath(GTOBJECT* gt, const char* path, int merge) {
         copyCurrentToSngBuffer(gt, currentSongFile);
     }
 
-    key    = 0;
-    rawkey = 0;
+    ascii_key    = 0;
+    scancode = 0;
     restartScreenDisplay();
 }
 

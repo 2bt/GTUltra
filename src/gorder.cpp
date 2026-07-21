@@ -26,8 +26,8 @@ int           trackcopyrpos;
 
 void orderlistcommands(GTOBJECT* gt, const EditorInput* input) {
     const EditorInput in      = input ? *input : editor_input_snapshot();
-    const int         jkey    = in.key;
-    const int         jrawkey = in.rawkey;
+    const int         jkey    = in.ascii_key;
+    const int         jrawkey = in.scancode;
     int               c, scrrep;
     int               ret = 0;
 
@@ -128,7 +128,7 @@ void orderlistcommands(GTOBJECT* gt, const EditorInput* input) {
     case SDL_SCANCODE_4:
     case SDL_SCANCODE_5:
     case SDL_SCANCODE_6:
-        if (shiftOrCtrlPressed) {
+        if (shift_or_ctrl_pressed) {
             int schn = editorInfo.eschn;
             int tchn = 0;
 
@@ -171,7 +171,7 @@ void orderlistcommands(GTOBJECT* gt, const EditorInput* input) {
         break;
 
     case SDL_SCANCODE_X:
-        if (shiftOrCtrlPressed) {
+        if (shift_or_ctrl_pressed) {
             if (editorInfo.esmarkchn == -1) // no table selected. copy single row under cursor
             {
                 editorInfo.esmarkchn   = editorInfo.eschn;
@@ -209,14 +209,14 @@ void orderlistcommands(GTOBJECT* gt, const EditorInput* input) {
         break;
 
     case SDL_SCANCODE_C:
-        if (shiftOrCtrlPressed) {
+        if (shift_or_ctrl_pressed) {
             if (editorInfo.expandOrderListView == 0) orderListCopyMarkedArea();
             else orderListCopyMarkedArea_Expanded();
         }
         break;
 
     case SDL_SCANCODE_V:
-        if (shiftOrCtrlPressed) {
+        if (shift_or_ctrl_pressed) {
             if (editorInfo.expandOrderListView == 0) orderListPasteToCursor(gt);
             else {
                 int transposeOnly = 0;
@@ -227,13 +227,13 @@ void orderlistcommands(GTOBJECT* gt, const EditorInput* input) {
         break;
 
     case SDL_SCANCODE_I:
-        if (shiftOrCtrlPressed) {
+        if (shift_or_ctrl_pressed) {
             if (editorInfo.expandOrderListView) orderListPasteToCursor_External(gt, true, false);
         }
         break;
 
     case SDL_SCANCODE_L:
-        if (shiftOrCtrlPressed) {
+        if (shift_or_ctrl_pressed) {
             if (editorInfo.esmarkchn == -1) {
                 if (editorInfo.expandOrderListView == 0) {
                     editorInfo.esmarkend = songlen[editorInfo.esnum][editorInfo.eschn] - 1;
@@ -254,7 +254,7 @@ void orderlistcommands(GTOBJECT* gt, const EditorInput* input) {
 
 
     case SDL_SCANCODE_SPACE:
-        if (!shiftOrCtrlPressed) {
+        if (!shift_or_ctrl_pressed) {
             int c2 = getActualChannel(editorInfo.esnum, editorInfo.eschn); // 0-12
 
             if (editorInfo.expandOrderListView == 0) {
@@ -289,7 +289,7 @@ void orderlistcommands(GTOBJECT* gt, const EditorInput* input) {
         break;
 
     case SDL_SCANCODE_BACKSPACE:
-        if (!shiftOrCtrlPressed) {
+        if (!shift_or_ctrl_pressed) {
             int c2 = getActualChannel(editorInfo.esnum, editorInfo.eschn); // 0-12
 
             if ((gt->editorUndoInfo.editorInfo[c2].esend != editorInfo.eseditpos) &&
@@ -410,20 +410,20 @@ void orderlistcommands(GTOBJECT* gt, const EditorInput* input) {
 
     case SDL_SCANCODE_LEFT:
         if (editorInfo.expandOrderListView == 0) {
-            if (!ctrlpressed) orderleft();
+            if (!ctrl_pressed) orderleft();
         }
         else {
-            if (!ctrlpressed) order_col_left_expanded(gt);
+            if (!ctrl_pressed) order_col_left_expanded(gt);
         }
 
         break;
 
     case SDL_SCANCODE_RIGHT:
         if (editorInfo.expandOrderListView == 0) {
-            if (!ctrlpressed) orderright();
+            if (!ctrl_pressed) orderright();
         }
         else {
-            if (!ctrlpressed) order_col_right_expanded(gt);
+            if (!ctrl_pressed) order_col_right_expanded(gt);
         }
         break;
 
@@ -437,13 +437,13 @@ void orderlistcommands(GTOBJECT* gt, const EditorInput* input) {
                 editorInfo.escolumn  = 0;
             }
             setMasterLoopChannel(gt, "debug_3");
-            if (shiftOrCtrlPressed) {
+            if (shift_or_ctrl_pressed) {
                 editorInfo.esmarkchn    = -1;
                 editorInfo.esmarkchnend = -1;
             }
         }
         else {
-            if (shiftOrCtrlPressed) {
+            if (shift_or_ctrl_pressed) {
                 if (editorInfo.esmarkchn == -1) {
                     editorInfo.esmarkchn = editorInfo.esmarkchnend = editorInfo.eschn;
                     editorInfo.esmarkstart = editorInfo.esmarkend = editorInfo.eseditpos;
@@ -453,7 +453,7 @@ void orderlistcommands(GTOBJECT* gt, const EditorInput* input) {
             if (editorInfo.eseditpos > 0) {
 
                 editorInfo.eseditpos--;
-                if (shiftOrCtrlPressed) editorInfo.esmarkend = editorInfo.eseditpos;
+                if (shift_or_ctrl_pressed) editorInfo.esmarkend = editorInfo.eseditpos;
             }
         }
         break;
@@ -470,13 +470,13 @@ void orderlistcommands(GTOBJECT* gt, const EditorInput* input) {
             }
             setMasterLoopChannel(gt, "debug_4");
 
-            if (shiftOrCtrlPressed) {
+            if (shift_or_ctrl_pressed) {
                 editorInfo.esmarkchn    = -1;
                 editorInfo.esmarkchnend = -1;
             }
         }
         else {
-            if (shiftOrCtrlPressed) {
+            if (shift_or_ctrl_pressed) {
                 if (editorInfo.esmarkchn == -1) {
                     editorInfo.esmarkchn = editorInfo.esmarkchnend = editorInfo.eschn;
                     editorInfo.esmarkstart = editorInfo.esmarkend = editorInfo.eseditpos;
@@ -485,7 +485,7 @@ void orderlistcommands(GTOBJECT* gt, const EditorInput* input) {
 
             if (editorInfo.eseditpos < 0x7ff) {
                 editorInfo.eseditpos++;
-                if (shiftOrCtrlPressed) editorInfo.esmarkend = editorInfo.eseditpos;
+                if (shift_or_ctrl_pressed) editorInfo.esmarkend = editorInfo.eseditpos;
             }
         }
         break;
@@ -584,7 +584,7 @@ void deleteorder(GTOBJECT* gt) {
 }
 
 void orderleft() {
-    if ((shiftOrCtrlPressed) && (editorInfo.eseditpos < songlen[editorInfo.esnum][editorInfo.eschn])) {
+    if ((shift_or_ctrl_pressed) && (editorInfo.eseditpos < songlen[editorInfo.esnum][editorInfo.eschn])) {
         if ((editorInfo.esmarkchn != editorInfo.eschn) || (editorInfo.eseditpos != editorInfo.esmarkend)) {
             editorInfo.esmarkchn   = editorInfo.eschn;
             editorInfo.esmarkstart = editorInfo.esmarkend = editorInfo.eseditpos;
@@ -603,7 +603,7 @@ void orderleft() {
         }
         else editorInfo.escolumn = 0;
     }
-    if ((shiftOrCtrlPressed) && (editorInfo.eseditpos < songlen[editorInfo.esnum][editorInfo.eschn])) {
+    if ((shift_or_ctrl_pressed) && (editorInfo.eseditpos < songlen[editorInfo.esnum][editorInfo.eschn])) {
         editorInfo.esmarkend = editorInfo.eseditpos;
         if (editorInfo.esmarkend == editorInfo.esmarkstart) {
             editorInfo.esmarkchn    = -1;
@@ -613,7 +613,7 @@ void orderleft() {
 }
 
 void orderright() {
-    if ((shiftOrCtrlPressed) && (editorInfo.eseditpos < songlen[editorInfo.esnum][editorInfo.eschn])) {
+    if ((shift_or_ctrl_pressed) && (editorInfo.eseditpos < songlen[editorInfo.esnum][editorInfo.eschn])) {
         if ((editorInfo.esmarkchn != editorInfo.eschn) || (editorInfo.eseditpos != editorInfo.esmarkend)) {
             editorInfo.esmarkchn   = editorInfo.eschn;
             editorInfo.esmarkstart = editorInfo.esmarkend = editorInfo.eseditpos;
@@ -629,7 +629,7 @@ void orderright() {
         }
         else editorInfo.escolumn = 1;
     }
-    if ((shiftOrCtrlPressed) && (editorInfo.eseditpos < songlen[editorInfo.esnum][editorInfo.eschn])) {
+    if ((shift_or_ctrl_pressed) && (editorInfo.eseditpos < songlen[editorInfo.esnum][editorInfo.eschn])) {
         editorInfo.esmarkend = editorInfo.eseditpos;
         if (editorInfo.esmarkend == editorInfo.esmarkstart) {
             editorInfo.esmarkchn    = -1;
@@ -1519,7 +1519,7 @@ int findFirstEndMarkerIndex(int sng, int chn) {
 int handleEnterInCompressedView(GTOBJECT* gt) {
     if (editorInfo.eseditpos >= songlen[editorInfo.esnum][editorInfo.eschn]) return 0;
 
-    if (!shiftOrCtrlPressed) {
+    if (!shift_or_ctrl_pressed) {
         int c2 = getActualChannel(editorInfo.esnum, editorInfo.eschn); // 0-12
 
         if (songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] < MAX_PATT)
@@ -1570,7 +1570,7 @@ int handleEnterInExpandedView(GTOBJECT* gt) {
     if (editorInfo.eseditpos >= songOrderLength[editorInfo.esnum][editorInfo.eschn] - 1) // 1.3.3
         return 0;
 
-    if (!shiftOrCtrlPressed) {
+    if (!shift_or_ctrl_pressed) {
         int c2 = getActualChannel(editorInfo.esnum, editorInfo.eschn); // 0-12
 
         if (songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] < MAX_PATT)
@@ -2015,7 +2015,7 @@ void order_list_swap_channel(GTOBJECT* gt, int tchn) {
 void order_col_left_expanded(GTOBJECT* gt) {
     const int maxCh = order_expanded_max_channels();
 
-    if (ctrlpressed) return;
+    if (ctrl_pressed) return;
 
     if (editorInfo.escolumn > 0) {
         editorInfo.escolumn--;
@@ -2030,7 +2030,7 @@ void order_col_left_expanded(GTOBJECT* gt) {
         setMasterLoopChannel(gt, "action_order_col_left_exp");
     }
 
-    if (shiftOrCtrlPressed) {
+    if (shift_or_ctrl_pressed) {
         if (editorInfo.esmarkchn == -1) {
             editorInfo.esmarkchn = editorInfo.esmarkchnend = editorInfo.eschn;
             editorInfo.esmarkstart = editorInfo.esmarkend = editorInfo.eseditpos;
@@ -2042,7 +2042,7 @@ void order_col_left_expanded(GTOBJECT* gt) {
 void order_col_right_expanded(GTOBJECT* gt) {
     const int maxCh = order_expanded_max_channels();
 
-    if (ctrlpressed) return;
+    if (ctrl_pressed) return;
 
     editorInfo.escolumn++;
     if (songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] < 0xff) {
@@ -2055,7 +2055,7 @@ void order_col_right_expanded(GTOBJECT* gt) {
         setMasterLoopChannel(gt, "action_order_col_right_exp");
     }
 
-    if (shiftOrCtrlPressed) {
+    if (shift_or_ctrl_pressed) {
         if (editorInfo.esmarkchn == -1) {
             editorInfo.esmarkchn = editorInfo.esmarkchnend = editorInfo.eschn;
             editorInfo.esmarkstart = editorInfo.esmarkend = editorInfo.eseditpos;
@@ -2096,7 +2096,7 @@ void order_select_patterns(GTOBJECT* gt) {
 }
 
 void order_play_range_start(GTOBJECT* gt) {
-    if (!shiftOrCtrlPressed) {
+    if (!shift_or_ctrl_pressed) {
         int c2 = getActualChannel(editorInfo.esnum, editorInfo.eschn);
 
         if (editorInfo.expandOrderListView == 0) {
@@ -2131,7 +2131,7 @@ void order_play_range_start(GTOBJECT* gt) {
 }
 
 void order_play_range_end(GTOBJECT* gt) {
-    if (!shiftOrCtrlPressed) {
+    if (!shift_or_ctrl_pressed) {
         int c2 = getActualChannel(editorInfo.esnum, editorInfo.eschn);
 
         if ((gt->editorUndoInfo.editorInfo[c2].esend != editorInfo.eseditpos) &&

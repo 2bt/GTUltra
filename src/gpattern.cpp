@@ -50,8 +50,8 @@ enum PatternNoteResult { PATTERN_NOTE_NONE = 0, PATTERN_NOTE_EDITED = 1, PATTERN
 
 int pattern_note_input(GTOBJECT* gt, int midiNote, const EditorInput* input) {
     const EditorInput in      = input ? *input : editor_input_snapshot();
-    int               jrawkey = in.rawkey;
-    int               jkey    = in.key;
+    int               jrawkey = in.scancode;
+    int               jkey    = in.ascii_key;
 
     if (midiNote >= 0) {
         jrawkey = 0;
@@ -69,12 +69,12 @@ int pattern_note_input(GTOBJECT* gt, int midiNote, const EditorInput* input) {
         switch (keypreset) {
         case KeyPreset::Tracker:
             for (c = 0; c < sizeof(notekeytbl1); c++) {
-                if ((jrawkey == notekeytbl1[c]) && (!editorInfo.epcolumn) && (!shiftOrCtrlPressed)) {
+                if ((jrawkey == notekeytbl1[c]) && (!editorInfo.epcolumn) && (!shift_or_ctrl_pressed)) {
                     newnote = FIRSTNOTE + c + editorInfo.epoctave * 12;
                 }
             }
             for (c = 0; c < sizeof(notekeytbl2); c++) {
-                if ((jrawkey == notekeytbl2[c]) && (!editorInfo.epcolumn) && (!shiftOrCtrlPressed)) {
+                if ((jrawkey == notekeytbl2[c]) && (!editorInfo.epcolumn) && (!shift_or_ctrl_pressed)) {
                     newnote = FIRSTNOTE + c + (editorInfo.epoctave + 1) * 12;
                 }
             }
@@ -82,7 +82,7 @@ int pattern_note_input(GTOBJECT* gt, int midiNote, const EditorInput* input) {
 
         case KeyPreset::Dmc:
             for (c = 0; c < sizeof(dmckeytbl); c++) {
-                if ((jrawkey == dmckeytbl[c]) && (!editorInfo.epcolumn) && (!shiftOrCtrlPressed)) {
+                if ((jrawkey == dmckeytbl[c]) && (!editorInfo.epcolumn) && (!shift_or_ctrl_pressed)) {
                     newnote = FIRSTNOTE + c + editorInfo.epoctave * 12;
                 }
             }
@@ -90,12 +90,12 @@ int pattern_note_input(GTOBJECT* gt, int midiNote, const EditorInput* input) {
 
         case KeyPreset::Janko:
             for (c = 0; c < sizeof(jankokeytbl1); c++) {
-                if ((jrawkey == jankokeytbl1[c]) && (!editorInfo.epcolumn) && (!shiftOrCtrlPressed)) {
+                if ((jrawkey == jankokeytbl1[c]) && (!editorInfo.epcolumn) && (!shift_or_ctrl_pressed)) {
                     newnote = FIRSTNOTE + c + editorInfo.epoctave * 12;
                 }
             }
             for (c = 0; c < sizeof(jankokeytbl2); c++) {
-                if ((jrawkey == jankokeytbl2[c]) && (!editorInfo.epcolumn) && (!shiftOrCtrlPressed)) {
+                if ((jrawkey == jankokeytbl2[c]) && (!editorInfo.epcolumn) && (!shift_or_ctrl_pressed)) {
                     newnote = FIRSTNOTE + c + (editorInfo.epoctave + 1) * 12;
                 }
             }
@@ -121,7 +121,7 @@ int pattern_note_input(GTOBJECT* gt, int midiNote, const EditorInput* input) {
         switch (editorInfo.epcolumn) {
         case 0:
             if (SIDTracker64ForIPadIsAmazing == 0) {
-                if (shiftOrCtrlPressed) newnote = KEYON;
+                if (shift_or_ctrl_pressed) newnote = KEYON;
                 else newnote = KEYOFF;
             }
             else {
@@ -153,7 +153,7 @@ int pattern_note_input(GTOBJECT* gt, int midiNote, const EditorInput* input) {
                     return 2;
                 }
                 else {
-                    if (shiftOrCtrlPressed) {
+                    if (shift_or_ctrl_pressed) {
                         int pos = gettablelen(WTBL);
                         if (pos >= MAX_TABLELEN - 1) pos = MAX_TABLELEN - 1;
                         pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4 + 3] = pos + 1;
@@ -172,7 +172,7 @@ int pattern_note_input(GTOBJECT* gt, int midiNote, const EditorInput* input) {
                     return 2;
                 }
                 else {
-                    if (shiftOrCtrlPressed) {
+                    if (shift_or_ctrl_pressed) {
                         int pos = gettablelen(PTBL);
                         if (pos >= MAX_TABLELEN - 1) pos = MAX_TABLELEN - 1;
                         pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4 + 3] = pos + 1;
@@ -191,7 +191,7 @@ int pattern_note_input(GTOBJECT* gt, int midiNote, const EditorInput* input) {
                     return 2;
                 }
                 else {
-                    if (shiftOrCtrlPressed) {
+                    if (shift_or_ctrl_pressed) {
                         int pos = gettablelen(FTBL);
                         if (pos >= MAX_TABLELEN - 1) pos = MAX_TABLELEN - 1;
                         pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4 + 3] = pos + 1;
@@ -204,7 +204,7 @@ int pattern_note_input(GTOBJECT* gt, int midiNote, const EditorInput* input) {
 
             case CMD_FUNKTEMPO:
                 if (pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4 + 3]) {
-                    if (!shiftOrCtrlPressed) {
+                    if (!shift_or_ctrl_pressed) {
                         allowEnterToReturnToPosition();
                         gototable(STBL,
                                   pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4 + 3] - 1);
@@ -219,7 +219,7 @@ int pattern_note_input(GTOBJECT* gt, int midiNote, const EditorInput* input) {
                     }
                 }
                 else {
-                    if (shiftOrCtrlPressed) {
+                    if (shift_or_ctrl_pressed) {
                         int pos = findfreespeedtable();
                         if (pos >= 0) {
                             pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4 + 3] = pos + 1;
@@ -235,7 +235,7 @@ int pattern_note_input(GTOBJECT* gt, int midiNote, const EditorInput* input) {
             case CMD_PORTADOWN:
             case CMD_TONEPORTA:
                 if (pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4 + 3]) {
-                    if (!shiftOrCtrlPressed) {
+                    if (!shift_or_ctrl_pressed) {
 
                         allowEnterToReturnToPosition();
                         gototable(STBL,
@@ -251,7 +251,7 @@ int pattern_note_input(GTOBJECT* gt, int midiNote, const EditorInput* input) {
                     }
                 }
                 else {
-                    if (shiftOrCtrlPressed) {
+                    if (shift_or_ctrl_pressed) {
                         int pos = findfreespeedtable();
                         if (pos >= 0) {
                             pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4 + 3] = pos + 1;
@@ -265,7 +265,7 @@ int pattern_note_input(GTOBJECT* gt, int midiNote, const EditorInput* input) {
 
             case CMD_VIBRATO:
                 if (pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4 + 3]) {
-                    if (!shiftOrCtrlPressed) {
+                    if (!shift_or_ctrl_pressed) {
                         allowEnterToReturnToPosition();
                         gototable(STBL,
                                   pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4 + 3] - 1);
@@ -280,7 +280,7 @@ int pattern_note_input(GTOBJECT* gt, int midiNote, const EditorInput* input) {
                     }
                 }
                 else {
-                    if (shiftOrCtrlPressed) {
+                    if (shift_or_ctrl_pressed) {
                         int pos = findfreespeedtable();
                         if (pos >= 0) {
                             pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4 + 3] = pos + 1;
@@ -335,7 +335,7 @@ int pattern_note_input(GTOBJECT* gt, int midiNote, const EditorInput* input) {
             else {
                 pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4 + 1] = 0;
             }
-            if ((shiftOrCtrlPressed) && (newnote == REST)) {
+            if ((shift_or_ctrl_pressed) && (newnote == REST)) {
                 pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4 + 2] = 0;
                 pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4 + 3] = 0;
             }
@@ -473,7 +473,7 @@ void patterncommands(GTOBJECT* gt, int midiNote, const EditorInput* input) {
 int patterndown(GTOBJECT* gt) {
     int ret = 0;
     int c2  = getActualChannel(editorInfo.esnum, editorInfo.epchn);
-    if (shiftOrCtrlPressed) {
+    if (shift_or_ctrl_pressed) {
         int c2                = getActualChannel(editorInfo.esnum, editorInfo.epchn);
         gt->masterLoopChannel = c2;
         gt->masterLoopSubSong = editorInfo.esnum;
@@ -488,7 +488,7 @@ int patterndown(GTOBJECT* gt) {
         editorInfo.eppos = 0;
         ret              = 1;
     }
-    if (shiftOrCtrlPressed) {
+    if (shift_or_ctrl_pressed) {
         editorInfo.epmarkend = editorInfo.eppos;
         if (editorInfo.epmarkend == editorInfo.epmarkstart) editorInfo.epmarkchn = -1;
 
@@ -502,7 +502,7 @@ int patterndown(GTOBJECT* gt) {
 int patternup(GTOBJECT* gt) {
     int ret = 0;
     int c2  = getActualChannel(editorInfo.esnum, editorInfo.epchn);
-    if (shiftOrCtrlPressed) {
+    if (shift_or_ctrl_pressed) {
         int c2                = getActualChannel(editorInfo.esnum, editorInfo.epchn);
         gt->masterLoopChannel = c2;
         gt->masterLoopSubSong = editorInfo.esnum;
@@ -517,7 +517,7 @@ int patternup(GTOBJECT* gt) {
         editorInfo.eppos = pattlen[gt->editorUndoInfo.editorInfo[c2].epnum];
         ret              = 1;
     }
-    if (shiftOrCtrlPressed) {
+    if (shift_or_ctrl_pressed) {
         editorInfo.epmarkend = editorInfo.eppos;
         if (editorInfo.epmarkend == editorInfo.epmarkstart) editorInfo.epmarkchn = -1;
 
@@ -1045,7 +1045,7 @@ int handlePolyphonicKeyboard(GTOBJECT* gt) {
         return 1;
     }
 
-    if (shiftOrCtrlPressed) return noKeysPressed;
+    if (shift_or_ctrl_pressed) return noKeysPressed;
 
     if (eamode == 1) return noKeysPressed; // editing ADSR
 
@@ -1257,7 +1257,7 @@ int findFreePolyChannel(int note) {
 }
 
 
-int getNote(int rawkey) {
+int getNote(int scancode) {
     int newnote;
     int c = 0;
 
@@ -1266,12 +1266,12 @@ int getNote(int rawkey) {
     switch (keypreset) {
     case KeyPreset::Tracker:
         for (c = 0; c < sizeof(notekeytbl1); c++) {
-            if (rawkey == notekeytbl1[c]) {
+            if (scancode == notekeytbl1[c]) {
                 newnote = FIRSTNOTE + c + editorInfo.epoctave * 12;
             }
         }
         for (c = 0; c < sizeof(notekeytbl2); c++) {
-            if (rawkey == notekeytbl2[c]) {
+            if (scancode == notekeytbl2[c]) {
                 newnote = FIRSTNOTE + c + (editorInfo.epoctave + 1) * 12;
             }
         }
@@ -1279,7 +1279,7 @@ int getNote(int rawkey) {
 
     case KeyPreset::Dmc:
         for (c = 0; c < sizeof(dmckeytbl); c++) {
-            if (rawkey == dmckeytbl[c]) {
+            if (scancode == dmckeytbl[c]) {
                 newnote = FIRSTNOTE + c + editorInfo.epoctave * 12;
             }
         }
@@ -1287,12 +1287,12 @@ int getNote(int rawkey) {
 
     case KeyPreset::Janko:
         for (c = 0; c < sizeof(jankokeytbl1); c++) {
-            if (rawkey == jankokeytbl1[c]) {
+            if (scancode == jankokeytbl1[c]) {
                 newnote = FIRSTNOTE + c + editorInfo.epoctave * 12;
             }
         }
         for (c = 0; c < sizeof(jankokeytbl2); c++) {
-            if (rawkey == jankokeytbl2[c]) {
+            if (scancode == jankokeytbl2[c]) {
                 newnote = FIRSTNOTE + c + (editorInfo.epoctave + 1) * 12;
             }
         }
@@ -1542,7 +1542,7 @@ void pattern_copy_or_cut(GTOBJECT* gt, int cut) {
         return;
     }
 
-    if (ctrlpressed) {
+    if (ctrl_pressed) {
         c                    = editorInfo.eppos;
         patterncopybuffer[0] = pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4];
         patterncopybuffer[1] = pattern[gt->editorUndoInfo.editorInfo[c2].epnum][c * 4 + 1];
@@ -1606,7 +1606,7 @@ void pattern_mark_toggle() {
 }
 
 void pattern_toggle_jam() {
-    if (!shiftOrCtrlPressed) recordmode = !recordmode;
+    if (!shift_or_ctrl_pressed) recordmode = !recordmode;
 }
 
 void pattern_play_from_cursor(GTOBJECT* gt) {
@@ -1619,7 +1619,7 @@ void pattern_mute_channel(GTOBJECT* gt, int ch) {
 }
 
 void pattern_toggle_autoadvance() {
-    if (!shiftpressed || ctrlpressed) return;
+    if (!shift_pressed || ctrl_pressed) return;
 
     autoadvance++;
     if (autoadvance > 2) autoadvance = 0;
@@ -1633,7 +1633,7 @@ void pattern_cmd_copy(GTOBJECT* gt) {
     int c;
     int c2 = getActualChannel(editorInfo.esnum, editorInfo.epchn);
 
-    if (!shiftOrCtrlPressed) return;
+    if (!shift_or_ctrl_pressed) return;
 
     if (editorInfo.epmarkchn != -1) {
         int mc2 = getActualChannel(editorInfo.esnum, editorInfo.epmarkchn);
@@ -1671,7 +1671,7 @@ void pattern_cmd_paste(GTOBJECT* gt) {
     int c;
     int c2 = getActualChannel(editorInfo.esnum, editorInfo.epchn);
 
-    if (!shiftOrCtrlPressed) return;
+    if (!shift_or_ctrl_pressed) return;
 
     for (c = 0; c < cmdcopyrows; c++) {
         if (editorInfo.eppos >= pattlen[gt->editorUndoInfo.editorInfo[c2].epnum]) break;
@@ -1686,7 +1686,7 @@ void pattern_invert(GTOBJECT* gt) {
     char temp;
     int  c2 = getActualChannel(editorInfo.esnum, editorInfo.epchn);
 
-    if (!shiftOrCtrlPressed) return;
+    if (!shift_or_ctrl_pressed) return;
 
     if (editorInfo.epmarkchn != -1) {
         int mc2 = getActualChannel(editorInfo.esnum, editorInfo.epmarkchn);
@@ -1790,12 +1790,12 @@ static void pattern_transpose_semitone_inner(GTOBJECT* gt, int delta) {
 }
 
 void pattern_transpose_up(GTOBJECT* gt) {
-    if (!shiftOrCtrlPressed) return;
+    if (!shift_or_ctrl_pressed) return;
     pattern_transpose_semitone_inner(gt, 1);
 }
 
 void pattern_transpose_down(GTOBJECT* gt) {
-    if (!shiftpressed) return;
+    if (!shift_pressed) return;
     pattern_transpose_semitone_inner(gt, -1);
 }
 
@@ -1848,23 +1848,23 @@ static void pattern_transpose_octave_inner(GTOBJECT* gt, int delta) {
 }
 
 void pattern_octave_up(GTOBJECT* gt) {
-    if (!shiftOrCtrlPressed) return;
+    if (!shift_or_ctrl_pressed) return;
     pattern_transpose_octave_inner(gt, 12);
 }
 
 void pattern_octave_down(GTOBJECT* gt) {
-    if (!shiftpressed || ctrlpressed) return;
+    if (!shift_pressed || ctrl_pressed) return;
     pattern_transpose_octave_inner(gt, -12);
 }
 
 void pattern_step_size_up() {
-    if (!shiftOrCtrlPressed) return;
+    if (!shift_or_ctrl_pressed) return;
     stepsize++;
     if (stepsize > MAX_PATTROWS) stepsize = MAX_PATTROWS;
 }
 
 void pattern_step_size_down() {
-    if (!shiftOrCtrlPressed) return;
+    if (!shift_or_ctrl_pressed) return;
     stepsize--;
     if (stepsize < 2) stepsize = 2;
 }
@@ -1872,7 +1872,7 @@ void pattern_step_size_down() {
 void pattern_mark_all(GTOBJECT* gt) {
     int c2 = getActualChannel(editorInfo.esnum, editorInfo.epchn);
 
-    if (!ctrlpressed) return;
+    if (!ctrl_pressed) return;
 
     if ((editorInfo.epmarkchn != gt->masterLoopChannel) || (editorInfo.eppos != editorInfo.epmarkend)) {
         editorInfo.epmarkchn   = gt->masterLoopChannel;
@@ -1882,7 +1882,7 @@ void pattern_mark_all(GTOBJECT* gt) {
 }
 
 void pattern_auto_pitchbend(GTOBJECT* gt) {
-    if (!shiftOrCtrlPressed) return;
+    if (!shift_or_ctrl_pressed) return;
 
     undoAreaSetCheckForChange(UNDO_AREA_TABLES + STBL, 0, UNDO_AREA_DIRTY_CHECK);
     undoAreaSetCheckForChange(UNDO_AREA_TABLES + STBL, 1, UNDO_AREA_DIRTY_CHECK);
@@ -1894,7 +1894,7 @@ void pattern_portamento_helper(GTOBJECT* gt) {
     int c;
     int c2 = getActualChannel(editorInfo.esnum, editorInfo.epchn);
 
-    if (!shiftOrCtrlPressed) return;
+    if (!shift_or_ctrl_pressed) return;
 
     switch (pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4 + 2]) {
     case CMD_PORTAUP:

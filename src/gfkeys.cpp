@@ -167,20 +167,20 @@ char F7_SHIFT_OriginalGT[] = { FKEY_NEXT_MULTIPLIER,FKEY_DONE };
     { SDL_SCANCODE_F7,0,0,FKEYS_NONE,F7_OriginalGT }, { SDL_SCANCODE_F7,1,1,FKEYS_OR,F7_SHIFT_OriginalGT }
 */
 
-int fkeys_check(GTOBJECT* gt, int rawkey) {
+int fkeys_check(GTOBJECT* gt, int scancode) {
 
     for (int i = 0; i < sizeof(GTFKeyInfo) / sizeof(GTFKEY_ENTRY); i++) {
         int key = GTFKeyInfo[i].key;
-        if (key == rawkey) {
+        if (key == scancode) {
             int found = 0;
             if (GTFKeyInfo[i].andOr == FKEYS_NONE) {
-                if (shiftpressed + ctrlpressed == 0) found = 1;
+                if (shift_pressed + ctrl_pressed == 0) found = 1;
             }
             else if (GTFKeyInfo[i].andOr == FKEYS_AND) {
-                if ((GTFKeyInfo[i].shift == shiftpressed) && (GTFKeyInfo[i].ctrl == ctrlpressed)) found = 1;
+                if ((GTFKeyInfo[i].shift == shift_pressed) && (GTFKeyInfo[i].ctrl == ctrl_pressed)) found = 1;
             }
             else {
-                if ((GTFKeyInfo[i].shift == shiftpressed) || (GTFKeyInfo[i].ctrl == ctrlpressed)) found = 1;
+                if ((GTFKeyInfo[i].shift == shift_pressed) || (GTFKeyInfo[i].ctrl == ctrl_pressed)) found = 1;
             }
 
             if (found == 1) {

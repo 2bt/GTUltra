@@ -26,7 +26,7 @@ int   cutinstr = -1;
 
 bool instrument_cell_input(GTOBJECT* gt, const EditorInput* input) {
     const EditorInput in      = input ? *input : editor_input_snapshot();
-    const int         jrawkey = in.rawkey;
+    const int         jrawkey = in.scancode;
 
     switch (jrawkey) {
     case 0x8:

@@ -299,7 +299,7 @@ void modify_filter_table_detailed(int hexnybble) {
 bool table_enter_input(GTOBJECT* gt, const EditorInput* input) {
     (void)gt;
     const EditorInput in = input ? *input : editor_input_snapshot();
-    if (in.rawkey != SDL_SCANCODE_RETURN) return false;
+    if (in.scancode != SDL_SCANCODE_RETURN) return false;
 
     if (editorInfo.etnum == WTBL) {
         int table   = -1;
@@ -400,7 +400,7 @@ bool table_cell_input(GTOBJECT* gt, const EditorInput* input) {
 
     if (table_enter_input(gt, &in)) return true;
 
-    switch (in.rawkey) {
+    switch (in.scancode) {
     case SDL_SCANCODE_Q:
         if (in.shift_or_ctrl && editorInfo.etnum == STBL) {
             int speed =
@@ -897,7 +897,7 @@ void validatetableview() {
 }
 
 void tableup() {
-    if (shiftOrCtrlPressed) {
+    if (shift_or_ctrl_pressed) {
         if ((editorInfo.etmarknum != editorInfo.etnum) || (editorInfo.etpos != editorInfo.etmarkend)) {
             editorInfo.etmarknum   = editorInfo.etnum;
             editorInfo.etmarkstart = editorInfo.etmarkend = editorInfo.etpos;
@@ -905,14 +905,14 @@ void tableup() {
     }
     editorInfo.etpos--;
     if (editorInfo.etpos < 0) editorInfo.etpos = 0;
-    if (shiftOrCtrlPressed) {
+    if (shift_or_ctrl_pressed) {
         editorInfo.etmarkend = editorInfo.etpos;
         if (editorInfo.etmarkend == editorInfo.etmarkstart) editorInfo.etmarknum = -1;
     }
 }
 
 void tabledown() {
-    if (shiftOrCtrlPressed) {
+    if (shift_or_ctrl_pressed) {
         if ((editorInfo.etmarknum != editorInfo.etnum) || (editorInfo.etpos != editorInfo.etmarkend)) {
             editorInfo.etmarknum   = editorInfo.etnum;
             editorInfo.etmarkstart = editorInfo.etmarkend = editorInfo.etpos;
@@ -920,7 +920,7 @@ void tabledown() {
     }
     editorInfo.etpos++;
     if (editorInfo.etpos >= MAX_TABLELEN) editorInfo.etpos = MAX_TABLELEN - 1;
-    if (shiftOrCtrlPressed) {
+    if (shift_or_ctrl_pressed) {
         editorInfo.etmarkend = editorInfo.etpos;
         if (editorInfo.etmarkend == editorInfo.etmarkstart) editorInfo.etmarknum = -1;
     }
@@ -989,7 +989,7 @@ static void table_mark_patterns_dirty_for_undo() {
 
 void table_list_insert(GTOBJECT* gt) {
     table_mark_patterns_dirty_for_undo();
-    insert_table(editorInfo.etnum, editorInfo.etpos, shiftOrCtrlPressed);
+    insert_table(editorInfo.etnum, editorInfo.etpos, shift_or_ctrl_pressed);
     (void)gt;
 }
 
@@ -1051,11 +1051,11 @@ void table_paste() {
 }
 
 void table_optimize() {
-    if (shiftOrCtrlPressed) optimizetable(editorInfo.etnum);
+    if (shift_or_ctrl_pressed) optimizetable(editorInfo.etnum);
 }
 
 void table_toggle_lock() {
-    if (!shiftOrCtrlPressed) return;
+    if (!shift_or_ctrl_pressed) return;
 
     editorInfo.etlock = !editorInfo.etlock;
     validatetableview();
@@ -1063,16 +1063,16 @@ void table_toggle_lock() {
 }
 
 void table_test_note(GTOBJECT* gt) {
-    if (!shiftOrCtrlPressed)
+    if (!shift_or_ctrl_pressed)
         playtestnote(FIRSTNOTE + editorInfo.epoctave * 12, editorInfo.einum, editorInfo.epchn, gt);
 }
 
 void table_release_note(GTOBJECT* gt) {
-    if (shiftOrCtrlPressed) releasenote(editorInfo.epchn, gt);
+    if (shift_or_ctrl_pressed) releasenote(editorInfo.epchn, gt);
 }
 
 void table_negate_value() {
-    if (!shiftOrCtrlPressed) return;
+    if (!shift_or_ctrl_pressed) return;
 
     switch (editorInfo.etnum) {
     case FTBL:

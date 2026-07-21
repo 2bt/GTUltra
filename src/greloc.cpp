@@ -1859,6 +1859,6 @@ PREXPORTCOMPLETE:
     membuf_free(&src);
     membuf_free(&dest);
 
-    key    = 0;
-    rawkey = 0;
+    ascii_key    = 0;
+    scancode = 0;
 }
