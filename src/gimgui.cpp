@@ -296,6 +296,10 @@ constexpr ImGuiWindowFlags kChromeWindowFlags = ImGuiWindowFlags_NoTitleBar | Im
 // Left/top inset for panel body content (must match gimgui_begin_panel).
 constexpr float kPanelBodyPad = 6.0f;
 
+// Experiment toggles.
+constexpr bool  kPanelHeaders = false; // draw the per-panel title bar
+constexpr float kWindowMargin = 3.0f;  // window-edge padding; matches the inter-panel gutter (g)
+
 // Extra inset for the Song metadata form (beyond kPanelBodyPad).
 constexpr float kSongFormPadY = 6.0f;
 constexpr float kSongLabelGap = 10.0f;
@@ -321,6 +325,10 @@ float gimgui_mono_advance() {
 }
 
 float gimgui_text_width(int cols) { return gimgui_mono_advance() * (float)cols; }
+
+// Left inset for each grid row's content (half a character), so text doesn't
+// hug the panel border while the header/row separators still span full width.
+float gimgui_row_pad() { return gimgui_mono_advance() * 0.5f; }
 
 float gimgui_button_width(int hex_digits) {
     return gimgui_text_width(hex_digits) + ImGui::GetStyle().FramePadding.x * 2.0f;
@@ -364,11 +372,11 @@ float gimgui_left_column_width() {
 }
 
 float gimgui_song_panel_height() {
-    const float panelHeader = ImGui::GetTextLineHeight() + kPanelBodyPad * 2.0f;
-    const float frameH      = ImGui::GetTextLineHeight() + ImGui::GetStyle().FramePadding.y * 2.0f;
-    const float gap         = ImGui::GetStyle().ItemSpacing.y;
-    return panelHeader + 4.0f + kPanelBodyPad + kSongFormPadY + 3.0f * frameH + 2.0f * gap + kSongFormPadY +
-           kPanelBodyPad;
+    const float frameH = ImGui::GetTextLineHeight() + ImGui::GetStyle().FramePadding.y * 2.0f;
+    const float gap    = ImGui::GetStyle().ItemSpacing.y;
+    const float header = kPanelHeaders ? (ImGui::GetTextLineHeight() + kPanelBodyPad * 2.0f + 4.0f) : 0.0f;
+    // top pad + 3 form rows (Name/Author/Copyright) + inter-row gaps + bottom pad
+    return header + kPanelBodyPad + kSongFormPadY + 3.0f * frameH + 2.0f * gap + kSongFormPadY + kPanelBodyPad;
 }
 
 // Fixed right-side panel widths (content-driven, not % of window).
@@ -378,12 +386,13 @@ float gimgui_instruments_grid_width() {
            (float)gtui::INSTR_FIELDS * gimgui_text_width(3);
 }
 
-// One bordered table column: the 8-char grid, its vertical scrollbar, and the
-// bordered child's own chrome (WindowPadding on both sides + the two borders).
+// One bordered table column: the 8-char grid, its half-char row inset, the
+// vertical scrollbar, and the two child borders. (The column child runs with
+// WindowPadding.x = 0 so its separator spans the full column, like the other
+// panels — the horizontal inset comes from the grid's body_pad instead.)
 float gimgui_table_column_width() {
     const ImGuiStyle& style = ImGui::GetStyle();
-    return gimgui_text_width(8) + style.ScrollbarSize + 2.0f * style.WindowPadding.x +
-           2.0f * style.ChildBorderSize;
+    return gimgui_text_width(8) + gimgui_row_pad() + style.ScrollbarSize + 2.0f * style.ChildBorderSize;
 }
 
 
@@ -430,15 +439,16 @@ void gimgui_grid_body(const char*        id,
                       OnClick            onClick,
                       bool               h_scroll      = true,
                       int*               out_view_row  = nullptr,
-                      const GridMouseFn* on_grid_mouse = nullptr) {
+                      const GridMouseFn* on_grid_mouse = nullptr,
+                      float              body_pad      = gimgui_row_pad()) {
     ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
     ImGui::BeginChild(id, ImVec2(0, 0), false, kNoNavWindowFlags);
 
     if (headerBandH > 0.0f) {
         ImDrawList*  hdl = ImGui::GetWindowDrawList();
         const ImVec2 hp  = ImGui::GetCursorScreenPos();
-        headerDraw(hdl, hp.x, hp.y);
-        ImGui::Dummy(ImVec2(rowW, headerBandH));
+        headerDraw(hdl, hp.x + body_pad, hp.y);
+        ImGui::Dummy(ImVec2(rowW + body_pad, headerBandH));
         ImGui::Separator();
     }
 
@@ -448,7 +458,7 @@ void gimgui_grid_body(const char*        id,
     ImDrawList*  dl     = ImGui::GetWindowDrawList();
     const ImVec2 origin = ImGui::GetCursorScreenPos();
     const float  totalH = rows * lineH;
-    ImGui::Dummy(ImVec2(rowW, totalH)); // reserve scroll region
+    ImGui::Dummy(ImVec2(rowW + body_pad, totalH)); // reserve scroll region
 
     const float winH       = ImGui::GetWindowHeight();
     const float curScroll  = ImGui::GetScrollY();
@@ -478,7 +488,7 @@ void gimgui_grid_body(const char*        id,
         const ImGuiIO&  io            = ImGui::GetIO();
         const ImVec2    m             = io.MousePos;
         const int       r             = (int)((m.y - drawTop) / lineH);
-        const float     localX        = m.x - origin.x;
+        const float     localX        = m.x - origin.x - body_pad;
         const bool      inRows        = r >= 0 && r < rows;
         constexpr float kHoldDelaySec = 24.f / 60.f; // legacy HOLDDELAY @ 60 Hz
 
@@ -514,7 +524,7 @@ void gimgui_grid_body(const char*        id,
     if (out_view_row) *out_view_row = firstRow;
     for (int r = firstRow; r < lastRow; r++) {
         const float rowY = drawTop + r * lineH;
-        drawRow(dl, r, origin.x, rowY);
+        drawRow(dl, r, origin.x + body_pad, rowY);
     }
 
     ImGui::EndChild(); // ##scroll
@@ -532,8 +542,9 @@ void gimgui_grid_body(const char*        id,
                       OnClick            onClick,
                       bool               h_scroll      = true,
                       int*               out_view_row  = nullptr,
-                      const GridMouseFn* on_grid_mouse = nullptr) {
-    gimgui_grid_body(id, rows, rowW, lineH, followRow, [](ImDrawList*, float, float) {}, 0.0f, drawRow, onClick, h_scroll, out_view_row, on_grid_mouse);
+                      const GridMouseFn* on_grid_mouse = nullptr,
+                      float              body_pad      = gimgui_row_pad()) {
+    gimgui_grid_body(id, rows, rowW, lineH, followRow, [](ImDrawList*, float, float) {}, 0.0f, drawRow, onClick, h_scroll, out_view_row, on_grid_mouse, body_pad);
 }
 
 constexpr ImVec2 kChromeWindowPadBase(8.0f, 4.0f);
@@ -765,16 +776,19 @@ bool gimgui_begin_panel(const char* title, ImVec2 pos, ImVec2 size) {
 
     // Edge-to-edge header bar with the section name (window padding is 0, so
     // window coords == content coords).
-    ImDrawList*  dl   = ImGui::GetWindowDrawList();
-    const ImVec2 wp   = ImGui::GetWindowPos();
-    const float  ww   = ImGui::GetWindowSize().x;
-    const float  hpad = kPanelBodyPad;
-    const float  hh   = ImGui::GetTextLineHeight() + hpad * 2.0f;
-    dl->AddRectFilled(wp, ImVec2(wp.x + ww, wp.y + hh), gtui::color(gtui::GuiColorRole::PanelHeaderBg));
-    dl->AddText(ImVec2(wp.x + hpad, wp.y + hpad), gtui::color(gtui::GuiColorRole::PanelHeaderText), title);
-
-    // Inset the body below the header, with a small left/top gutter.
-    ImGui::SetCursorPos(ImVec2(hpad, hh + 4.0f));
+    const float hpad = kPanelBodyPad;
+    if (kPanelHeaders) {
+        ImDrawList*  dl = ImGui::GetWindowDrawList();
+        const ImVec2 wp = ImGui::GetWindowPos();
+        const float  ww = ImGui::GetWindowSize().x;
+        const float  hh = ImGui::GetTextLineHeight() + hpad * 2.0f;
+        dl->AddRectFilled(wp, ImVec2(wp.x + ww, wp.y + hh), gtui::color(gtui::GuiColorRole::PanelHeaderBg));
+        dl->AddText(ImVec2(wp.x + hpad, wp.y + hpad), gtui::color(gtui::GuiColorRole::PanelHeaderText), title);
+        ImGui::SetCursorPos(ImVec2(hpad, hh + 4.0f)); // body below the header
+    }
+    else {
+        ImGui::SetCursorPos(ImVec2(hpad, hpad)); // no header: body at the top
+    }
     return true;
 }
 
@@ -823,12 +837,16 @@ void gimgui_draw_tables(ImVec2 pos, ImVec2 size) {
     }
 
     ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(kTableColGap, 2));
+    // WindowPadding.x = 0 so each column's name/separator span its full width;
+    // the half-char horizontal inset comes from the name offset + grid body_pad.
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, gimgui_row_pad()));
     for (int t = 0; t < gtui::table_count(); t++) {
         if (t) ImGui::SameLine();
         ImGui::PushID(t);
 
         const bool active = (curTab == t);
         ImGui::BeginChild("col", ImVec2(colW, 0), true, kNoNavWindowFlags);
+        ImGui::SetCursorPosX(gimgui_row_pad());
         ImGui::TextUnformatted(kTableNames[t]);
         ImGui::Separator();
 
@@ -838,7 +856,7 @@ void gimgui_draw_tables(ImVec2 pos, ImVec2 size) {
             tlen,
             cellW8,
             lineH,
-            (panelActive && active) ? curPos : -1,
+            active ? curPos : -1, // follow the active table's cursor regardless of panel focus
             [&](ImDrawList* dl, int r, float x, float y) {
                 char buf[16];
                 if (gtui::table_row_uses_selected_instrument(t, r))
@@ -873,7 +891,7 @@ void gimgui_draw_tables(ImVec2 pos, ImVec2 size) {
         ImGui::EndChild();
         ImGui::PopID();
     }
-    ImGui::PopStyleVar();
+    ImGui::PopStyleVar(2); // ItemSpacing + WindowPadding
 
     gimgui_note_panel_hover(gtui::EditPanelTables);
     gimgui_end_panel();
@@ -931,8 +949,6 @@ void gimgui_draw_pattern(ImVec2 pos, ImVec2 size) {
     const ImU32 cCmd        = gtui::color(gtui::GuiColorRole::GridCommandText);
     const ImU32 cDots       = gtui::color(gtui::GuiColorRole::GridDots);
     const ImU32 cMuted      = gtui::color(gtui::GuiColorRole::GridMuted);
-    const ImU32 cHeader     = gtui::color(gtui::GuiColorRole::GridHeaderText);
-    const ImU32 cMaster     = gtui::color(gtui::GuiColorRole::MasterChannel);
     const ImU32 cEnd        = gtui::color(gtui::GuiColorRole::GridEndMarker);
 
     const int  chans       = gtui::pattern_channels();
@@ -965,25 +981,21 @@ void gimgui_draw_pattern(ImVec2 pos, ImVec2 size) {
     const float chanW     = gimgui_text_width(9);
     const float chanCellW = gimgui_text_width(8);
     const float noteW     = gimgui_text_width(3);
-    const float headerH   = lineH * 2.f;
+    const float headerH   = lineH;
     const float totalW    = rowNumW + chans * chanW;
 
-    gimgui_snap_body_pad_x();
     gimgui_grid_body(
         "patgrid",
         rows,
         totalW,
         lineH,
-        panelActive ? curRow : -1,
+        curRow, // follow the cursor even when this panel isn't the active one (wheel-scroll)
         [&](ImDrawList* hdl, float x, float y) {
             char hbuf[16];
             for (int c = 0; c < chans; c++) {
-                const float cx     = x + rowNumW + c * chanW;
-                const bool  master = gtui::order_is_master_channel(c);
-                snprintf(hbuf, sizeof hbuf, "%X", gtui::pattern_actual_channel(c));
-                hdl->AddText(ImVec2(cx, y), master ? cMaster : cHeader, hbuf);
+                const float cx = x + rowNumW + c * chanW;
                 snprintf(hbuf, sizeof hbuf, "%02X", gtui::pattern_number(c));
-                hdl->AddText(ImVec2(cx, y + lineH), cMuted, hbuf);
+                hdl->AddText(ImVec2(cx, y), cMuted, hbuf);
             }
         },
         headerH,
@@ -1104,8 +1116,6 @@ void gimgui_draw_orderlist(ImVec2 pos, ImVec2 size) {
     const ImU32 cCmd        = gtui::color(gtui::GuiColorRole::GridCommandText);
     const ImU32 cEnd        = gtui::color(gtui::GuiColorRole::GridEndMarker);
     const ImU32 cMuted      = gtui::color(gtui::GuiColorRole::GridMuted);
-    const ImU32 cHeader     = gtui::color(gtui::GuiColorRole::GridHeaderText);
-    const ImU32 cMaster     = gtui::color(gtui::GuiColorRole::MasterChannel);
     const ImU32 cSizeBad    = gtui::color(gtui::GuiColorRole::Error);
 
     const int  chans       = gtui::order_channels();
@@ -1138,7 +1148,7 @@ void gimgui_draw_orderlist(ImVec2 pos, ImVec2 size) {
     const float colGap    = charW;
     const float colPitch  = cellW + colGap;
     const float totalW    = rowNumW + (float)chans * cellW + (float)(chans > 0 ? chans - 1 : 0) * colGap;
-    const float headerH   = lineH * 2.f;
+    const float headerH   = lineH;
 
     int selRow[8], endRow[8], playRow[8];
     for (int c = 0; c < chans && c < 8; c++) {
@@ -1147,7 +1157,6 @@ void gimgui_draw_orderlist(ImVec2 pos, ImVec2 size) {
         playRow[c] = gtui::order_play_row(c);
     }
 
-    gimgui_snap_body_pad_x();
     const GridMouseFn orderMouse = [&](int r, float localX, ImGuiMouseButton btn, bool dbl, bool drag) {
         const ImGuiIO& io = ImGui::GetIO();
         if (io.MouseDown[ImGuiMouseButton_Left] &&
@@ -1187,24 +1196,19 @@ void gimgui_draw_orderlist(ImVec2 pos, ImVec2 size) {
         rows,
         totalW,
         lineH,
-        panelActive ? curRow : -1,
+        curRow, // follow the cursor even when this panel isn't the active one (wheel-scroll)
         [&](ImDrawList* hdl, float x, float y) {
             char hbuf[16];
             for (int c = 0; c < chans; c++) {
-                const float cx     = x + rowNumW + (float)c * colPitch;
-                const bool  master = gtui::order_is_master_channel(c);
-                snprintf(hbuf, sizeof hbuf, "%X", gtui::order_actual_channel(c));
-                hdl->AddText(ImVec2(cx, y), master ? cMaster : cHeader, hbuf);
-                {
-                    const int total   = expanded ? gtui::order_compressed_size(c) : 0;
-                    const int payload = expanded ? gtui::order_compressed_payload_size(c) : gtui::order_length(c);
-                    if (expanded && total > 0xff) snprintf(hbuf, sizeof hbuf, "**");
-                    else snprintf(hbuf, sizeof hbuf, "%02X", payload);
-                    const ImU32 sizeCol = (expanded && total > 0xff)    ? cSizeBad
-                                          : (expanded && total >= 0xf0) ? cSizeBad
-                                                                        : cMuted;
-                    hdl->AddText(ImVec2(cx, y + lineH), sizeCol, hbuf);
-                }
+                const float cx      = x + rowNumW + (float)c * colPitch;
+                const int   total   = expanded ? gtui::order_compressed_size(c) : 0;
+                const int   payload = expanded ? gtui::order_compressed_payload_size(c) : gtui::order_length(c);
+                if (expanded && total > 0xff) snprintf(hbuf, sizeof hbuf, "**");
+                else snprintf(hbuf, sizeof hbuf, "%02X", payload);
+                const ImU32 sizeCol = (expanded && total > 0xff)    ? cSizeBad
+                                      : (expanded && total >= 0xf0) ? cSizeBad
+                                                                    : cMuted;
+                hdl->AddText(ImVec2(cx, y), sizeCol, hbuf);
             }
         },
         headerH,
@@ -1328,15 +1332,14 @@ void gimgui_draw_instruments(ImVec2 pos, ImVec2 size) {
 
     g_instr_name_item_active = false;
     ImGui::PushItemFlag(ImGuiItemFlags_NoTabStop, true);
-    gimgui_snap_body_pad_x();
     gimgui_grid_body(
         "instgrid",
         rows,
         totalW,
         lineH,
-        panelActive ? curInst - gtui::INSTR_FIRST : -1,
+        curInst - gtui::INSTR_FIRST, // follow the cursor even when this panel isn't active (wheel-scroll)
         [&](ImDrawList* dl, float x, float y) {
-            dl->AddText(ImVec2(x + colX[1], y), cHeader, "Name");
+            dl->AddText(ImVec2(x + colX[1], y), cHeader, "Instrument Name");
             for (int f = 0; f < gtui::INSTR_FIELDS; f++)
                 dl->AddText(ImVec2(x + colX[3 + f], y), cHeader, FIELD_LABELS[f]);
         },
@@ -1739,9 +1742,13 @@ void gimgui_render() {
                                                   ImVec2(vp->Pos.x + vp->Size.x, vp->Pos.y + vp->Size.y),
                                                   gtui::color(gtui::GuiColorRole::AppBackground));
 
-    const ImVec2 vo = vp->WorkPos;  // origin below the menu bar
-    const ImVec2 vs = vp->WorkSize; // area excluding the menu bar
-    const float  g  = 3.0f;         // gutter between panels
+    const float g = 3.0f;          // gutter between panels
+    const float m = kWindowMargin; // margin between the whole UI and the window edges
+
+    // Everything (chrome bars + panels) lives inside a uniform window margin;
+    // the app-background fill behind it shows as padding at the window edges.
+    const ImVec2 vo = ImVec2(vp->WorkPos.x + m, vp->WorkPos.y + m);
+    const ImVec2 vs = ImVec2(vp->WorkSize.x - 2 * m, vp->WorkSize.y - 2 * m);
 
     const float chromeH = gimgui_chrome_row_h();
 
