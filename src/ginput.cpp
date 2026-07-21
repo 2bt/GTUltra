@@ -5,14 +5,14 @@
 
 extern int hexnybble;
 
-int key                = 0;
-int rawkey             = 0;
-int shiftpressed       = 0;
-int shiftOrCtrlPressed = 0;
-int ctrlpressed        = 0;
-int cursorflashdelay   = 0;
-int mouseb             = 0;
-int prevmouseb         = 0;
+int      key                = 0;
+int      rawkey             = 0;
+bool     shiftpressed       = false;
+bool     shiftOrCtrlPressed = false;
+bool     ctrlpressed        = false;
+int      cursorflashdelay   = 0;
+unsigned mouseb             = 0;
+unsigned prevmouseb         = 0;
 
 EditorInput editor_input_snapshot() {
     EditorInput in;
@@ -35,46 +35,34 @@ void getkey() {
     cursorflashdelay += win_getspeed(50);
 
     prevmouseb = mouseb;
-    mouseb     = (int)mou_getbuttons();
+    mouseb     = mou_getbuttons();
 
+    // The first non-modifier key held this frame becomes the raw key.
     key    = win_asciikey;
     rawkey = 0;
-    for (int c = 0; c < SDL_NUM_SCANCODES; c++) {
-        if (win_keytable[c]) {
-            if ((c != SDL_SCANCODE_LSHIFT) && (c != SDL_SCANCODE_RSHIFT) && (c != SDL_SCANCODE_LCTRL) &&
-                (c != SDL_SCANCODE_RCTRL)) {
-                rawkey          = c;
-                win_keytable[c] = 0;
-                break;
-            }
+    for (int scancode = 0; scancode < SDL_NUM_SCANCODES; scancode++) {
+        if (win_keytable[scancode] && scancode != SDL_SCANCODE_LSHIFT && scancode != SDL_SCANCODE_RSHIFT &&
+            scancode != SDL_SCANCODE_LCTRL && scancode != SDL_SCANCODE_RCTRL) {
+            rawkey                 = scancode;
+            win_keytable[scancode] = 0;
+            break;
         }
     }
 
-    ctrlpressed  = 0;
-    shiftpressed = 0;
+    ctrlpressed        = win_keystate[SDL_SCANCODE_LCTRL] || win_keystate[SDL_SCANCODE_RCTRL];
+    shiftpressed       = win_keystate[SDL_SCANCODE_LSHIFT] || win_keystate[SDL_SCANCODE_RSHIFT];
+    shiftOrCtrlPressed = shiftpressed || ctrlpressed;
 
-    if (win_keystate[SDL_SCANCODE_LCTRL] || win_keystate[SDL_SCANCODE_RCTRL]) ctrlpressed = 1;
-
-    if (win_keystate[SDL_SCANCODE_LSHIFT] || win_keystate[SDL_SCANCODE_RSHIFT]) shiftpressed = 1;
-
-    shiftOrCtrlPressed = shiftpressed | ctrlpressed;
-
+    // Keypad Enter acts as Return; keypad digits produce their ASCII digit
+    // (KP_1..KP_9 are contiguous in SDL, with KP_0 sitting just after them).
     if (rawkey == SDL_SCANCODE_KP_ENTER) {
         key    = SDL_SCANCODE_RETURN;
         rawkey = SDL_SCANCODE_RETURN;
     }
+    else if (rawkey >= SDL_SCANCODE_KP_1 && rawkey <= SDL_SCANCODE_KP_9) key = '1' + (rawkey - SDL_SCANCODE_KP_1);
+    else if (rawkey == SDL_SCANCODE_KP_0) key = '0';
 
-    if (rawkey == SDL_SCANCODE_KP_0) key = '0';
-    if (rawkey == SDL_SCANCODE_KP_1) key = '1';
-    if (rawkey == SDL_SCANCODE_KP_2) key = '2';
-    if (rawkey == SDL_SCANCODE_KP_3) key = '3';
-    if (rawkey == SDL_SCANCODE_KP_4) key = '4';
-    if (rawkey == SDL_SCANCODE_KP_5) key = '5';
-    if (rawkey == SDL_SCANCODE_KP_6) key = '6';
-    if (rawkey == SDL_SCANCODE_KP_7) key = '7';
-    if (rawkey == SDL_SCANCODE_KP_8) key = '8';
-    if (rawkey == SDL_SCANCODE_KP_9) key = '9';
-
+    // ImGui owns the mouse/keyboard while one of its widgets is focused.
     const int cap = gimgui_input_capture();
     if (cap & GimguiCaptureMouse) {
         mouseb         = 0;

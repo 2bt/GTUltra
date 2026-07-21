@@ -2,16 +2,17 @@
 
 #include <SDL.h>
 
-// Per-frame keyboard snapshot for editor command handlers (M3).
-// docommand() captures globals into EditorInput before calling *commands()
-// so handlers do not depend on key/rawkey being cleared by action dispatch.
+// Per-frame input snapshot for editor command handlers (M3).
+// docommand() captures the live input globals into an EditorInput before
+// calling the *commands() handlers, so they don't depend on key/rawkey
+// being cleared by action dispatch mid-frame.
 struct EditorInput {
-    int key           = 0;
-    int rawkey        = 0;
-    int shift         = 0;
-    int ctrl          = 0;
-    int shift_or_ctrl = 0;
-    int hex_nybble    = -1;
+    int  key           = 0;  // ASCII of the character typed this frame, or 0
+    int  rawkey        = 0;  // SDL scancode pressed this frame, or 0
+    bool shift         = false;
+    bool ctrl          = false;
+    bool shift_or_ctrl = false;
+    int  hex_nybble    = -1; // 0..15 when a hex digit is pressed, else -1
 };
 
 EditorInput editor_input_snapshot();
@@ -19,11 +20,12 @@ void        editor_input_clear();
 
 void getkey();
 
-extern int key;
-extern int rawkey;
-extern int shiftpressed;
-extern int ctrlpressed;
-extern int shiftOrCtrlPressed;
-extern int cursorflashdelay;
-extern int mouseb;
-extern int prevmouseb;
+// Live per-frame input state, refreshed by getkey().
+extern int      key;                // ASCII of the character typed this frame
+extern int      rawkey;             // SDL scancode pressed this frame
+extern bool     shiftpressed;
+extern bool     ctrlpressed;
+extern bool     shiftOrCtrlPressed;
+extern int      cursorflashdelay;
+extern unsigned mouseb;             // current mouse-button bitmask (MOUSEB_*)
+extern unsigned prevmouseb;         // previous frame's button bitmask
