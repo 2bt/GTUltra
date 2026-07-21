@@ -30,7 +30,7 @@ int order_expanded_max_channels() {
 // gorder-local helpers, defined here (above their first use) so no
 // forward declarations are needed.
 
-void orderListHandleHexInputOriginalView(GTOBJECT* gt) {
+void order_hex_input_original_view(GTOBJECT* gt) {
     if (editorInfo.eseditpos != songlen[editorInfo.esnum][editorInfo.eschn]) {
         switch (editorInfo.escolumn) {
         case 0:
@@ -91,7 +91,7 @@ void orderListHandleHexInputOriginalView(GTOBJECT* gt) {
     }
 }
 
-void updateTransposeToPlayingSong(GTOBJECT* gt) {
+void update_transpose_to_playing_song(GTOBJECT* gt) {
     int c2 = getActualChannel(editorInfo.esnum, editorInfo.eschn);
     if (editorInfo.eseditpos ==
         gt->chn[c2].songptr - 1) // cursor editing row as whats currently playing in this channel?
@@ -107,7 +107,7 @@ void updateTransposeToPlayingSong(GTOBJECT* gt) {
 // Loop position can be 12 bit in expanded view.
 // We can't enter a value longer than 2 digits
 // Shift-click on entry to set loop position?
-void orderListHandleHexInputExpandedView(GTOBJECT* gt) {
+void order_hex_input_expanded_view(GTOBJECT* gt) {
     // songOrderPatterns[editorInfo.esnum][c][p];
 
     if (songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] <
@@ -126,7 +126,7 @@ void orderListHandleHexInputExpandedView(GTOBJECT* gt) {
                 songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] = 0x80 + hexnybble;
             }
 
-            updateTransposeToPlayingSong(gt);
+            update_transpose_to_playing_song(gt);
 
             songCompressedSize[editorInfo.esnum][editorInfo.eschn] =
                 generateCompressedSongChannel(editorInfo.esnum, editorInfo.eschn, true);
@@ -219,7 +219,7 @@ void orderListHandleHexInputExpandedView(GTOBJECT* gt) {
     return;
 }
 
-int handleEnterInCompressedView(GTOBJECT* gt) {
+int handle_enter_in_compressed_view(GTOBJECT* gt) {
     if (editorInfo.eseditpos >= songlen[editorInfo.esnum][editorInfo.eschn]) return 0;
 
     if (!shift_or_ctrl_pressed) {
@@ -238,7 +238,7 @@ int handleEnterInCompressedView(GTOBJECT* gt) {
     return 1;
 }
 
-int handleEnterInExpandedView(GTOBJECT* gt) {
+int handle_enter_in_expanded_view(GTOBJECT* gt) {
 
     //	sprintf(textbuffer, "snd %x, chn %x, songorderLen %x\n", editorInfo.esnum,
     // editorInfo.eschn,(songOrderLength[editorInfo.esnum][editorInfo.eschn] - 1));
@@ -262,7 +262,7 @@ int handleEnterInExpandedView(GTOBJECT* gt) {
     return 1;
 }
 
-void getExpandedSelectedArea(int* x, int* y, int* w, int* h) {
+void get_expanded_selected_area(int* x, int* y, int* w, int* h) {
     int tx, ty, tw, th;
 
     if (editorInfo.esmarkchn < 0 || editorInfo.esmarkchnend < 0 || editorInfo.esmarkstart < 0 ||
@@ -306,8 +306,8 @@ bool order_cell_input(GTOBJECT* gt, const EditorInput* input) {
     const EditorInput in = input ? *input : editor_input_snapshot();
     if (in.hex_nybble < 0) return false;
 
-    if (editorInfo.expandOrderListView == 0) orderListHandleHexInputOriginalView(gt);
-    else orderListHandleHexInputExpandedView(gt);
+    if (editorInfo.expandOrderListView == 0) order_hex_input_original_view(gt);
+    else order_hex_input_expanded_view(gt);
     return true;
 }
 
@@ -985,7 +985,7 @@ void orderListCopyMarkedArea_Expanded() {
 
     if (editorInfo.esmarkchn != -1) {
         int x, y, w, h;
-        getExpandedSelectedArea(&x, &y, &w, &h);
+        get_expanded_selected_area(&x, &y, &w, &h);
 
         int wy = 0;
         for (int i = y; i < (y + h); i++) {
@@ -1093,7 +1093,7 @@ void orderListDeleteRowAtCursor_External(int sng, int chn, int row) {
 
 void orderListInsert_External(GTOBJECT* gt) {
     int x, y, w, h;
-    getExpandedSelectedArea(&x, &y, &w, &h);
+    get_expanded_selected_area(&x, &y, &w, &h);
     if (w == 0) // Nothing selected
     {
         w = 1;
@@ -1117,7 +1117,7 @@ void orderListInsert_External(GTOBJECT* gt) {
 
 void orderListDelete_External() {
     int x, y, w, h;
-    getExpandedSelectedArea(&x, &y, &w, &h);
+    get_expanded_selected_area(&x, &y, &w, &h);
     if (w == 0) // Nothing selected
     {
         w = 1;
@@ -1230,7 +1230,7 @@ void order_list_transpose_up() {
             songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] &= 0x7f;
             if ((songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] & 0x7f) == 0xf)
                 songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos]--;
-            updateTransposeToPlayingSong(&gtObject);
+            update_transpose_to_playing_song(&gtObject);
             songCompressedSize[editorInfo.esnum][editorInfo.eschn] =
                 generateCompressedSongChannel(editorInfo.esnum, editorInfo.eschn, true);
         }
@@ -1247,7 +1247,7 @@ void order_list_transpose_down() {
         if (songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] < 0xff &&
             editorInfo.escolumn == 3) {
             songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] |= 0x80;
-            updateTransposeToPlayingSong(&gtObject);
+            update_transpose_to_playing_song(&gtObject);
             songCompressedSize[editorInfo.esnum][editorInfo.eschn] =
                 generateCompressedSongChannel(editorInfo.esnum, editorInfo.eschn, true);
         }
@@ -1358,8 +1358,8 @@ void order_col_right_expanded(GTOBJECT* gt) {
 int order_go_pattern(GTOBJECT* gt) {
     int ret;
 
-    if (editorInfo.expandOrderListView == 0) ret = handleEnterInCompressedView(gt);
-    else ret = handleEnterInExpandedView(gt);
+    if (editorInfo.expandOrderListView == 0) ret = handle_enter_in_compressed_view(gt);
+    else ret = handle_enter_in_expanded_view(gt);
 
     if (ret) {
         editorInfo.epmarkchn = -1;
