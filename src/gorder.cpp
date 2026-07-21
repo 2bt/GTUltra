@@ -8,10 +8,6 @@
 
 namespace {
 
-int backup_pat_pos[MAX_PLAY_CH];
-int jr   = 0;
-int jcnt = 0;
-
 int order_expanded_max_channels() {
     if ((editorInfo.maxSIDChannels == 3) || (editorInfo.maxSIDChannels == 9 && (editorInfo.esnum & 1))) return 3;
     return 6;
@@ -31,11 +27,6 @@ void orderlistcommands(GTOBJECT* gt, const EditorInput* input) {
     int               c, scrrep;
     int               ret = 0;
 
-    //	if (editPaletteMode)
-    //	{
-    //		paletteEditCommands();
-    //		return;
-    //	}
 
     //	int c2 = getActualChannel(editorInfo.esnum, editorInfo.eschn);	// 0-12
 
@@ -733,27 +724,6 @@ void songchange(GTOBJECT* gt, bool reset_editing_positions) {
 A cut down version of songchange
 initialises editor parameters (espos and epnum..)
 */
-void initEditorSongInfo(GTOBJECT* gt) {
-    editorInfo.highlightLoopChannel       = 999; // remove from display
-    editorInfo.highlightLoopPatternNumber = -1;
-    editorInfo.highlightLoopStart = editorInfo.highlightLoopEnd = 0;
-
-    // Set up the editor pattern length info (gt->editorUndoInfo.editorInfo[c2].epnum ) and song pos (.espos) for
-    // each channel
-    orderSelectPatternsFromSelected(gt);
-
-    editorInfo.eseditpos    = 0;
-    editorInfo.esmarkchn    = -1;
-    editorInfo.esmarkchnend = -1;
-    editorInfo.eppos        = 0; // pattern pos
-    editorInfo.epview       = -VISIBLEPATTROWS / 2;
-
-    if (editorInfo.eseditpos == songlen[editorInfo.esnum][editorInfo.eschn]) editorInfo.eseditpos++;
-    editorInfo.esmarkchn = -1;
-
-    updateviewtopos(gt);
-}
-
 void resetSongInfo(GTOBJECT* gt, int jc2) {
     for (int c = 0; c < editorInfo.maxSIDChannels; c++) {
         gt->editorUndoInfo.editorInfo[c].espos = 0; // highlighted (green) position
@@ -772,8 +742,6 @@ void resetSongInfo(GTOBJECT* gt, int jc2) {
 void updateviewtopos(GTOBJECT* gt) {
     int c, d;
 
-    //	if (editPaletteMode)
-    //		return;
 
     for (c = 0; c < editorInfo.maxSIDChannels; c++) {
         int c2      = getActualChannel(editorInfo.esnum, c); // 0-12
@@ -820,39 +788,6 @@ void updateviewtopos(GTOBJECT* gt) {
 int tempPatternMin  = 0;
 int tempPatternSec  = 0;
 int tempPatterFrame = 0;
-
-
-int addOrRemoveInterPatternLoop() {
-    GTOBJECT* gtPlayer   = &gtObject;
-    int       removeLoop = 0;
-
-    int c3 = getActualChannel(editorInfo.esnum, editorInfo.epmarkchn);
-
-    int markStart = editorInfo.epmarkstart;
-    int markEnd   = editorInfo.epmarkend;
-    if (markEnd < markStart) {
-        markStart = markEnd;
-        markEnd   = editorInfo.epmarkstart;
-    }
-    if (editorInfo.epmarkstart == editorInfo.epmarkend) removeLoop = 1;
-
-    if (editorInfo.highlightLoopStart == markStart && editorInfo.highlightLoopEnd == markEnd &&
-        editorInfo.highlightLoopChannel == c3 &&
-        editorInfo.highlightLoopPatternNumber == gtPlayer->editorUndoInfo.editorInfo[c3].epnum)
-        removeLoop = 1;
-
-    if (removeLoop) {
-        editorInfo.highlightLoopChannel       = 999; // remove from display
-        gtPlayer->interPatternLoopEnabledFlag = 0;   // disable in player
-        editorInfo.highlightLoopPatternNumber = -1;
-        return -1;
-    }
-    else {
-        editorInfo.highlightLoopPatternNumber =
-            gtPlayer->editorUndoInfo.editorInfo[c3].epnum; // highlight looping area
-    }
-    return 0;
-}
 
 
 int calcStartofInterPatternLoop(int songNum, int channelNum, int startSongPos, GTOBJECT* gtloop) {
@@ -993,23 +928,6 @@ int calculateLoopInfo2(int songNum, int channelNum, int startSongPos, GTOBJECT* 
 }
 
 
-/*
-void playFromCurrentPosition(GTOBJECT *gt, int currentPos)
-{
-
-    int t1 = followplay;
-    int t2 = gt->interPatternLoopEnabledFlag;
-    gt->loopEnabledFlag = 0;
-    gt->interPatternLoopEnabledFlag = 0;
-    int c2 = getActualChannel(editorInfo.esnum, editorInfo.epchn);
-    handleShiftSpace(gt, c2, currentPos * 4, false, true);
-
-    gt->loopEnabledFlag = transportLoopPattern;
-    gt->interPatternLoopEnabledFlag = t2;
-    followplay = t1;
-}
-*/
-
 void orderPlayFromPosition(GTOBJECT* gt,
                            int       startPatternPos,
                            int       startSongPos,
@@ -1049,20 +967,6 @@ void orderPlayFromPosition(GTOBJECT* gt,
     int loopMode = transportLoopPattern; // gt->loopEnabledFlag;
 
     int ep = startSongPos;
-    //	int ep2;
-
-    if (editorInfo.expandOrderListView == 0) {
-        /*
-                    do
-                    {
-                        ep2 = ep;
-                        if ((songorder[sng][c2 % 6][ep] >= REPEAT) && (songorder[sng][c2 % 6][ep] < TRANSDOWN))
-                            ep++;
-                        if ((songorder[sng][c2 % 6][ep] >= TRANSDOWN) && (songorder[sng][c2 % 6][ep] < LOOPSONG))
-                            ep++;
-                    } while (ep != ep2);
-        */
-    }
 
     initsong(editorInfo.esnum, PlayMode::Beginning, gt);
     gt->loopEnabledFlag   = 0;
@@ -1304,20 +1208,6 @@ void setMasterLoopChannel(GTOBJECT* gt, const char* debugText) {
 }
 
 
-void resetOrderView(GTOBJECT* gt) {
-    if (gt->chn[gt->masterLoopChannel].songptr <= editorInfo.esview) {
-
-        editorInfo.esview = gt->chn[gt->masterLoopChannel].songptr - 1;
-        if (editorInfo.esview < 0) editorInfo.esview = 0;
-        editorInfo.eseditpos = gt->chn[gt->masterLoopChannel].songptr;
-    }
-    else if (gt->chn[gt->masterLoopChannel].songptr > editorInfo.esview + VISIBLEORDERLIST) {
-        editorInfo.esview    = gt->chn[gt->masterLoopChannel].songptr - VISIBLEORDERLIST - 1;
-        editorInfo.eseditpos = gt->chn[gt->masterLoopChannel].songptr - 1;
-    }
-    updateviewtopos(gt);
-}
-
 void orderListHandleHexInputOriginalView(GTOBJECT* gt) {
     if (editorInfo.eseditpos != songlen[editorInfo.esnum][editorInfo.eschn]) {
         switch (editorInfo.escolumn) {
@@ -1531,32 +1421,6 @@ int handleEnterInCompressedView(GTOBJECT* gt) {
         orderSelectPatternsFromSelected(gt);
         restorePatternDisplayInfo(gt); // V1.2.2
         return 0;
-        /*
-                int c, d;
-
-                for (c = 0; c < editorInfo.maxSIDChannels; c++)
-                {
-                    int start;
-
-                    int c2 = getActualChannel(editorInfo.esnum, c);	// 0-12
-                    int songNum = getActualSongNumber(editorInfo.esnum, c2);
-                    int c3 = c % 6;
-
-                    if (editorInfo.eseditpos != gt->editorUndoInfo.editorInfo[c2].espos)
-                        start = editorInfo.eseditpos;
-                    else
-                        start = gt->editorUndoInfo.editorInfo[c2].espos;
-
-                    for (d = start; d < songlen[songNum][c3]; d++)
-                    {
-                        if (songorder[songNum][c3][d] < MAX_PATT)
-                        {
-                            gt->editorUndoInfo.editorInfo[c2].epnum = songorder[songNum][c3][d];
-                            break;
-                        }
-                    }
-                }
-        */
     }
     return 1;
 }
@@ -1582,32 +1446,6 @@ int handleEnterInExpandedView(GTOBJECT* gt) {
         orderSelectPatternsFromSelected(gt);
         restorePatternDisplayInfo(gt); // V1.2.2
         return 0;
-        /*
-                int c, d;
-
-                for (c = 0; c < editorInfo.maxSIDChannels; c++)
-                {
-                    int start;
-
-                    int c2 = getActualChannel(editorInfo.esnum, c);	// 0-12
-                    int songNum = getActualSongNumber(editorInfo.esnum, c2);
-                    int c3 = c % 6;
-
-                    if (editorInfo.eseditpos != gt->editorUndoInfo.editorInfo[c2].espos)
-                        start = editorInfo.eseditpos;
-                    else
-                        start = gt->editorUndoInfo.editorInfo[c2].espos;
-
-                    for (d = start; d < songOrderLength[songNum][c3]; d++)
-                    {
-                        if (songOrderPatterns[songNum][c3][d] < MAX_PATT)
-                        {
-                            gt->editorUndoInfo.editorInfo[c2].epnum = songOrderPatterns[songNum][c3][d];
-                            break;
-                        }
-                    }
-                }
-        */
     }
     return 1;
 }

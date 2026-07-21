@@ -9,7 +9,6 @@
 extern int instrumentCount[MAX_INSTR];
 
 int  calculateLoopInfo2(int songNum, int channelNum, int startSongPos, GTOBJECT* gtloop);
-int  addOrRemoveInterPatternLoop();
 int  calcStartofInterPatternLoop(int songNum, int channelNum, int startSongPos, GTOBJECT* gtloop);
 void setMasterLoopChannel(GTOBJECT* gt, const char* debugText);
 
@@ -32,7 +31,6 @@ void insertorder(uint8_t byte, GTOBJECT* gt);
 void countInstruments();
 void calculateTotalInstrumentsFromAllPatterns();
 void countInstrumentsInPattern(int pat);
-void resetOrderView(GTOBJECT* gt);
 void orderListHandleHexInputExpandedView(GTOBJECT* gt);
 void orderListHandleHexInputOriginalView(GTOBJECT* gt);
 void resetSongInfo(GTOBJECT* gt, int jc2);
@@ -40,7 +38,6 @@ int  findFirstEndMarkerIndex(int sng, int chn);
 void updateTransposeToPlayingSong(GTOBJECT* gt);
 int  handleEnterInCompressedView(GTOBJECT* gt);
 int  handleEnterInExpandedView(GTOBJECT* gt);
-void initEditorSongInfo(GTOBJECT* gt);
 void orderListCopyMarkedArea();
 void orderListCopyMarkedArea_Expanded();
 void getExpandedSelectedArea(int* x, int* y, int* w, int* h);
