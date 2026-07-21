@@ -231,8 +231,7 @@ void orderlistcommands(GTOBJECT* gt, const EditorInput* input) {
             if (shift_or_ctrl_pressed) {
                 if (editorInfo.expandOrderListView == 0) orderListPasteToCursor(gt);
                 else {
-                    int transposeOnly = 0;
-                    if (editorInfo.escolumn > 2) transposeOnly++;
+                    bool transposeOnly = editorInfo.escolumn > 2;
                     orderListPasteToCursor_External(gt, false, transposeOnly);
                 }
             }
@@ -528,69 +527,62 @@ void namecommands(GTOBJECT* gt, const EditorInput* input) {
 
 // Insert single byte into orderlist
 void insertorder(uint8_t byte, GTOBJECT* gt) {
-    if ((songlen[editorInfo.esnum][editorInfo.eschn] - editorInfo.eseditpos) - 1 >= 0) {
+    auto& order = songorder[editorInfo.esnum][editorInfo.eschn];
+    int&  slen  = songlen[editorInfo.esnum][editorInfo.eschn];
+    int&  pos   = editorInfo.eseditpos;
+
+    if ((slen - pos) - 1 >= 0) {
         int len;
-        if (songlen[editorInfo.esnum][editorInfo.eschn] < MAX_SONGLEN) {
-            len = songlen[editorInfo.esnum][editorInfo.eschn] + 1;
-            songorder[editorInfo.esnum][editorInfo.eschn][len + 1] =
-                songorder[editorInfo.esnum][editorInfo.eschn][len];
-            songorder[editorInfo.esnum][editorInfo.eschn][len] = LOOPSONG;
-            if (len) songorder[editorInfo.esnum][editorInfo.eschn][len - 1] = byte;
+        if (slen < MAX_SONGLEN) {
+            len            = slen + 1;
+            order[len + 1] = order[len];
+            order[len]     = LOOPSONG;
+            if (len) order[len - 1] = byte;
             countthispattern(gt);
         }
-        memmove(&songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos + 1],
-                &songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos],
-                (songlen[editorInfo.esnum][editorInfo.eschn] - editorInfo.eseditpos) - 1);
-        songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] = byte;
-        len = songlen[editorInfo.esnum][editorInfo.eschn] + 1;
-        if ((songorder[editorInfo.esnum][editorInfo.eschn][len] > editorInfo.eseditpos) &&
-            (songorder[editorInfo.esnum][editorInfo.eschn][len] < (len - 2)))
-            songorder[editorInfo.esnum][editorInfo.eschn][len]++;
+        memmove(&order[pos + 1], &order[pos], (slen - pos) - 1);
+        order[pos] = byte;
+        len        = slen + 1;
+        if ((order[len] > pos) && (order[len] < (len - 2))) order[len]++;
     }
     else {
-        if (editorInfo.eseditpos > songlen[editorInfo.esnum][editorInfo.eschn]) {
-            if (songlen[editorInfo.esnum][editorInfo.eschn] < MAX_SONGLEN) {
-                songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos + 1] =
-                    songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos];
-                songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] = LOOPSONG;
-                if (editorInfo.eseditpos)
-                    songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos - 1] = byte;
+        if (pos > slen) {
+            if (slen < MAX_SONGLEN) {
+                order[pos + 1] = order[pos];
+                order[pos]     = LOOPSONG;
+                if (pos) order[pos - 1] = byte;
                 countthispattern(gt);
-                editorInfo.eseditpos = songlen[editorInfo.esnum][editorInfo.eschn] + 1;
+                pos = slen + 1;
             }
         }
     }
 }
 
 void deleteorder(GTOBJECT* gt) {
-    if ((songlen[editorInfo.esnum][editorInfo.eschn] - editorInfo.eseditpos) - 1 >= 0) {
+    auto& order = songorder[editorInfo.esnum][editorInfo.eschn];
+    int&  slen  = songlen[editorInfo.esnum][editorInfo.eschn];
+    int&  pos   = editorInfo.eseditpos;
+
+    if ((slen - pos) - 1 >= 0) {
         int len;
-        memmove(&songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos],
-                &songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos + 1],
-                (songlen[editorInfo.esnum][editorInfo.eschn] - editorInfo.eseditpos) - 1);
-        songorder[editorInfo.esnum][editorInfo.eschn][songlen[editorInfo.esnum][editorInfo.eschn] - 1] = 0x00;
-        if (songlen[editorInfo.esnum][editorInfo.eschn] > 0) {
-            songorder[editorInfo.esnum][editorInfo.eschn][songlen[editorInfo.esnum][editorInfo.eschn] - 1] =
-                songorder[editorInfo.esnum][editorInfo.eschn][songlen[editorInfo.esnum][editorInfo.eschn]];
-            songorder[editorInfo.esnum][editorInfo.eschn][songlen[editorInfo.esnum][editorInfo.eschn]] =
-                songorder[editorInfo.esnum][editorInfo.eschn][songlen[editorInfo.esnum][editorInfo.eschn] + 1];
+        memmove(&order[pos], &order[pos + 1], (slen - pos) - 1);
+        order[slen - 1] = 0x00;
+        if (slen > 0) {
+            order[slen - 1] = order[slen];
+            order[slen]     = order[slen + 1];
             countthispattern(gt);
         }
-        if (editorInfo.eseditpos == songlen[editorInfo.esnum][editorInfo.eschn]) editorInfo.eseditpos++;
-        len = songlen[editorInfo.esnum][editorInfo.eschn] + 1;
-        if ((songorder[editorInfo.esnum][editorInfo.eschn][len] > editorInfo.eseditpos) &&
-            (songorder[editorInfo.esnum][editorInfo.eschn][len] > 0))
-            songorder[editorInfo.esnum][editorInfo.eschn][len]--;
+        if (pos == slen) pos++;
+        len = slen + 1;
+        if ((order[len] > pos) && (order[len] > 0)) order[len]--;
     }
     else {
-        if (editorInfo.eseditpos > songlen[editorInfo.esnum][editorInfo.eschn]) {
-            if (songlen[editorInfo.esnum][editorInfo.eschn] > 0) {
-                songorder[editorInfo.esnum][editorInfo.eschn][songlen[editorInfo.esnum][editorInfo.eschn] - 1] =
-                    songorder[editorInfo.esnum][editorInfo.eschn][songlen[editorInfo.esnum][editorInfo.eschn]];
-                songorder[editorInfo.esnum][editorInfo.eschn][songlen[editorInfo.esnum][editorInfo.eschn]] =
-                    songorder[editorInfo.esnum][editorInfo.eschn][songlen[editorInfo.esnum][editorInfo.eschn] + 1];
+        if (pos > slen) {
+            if (slen > 0) {
+                order[slen - 1] = order[slen];
+                order[slen]     = order[slen + 1];
                 countthispattern(gt);
-                editorInfo.eseditpos = songlen[editorInfo.esnum][editorInfo.eschn] + 1;
+                pos = slen + 1;
             }
         }
     }
@@ -849,7 +841,7 @@ int calcStartofInterPatternLoop(int songNum, int channelNum, int startSongPos, G
 
     // Now get Select Start, Select End and Play Start ..Then get pattern end
 
-    int findPatternLoopStart = 0;
+    bool findPatternLoopStart = false;
     //	int findPatternLoopEnd = 0;
     int loopPatternNum = 0;
 
@@ -862,11 +854,12 @@ int calcStartofInterPatternLoop(int songNum, int channelNum, int startSongPos, G
             return -1;
 
         int lastpattptr = gtloop->chn[c3].pattptr;
-        int found       = 0;
-        if (findPatternLoopStart == 0 && gtloop->chn[c3].pattptr == markStart * 4) found = 1;
-        else if (gtloop->chn[c3].songptr != startSongPos + 1 || gtloop->chn[c3].pattptr < lastpattptr) found = 1;
+        bool found       = false;
+        if (!findPatternLoopStart && gtloop->chn[c3].pattptr == markStart * 4) found = true;
+        else if (gtloop->chn[c3].songptr != startSongPos + 1 || gtloop->chn[c3].pattptr < lastpattptr)
+            found = true;
         if (found) {
-            findPatternLoopStart = 1;
+            findPatternLoopStart = true;
             memcpy((char*)&gtPlayer->patternLoopStartChn[0], (char*)&gtloop->chn[0], sizeof(CHN) * MAX_PLAY_CH);
             memcpy((char*)&gtPlayer->looptimemin, (char*)&gtloop->timemin, sizeof(int) * 3);
             tempPatternMin  = gtloop->timemin;
@@ -932,15 +925,15 @@ int calculateLoopInfo2(int songNum, int channelNum, int startSongPos, GTOBJECT* 
     // Now sync to end of pattern (info used for looping)
     int sptr = gtloop->chn[c3].songptr;
 
-    int quitloop = 0;
+    bool quitloop = false;
     do {
         playroutine(gtloop);
         if (gtloop->songinit == PlayMode::Stopped) // Error in song data
             return -1;
 
         if (gtloop->chn[c3].loopCount) // reached end of song and looped?
-            quitloop++;
-        else if (gtloop->chn[c3].songptr != sptr) quitloop++;
+            quitloop = true;
+        else if (gtloop->chn[c3].songptr != sptr) quitloop = true;
 
     } while (!quitloop); // gtloop->chn[c2].songptr == sptr);
 
