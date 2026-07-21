@@ -1755,7 +1755,10 @@ void gimgui_render() {
     const float songH = gimgui_song_panel_height();
     const float insW  = gimgui_instruments_panel_width();
     const float tblW  = gimgui_tables_panel_width();
-    const float patW  = s.x - leftW - insW - tblW - 4 * g;
+    // Three gutters sit between the four columns; no outer margin, so the left
+    // column is flush to the window's left edge and Tables is flush to the right
+    // (matching the full-width chrome bars above and below).
+    const float patW  = s.x - leftW - insW - tblW - 3 * g;
     const float leftX = o.x;
     const float patX  = o.x + leftW + g;
     const float insX  = o.x + leftW + patW + 2 * g;
