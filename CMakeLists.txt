@@ -200,7 +200,6 @@ add_library(
     "${SRC}/gmidi.cpp"
     "${SRC}/gundo.cpp"
     "${SRC}/RtMidi.cpp"
-    "${SRC}/gfkeys.cpp"
     "${SRC}/ginput.cpp"
 )
 # Project headers are quote-includes under src/; gplatform PUBLIC adds ${SRC}.

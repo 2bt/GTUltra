@@ -143,7 +143,6 @@ int           sidAddr2        = 0xd420;
 int           sidAddr3        = 0xd440;
 int           sidAddr4        = 0xd460;
 
-char fkeysFilename[MAX_PATHNAME];
 int  selectedMIDIPort = 0;
 
 int          debugTicks; // used to measure CPU use when looking to improve performance

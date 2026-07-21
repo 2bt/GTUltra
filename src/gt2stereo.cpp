@@ -147,7 +147,6 @@ char instrpath[MAX_PATHNAME];
 char packedpath[MAX_PATHNAME];
 char tempSngFilename[MAX_PATHNAME];
 char backupSngFilename[MAX_PATHNAME];
-char fkeysFilename[MAX_PATHNAME];
 
 extern const char* notename[];
 const char*        programname = "$VER: GTUltra V1.5.4";
@@ -219,7 +218,6 @@ int main(int argc, char** argv) {
 #endif
 
     createFilename(appFileName, backupSngFilename, "gtubackup.sng");
-    createFilename(appFileName, fkeysFilename, "fkeys.cfg");
 
     // Skins are ImGui guicolors (legacy .gtp / charset.bin removed).
 
@@ -432,8 +430,6 @@ int main(int argc, char** argv) {
             }
         }
     }
-
-    fkeys_loadCFG(); // Load fkeys.cfg file and process (user defined F1-F4)
 
     // Validate parameters
 

@@ -30,7 +30,6 @@
 #include "gtable.hpp"
 #include "ginfo.hpp"
 #include "gundo.hpp"
-#include "gfkeys.hpp"
 
 #include <cstdint>
 
@@ -109,7 +108,6 @@ extern uint8_t     hexkeytbl[16];
 extern int         jdebug[16];
 extern char        backupFolderName[MAX_PATHNAME];
 extern char        backupSngFilename[MAX_PATHNAME];
-extern char        fkeysFilename[MAX_PATHNAME];
 
 extern int patternOrderArray[256];
 extern int patternOrderList[256];
