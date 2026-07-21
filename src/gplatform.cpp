@@ -214,6 +214,46 @@ void clear_transient_input() {
     win_asciikey = 0;
 }
 
+void win_reapply_mousemode() {
+    switch (mouse_mode) {
+    case MOUSE_ALWAYS_VISIBLE: SDL_ShowCursor(SDL_ENABLE); break;
+    case MOUSE_FULLSCREEN_HIDDEN: SDL_ShowCursor(win_fullscreen ? SDL_DISABLE : SDL_ENABLE); break;
+    case MOUSE_ALWAYS_HIDDEN: SDL_ShowCursor(SDL_DISABLE); break;
+    }
+}
+
+void win_setmousemode(int mode) {
+    mouse_mode = mode;
+    win_reapply_mousemode();
+}
+
+bool win_openwindow(unsigned xsize, unsigned ysize, const char* appname, int enable_anti_alias) {
+    Uint32 flags = win_fullscreen ? (SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_SHOWN)
+                                  : (SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN);
+
+    if (!window_initted) {
+        if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER) < 0) return false;
+        atexit(SDL_Quit);
+        window_initted = 1;
+    }
+
+    if (enable_anti_alias) SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
+
+    win_window =
+        SDL_CreateWindow(appname, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, (int)xsize, (int)ysize, flags);
+    return win_window != nullptr;
+}
+
+bool gfx_init() {
+    if (gfx_renderer) return true;
+
+    gfx_renderer = SDL_CreateRenderer(win_window, -1, SDL_RENDERER_ACCELERATED);
+    if (!gfx_renderer) return false;
+
+    win_reapply_mousemode();
+    return true;
+}
+
 } // namespace
 
 // --- Audio ---------------------------------------------------------------
@@ -288,16 +328,6 @@ void snd_set_custom_mixer(void (*custom_mixer)(Sint32* dest, unsigned samples)) 
 
 // --- Graphics ------------------------------------------------------------
 
-bool gfx_init() {
-    if (gfx_renderer) return true;
-
-    gfx_renderer = SDL_CreateRenderer(win_window, -1, SDL_RENDERER_ACCELERATED);
-    if (!gfx_renderer) return false;
-
-    win_reapply_mousemode();
-    return true;
-}
-
 void gfx_present() {
     if (!gfx_renderer) return;
     SDL_SetRenderDrawColor(gfx_renderer, 0, 0, 0, 255);
@@ -307,23 +337,6 @@ void gfx_present() {
 }
 
 // --- Window / input ------------------------------------------------------
-
-bool win_openwindow(unsigned xsize, unsigned ysize, const char* appname, int enable_anti_alias) {
-    Uint32 flags = win_fullscreen ? (SDL_WINDOW_FULLSCREEN_DESKTOP | SDL_WINDOW_SHOWN)
-                                  : (SDL_WINDOW_RESIZABLE | SDL_WINDOW_SHOWN);
-
-    if (!window_initted) {
-        if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER) < 0) return false;
-        atexit(SDL_Quit);
-        window_initted = 1;
-    }
-
-    if (enable_anti_alias) SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
-
-    win_window =
-        SDL_CreateWindow(appname, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, (int)xsize, (int)ysize, flags);
-    return win_window != nullptr;
-}
 
 bool win_init_editor(unsigned scale, int enable_anti_alias) {
     if (scale < 1) scale = 1;
@@ -357,19 +370,6 @@ int win_getspeed(int framerate) {
         if (!frames) SDL_Delay((Uint32)((frametime - frame_counter) / 10));
     }
     return frames;
-}
-
-void win_reapply_mousemode() {
-    switch (mouse_mode) {
-    case MOUSE_ALWAYS_VISIBLE: SDL_ShowCursor(SDL_ENABLE); break;
-    case MOUSE_FULLSCREEN_HIDDEN: SDL_ShowCursor(win_fullscreen ? SDL_DISABLE : SDL_ENABLE); break;
-    case MOUSE_ALWAYS_HIDDEN: SDL_ShowCursor(SDL_DISABLE); break;
-    }
-}
-
-void win_setmousemode(int mode) {
-    mouse_mode = mode;
-    win_reapply_mousemode();
 }
 
 void win_native_modal_begin() {

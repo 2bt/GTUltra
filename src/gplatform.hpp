@@ -24,18 +24,14 @@ extern int      snd_bpmtempo;
 extern unsigned snd_mixrate;
 
 // --- Graphics (SDL renderer + ImGui present) -----------------------------
-bool gfx_init();
 void gfx_present();
 
 extern SDL_Renderer* gfx_renderer;
 
 // --- Window / input ------------------------------------------------------
-bool win_openwindow(unsigned xsize, unsigned ysize, const char* appname, int enable_anti_alias);
 // Editor bootstrap: SDL init, window, icon, renderer. scale is 1..3 (legacy "bigwindow").
 bool win_init_editor(unsigned scale, int enable_anti_alias);
 int  win_getspeed(int framerate);
-void win_setmousemode(int mode);
-void win_reapply_mousemode();
 void win_enable_key_repeat();
 void win_disable_key_repeat();
 void win_native_modal_begin();
