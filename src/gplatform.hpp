@@ -126,6 +126,6 @@
 #define KEY_KPPERIOD SDL_SCANCODE_KP_PERIOD
 
 #include "gaudio.hpp"
-#include "gendian.h"
+#include "gendian.hpp"
 #include "ggfx.hpp"
 #include "gwin.hpp"

@@ -6,13 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#ifdef __cplusplus
-extern "C" {
-#endif
-#include "gendian.h"
-#ifdef __cplusplus
-}
-#endif
+#include "gendian.hpp"
 #include "gcommon.hpp"
 
 int main(int argc, char **argv);

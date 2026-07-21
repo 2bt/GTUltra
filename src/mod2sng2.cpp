@@ -6,13 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#ifdef __cplusplus
-extern "C" {
-#endif
-#include "gendian.h"
-#ifdef __cplusplus
-}
-#endif
+#include "gendian.hpp"
 
 struct NOTE {
     unsigned char note;
