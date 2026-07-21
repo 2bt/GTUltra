@@ -970,8 +970,7 @@ void docommand(void) {
 
     case EditMode::OrderList:
 
-        // We need to check all channels in order list incase user presses shift1-6 to swap them around
-        // (we could just set this for the other channe in orderlistcommands - but this is just safer overall..)
+        // We need to check all channels in order list in case the user presses shift+1-6 to swap them around.
 
         if (editorInfo.expandOrderListView == 0) {
             for (int i = 0; i < MAX_CHN; i++) {
@@ -1000,7 +999,7 @@ void docommand(void) {
 
         if (!gtaction::dispatch_mode_navigation()) {
             const EditorInput in = editor_input_snapshot();
-            if (!gtaction::dispatch_global(gtaction::Ctx::Order)) orderlistcommands(gt, &in);
+            if (!gtaction::dispatch_global(gtaction::Ctx::Order)) gtaction::dispatch_order_cell_input(&in);
         }
         break;
 

@@ -1793,6 +1793,17 @@ bool dispatch_table_cell_input(const EditorInput* input) {
     return true;
 }
 
+bool dispatch_order_cell_input(const EditorInput* input) {
+    if (editorInfo.editmode != EditMode::OrderList) return false;
+
+    const EditorInput in = input ? *input : editor_input_snapshot();
+    if (!order_cell_input(&gtObject, &in)) return false;
+
+    order_sync_view();
+    clear_input();
+    return true;
+}
+
 bool consume_legacy_hex_input(int hex_at_frame_start) {
     if (hex_at_frame_start < 0) return false;
     switch (editorInfo.editmode) {

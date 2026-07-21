@@ -17,7 +17,7 @@ void orderPlayFromPosition(GTOBJECT* gt,
                            bool      enable_sid_writes);
 void orderSelectPatternsFromSelected(GTOBJECT* gt);
 void updateviewtopos(GTOBJECT* gt);
-void orderlistcommands(GTOBJECT* gt, const EditorInput* input = nullptr);
+bool order_cell_input(GTOBJECT* gt, const EditorInput* input = nullptr);
 void namecommands(GTOBJECT* gt, const EditorInput* input = nullptr);
 void nextsong(GTOBJECT* gt);
 void prevsong(GTOBJECT* gt);

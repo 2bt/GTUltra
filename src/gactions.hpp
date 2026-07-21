@@ -244,6 +244,7 @@ bool dispatch_global(Ctx ctx);
 bool dispatch_pattern_cell_input(int midiNote, const EditorInput* input = nullptr);
 bool dispatch_instrument_cell_input(const EditorInput* input = nullptr);
 bool dispatch_table_cell_input(const EditorInput* input = nullptr);
+bool dispatch_order_cell_input(const EditorInput* input = nullptr);
 bool consume_legacy_hex_input(int hex_at_frame_start);
 
 // Runtime keymap overrides (M7 TOML / rebind UI).
