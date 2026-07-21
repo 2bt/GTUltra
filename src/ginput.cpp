@@ -60,7 +60,7 @@ void getkey() {
     shiftOrCtrlPressed = shiftpressed | ctrlpressed;
 
     if (rawkey == SDL_SCANCODE_KP_ENTER) {
-        key    = KEY_ENTER;
+        key    = SDL_SCANCODE_RETURN;
         rawkey = SDL_SCANCODE_RETURN;
     }
 

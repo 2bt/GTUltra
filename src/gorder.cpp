@@ -55,10 +55,10 @@ void orderlistcommands(GTOBJECT* gt, const EditorInput* input) {
     if (!editorInfo.expandOrderListView) goto order_sync_view;
 
     switch (jrawkey) {
-    case KEY_UP:
-    case KEY_DOWN:
-    case KEY_LEFT:
-    case KEY_RIGHT: win_enable_key_repeat(); break;
+    case SDL_SCANCODE_UP:
+    case SDL_SCANCODE_DOWN:
+    case SDL_SCANCODE_LEFT:
+    case SDL_SCANCODE_RIGHT: win_enable_key_repeat(); break;
     default:
         if (!enablekeyrepeat) win_disable_key_repeat();
     }
@@ -122,24 +122,24 @@ void orderlistcommands(GTOBJECT* gt, const EditorInput* input) {
     case '[': prevsong(gt); break;
     }
     switch (jrawkey) {
-    case KEY_1:
-    case KEY_2:
-    case KEY_3:
-    case KEY_4:
-    case KEY_5:
-    case KEY_6:
+    case SDL_SCANCODE_1:
+    case SDL_SCANCODE_2:
+    case SDL_SCANCODE_3:
+    case SDL_SCANCODE_4:
+    case SDL_SCANCODE_5:
+    case SDL_SCANCODE_6:
         if (shiftOrCtrlPressed) {
             int schn = editorInfo.eschn;
             int tchn = 0;
 
             editorInfo.esmarkchn    = -1;
             editorInfo.esmarkchnend = -1;
-            if (jrawkey == KEY_1) tchn = 0;
-            if (jrawkey == KEY_2) tchn = 1;
-            if (jrawkey == KEY_3) tchn = 2;
-            if (jrawkey == KEY_4) tchn = 3;
-            if (jrawkey == KEY_5) tchn = 4;
-            if (jrawkey == KEY_6) tchn = 5;
+            if (jrawkey == SDL_SCANCODE_1) tchn = 0;
+            if (jrawkey == SDL_SCANCODE_2) tchn = 1;
+            if (jrawkey == SDL_SCANCODE_3) tchn = 2;
+            if (jrawkey == SDL_SCANCODE_4) tchn = 3;
+            if (jrawkey == SDL_SCANCODE_5) tchn = 4;
+            if (jrawkey == SDL_SCANCODE_6) tchn = 5;
             if (schn != tchn) {
                 int lentemp                     = songlen[editorInfo.esnum][schn];
                 songlen[editorInfo.esnum][schn] = songlen[editorInfo.esnum][tchn];
@@ -170,7 +170,7 @@ void orderlistcommands(GTOBJECT* gt, const EditorInput* input) {
         }
         break;
 
-    case KEY_X:
+    case SDL_SCANCODE_X:
         if (shiftOrCtrlPressed) {
             if (editorInfo.esmarkchn == -1) // no table selected. copy single row under cursor
             {
@@ -208,14 +208,14 @@ void orderlistcommands(GTOBJECT* gt, const EditorInput* input) {
         }
         break;
 
-    case KEY_C:
+    case SDL_SCANCODE_C:
         if (shiftOrCtrlPressed) {
             if (editorInfo.expandOrderListView == 0) orderListCopyMarkedArea();
             else orderListCopyMarkedArea_Expanded();
         }
         break;
 
-    case KEY_V:
+    case SDL_SCANCODE_V:
         if (shiftOrCtrlPressed) {
             if (editorInfo.expandOrderListView == 0) orderListPasteToCursor(gt);
             else {
@@ -226,13 +226,13 @@ void orderlistcommands(GTOBJECT* gt, const EditorInput* input) {
         }
         break;
 
-    case KEY_I:
+    case SDL_SCANCODE_I:
         if (shiftOrCtrlPressed) {
             if (editorInfo.expandOrderListView) orderListPasteToCursor_External(gt, true, false);
         }
         break;
 
-    case KEY_L:
+    case SDL_SCANCODE_L:
         if (shiftOrCtrlPressed) {
             if (editorInfo.esmarkchn == -1) {
                 if (editorInfo.expandOrderListView == 0) {
@@ -253,7 +253,7 @@ void orderlistcommands(GTOBJECT* gt, const EditorInput* input) {
         break;
 
 
-    case KEY_SPACE:
+    case SDL_SCANCODE_SPACE:
         if (!shiftOrCtrlPressed) {
             int c2 = getActualChannel(editorInfo.esnum, editorInfo.eschn); // 0-12
 
@@ -288,7 +288,7 @@ void orderlistcommands(GTOBJECT* gt, const EditorInput* input) {
         }
         break;
 
-    case KEY_BACKSPACE:
+    case SDL_SCANCODE_BACKSPACE:
         if (!shiftOrCtrlPressed) {
             int c2 = getActualChannel(editorInfo.esnum, editorInfo.eschn); // 0-12
 
@@ -331,7 +331,7 @@ void orderlistcommands(GTOBJECT* gt, const EditorInput* input) {
         }
         break;
 
-    case KEY_ENTER:
+    case SDL_SCANCODE_RETURN:
 
         if (editorInfo.expandOrderListView == 0) ret = handleEnterInCompressedView(gt);
         else ret = handleEnterInExpandedView(gt);
@@ -347,7 +347,7 @@ void orderlistcommands(GTOBJECT* gt, const EditorInput* input) {
         }
         break;
 
-    case KEY_DEL:
+    case SDL_SCANCODE_DELETE:
         if (editorInfo.expandOrderListView == 0) {
             editorInfo.esmarkchn    = -1;
             editorInfo.esmarkchnend = -1;
@@ -358,7 +358,7 @@ void orderlistcommands(GTOBJECT* gt, const EditorInput* input) {
         playUntilEnd(editorInfo.esnum);
         break;
 
-    case KEY_INS:
+    case SDL_SCANCODE_INSERT:
         if (editorInfo.expandOrderListView == 0) {
             editorInfo.esmarkchn    = -1;
             editorInfo.esmarkchnend = -1;
@@ -368,7 +368,7 @@ void orderlistcommands(GTOBJECT* gt, const EditorInput* input) {
         playUntilEnd(editorInfo.esnum);
         break;
 
-    case KEY_HOME:
+    case SDL_SCANCODE_HOME:
         if (editorInfo.expandOrderListView == 0) {
             if (songlen[editorInfo.esnum][editorInfo.eschn]) {
                 while ((editorInfo.eseditpos != 0) || (editorInfo.escolumn != 0)) orderleft();
@@ -379,7 +379,7 @@ void orderlistcommands(GTOBJECT* gt, const EditorInput* input) {
         }
         break;
 
-    case KEY_END:
+    case SDL_SCANCODE_END:
         if (editorInfo.expandOrderListView == 0) {
             while (editorInfo.eseditpos != songlen[editorInfo.esnum][editorInfo.eschn] + 1) orderright();
         }
@@ -388,7 +388,7 @@ void orderlistcommands(GTOBJECT* gt, const EditorInput* input) {
         }
         break;
 
-    case KEY_PGUP:
+    case SDL_SCANCODE_PAGEUP:
         if (editorInfo.expandOrderListView == 0) {
             for (scrrep = PGUPDNREPEAT * 2; scrrep; scrrep--) orderleft();
         }
@@ -398,7 +398,7 @@ void orderlistcommands(GTOBJECT* gt, const EditorInput* input) {
         }
         break;
 
-    case KEY_PGDN:
+    case SDL_SCANCODE_PAGEDOWN:
         if (editorInfo.expandOrderListView == 0) {
             for (scrrep = PGUPDNREPEAT * 2; scrrep; scrrep--) orderright();
         }
@@ -408,7 +408,7 @@ void orderlistcommands(GTOBJECT* gt, const EditorInput* input) {
         }
         break;
 
-    case KEY_LEFT:
+    case SDL_SCANCODE_LEFT:
         if (editorInfo.expandOrderListView == 0) {
             if (!ctrlpressed) orderleft();
         }
@@ -418,7 +418,7 @@ void orderlistcommands(GTOBJECT* gt, const EditorInput* input) {
 
         break;
 
-    case KEY_RIGHT:
+    case SDL_SCANCODE_RIGHT:
         if (editorInfo.expandOrderListView == 0) {
             if (!ctrlpressed) orderright();
         }
@@ -427,7 +427,7 @@ void orderlistcommands(GTOBJECT* gt, const EditorInput* input) {
         }
         break;
 
-    case KEY_UP:
+    case SDL_SCANCODE_UP:
         if (editorInfo.expandOrderListView == 0) {
             editorInfo.eschn--;
             if (editorInfo.eschn < 0) editorInfo.eschn = maxCh - 1;
@@ -458,7 +458,7 @@ void orderlistcommands(GTOBJECT* gt, const EditorInput* input) {
         }
         break;
 
-    case KEY_DOWN:
+    case SDL_SCANCODE_DOWN:
 
         if (editorInfo.expandOrderListView == 0) {
             editorInfo.eschn++;

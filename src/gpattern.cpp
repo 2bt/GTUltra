@@ -9,27 +9,27 @@
 
 
 unsigned char notekeytbl1[] = {
-    KEY_Z, KEY_S, KEY_X, KEY_D, KEY_C,     KEY_V, KEY_G,     KEY_B,
-    KEY_H, KEY_N, KEY_J, KEY_M, KEY_COMMA, KEY_L, KEY_COLON,
+    SDL_SCANCODE_Z, SDL_SCANCODE_S, SDL_SCANCODE_X, SDL_SCANCODE_D, SDL_SCANCODE_C,     SDL_SCANCODE_V, SDL_SCANCODE_G,     SDL_SCANCODE_B,
+    SDL_SCANCODE_H, SDL_SCANCODE_N, SDL_SCANCODE_J, SDL_SCANCODE_M, SDL_SCANCODE_COMMA, SDL_SCANCODE_L, SDL_SCANCODE_PERIOD,
 };
 
 unsigned char notekeytbl2[] = {
-    KEY_Q, KEY_2, KEY_W, KEY_3, KEY_E, KEY_R, KEY_5, KEY_T, KEY_6,
-    KEY_Y, KEY_7, KEY_U, KEY_I, KEY_9, KEY_O, KEY_0, KEY_P,
+    SDL_SCANCODE_Q, SDL_SCANCODE_2, SDL_SCANCODE_W, SDL_SCANCODE_3, SDL_SCANCODE_E, SDL_SCANCODE_R, SDL_SCANCODE_5, SDL_SCANCODE_T, SDL_SCANCODE_6,
+    SDL_SCANCODE_Y, SDL_SCANCODE_7, SDL_SCANCODE_U, SDL_SCANCODE_I, SDL_SCANCODE_9, SDL_SCANCODE_O, SDL_SCANCODE_0, SDL_SCANCODE_P,
 };
 
 unsigned char dmckeytbl[] = {
-    KEY_A, KEY_W, KEY_S, KEY_E, KEY_D, KEY_F, KEY_T, KEY_G, KEY_Y, KEY_H, KEY_U, KEY_J, KEY_K, KEY_O, KEY_L, KEY_P,
+    SDL_SCANCODE_A, SDL_SCANCODE_W, SDL_SCANCODE_S, SDL_SCANCODE_E, SDL_SCANCODE_D, SDL_SCANCODE_F, SDL_SCANCODE_T, SDL_SCANCODE_G, SDL_SCANCODE_Y, SDL_SCANCODE_H, SDL_SCANCODE_U, SDL_SCANCODE_J, SDL_SCANCODE_K, SDL_SCANCODE_O, SDL_SCANCODE_L, SDL_SCANCODE_P,
 };
 
 unsigned char jankokeytbl1[] = {
-    KEY_Z, KEY_S, KEY_X, KEY_D, KEY_C, KEY_F,     KEY_V, KEY_G,     KEY_B,
-    KEY_H, KEY_N, KEY_J, KEY_M, KEY_K, KEY_COMMA, KEY_L, KEY_COLON,
+    SDL_SCANCODE_Z, SDL_SCANCODE_S, SDL_SCANCODE_X, SDL_SCANCODE_D, SDL_SCANCODE_C, SDL_SCANCODE_F,     SDL_SCANCODE_V, SDL_SCANCODE_G,     SDL_SCANCODE_B,
+    SDL_SCANCODE_H, SDL_SCANCODE_N, SDL_SCANCODE_J, SDL_SCANCODE_M, SDL_SCANCODE_K, SDL_SCANCODE_COMMA, SDL_SCANCODE_L, SDL_SCANCODE_PERIOD,
 };
 
 unsigned char jankokeytbl2[] = {
-    KEY_Q, KEY_2, KEY_W, KEY_3, KEY_E, KEY_4, KEY_R, KEY_5, KEY_T, KEY_6,
-    KEY_Y, KEY_7, KEY_U, KEY_8, KEY_I, KEY_9, KEY_O, KEY_0, KEY_P,
+    SDL_SCANCODE_Q, SDL_SCANCODE_2, SDL_SCANCODE_W, SDL_SCANCODE_3, SDL_SCANCODE_E, SDL_SCANCODE_4, SDL_SCANCODE_R, SDL_SCANCODE_5, SDL_SCANCODE_T, SDL_SCANCODE_6,
+    SDL_SCANCODE_Y, SDL_SCANCODE_7, SDL_SCANCODE_U, SDL_SCANCODE_8, SDL_SCANCODE_I, SDL_SCANCODE_9, SDL_SCANCODE_O, SDL_SCANCODE_0, SDL_SCANCODE_P,
 };
 
 unsigned char patterncopybuffer[MAX_PATTROWS * 4 + 4];
@@ -105,7 +105,7 @@ int pattern_note_input(GTOBJECT* gt, int midiNote, const EditorInput* input) {
     else newnote = midiNote;
 
     if (newnote > LASTNOTE) newnote = -1;
-    if ((jrawkey == KEY_BACKSPACE) && (!editorInfo.epcolumn)) {
+    if ((jrawkey == SDL_SCANCODE_BACKSPACE) && (!editorInfo.epcolumn)) {
         newnote = REST;
         if (SIDTracker64ForIPadIsAmazing != 0) {
             int i2 = editorInfo.eppos * 4;
@@ -114,10 +114,10 @@ int pattern_note_input(GTOBJECT* gt, int midiNote, const EditorInput* input) {
     }
 
 
-    if ((jrawkey == KEY_CAPSLOCK) && (!editorInfo.epcolumn)) newnote = KEYOFF;
+    if ((jrawkey == SDL_SCANCODE_CAPSLOCK) && (!editorInfo.epcolumn)) newnote = KEYOFF;
 
 
-    if (jrawkey == KEY_ENTER) {
+    if (jrawkey == SDL_SCANCODE_RETURN) {
         switch (editorInfo.epcolumn) {
         case 0:
             if (SIDTracker64ForIPadIsAmazing == 0) {

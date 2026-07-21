@@ -139,14 +139,14 @@ char F4_OriginalGT[]       = { FKEY_STOP, FKEY_DONE };
 char F4_SHIFT_OriginalGT[] = { FKEY_MUTE_CHANNEL, FKEY_DONE };
 
 
-GTFKEY_ENTRY GTFKeyInfo[] = { { KEY_F1, FKEY_NO_SHIFT, FKEY_NO_CTRL, FKEYS_NONE, F1_OriginalGT },
-                              { KEY_F1, FKEY_REQUIRE_SHIFT, FKEY_REQUIRE_CTRL, FKEYS_OR, F1_SHIFT_OriginalGT },
-                              { KEY_F2, FKEY_NO_SHIFT, FKEY_NO_CTRL, FKEYS_NONE, F2_OriginalGT },
-                              { KEY_F2, FKEY_REQUIRE_SHIFT, FKEY_REQUIRE_CTRL, FKEYS_OR, F2_SHIFT_OriginalGT },
-                              { KEY_F3, FKEY_NO_SHIFT, FKEY_NO_CTRL, FKEYS_NONE, F3_OriginalGT },
-                              { KEY_F3, FKEY_REQUIRE_SHIFT, FKEY_REQUIRE_CTRL, FKEYS_OR, F3_SHIFT_OriginalGT },
-                              { KEY_F4, FKEY_NO_SHIFT, FKEY_NO_CTRL, FKEYS_NONE, F4_OriginalGT },
-                              { KEY_F4, FKEY_REQUIRE_SHIFT, FKEY_REQUIRE_CTRL, FKEYS_OR, F4_SHIFT_OriginalGT } };
+GTFKEY_ENTRY GTFKeyInfo[] = { { SDL_SCANCODE_F1, FKEY_NO_SHIFT, FKEY_NO_CTRL, FKEYS_NONE, F1_OriginalGT },
+                              { SDL_SCANCODE_F1, FKEY_REQUIRE_SHIFT, FKEY_REQUIRE_CTRL, FKEYS_OR, F1_SHIFT_OriginalGT },
+                              { SDL_SCANCODE_F2, FKEY_NO_SHIFT, FKEY_NO_CTRL, FKEYS_NONE, F2_OriginalGT },
+                              { SDL_SCANCODE_F2, FKEY_REQUIRE_SHIFT, FKEY_REQUIRE_CTRL, FKEYS_OR, F2_SHIFT_OriginalGT },
+                              { SDL_SCANCODE_F3, FKEY_NO_SHIFT, FKEY_NO_CTRL, FKEYS_NONE, F3_OriginalGT },
+                              { SDL_SCANCODE_F3, FKEY_REQUIRE_SHIFT, FKEY_REQUIRE_CTRL, FKEYS_OR, F3_SHIFT_OriginalGT },
+                              { SDL_SCANCODE_F4, FKEY_NO_SHIFT, FKEY_NO_CTRL, FKEYS_NONE, F4_OriginalGT },
+                              { SDL_SCANCODE_F4, FKEY_REQUIRE_SHIFT, FKEY_REQUIRE_CTRL, FKEYS_OR, F4_SHIFT_OriginalGT } };
 
 /*
     FKEY_PANEL,
@@ -162,9 +162,9 @@ char F6_SHIFT_OriginalGT[] = { FKEY_NEXT_MULTIPLIER,FKEY_DONE };
 
 char F7_OriginalGT[] = { FKEY_SELECT_INSTRUMENT_OR_TABLE_PANEL,FKEY_DONE };
 char F7_SHIFT_OriginalGT[] = { FKEY_NEXT_MULTIPLIER,FKEY_DONE };
-    { KEY_F5,0,0,FKEYS_NONE,F5_OriginalGT }, { KEY_F5,1,1,FKEYS_OR,F5_SHIFT_OriginalGT },
-    { KEY_F6,0,0,FKEYS_NONE,F6_OriginalGT }, { KEY_F6,1,1,FKEYS_OR,F6_SHIFT_OriginalGT },
-    { KEY_F7,0,0,FKEYS_NONE,F7_OriginalGT }, { KEY_F7,1,1,FKEYS_OR,F7_SHIFT_OriginalGT }
+    { SDL_SCANCODE_F5,0,0,FKEYS_NONE,F5_OriginalGT }, { SDL_SCANCODE_F5,1,1,FKEYS_OR,F5_SHIFT_OriginalGT },
+    { SDL_SCANCODE_F6,0,0,FKEYS_NONE,F6_OriginalGT }, { SDL_SCANCODE_F6,1,1,FKEYS_OR,F6_SHIFT_OriginalGT },
+    { SDL_SCANCODE_F7,0,0,FKEYS_NONE,F7_OriginalGT }, { SDL_SCANCODE_F7,1,1,FKEYS_OR,F7_SHIFT_OriginalGT }
 */
 
 int fkeys_check(GTOBJECT* gt, int rawkey) {

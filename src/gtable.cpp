@@ -299,7 +299,7 @@ void modify_filter_table_detailed(int hexnybble) {
 bool table_enter_input(GTOBJECT* gt, const EditorInput* input) {
     (void)gt;
     const EditorInput in = input ? *input : editor_input_snapshot();
-    if (in.rawkey != KEY_ENTER) return false;
+    if (in.rawkey != SDL_SCANCODE_RETURN) return false;
 
     if (editorInfo.etnum == WTBL) {
         int table   = -1;
@@ -401,7 +401,7 @@ bool table_cell_input(GTOBJECT* gt, const EditorInput* input) {
     if (table_enter_input(gt, &in)) return true;
 
     switch (in.rawkey) {
-    case KEY_Q:
+    case SDL_SCANCODE_Q:
         if (in.shift_or_ctrl && editorInfo.etnum == STBL) {
             int speed =
                 (ltable[editorInfo.etnum][editorInfo.etpos] << 8) | rtable[editorInfo.etnum][editorInfo.etpos];
@@ -415,7 +415,7 @@ bool table_cell_input(GTOBJECT* gt, const EditorInput* input) {
         }
         break;
 
-    case KEY_A:
+    case SDL_SCANCODE_A:
         if (in.shift_or_ctrl && editorInfo.etnum == STBL) {
             int speed =
                 (ltable[editorInfo.etnum][editorInfo.etpos] << 8) | rtable[editorInfo.etnum][editorInfo.etpos];
@@ -428,7 +428,7 @@ bool table_cell_input(GTOBJECT* gt, const EditorInput* input) {
         }
         break;
 
-    case KEY_W:
+    case SDL_SCANCODE_W:
         if (in.shift_or_ctrl && editorInfo.etnum == STBL) {
             int speed =
                 (ltable[editorInfo.etnum][editorInfo.etpos] << 8) | rtable[editorInfo.etnum][editorInfo.etpos];
@@ -451,7 +451,7 @@ bool table_cell_input(GTOBJECT* gt, const EditorInput* input) {
         }
         break;
 
-    case KEY_S:
+    case SDL_SCANCODE_S:
         if (!in.ctrl) {
             if (in.shift_or_ctrl && editorInfo.etnum == STBL) {
                 int speed =
@@ -473,7 +473,7 @@ bool table_cell_input(GTOBJECT* gt, const EditorInput* input) {
         }
         break;
 
-    case KEY_APOST2: table_cycle_type(in.shift_or_ctrl ? -1 : 1); return true;
+    case SDL_SCANCODE_GRAVE: table_cycle_type(in.shift_or_ctrl ? -1 : 1); return true;
     }
 
     return false;

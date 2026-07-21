@@ -30,7 +30,7 @@ bool instrument_cell_input(GTOBJECT* gt, const EditorInput* input) {
 
     switch (jrawkey) {
     case 0x8:
-    case KEY_DEL:
+    case SDL_SCANCODE_DELETE:
         if ((editorInfo.einum) && (in.shift_or_ctrl) && (editorInfo.eipos < LAST_INST)) {
             deleteinstrtable(editorInfo.einum);
             clearinstr(editorInfo.einum);
@@ -38,7 +38,7 @@ bool instrument_cell_input(GTOBJECT* gt, const EditorInput* input) {
         }
         break;
 
-    case KEY_X:
+    case SDL_SCANCODE_X:
         if ((editorInfo.einum) && (in.ctrl) && (editorInfo.eipos <= LAST_INST)) {
             cutinstr = editorInfo.einum;
             memcpy(&instrcopybuffer, &instr[editorInfo.einum], sizeof(INSTR));
@@ -47,7 +47,7 @@ bool instrument_cell_input(GTOBJECT* gt, const EditorInput* input) {
         }
         break;
 
-    case KEY_C:
+    case SDL_SCANCODE_C:
         if ((editorInfo.einum) && (in.ctrl) && (editorInfo.eipos <= LAST_INST)) {
             cutinstr = -1;
             memcpy(&instrcopybuffer, &instr[editorInfo.einum], sizeof(INSTR));
@@ -55,7 +55,7 @@ bool instrument_cell_input(GTOBJECT* gt, const EditorInput* input) {
         }
         break;
 
-    case KEY_S:
+    case SDL_SCANCODE_S:
         if ((editorInfo.einum) && (in.shift) && (editorInfo.eipos < LAST_INST)) {
             memcpy(&instr[editorInfo.einum], &instrcopybuffer, sizeof(INSTR));
             if (cutinstr != -1) {
@@ -68,21 +68,21 @@ bool instrument_cell_input(GTOBJECT* gt, const EditorInput* input) {
         }
         break;
 
-    case KEY_V:
+    case SDL_SCANCODE_V:
         if ((editorInfo.einum) && (in.ctrl) && (editorInfo.eipos <= LAST_INST)) {
             memcpy(&instr[editorInfo.einum], &instrcopybuffer, sizeof(INSTR));
             return true;
         }
         break;
 
-    case KEY_N:
+    case SDL_SCANCODE_N:
         if ((editorInfo.eipos != LAST_INST) && (in.shift_or_ctrl)) {
             editorInfo.eipos = LAST_INST;
             return true;
         }
         break;
 
-    case KEY_U:
+    case SDL_SCANCODE_U:
         if (in.shift_or_ctrl) {
             editorInfo.etlock = !editorInfo.etlock;
             validatetableview();
@@ -92,7 +92,7 @@ bool instrument_cell_input(GTOBJECT* gt, const EditorInput* input) {
         }
         break;
 
-    case KEY_SPACE:
+    case SDL_SCANCODE_SPACE:
         if (editorInfo.eipos != LAST_INST) {
             if (!in.shift_or_ctrl)
                 playtestnote(FIRSTNOTE + editorInfo.epoctave * 12, editorInfo.einum, editorInfo.epchn, gt);
@@ -101,7 +101,7 @@ bool instrument_cell_input(GTOBJECT* gt, const EditorInput* input) {
         }
         break;
 
-    case KEY_ENTER:
+    case SDL_SCANCODE_RETURN:
         if (!editorInfo.einum) break;
         switch (editorInfo.eipos) {
         case 2:

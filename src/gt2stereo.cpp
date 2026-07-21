@@ -840,18 +840,18 @@ void editor_frame_update(GTOBJECT* gt) {
     editorInfo.mouseTrack = 0;
 
     if (win_mousewheel) {
-        int keyUp   = KEY_UP;
-        int keyDown = KEY_DOWN;
+        int keyUp   = SDL_SCANCODE_UP;
+        int keyDown = SDL_SCANCODE_DOWN;
 
         // Legacy horizontal order list used left/right for position; the ImGui
         // vertical layout uses up/down for rows.
         if (editorInfo.editmode == EditMode::OrderList && editorInfo.expandOrderListView == 0) {
-            keyUp   = KEY_UP;
-            keyDown = KEY_DOWN;
+            keyUp   = SDL_SCANCODE_UP;
+            keyDown = SDL_SCANCODE_DOWN;
         }
         else if (editorInfo.editmode == EditMode::OrderList && editorInfo.expandOrderListView == 0) {
-            keyUp   = KEY_LEFT;
-            keyDown = KEY_RIGHT;
+            keyUp   = SDL_SCANCODE_LEFT;
+            keyDown = SDL_SCANCODE_RIGHT;
         }
 
         if (win_mousewheel < 0) rawkey = keyDown;
@@ -1190,22 +1190,22 @@ void editSIDPan(GTOBJECT* gt) {
 
         switch (rawkey) {
 
-        case KEY_F7:
+        case SDL_SCANCODE_F7:
             if (!shiftOrCtrlPressed) break;
 
-        case KEY_ESC:
-        case KEY_ENTER:
-        case KEY_TAB:
+        case SDL_SCANCODE_ESCAPE:
+        case SDL_SCANCODE_RETURN:
+        case SDL_SCANCODE_TAB:
             eamode = 0;
             key    = 0;
             rawkey = 0;
             return;
 
-        case KEY_BACKSPACE:
+        case SDL_SCANCODE_BACKSPACE:
             if (!editorInfo.eacolumn) break;
-        case KEY_LEFT: editorInfo.eacolumn--; break;
+        case SDL_SCANCODE_LEFT: editorInfo.eacolumn--; break;
 
-        case KEY_RIGHT: editorInfo.eacolumn++;
+        case SDL_SCANCODE_RIGHT: editorInfo.eacolumn++;
         }
         if (editorInfo.eacolumn < 0) editorInfo.eacolumn = sidChips - 1;
         editorInfo.eacolumn %= sidChips;
@@ -1264,27 +1264,27 @@ void editadsr(GTOBJECT* gt) {
 
         switch (rawkey) {
 
-        case KEY_Z:
+        case SDL_SCANCODE_Z:
             if (!ctrlpressed) break;
             undoPerform(gt);
             break;
 
-        case KEY_F7:
+        case SDL_SCANCODE_F7:
             if (!shiftOrCtrlPressed) break;
 
-        case KEY_ESC:
-        case KEY_ENTER:
-        case KEY_TAB:
+        case SDL_SCANCODE_ESCAPE:
+        case SDL_SCANCODE_RETURN:
+        case SDL_SCANCODE_TAB:
             eamode = 0;
             key    = 0;
             rawkey = 0;
             return;
 
-        case KEY_BACKSPACE:
+        case SDL_SCANCODE_BACKSPACE:
             if (!editorInfo.eacolumn) break;
-        case KEY_LEFT: editorInfo.eacolumn--; break;
+        case SDL_SCANCODE_LEFT: editorInfo.eacolumn--; break;
 
-        case KEY_RIGHT: editorInfo.eacolumn++;
+        case SDL_SCANCODE_RIGHT: editorInfo.eacolumn++;
         }
 
         editorInfo.eacolumn &= 3;

@@ -188,7 +188,7 @@ constexpr Chord make_chord(int ascii_key, uint32_t mods = 0) {
     return static_cast<Chord>(static_cast<uint32_t>(ascii_key & 0xffff) | mods);
 }
 
-// SDL scancode (KEY_F5, KEY_INS, …) — never collides with ASCII '>' (62) etc.
+// SDL scancode (SDL_SCANCODE_F5, SDL_SCANCODE_INSERT, …) — never collides with ASCII '>' (62) etc.
 constexpr Chord make_scancode_chord(int scancode, uint32_t mods = 0) {
     return make_chord(scancode, mods | Scancode);
 }

@@ -184,54 +184,54 @@ const ActionMeta kActionMeta[] = {
 // Default keymap. Context-specific entries override Global for the same chord.
 const Binding kBindings[] = {
     // Global file / session
-    { Action::Save, Ctx::Global, make_scancode_chord(KEY_S, Ctrl) },
-    { Action::Undo, Ctx::Global, make_scancode_chord(KEY_Z, Ctrl) },
-    { Action::Cancel, Ctx::Global, make_scancode_chord(KEY_ESC) },
-    { Action::Clear, Ctx::Global, make_scancode_chord(KEY_ESC, Shift) },
-    { Action::Help, Ctx::Global, make_scancode_chord(KEY_F12) },
-    { Action::ToggleSIDTracker64, Ctx::Global, make_scancode_chord(KEY_F12, Shift) },
-    { Action::ToggleSIDTracker64, Ctx::Global, make_scancode_chord(KEY_F12, Ctrl) },
+    { Action::Save, Ctx::Global, make_scancode_chord(SDL_SCANCODE_S, Ctrl) },
+    { Action::Undo, Ctx::Global, make_scancode_chord(SDL_SCANCODE_Z, Ctrl) },
+    { Action::Cancel, Ctx::Global, make_scancode_chord(SDL_SCANCODE_ESCAPE) },
+    { Action::Clear, Ctx::Global, make_scancode_chord(SDL_SCANCODE_ESCAPE, Shift) },
+    { Action::Help, Ctx::Global, make_scancode_chord(SDL_SCANCODE_F12) },
+    { Action::ToggleSIDTracker64, Ctx::Global, make_scancode_chord(SDL_SCANCODE_F12, Shift) },
+    { Action::ToggleSIDTracker64, Ctx::Global, make_scancode_chord(SDL_SCANCODE_F12, Ctrl) },
 
     // Edit mode (Tab cycle — rebindable via set_binding() / M7 keymap)
-    { Action::EditModeNext, Ctx::Global, make_scancode_chord(KEY_TAB) },
-    { Action::EditModePrev, Ctx::Global, make_scancode_chord(KEY_TAB, Shift) },
-    { Action::EditModePattern, Ctx::Global, make_scancode_chord(KEY_F5) },
-    { Action::EditModeOrder, Ctx::Global, make_scancode_chord(KEY_F6) },
-    { Action::EditModeInstrument, Ctx::Global, make_scancode_chord(KEY_F7) },
-    { Action::EditModeNames, Ctx::Global, make_scancode_chord(KEY_F8) },
-    { Action::PrevMultiplier, Ctx::Global, make_scancode_chord(KEY_F5, Shift) },
-    { Action::NextMultiplier, Ctx::Global, make_scancode_chord(KEY_F6, Shift) },
-    { Action::ToggleAdsrOrPan, Ctx::Global, make_scancode_chord(KEY_F7, Shift) },
-    { Action::ToggleSidModel, Ctx::Global, make_scancode_chord(KEY_F8, Shift) },
-    { Action::PrevMultiplier, Ctx::Global, make_scancode_chord(KEY_F5, Ctrl) },
-    { Action::NextMultiplier, Ctx::Global, make_scancode_chord(KEY_F6, Ctrl) },
-    { Action::ToggleAdsrOrPan, Ctx::Global, make_scancode_chord(KEY_F7, Ctrl) },
-    { Action::ToggleSidModel, Ctx::Global, make_scancode_chord(KEY_F8, Ctrl) },
+    { Action::EditModeNext, Ctx::Global, make_scancode_chord(SDL_SCANCODE_TAB) },
+    { Action::EditModePrev, Ctx::Global, make_scancode_chord(SDL_SCANCODE_TAB, Shift) },
+    { Action::EditModePattern, Ctx::Global, make_scancode_chord(SDL_SCANCODE_F5) },
+    { Action::EditModeOrder, Ctx::Global, make_scancode_chord(SDL_SCANCODE_F6) },
+    { Action::EditModeInstrument, Ctx::Global, make_scancode_chord(SDL_SCANCODE_F7) },
+    { Action::EditModeNames, Ctx::Global, make_scancode_chord(SDL_SCANCODE_F8) },
+    { Action::PrevMultiplier, Ctx::Global, make_scancode_chord(SDL_SCANCODE_F5, Shift) },
+    { Action::NextMultiplier, Ctx::Global, make_scancode_chord(SDL_SCANCODE_F6, Shift) },
+    { Action::ToggleAdsrOrPan, Ctx::Global, make_scancode_chord(SDL_SCANCODE_F7, Shift) },
+    { Action::ToggleSidModel, Ctx::Global, make_scancode_chord(SDL_SCANCODE_F8, Shift) },
+    { Action::PrevMultiplier, Ctx::Global, make_scancode_chord(SDL_SCANCODE_F5, Ctrl) },
+    { Action::NextMultiplier, Ctx::Global, make_scancode_chord(SDL_SCANCODE_F6, Ctrl) },
+    { Action::ToggleAdsrOrPan, Ctx::Global, make_scancode_chord(SDL_SCANCODE_F7, Ctrl) },
+    { Action::ToggleSidModel, Ctx::Global, make_scancode_chord(SDL_SCANCODE_F8, Ctrl) },
 
     // Transport — handler reads shift/ctrl for variant behaviour
-    { Action::PlaySongStart, Ctx::Global, make_scancode_chord(KEY_F1) },
-    { Action::PlaySongStart, Ctx::Global, make_scancode_chord(KEY_F1, Shift) },
-    { Action::PlayPatternStart, Ctx::Global, make_scancode_chord(KEY_F2) },
-    { Action::PlayPatternStart, Ctx::Global, make_scancode_chord(KEY_F2, Shift) },
-    { Action::PlayCurrent, Ctx::Global, make_scancode_chord(KEY_F3) },
-    { Action::PlayCurrent, Ctx::Global, make_scancode_chord(KEY_F3, Shift) },
-    { Action::Stop, Ctx::Global, make_scancode_chord(KEY_F4) },
-    { Action::Stop, Ctx::Global, make_scancode_chord(KEY_F4, Shift) },
+    { Action::PlaySongStart, Ctx::Global, make_scancode_chord(SDL_SCANCODE_F1) },
+    { Action::PlaySongStart, Ctx::Global, make_scancode_chord(SDL_SCANCODE_F1, Shift) },
+    { Action::PlayPatternStart, Ctx::Global, make_scancode_chord(SDL_SCANCODE_F2) },
+    { Action::PlayPatternStart, Ctx::Global, make_scancode_chord(SDL_SCANCODE_F2, Shift) },
+    { Action::PlayCurrent, Ctx::Global, make_scancode_chord(SDL_SCANCODE_F3) },
+    { Action::PlayCurrent, Ctx::Global, make_scancode_chord(SDL_SCANCODE_F3, Shift) },
+    { Action::Stop, Ctx::Global, make_scancode_chord(SDL_SCANCODE_F4) },
+    { Action::Stop, Ctx::Global, make_scancode_chord(SDL_SCANCODE_F4, Shift) },
 
-    { Action::Relocate, Ctx::Global, make_scancode_chord(KEY_F9) },
-    { Action::CycleStereoMode, Ctx::Global, make_scancode_chord(KEY_F9, Shift) },
-    { Action::FastRelocate, Ctx::Global, make_scancode_chord(KEY_F9, Ctrl) },
-    { Action::LoadSong, Ctx::Global, make_scancode_chord(KEY_F10) },
-    { Action::SaveSong, Ctx::Global, make_scancode_chord(KEY_F11) },
-    { Action::SaveWav, Ctx::Global, make_scancode_chord(KEY_F11, Shift) },
-    { Action::SaveWav, Ctx::Global, make_scancode_chord(KEY_F11, Ctrl) },
+    { Action::Relocate, Ctx::Global, make_scancode_chord(SDL_SCANCODE_F9) },
+    { Action::CycleStereoMode, Ctx::Global, make_scancode_chord(SDL_SCANCODE_F9, Shift) },
+    { Action::FastRelocate, Ctx::Global, make_scancode_chord(SDL_SCANCODE_F9, Ctrl) },
+    { Action::LoadSong, Ctx::Global, make_scancode_chord(SDL_SCANCODE_F10) },
+    { Action::SaveSong, Ctx::Global, make_scancode_chord(SDL_SCANCODE_F11) },
+    { Action::SaveWav, Ctx::Global, make_scancode_chord(SDL_SCANCODE_F11, Shift) },
+    { Action::SaveWav, Ctx::Global, make_scancode_chord(SDL_SCANCODE_F11, Ctrl) },
 
     // Octave / instrument (legacy switch(key) shortcuts)
     { Action::OctaveUp, Ctx::Global, make_chord('*') },
     { Action::OctaveDown, Ctx::Global, make_chord('/') },
     { Action::OctaveDown, Ctx::Global, make_chord('\'') },
-    { Action::OctaveUp, Ctx::Global, make_scancode_chord(KEY_KPMULTIPLY) },
-    { Action::OctaveDown, Ctx::Global, make_scancode_chord(KEY_KPDIVIDE) },
+    { Action::OctaveUp, Ctx::Global, make_scancode_chord(SDL_SCANCODE_KP_MULTIPLY) },
+    { Action::OctaveDown, Ctx::Global, make_scancode_chord(SDL_SCANCODE_KP_DIVIDE) },
     { Action::PrevInstr, Ctx::Global, make_chord('?') },
     { Action::PrevInstr, Ctx::Global, make_chord('-') },
     { Action::PrevInstr, Ctx::Global, make_chord('<') },
@@ -240,38 +240,38 @@ const Binding kBindings[] = {
     { Action::NextInstr, Ctx::Global, make_chord('>') },
 
     // Song position (legacy ';' / ':' keys)
-    { Action::SongPosPrev, Ctx::Global, make_scancode_chord(KEY_SEMICOLON) },
+    { Action::SongPosPrev, Ctx::Global, make_scancode_chord(SDL_SCANCODE_SEMICOLON) },
     { Action::SongPosPrev, Ctx::Global, make_chord(';') },
-    { Action::SongPosNext, Ctx::Global, make_scancode_chord(KEY_COLON) },
+    { Action::SongPosNext, Ctx::Global, make_scancode_chord(SDL_SCANCODE_PERIOD) },
     { Action::SongPosNext, Ctx::Global, make_chord(':') },
 
     // Song transport (Ctrl+arrow)
-    { Action::SongRewind, Ctx::Global, make_scancode_chord(KEY_LEFT, Ctrl) },
-    { Action::SongPosNext, Ctx::Global, make_scancode_chord(KEY_RIGHT, Ctrl) },
+    { Action::SongRewind, Ctx::Global, make_scancode_chord(SDL_SCANCODE_LEFT, Ctrl) },
+    { Action::SongPosNext, Ctx::Global, make_scancode_chord(SDL_SCANCODE_RIGHT, Ctrl) },
 
     // Order list — ImGui vertical layout
-    { Action::OrderRowUp, Ctx::Order, make_scancode_chord(KEY_UP) },
-    { Action::OrderRowDown, Ctx::Order, make_scancode_chord(KEY_DOWN) },
-    { Action::OrderColLeft, Ctx::Order, make_scancode_chord(KEY_LEFT) },
-    { Action::OrderColRight, Ctx::Order, make_scancode_chord(KEY_RIGHT) },
-    { Action::OrderPageUp, Ctx::Order, make_scancode_chord(KEY_PGUP) },
-    { Action::OrderPageDown, Ctx::Order, make_scancode_chord(KEY_PGDN) },
-    { Action::OrderHome, Ctx::Order, make_scancode_chord(KEY_HOME) },
-    { Action::OrderEnd, Ctx::Order, make_scancode_chord(KEY_END) },
-    { Action::OrderInsert, Ctx::Order, make_scancode_chord(KEY_INS) },
-    { Action::OrderInsert, Ctx::Order, make_scancode_chord(KEY_DEL, Shift) },
-    { Action::OrderDelete, Ctx::Order, make_scancode_chord(KEY_DEL) },
-    { Action::OrderGoPattern, Ctx::Order, make_scancode_chord(KEY_ENTER) },
-    { Action::OrderSelectPatterns, Ctx::Order, make_scancode_chord(KEY_ENTER, Shift) },
-    { Action::OrderSelectPatterns, Ctx::Order, make_scancode_chord(KEY_ENTER, Ctrl) },
-    { Action::OrderCopy, Ctx::Order, make_scancode_chord(KEY_C, Shift) },
-    { Action::OrderCopy, Ctx::Order, make_scancode_chord(KEY_C, Ctrl) },
-    { Action::OrderCut, Ctx::Order, make_scancode_chord(KEY_X, Shift) },
-    { Action::OrderCut, Ctx::Order, make_scancode_chord(KEY_X, Ctrl) },
-    { Action::OrderPaste, Ctx::Order, make_scancode_chord(KEY_V, Shift) },
-    { Action::OrderPaste, Ctx::Order, make_scancode_chord(KEY_V, Ctrl) },
+    { Action::OrderRowUp, Ctx::Order, make_scancode_chord(SDL_SCANCODE_UP) },
+    { Action::OrderRowDown, Ctx::Order, make_scancode_chord(SDL_SCANCODE_DOWN) },
+    { Action::OrderColLeft, Ctx::Order, make_scancode_chord(SDL_SCANCODE_LEFT) },
+    { Action::OrderColRight, Ctx::Order, make_scancode_chord(SDL_SCANCODE_RIGHT) },
+    { Action::OrderPageUp, Ctx::Order, make_scancode_chord(SDL_SCANCODE_PAGEUP) },
+    { Action::OrderPageDown, Ctx::Order, make_scancode_chord(SDL_SCANCODE_PAGEDOWN) },
+    { Action::OrderHome, Ctx::Order, make_scancode_chord(SDL_SCANCODE_HOME) },
+    { Action::OrderEnd, Ctx::Order, make_scancode_chord(SDL_SCANCODE_END) },
+    { Action::OrderInsert, Ctx::Order, make_scancode_chord(SDL_SCANCODE_INSERT) },
+    { Action::OrderInsert, Ctx::Order, make_scancode_chord(SDL_SCANCODE_DELETE, Shift) },
+    { Action::OrderDelete, Ctx::Order, make_scancode_chord(SDL_SCANCODE_DELETE) },
+    { Action::OrderGoPattern, Ctx::Order, make_scancode_chord(SDL_SCANCODE_RETURN) },
+    { Action::OrderSelectPatterns, Ctx::Order, make_scancode_chord(SDL_SCANCODE_RETURN, Shift) },
+    { Action::OrderSelectPatterns, Ctx::Order, make_scancode_chord(SDL_SCANCODE_RETURN, Ctrl) },
+    { Action::OrderCopy, Ctx::Order, make_scancode_chord(SDL_SCANCODE_C, Shift) },
+    { Action::OrderCopy, Ctx::Order, make_scancode_chord(SDL_SCANCODE_C, Ctrl) },
+    { Action::OrderCut, Ctx::Order, make_scancode_chord(SDL_SCANCODE_X, Shift) },
+    { Action::OrderCut, Ctx::Order, make_scancode_chord(SDL_SCANCODE_X, Ctrl) },
+    { Action::OrderPaste, Ctx::Order, make_scancode_chord(SDL_SCANCODE_V, Shift) },
+    { Action::OrderPaste, Ctx::Order, make_scancode_chord(SDL_SCANCODE_V, Ctrl) },
     { Action::OrderInsertPaste, Ctx::Order, make_chord('i', Ctrl) },
-    { Action::OrderMarkToggle, Ctx::Order, make_scancode_chord(KEY_L, Shift) },
+    { Action::OrderMarkToggle, Ctx::Order, make_scancode_chord(SDL_SCANCODE_L, Shift) },
     { Action::OrderTransposeUp, Ctx::Order, make_chord('+') },
     { Action::OrderTransposeDown, Ctx::Order, make_chord('-') },
     { Action::OrderInsertRepeat, Ctx::Order, make_chord('R') },
@@ -282,98 +282,98 @@ const Binding kBindings[] = {
     { Action::OrderSubtuneNext, Ctx::Order, make_chord('>') },
     { Action::OrderSubtuneNext, Ctx::Order, make_chord(']') },
     { Action::OrderSubtuneNext, Ctx::Order, make_chord(')') },
-    { Action::OrderPlayRangeStart, Ctx::Order, make_scancode_chord(KEY_SPACE) },
-    { Action::OrderPlayRangeStart, Ctx::Order, make_scancode_chord(KEY_SPACE, Shift) },
-    { Action::OrderPlayRangeEnd, Ctx::Order, make_scancode_chord(KEY_BACKSPACE) },
-    { Action::OrderPlayRangeEnd, Ctx::Order, make_scancode_chord(KEY_BACKSPACE, Shift) },
+    { Action::OrderPlayRangeStart, Ctx::Order, make_scancode_chord(SDL_SCANCODE_SPACE) },
+    { Action::OrderPlayRangeStart, Ctx::Order, make_scancode_chord(SDL_SCANCODE_SPACE, Shift) },
+    { Action::OrderPlayRangeEnd, Ctx::Order, make_scancode_chord(SDL_SCANCODE_BACKSPACE) },
+    { Action::OrderPlayRangeEnd, Ctx::Order, make_scancode_chord(SDL_SCANCODE_BACKSPACE, Shift) },
 
     // Pattern editor — unmodified arrow keys
-    { Action::PatternRowUp, Ctx::Pattern, make_scancode_chord(KEY_UP) },
-    { Action::PatternRowDown, Ctx::Pattern, make_scancode_chord(KEY_DOWN) },
-    { Action::PatternColLeft, Ctx::Pattern, make_scancode_chord(KEY_LEFT) },
-    { Action::PatternColRight, Ctx::Pattern, make_scancode_chord(KEY_RIGHT) },
-    { Action::PatternPageUp, Ctx::Pattern, make_scancode_chord(KEY_PGUP) },
-    { Action::PatternPageDown, Ctx::Pattern, make_scancode_chord(KEY_PGDN) },
-    { Action::PatternHome, Ctx::Pattern, make_scancode_chord(KEY_HOME) },
-    { Action::PatternEnd, Ctx::Pattern, make_scancode_chord(KEY_END) },
-    { Action::PatternPrev, Ctx::Pattern, make_scancode_chord(KEY_LEFT, Shift) },
-    { Action::PatternNext, Ctx::Pattern, make_scancode_chord(KEY_RIGHT, Shift) },
+    { Action::PatternRowUp, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_UP) },
+    { Action::PatternRowDown, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_DOWN) },
+    { Action::PatternColLeft, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_LEFT) },
+    { Action::PatternColRight, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_RIGHT) },
+    { Action::PatternPageUp, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_PAGEUP) },
+    { Action::PatternPageDown, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_PAGEDOWN) },
+    { Action::PatternHome, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_HOME) },
+    { Action::PatternEnd, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_END) },
+    { Action::PatternPrev, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_LEFT, Shift) },
+    { Action::PatternNext, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_RIGHT, Shift) },
     { Action::PatternPrev, Ctx::Pattern, make_chord('<') },
     { Action::PatternPrev, Ctx::Pattern, make_chord('[') },
     { Action::PatternPrev, Ctx::Pattern, make_chord('(') },
     { Action::PatternNext, Ctx::Pattern, make_chord('>') },
     { Action::PatternNext, Ctx::Pattern, make_chord(']') },
     { Action::PatternNext, Ctx::Pattern, make_chord(')') },
-    { Action::PatternInsert, Ctx::Pattern, make_scancode_chord(KEY_INS) },
-    { Action::PatternInsert, Ctx::Pattern, make_scancode_chord(KEY_DEL, Shift) },
-    { Action::PatternDelete, Ctx::Pattern, make_scancode_chord(KEY_DEL) },
-    { Action::PatternCopy, Ctx::Pattern, make_scancode_chord(KEY_C, Shift) },
-    { Action::PatternCopy, Ctx::Pattern, make_scancode_chord(KEY_C, Ctrl) },
-    { Action::PatternCut, Ctx::Pattern, make_scancode_chord(KEY_X, Shift) },
-    { Action::PatternCut, Ctx::Pattern, make_scancode_chord(KEY_X, Ctrl) },
-    { Action::PatternPaste, Ctx::Pattern, make_scancode_chord(KEY_V, Shift) },
-    { Action::PatternPaste, Ctx::Pattern, make_scancode_chord(KEY_V, Ctrl) },
-    { Action::PatternMarkToggle, Ctx::Pattern, make_scancode_chord(KEY_L, Shift) },
-    { Action::PatternShrink, Ctx::Pattern, make_scancode_chord(KEY_O, Shift) },
-    { Action::PatternExpand, Ctx::Pattern, make_scancode_chord(KEY_P, Shift) },
-    { Action::PatternJoin, Ctx::Pattern, make_scancode_chord(KEY_J, Shift) },
-    { Action::PatternSplit, Ctx::Pattern, make_scancode_chord(KEY_K, Shift) },
-    { Action::PatternToggleJam, Ctx::Pattern, make_scancode_chord(KEY_SPACE) },
-    { Action::PatternPlayFromCursor, Ctx::Pattern, make_scancode_chord(KEY_SPACE, Shift) },
-    { Action::PatternChnNext, Ctx::Pattern, make_scancode_chord(KEY_APOST2) },
-    { Action::PatternChnPrev, Ctx::Pattern, make_scancode_chord(KEY_APOST2, Shift) },
-    { Action::PatternToggleAutoAdvance, Ctx::Pattern, make_scancode_chord(KEY_Z, Shift) },
-    { Action::PatternCmdCopy, Ctx::Pattern, make_scancode_chord(KEY_E, Shift) },
-    { Action::PatternCmdPaste, Ctx::Pattern, make_scancode_chord(KEY_R, Shift) },
-    { Action::PatternInvert, Ctx::Pattern, make_scancode_chord(KEY_I, Shift) },
-    { Action::PatternTransposeUp, Ctx::Pattern, make_scancode_chord(KEY_Q, Shift) },
-    { Action::PatternTransposeDown, Ctx::Pattern, make_scancode_chord(KEY_A, Shift) },
-    { Action::PatternOctaveUp, Ctx::Pattern, make_scancode_chord(KEY_W, Shift) },
-    { Action::PatternOctaveDown, Ctx::Pattern, make_scancode_chord(KEY_S, Shift) },
-    { Action::PatternStepSizeUp, Ctx::Pattern, make_scancode_chord(KEY_M, Shift) },
-    { Action::PatternStepSizeDown, Ctx::Pattern, make_scancode_chord(KEY_N, Shift) },
-    { Action::PatternMarkAll, Ctx::Pattern, make_scancode_chord(KEY_A, Ctrl) },
-    { Action::PatternAutoPitchbend, Ctx::Pattern, make_scancode_chord(KEY_Y, Shift) },
-    { Action::PatternPortamentoHelper, Ctx::Pattern, make_scancode_chord(KEY_H, Shift) },
+    { Action::PatternInsert, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_INSERT) },
+    { Action::PatternInsert, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_DELETE, Shift) },
+    { Action::PatternDelete, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_DELETE) },
+    { Action::PatternCopy, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_C, Shift) },
+    { Action::PatternCopy, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_C, Ctrl) },
+    { Action::PatternCut, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_X, Shift) },
+    { Action::PatternCut, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_X, Ctrl) },
+    { Action::PatternPaste, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_V, Shift) },
+    { Action::PatternPaste, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_V, Ctrl) },
+    { Action::PatternMarkToggle, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_L, Shift) },
+    { Action::PatternShrink, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_O, Shift) },
+    { Action::PatternExpand, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_P, Shift) },
+    { Action::PatternJoin, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_J, Shift) },
+    { Action::PatternSplit, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_K, Shift) },
+    { Action::PatternToggleJam, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_SPACE) },
+    { Action::PatternPlayFromCursor, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_SPACE, Shift) },
+    { Action::PatternChnNext, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_GRAVE) },
+    { Action::PatternChnPrev, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_GRAVE, Shift) },
+    { Action::PatternToggleAutoAdvance, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_Z, Shift) },
+    { Action::PatternCmdCopy, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_E, Shift) },
+    { Action::PatternCmdPaste, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_R, Shift) },
+    { Action::PatternInvert, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_I, Shift) },
+    { Action::PatternTransposeUp, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_Q, Shift) },
+    { Action::PatternTransposeDown, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_A, Shift) },
+    { Action::PatternOctaveUp, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_W, Shift) },
+    { Action::PatternOctaveDown, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_S, Shift) },
+    { Action::PatternStepSizeUp, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_M, Shift) },
+    { Action::PatternStepSizeDown, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_N, Shift) },
+    { Action::PatternMarkAll, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_A, Ctrl) },
+    { Action::PatternAutoPitchbend, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_Y, Shift) },
+    { Action::PatternPortamentoHelper, Ctx::Pattern, make_scancode_chord(SDL_SCANCODE_H, Shift) },
 
     // SID tables — ImGui four-column layout
-    { Action::TableRowUp, Ctx::Tables, make_scancode_chord(KEY_UP) },
-    { Action::TableRowDown, Ctx::Tables, make_scancode_chord(KEY_DOWN) },
-    { Action::TableColLeft, Ctx::Tables, make_scancode_chord(KEY_LEFT) },
-    { Action::TableColRight, Ctx::Tables, make_scancode_chord(KEY_RIGHT) },
-    { Action::TablePageUp, Ctx::Tables, make_scancode_chord(KEY_PGUP) },
-    { Action::TablePageDown, Ctx::Tables, make_scancode_chord(KEY_PGDN) },
-    { Action::TableHome, Ctx::Tables, make_scancode_chord(KEY_HOME) },
-    { Action::TableEnd, Ctx::Tables, make_scancode_chord(KEY_END) },
-    { Action::TableInsert, Ctx::Tables, make_scancode_chord(KEY_INS) },
-    { Action::TableDelete, Ctx::Tables, make_scancode_chord(KEY_DEL) },
-    { Action::TableCopy, Ctx::Tables, make_scancode_chord(KEY_C, Shift) },
-    { Action::TableCopy, Ctx::Tables, make_scancode_chord(KEY_C, Ctrl) },
-    { Action::TableCut, Ctx::Tables, make_scancode_chord(KEY_X, Shift) },
-    { Action::TableCut, Ctx::Tables, make_scancode_chord(KEY_X, Ctrl) },
-    { Action::TablePaste, Ctx::Tables, make_scancode_chord(KEY_V, Shift) },
-    { Action::TablePaste, Ctx::Tables, make_scancode_chord(KEY_V, Ctrl) },
-    { Action::TableOptimize, Ctx::Tables, make_scancode_chord(KEY_O, Shift) },
-    { Action::TableToggleLock, Ctx::Tables, make_scancode_chord(KEY_U, Shift) },
-    { Action::TableTestNote, Ctx::Tables, make_scancode_chord(KEY_SPACE) },
-    { Action::TableReleaseNote, Ctx::Tables, make_scancode_chord(KEY_SPACE, Shift) },
-    { Action::TableNegate, Ctx::Tables, make_scancode_chord(KEY_N, Shift) },
-    { Action::TableConvertNote, Ctx::Tables, make_scancode_chord(KEY_R, Shift) },
+    { Action::TableRowUp, Ctx::Tables, make_scancode_chord(SDL_SCANCODE_UP) },
+    { Action::TableRowDown, Ctx::Tables, make_scancode_chord(SDL_SCANCODE_DOWN) },
+    { Action::TableColLeft, Ctx::Tables, make_scancode_chord(SDL_SCANCODE_LEFT) },
+    { Action::TableColRight, Ctx::Tables, make_scancode_chord(SDL_SCANCODE_RIGHT) },
+    { Action::TablePageUp, Ctx::Tables, make_scancode_chord(SDL_SCANCODE_PAGEUP) },
+    { Action::TablePageDown, Ctx::Tables, make_scancode_chord(SDL_SCANCODE_PAGEDOWN) },
+    { Action::TableHome, Ctx::Tables, make_scancode_chord(SDL_SCANCODE_HOME) },
+    { Action::TableEnd, Ctx::Tables, make_scancode_chord(SDL_SCANCODE_END) },
+    { Action::TableInsert, Ctx::Tables, make_scancode_chord(SDL_SCANCODE_INSERT) },
+    { Action::TableDelete, Ctx::Tables, make_scancode_chord(SDL_SCANCODE_DELETE) },
+    { Action::TableCopy, Ctx::Tables, make_scancode_chord(SDL_SCANCODE_C, Shift) },
+    { Action::TableCopy, Ctx::Tables, make_scancode_chord(SDL_SCANCODE_C, Ctrl) },
+    { Action::TableCut, Ctx::Tables, make_scancode_chord(SDL_SCANCODE_X, Shift) },
+    { Action::TableCut, Ctx::Tables, make_scancode_chord(SDL_SCANCODE_X, Ctrl) },
+    { Action::TablePaste, Ctx::Tables, make_scancode_chord(SDL_SCANCODE_V, Shift) },
+    { Action::TablePaste, Ctx::Tables, make_scancode_chord(SDL_SCANCODE_V, Ctrl) },
+    { Action::TableOptimize, Ctx::Tables, make_scancode_chord(SDL_SCANCODE_O, Shift) },
+    { Action::TableToggleLock, Ctx::Tables, make_scancode_chord(SDL_SCANCODE_U, Shift) },
+    { Action::TableTestNote, Ctx::Tables, make_scancode_chord(SDL_SCANCODE_SPACE) },
+    { Action::TableReleaseNote, Ctx::Tables, make_scancode_chord(SDL_SCANCODE_SPACE, Shift) },
+    { Action::TableNegate, Ctx::Tables, make_scancode_chord(SDL_SCANCODE_N, Shift) },
+    { Action::TableConvertNote, Ctx::Tables, make_scancode_chord(SDL_SCANCODE_R, Shift) },
 
     // Instrument list — ImGui grid layout
-    { Action::InstrRowUp, Ctx::Instrument, make_scancode_chord(KEY_UP) },
-    { Action::InstrRowDown, Ctx::Instrument, make_scancode_chord(KEY_DOWN) },
-    { Action::InstrColLeft, Ctx::Instrument, make_scancode_chord(KEY_LEFT) },
-    { Action::InstrColRight, Ctx::Instrument, make_scancode_chord(KEY_RIGHT) },
-    { Action::InstrPageUp, Ctx::Instrument, make_scancode_chord(KEY_PGUP) },
-    { Action::InstrPageDown, Ctx::Instrument, make_scancode_chord(KEY_PGDN) },
-    { Action::InstrHome, Ctx::Instrument, make_scancode_chord(KEY_HOME) },
-    { Action::InstrEnd, Ctx::Instrument, make_scancode_chord(KEY_END) },
+    { Action::InstrRowUp, Ctx::Instrument, make_scancode_chord(SDL_SCANCODE_UP) },
+    { Action::InstrRowDown, Ctx::Instrument, make_scancode_chord(SDL_SCANCODE_DOWN) },
+    { Action::InstrColLeft, Ctx::Instrument, make_scancode_chord(SDL_SCANCODE_LEFT) },
+    { Action::InstrColRight, Ctx::Instrument, make_scancode_chord(SDL_SCANCODE_RIGHT) },
+    { Action::InstrPageUp, Ctx::Instrument, make_scancode_chord(SDL_SCANCODE_PAGEUP) },
+    { Action::InstrPageDown, Ctx::Instrument, make_scancode_chord(SDL_SCANCODE_PAGEDOWN) },
+    { Action::InstrHome, Ctx::Instrument, make_scancode_chord(SDL_SCANCODE_HOME) },
+    { Action::InstrEnd, Ctx::Instrument, make_scancode_chord(SDL_SCANCODE_END) },
 
     // Song metadata (names panel)
-    { Action::NamesFieldNext, Ctx::Names, make_scancode_chord(KEY_DOWN) },
-    { Action::NamesFieldPrev, Ctx::Names, make_scancode_chord(KEY_UP) },
-    { Action::NamesFieldEdit, Ctx::Names, make_scancode_chord(KEY_ENTER) },
+    { Action::NamesFieldNext, Ctx::Names, make_scancode_chord(SDL_SCANCODE_DOWN) },
+    { Action::NamesFieldPrev, Ctx::Names, make_scancode_chord(SDL_SCANCODE_UP) },
+    { Action::NamesFieldEdit, Ctx::Names, make_scancode_chord(SDL_SCANCODE_RETURN) },
 };
 
 std::vector<Binding> g_overrides;
@@ -762,7 +762,7 @@ void instr_col_left(GTOBJECT* gt) {
     (void)gt;
 }
 
-// ---- transport (migrated from generalcommands KEY_F1..F4) ----
+// ---- transport (migrated from generalcommands SDL_SCANCODE_F1..F4) ----
 
 void transport_on_f1(GTOBJECT* gt) {
 
@@ -1354,14 +1354,14 @@ Action resolve_input_ctx(Ctx ctx, int raw_scancode, int ascii_key, int shift, in
 
 bool is_nav_arrow_key(int raw_scancode) {
     switch (raw_scancode) {
-    case KEY_UP:
-    case KEY_DOWN:
-    case KEY_LEFT:
-    case KEY_RIGHT:
-    case KEY_PGUP:
-    case KEY_PGDN:
-    case KEY_HOME:
-    case KEY_END: return true;
+    case SDL_SCANCODE_UP:
+    case SDL_SCANCODE_DOWN:
+    case SDL_SCANCODE_LEFT:
+    case SDL_SCANCODE_RIGHT:
+    case SDL_SCANCODE_PAGEUP:
+    case SDL_SCANCODE_PAGEDOWN:
+    case SDL_SCANCODE_HOME:
+    case SDL_SCANCODE_END: return true;
     default: return false;
     }
 }
@@ -1379,8 +1379,8 @@ bool dispatch_order_navigation() {
 
     // Vertical layout and editing actions apply to the ImGui order panel.
 
-    if (shiftpressed && !ctrlpressed && rawkey >= KEY_1 && rawkey <= KEY_6) {
-        order_list_swap_channel(&gtObject, rawkey - KEY_1);
+    if (shiftpressed && !ctrlpressed && rawkey >= SDL_SCANCODE_1 && rawkey <= SDL_SCANCODE_6) {
+        order_list_swap_channel(&gtObject, rawkey - SDL_SCANCODE_1);
         clear_input();
         return true;
     }
@@ -1389,12 +1389,12 @@ bool dispatch_order_navigation() {
     if (act == Action::None) return false;
 
     switch (rawkey) {
-    case KEY_UP:
-    case KEY_DOWN:
-    case KEY_LEFT:
-    case KEY_RIGHT:
-    case KEY_PGUP:
-    case KEY_PGDN: win_enable_key_repeat(); break;
+    case SDL_SCANCODE_UP:
+    case SDL_SCANCODE_DOWN:
+    case SDL_SCANCODE_LEFT:
+    case SDL_SCANCODE_RIGHT:
+    case SDL_SCANCODE_PAGEUP:
+    case SDL_SCANCODE_PAGEDOWN: win_enable_key_repeat(); break;
     default: break;
     }
 
@@ -1414,8 +1414,8 @@ bool dispatch_pattern_navigation() {
         if (act == Action::None) return false;
     }
 
-    if (shiftpressed && !ctrlpressed && rawkey >= KEY_1 && rawkey <= KEY_6) {
-        pattern_mute_channel(&gtObject, rawkey - KEY_1);
+    if (shiftpressed && !ctrlpressed && rawkey >= SDL_SCANCODE_1 && rawkey <= SDL_SCANCODE_6) {
+        pattern_mute_channel(&gtObject, rawkey - SDL_SCANCODE_1);
         clear_input();
         return true;
     }
@@ -1425,14 +1425,14 @@ bool dispatch_pattern_navigation() {
 
 
     switch (rawkey) {
-    case KEY_UP:
-    case KEY_DOWN:
-    case KEY_LEFT:
-    case KEY_RIGHT:
-    case KEY_PGUP:
-    case KEY_PGDN:
-    case KEY_INS:
-    case KEY_DEL: win_enable_key_repeat(); break;
+    case SDL_SCANCODE_UP:
+    case SDL_SCANCODE_DOWN:
+    case SDL_SCANCODE_LEFT:
+    case SDL_SCANCODE_RIGHT:
+    case SDL_SCANCODE_PAGEUP:
+    case SDL_SCANCODE_PAGEDOWN:
+    case SDL_SCANCODE_INSERT:
+    case SDL_SCANCODE_DELETE: win_enable_key_repeat(); break;
     default: break;
     }
 
@@ -1458,14 +1458,14 @@ bool dispatch_table_navigation() {
     if (act == Action::None) return false;
 
     switch (rawkey) {
-    case KEY_UP:
-    case KEY_DOWN:
-    case KEY_LEFT:
-    case KEY_RIGHT:
-    case KEY_PGUP:
-    case KEY_PGDN:
-    case KEY_INS:
-    case KEY_DEL: win_enable_key_repeat(); break;
+    case SDL_SCANCODE_UP:
+    case SDL_SCANCODE_DOWN:
+    case SDL_SCANCODE_LEFT:
+    case SDL_SCANCODE_RIGHT:
+    case SDL_SCANCODE_PAGEUP:
+    case SDL_SCANCODE_PAGEDOWN:
+    case SDL_SCANCODE_INSERT:
+    case SDL_SCANCODE_DELETE: win_enable_key_repeat(); break;
     default: break;
     }
 
@@ -1484,7 +1484,7 @@ bool dispatch_instrument_navigation() {
     if (ctrlpressed) return false;
 
     // Enter on the name field opens the ImGui editor (replaces legacy editstring).
-    if (rawkey == KEY_ENTER && editorInfo.einum >= gtui::INSTR_FIRST && editorInfo.eipos >= LAST_INST) {
+    if (rawkey == SDL_SCANCODE_RETURN && editorInfo.einum >= gtui::INSTR_FIRST && editorInfo.eipos >= LAST_INST) {
         gimgui_instr_name_begin(editorInfo.einum);
         clear_input();
         return true;
@@ -1494,12 +1494,12 @@ bool dispatch_instrument_navigation() {
     if (act == Action::None) return false;
 
     switch (rawkey) {
-    case KEY_UP:
-    case KEY_DOWN:
-    case KEY_LEFT:
-    case KEY_RIGHT:
-    case KEY_PGUP:
-    case KEY_PGDN: win_enable_key_repeat(); break;
+    case SDL_SCANCODE_UP:
+    case SDL_SCANCODE_DOWN:
+    case SDL_SCANCODE_LEFT:
+    case SDL_SCANCODE_RIGHT:
+    case SDL_SCANCODE_PAGEUP:
+    case SDL_SCANCODE_PAGEDOWN: win_enable_key_repeat(); break;
     default: break;
     }
 
@@ -1531,26 +1531,26 @@ bool dispatch_names_navigation() {
 const char* scancode_label(int sc) {
     // Prefer short tracker-style names over SDL's verbose ones.
     switch (sc) {
-    case KEY_ESC: return "Esc";
-    case KEY_TAB: return "Tab";
-    case KEY_SPACE: return "Space";
-    case KEY_ENTER: return "Enter";
-    case KEY_BACKSPACE: return "Backspace";
-    case KEY_INS: return "Ins";
-    case KEY_DEL: return "Del";
-    case KEY_HOME: return "Home";
-    case KEY_END: return "End";
-    case KEY_PGUP: return "PgUp";
-    case KEY_PGDN: return "PgDn";
-    case KEY_UP: return "Up";
-    case KEY_DOWN: return "Down";
-    case KEY_LEFT: return "Left";
-    case KEY_RIGHT: return "Right";
-    case KEY_APOST2: return "`";
-    case KEY_KPMULTIPLY: return "Keypad*";
-    case KEY_KPDIVIDE: return "Keypad/";
-    case KEY_SEMICOLON: return ";";
-    case KEY_COLON: return ".";
+    case SDL_SCANCODE_ESCAPE: return "Esc";
+    case SDL_SCANCODE_TAB: return "Tab";
+    case SDL_SCANCODE_SPACE: return "Space";
+    case SDL_SCANCODE_RETURN: return "Enter";
+    case SDL_SCANCODE_BACKSPACE: return "Backspace";
+    case SDL_SCANCODE_INSERT: return "Ins";
+    case SDL_SCANCODE_DELETE: return "Del";
+    case SDL_SCANCODE_HOME: return "Home";
+    case SDL_SCANCODE_END: return "End";
+    case SDL_SCANCODE_PAGEUP: return "PgUp";
+    case SDL_SCANCODE_PAGEDOWN: return "PgDn";
+    case SDL_SCANCODE_UP: return "Up";
+    case SDL_SCANCODE_DOWN: return "Down";
+    case SDL_SCANCODE_LEFT: return "Left";
+    case SDL_SCANCODE_RIGHT: return "Right";
+    case SDL_SCANCODE_GRAVE: return "`";
+    case SDL_SCANCODE_KP_MULTIPLY: return "Keypad*";
+    case SDL_SCANCODE_KP_DIVIDE: return "Keypad/";
+    case SDL_SCANCODE_SEMICOLON: return ";";
+    case SDL_SCANCODE_PERIOD: return ".";
     default: break;
     }
     if (const char* n = SDL_GetScancodeName((SDL_Scancode)sc)) {
