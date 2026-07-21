@@ -21,7 +21,8 @@ enum EditPanel : int {
     EditPanelTables     = 3,
     EditPanelNames      = 4,
 };
-EditPanel edit_panel(); // current keyboard-focus edit mode
+EditPanel edit_panel();                // current keyboard-focus edit mode
+void      set_edit_panel(EditPanel p); // switch keyboard focus to a panel
 
 int  names_field(); // selected metadata field (0=name, 1=author, 2=copyright)
 void names_set_field(int field);

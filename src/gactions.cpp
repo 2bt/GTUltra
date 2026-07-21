@@ -913,15 +913,13 @@ bool handle_global_action(Action act) {
 
     case Action::Undo: undoPerform(gt); return true;
 
-    case Action::Cancel:
-        if (gimgui_help_open()) gimgui_close_help();
-        return true;
+    case Action::Cancel: gimgui_set_help_open(false); return true;
 
     case Action::Clear:
         if (shift_or_ctrl_pressed) clear(gt);
         return true;
 
-    case Action::Help: gimgui_open_help(); return true;
+    case Action::Help: gimgui_set_help_open(!gimgui_help_open()); return true;
 
     case Action::EditModeNext:
         if (!shift_or_ctrl_pressed) {

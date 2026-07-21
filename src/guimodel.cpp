@@ -22,6 +22,11 @@ namespace gtui {
 
 EditPanel edit_panel() { return static_cast<EditPanel>(editorInfo.editmode); }
 
+void set_edit_panel(EditPanel p) {
+    if (p < EditPanelPattern || p > EditPanelNames) return;
+    editorInfo.editmode = static_cast<EditMode>(p);
+}
+
 int names_field() { return editorInfo.enpos; }
 
 void names_set_field(int field) {
