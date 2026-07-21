@@ -22,20 +22,278 @@ int           instrumentCount[MAX_INSTR];
 int           firstInstrumentPattern[MAX_INSTR];
 int           patternChecked[MAX_PATT];
 
-// gorder-local helpers (definitions further down are wrapped in this same
-// anonymous namespace); forward-declared here because earlier functions in
-// the file (order_cell_input, order_go_pattern) call them before their
-// definitions below.
-void orderListHandleHexInputOriginalView(GTOBJECT* gt);
-void updateTransposeToPlayingSong(GTOBJECT* gt);
-void orderListHandleHexInputExpandedView(GTOBJECT* gt);
-int  handleEnterInCompressedView(GTOBJECT* gt);
-int  handleEnterInExpandedView(GTOBJECT* gt);
-void getExpandedSelectedArea(int* x, int* y, int* w, int* h);
-
 int order_expanded_max_channels() {
     if ((editorInfo.maxSIDChannels == 3) || (editorInfo.maxSIDChannels == 9 && (editorInfo.esnum & 1))) return 3;
     return 6;
+}
+
+// gorder-local helpers, defined here (above their first use) so no
+// forward declarations are needed.
+
+void orderListHandleHexInputOriginalView(GTOBJECT* gt) {
+    if (editorInfo.eseditpos != songlen[editorInfo.esnum][editorInfo.eschn]) {
+        switch (editorInfo.escolumn) {
+        case 0:
+            songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] &= 0x0f;
+            songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] |= hexnybble << 4;
+            if (editorInfo.eseditpos < songlen[editorInfo.esnum][editorInfo.eschn]) {
+                if (songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] >= MAX_PATT)
+                    songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] = MAX_PATT - 1;
+            }
+            else {
+                if (songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] >= MAX_SONGLEN)
+                    songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] = MAX_SONGLEN - 1;
+            }
+            break;
+
+        case 1:
+            songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] &= 0xf0;
+            if ((songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] & 0xf0) == REPEAT) {
+                hexnybble--;
+                if (hexnybble < 0) hexnybble = 0xf;
+            }
+            if ((songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] & 0xf0) == TRANSDOWN) {
+                hexnybble = 16 - hexnybble;
+                hexnybble &= 0xf;
+            }
+            songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] |= hexnybble;
+
+            if (editorInfo.eseditpos < songlen[editorInfo.esnum][editorInfo.eschn]) {
+                if (songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] == LOOPSONG)
+                    songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] = LOOPSONG - 1;
+                if (songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] == TRANSDOWN)
+                    songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] = TRANSDOWN + 0x0f;
+            }
+            else {
+                if (songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] >= MAX_SONGLEN)
+                    songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] = MAX_SONGLEN - 1;
+            }
+            break;
+        }
+
+        int c2 = getActualChannel(editorInfo.esnum, editorInfo.eschn); // 0-12
+
+        if (editorInfo.eseditpos == gt->editorUndoInfo.editorInfo[c2].espos) {
+            if (songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] <
+                MAX_PATT) // remember pattern number for undo
+                gt->editorUndoInfo.editorInfo[c2].epnum =
+                    songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos];
+        }
+
+        editorInfo.escolumn++;
+        if (editorInfo.escolumn > 1) {
+            editorInfo.escolumn = 0;
+            if (editorInfo.eseditpos < (songlen[editorInfo.esnum][editorInfo.eschn] + 1)) {
+                editorInfo.eseditpos++;
+                if (editorInfo.eseditpos == songlen[editorInfo.esnum][editorInfo.eschn]) editorInfo.eseditpos++;
+            }
+        }
+    }
+}
+
+void updateTransposeToPlayingSong(GTOBJECT* gt) {
+    int c2 = getActualChannel(editorInfo.esnum, editorInfo.eschn);
+    if (editorInfo.eseditpos ==
+        gt->chn[c2].songptr - 1) // cursor editing row as whats currently playing in this channel?
+    {
+        int t = songOrderTranspose[editorInfo.esnum][editorInfo.eschn]
+                                  [editorInfo.eseditpos]; // Yes. So modify the transpose directly too
+        if (t < 0x080) gt->chn[c2].trans = t;
+        else gt->chn[c2].trans = -(t & 0x7f);
+    }
+}
+
+// TO WORK OUT:
+// Loop position can be 12 bit in expanded view.
+// We can't enter a value longer than 2 digits
+// Shift-click on entry to set loop position?
+void orderListHandleHexInputExpandedView(GTOBJECT* gt) {
+    // songOrderPatterns[editorInfo.esnum][c][p];
+
+    if (songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] <
+        0xff) // editing pattern number or transpose value
+    {
+        if (editorInfo.escolumn == 3) return; // cursor currently on +/- so we don't want to handle hex input there
+
+        if (editorInfo.escolumn == 4) // transpose value
+        {
+            if (songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] < 0x80) {
+                if (hexnybble < 0xf) {
+                    songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] = hexnybble;
+                }
+            }
+            else {
+                songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] = 0x80 + hexnybble;
+            }
+
+            updateTransposeToPlayingSong(gt);
+
+            songCompressedSize[editorInfo.esnum][editorInfo.eschn] =
+                generateCompressedSongChannel(editorInfo.esnum, editorInfo.eschn, true);
+            return;
+        }
+    }
+    else if (editorInfo.escolumn >= 2) // editing loop position
+    {
+        switch (editorInfo.escolumn) {
+        case 2:
+            songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] &= 0x0ff;
+            songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] |= hexnybble << 8;
+            editorInfo.escolumn = 3;
+            break;
+        case 3:
+            songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] &= 0x0f0f;
+            songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] |= hexnybble << 4;
+            editorInfo.escolumn = 4;
+            break;
+        case 4:
+            songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] &= 0xff0;
+            songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] |= hexnybble;
+            editorInfo.escolumn = 2;
+            break;
+        }
+        songCompressedSize[editorInfo.esnum][editorInfo.eschn] =
+            generateCompressedSongChannel(editorInfo.esnum, editorInfo.eschn, true);
+        return;
+    }
+
+    if (editorInfo.escolumn <= 2) // pattern editing
+    {
+        int temp       = songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos];
+        int tempColumn = editorInfo.escolumn;
+
+        switch (editorInfo.escolumn) {
+        case 0:
+
+            songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] &= 0x0f;
+            songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] |= hexnybble << 4;
+            editorInfo.escolumn = 1;
+            break;
+        case 1:
+            songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] &= 0xf0;
+            songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] |= hexnybble;
+            editorInfo.escolumn = 0;
+            break;
+        }
+
+        if (songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] == 0xff) {
+            if (temp == 0xff) editorInfo.escolumn = tempColumn;
+            else songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] = 0;
+        }
+        else if (songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] >= REPEAT) {
+            if (songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] < TRANSUP) {
+                songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] = temp;
+                editorInfo.escolumn                                                         = tempColumn;
+            }
+            else {
+                editorInfo.escolumn                                                          = tempColumn;
+                songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos]  = 0xff;
+                songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] = 0;
+            }
+        }
+        else if (temp == 0xff) {
+            songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] = 0;
+        }
+        else {
+            int c2 = getActualChannel(editorInfo.esnum, editorInfo.eschn); // 0-12
+
+            if (editorInfo.eseditpos == gt->editorUndoInfo.editorInfo[c2].espos) {
+                if (songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] <
+                    MAX_PATT) // jpjpjp
+                    gt->editorUndoInfo.editorInfo[c2].epnum =
+                        songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos];
+            }
+        }
+    }
+
+    songCompressedSize[editorInfo.esnum][editorInfo.eschn] =
+        generateCompressedSongChannel(editorInfo.esnum, editorInfo.eschn, true);
+
+    int index = findFirstEndMarkerIndex(editorInfo.esnum, editorInfo.eschn);
+    songOrderLength[editorInfo.esnum][editorInfo.eschn] = index + 1;
+
+    // sprintf(textbuffer, "j %x, chn %x, songorderLen %x\n", editorInfo.esnum, editorInfo.eschn,
+    // (songOrderLength[editorInfo.esnum][editorInfo.eschn] - 1));
+
+    //	songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos]++;
+    return;
+}
+
+int handleEnterInCompressedView(GTOBJECT* gt) {
+    if (editorInfo.eseditpos >= songlen[editorInfo.esnum][editorInfo.eschn]) return 0;
+
+    if (!shift_or_ctrl_pressed) {
+        int c2 = getActualChannel(editorInfo.esnum, editorInfo.eschn); // 0-12
+
+        if (songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] < MAX_PATT)
+            gt->editorUndoInfo.editorInfo[c2].epnum =
+                songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos];
+    }
+    else {
+        backupPatternDisplayInfo(gt); // V1.2.2 - Preserve pattern edit position
+        orderSelectPatternsFromSelected(gt);
+        restorePatternDisplayInfo(gt); // V1.2.2
+        return 0;
+    }
+    return 1;
+}
+
+int handleEnterInExpandedView(GTOBJECT* gt) {
+
+    //	sprintf(textbuffer, "snd %x, chn %x, songorderLen %x\n", editorInfo.esnum,
+    // editorInfo.eschn,(songOrderLength[editorInfo.esnum][editorInfo.eschn] - 1));
+
+    if (editorInfo.eseditpos >= songOrderLength[editorInfo.esnum][editorInfo.eschn] - 1) // 1.3.3
+        return 0;
+
+    if (!shift_or_ctrl_pressed) {
+        int c2 = getActualChannel(editorInfo.esnum, editorInfo.eschn); // 0-12
+
+        if (songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] < MAX_PATT)
+            gt->editorUndoInfo.editorInfo[c2].epnum =
+                songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos];
+    }
+    else {
+        backupPatternDisplayInfo(gt); // V1.2.2 - Preserve pattern edit position
+        orderSelectPatternsFromSelected(gt);
+        restorePatternDisplayInfo(gt); // V1.2.2
+        return 0;
+    }
+    return 1;
+}
+
+void getExpandedSelectedArea(int* x, int* y, int* w, int* h) {
+    int tx, ty, tw, th;
+
+    if (editorInfo.esmarkchn < 0 || editorInfo.esmarkchnend < 0 || editorInfo.esmarkstart < 0 ||
+        editorInfo.esmarkend < 0) {
+        *x = 0;
+        *y = 0;
+        *w = 0;
+        *h = 0;
+        return;
+    }
+
+    tx = editorInfo.esmarkchn;
+    tw = editorInfo.esmarkchnend - editorInfo.esmarkchn;
+    if (tw < 0) {
+        tx = editorInfo.esmarkchnend;
+        tw = editorInfo.esmarkchn - editorInfo.esmarkchnend;
+    }
+    tw++;
+
+    ty = editorInfo.esmarkstart;
+    th = editorInfo.esmarkend - editorInfo.esmarkstart;
+    if (th < 0) {
+        ty = editorInfo.esmarkend;
+        th = editorInfo.esmarkstart - editorInfo.esmarkend;
+    }
+    th++;
+
+    *x = tx;
+    *y = ty;
+    *w = tw;
+    *h = th;
 }
 
 } // namespace
@@ -157,7 +415,6 @@ void songchange(GTOBJECT* gt, bool reset_editing_positions) {
         getActualChannel(editorInfo.esnum, editorInfo.eschn); // 0-12 for currently selected channel in orderlist
     //	int jsongNum = getActualSongNumber(editorInfo.esnum, jc2);
 
-
     editorInfo.highlightLoopChannel = 999; // remove from display
                                            //	gt->interPatternLoopEnabledFlag = 0;		// disable in player
     editorInfo.highlightLoopPatternNumber = -1;
@@ -180,7 +437,6 @@ void songchange(GTOBJECT* gt, bool reset_editing_positions) {
         if (editorInfo.eschn >= 3) editorInfo.eschn = 2;
     }
 
-
     for (c = 0; c < editorInfo.maxSIDChannels; c++) {
         int c2      = getActualChannel(editorInfo.esnum, c); // 0-12
         int songNum = getActualSongNumber(editorInfo.esnum, c2);
@@ -197,7 +453,6 @@ void songchange(GTOBJECT* gt, bool reset_editing_positions) {
         }
     }
 
-
     orderSelectPatternsFromSelected(gt);
 
     editorInfo.eppos  = 0; // pattern pos
@@ -210,7 +465,6 @@ void songchange(GTOBJECT* gt, bool reset_editing_positions) {
 
     updateviewtopos(gt);
 }
-
 
 /*
 A cut down version of songchange
@@ -230,10 +484,8 @@ void resetSongInfo(GTOBJECT* gt, int jc2) {
     editorInfo.esview    = 0; // reset scroll position in order list
 }
 
-
 void updateviewtopos(GTOBJECT* gt) {
     int c, d;
-
 
     for (c = 0; c < editorInfo.maxSIDChannels; c++) {
         int c2      = getActualChannel(editorInfo.esnum, c); // 0-12
@@ -277,8 +529,6 @@ void updateviewtopos(GTOBJECT* gt) {
     }
 }
 
-
-
 int calcStartofInterPatternLoop(int songNum, int channelNum, int startSongPos, GTOBJECT* gtloop) {
     GTOBJECT* gtPlayer = &gtObject;
 
@@ -290,7 +540,6 @@ int calcStartofInterPatternLoop(int songNum, int channelNum, int startSongPos, G
         markStart = markEnd;
         markEnd   = editorInfo.epmarkstart;
     }
-
 
     int c2  = channelNum; // getActualChannel(songNum, channelNum);
     int sng = songNum;    // getActualSongNumber(songNum, c2);
@@ -356,7 +605,6 @@ int calcStartofInterPatternLoop(int songNum, int channelNum, int startSongPos, G
     return 0;
 }
 
-
 int calculateLoopInfo2(int songNum, int channelNum, int startSongPos, GTOBJECT* gtloop) {
     GTOBJECT* gtPlayer = &gtObject;
 
@@ -417,7 +665,6 @@ int calculateLoopInfo2(int songNum, int channelNum, int startSongPos, GTOBJECT* 
     return 0;
 }
 
-
 void orderPlayFromPosition(GTOBJECT* gt,
                            int       startPatternPos,
                            int       startSongPos,
@@ -438,7 +685,6 @@ void orderPlayFromPosition(GTOBJECT* gt,
         if (startSongPos >= songOrderLength[editorInfo.esnum][focusChannel % 6] - 1) // 1.3.3
             return;
     }
-
 
     int c2 = getActualChannel(editorInfo.esnum, focusChannel);
     //	int sng = getActualSongNumber(editorInfo.esnum, c2);
@@ -472,7 +718,6 @@ void orderPlayFromPosition(GTOBJECT* gt,
     int tempMin   = gt->timemin;
     int tempSec   = gt->timesec;
     int tempFrame = gt->timeframe;
-
 
     // Now sync to pattern start position (where cursor was when F3 was pressed)
     if (startPatternPos > 0) {
@@ -589,8 +834,6 @@ void orderSelectPatternsFromSelected(GTOBJECT* gt) {
     }
 }
 
-
-
 void countInstruments() {
     for (int p = 0; p < MAX_PATT; p++) {
         patternChecked[p] = 0;
@@ -640,7 +883,6 @@ void countInstruments() {
     calculateTotalInstrumentsFromAllPatterns();
 }
 
-
 void calculateTotalInstrumentsFromAllPatterns() {
     for (int i = 0; i < MAX_INSTR; i++) {
         instrumentCount[i]        = 0;
@@ -675,7 +917,6 @@ void countInstrumentsInPattern(int pat) {
     }
 }
 
-
 void setMasterLoopChannel(GTOBJECT* gt, const char* debugText) {
 
     //	sprintf(textbuffer, "%x master %s", jdebug[15]++, debugText);
@@ -693,257 +934,12 @@ void setMasterLoopChannel(GTOBJECT* gt, const char* debugText) {
     }
 }
 
-
-namespace {
-
-void orderListHandleHexInputOriginalView(GTOBJECT* gt) {
-    if (editorInfo.eseditpos != songlen[editorInfo.esnum][editorInfo.eschn]) {
-        switch (editorInfo.escolumn) {
-        case 0:
-            songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] &= 0x0f;
-            songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] |= hexnybble << 4;
-            if (editorInfo.eseditpos < songlen[editorInfo.esnum][editorInfo.eschn]) {
-                if (songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] >= MAX_PATT)
-                    songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] = MAX_PATT - 1;
-            }
-            else {
-                if (songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] >= MAX_SONGLEN)
-                    songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] = MAX_SONGLEN - 1;
-            }
-            break;
-
-        case 1:
-            songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] &= 0xf0;
-            if ((songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] & 0xf0) == REPEAT) {
-                hexnybble--;
-                if (hexnybble < 0) hexnybble = 0xf;
-            }
-            if ((songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] & 0xf0) == TRANSDOWN) {
-                hexnybble = 16 - hexnybble;
-                hexnybble &= 0xf;
-            }
-            songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] |= hexnybble;
-
-            if (editorInfo.eseditpos < songlen[editorInfo.esnum][editorInfo.eschn]) {
-                if (songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] == LOOPSONG)
-                    songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] = LOOPSONG - 1;
-                if (songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] == TRANSDOWN)
-                    songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] = TRANSDOWN + 0x0f;
-            }
-            else {
-                if (songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] >= MAX_SONGLEN)
-                    songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] = MAX_SONGLEN - 1;
-            }
-            break;
-        }
-
-        int c2 = getActualChannel(editorInfo.esnum, editorInfo.eschn); // 0-12
-
-        if (editorInfo.eseditpos == gt->editorUndoInfo.editorInfo[c2].espos) {
-            if (songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] <
-                MAX_PATT) // remember pattern number for undo
-                gt->editorUndoInfo.editorInfo[c2].epnum =
-                    songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos];
-        }
-
-        editorInfo.escolumn++;
-        if (editorInfo.escolumn > 1) {
-            editorInfo.escolumn = 0;
-            if (editorInfo.eseditpos < (songlen[editorInfo.esnum][editorInfo.eschn] + 1)) {
-                editorInfo.eseditpos++;
-                if (editorInfo.eseditpos == songlen[editorInfo.esnum][editorInfo.eschn]) editorInfo.eseditpos++;
-            }
-        }
-    }
-}
-
-void updateTransposeToPlayingSong(GTOBJECT* gt) {
-    int c2 = getActualChannel(editorInfo.esnum, editorInfo.eschn);
-    if (editorInfo.eseditpos ==
-        gt->chn[c2].songptr - 1) // cursor editing row as whats currently playing in this channel?
-    {
-        int t = songOrderTranspose[editorInfo.esnum][editorInfo.eschn]
-                                  [editorInfo.eseditpos]; // Yes. So modify the transpose directly too
-        if (t < 0x080) gt->chn[c2].trans = t;
-        else gt->chn[c2].trans = -(t & 0x7f);
-    }
-}
-
-// TO WORK OUT:
-// Loop position can be 12 bit in expanded view.
-// We can't enter a value longer than 2 digits
-// Shift-click on entry to set loop position?
-void orderListHandleHexInputExpandedView(GTOBJECT* gt) {
-    // songOrderPatterns[editorInfo.esnum][c][p];
-
-
-    if (songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] <
-        0xff) // editing pattern number or transpose value
-    {
-        if (editorInfo.escolumn == 3) return; // cursor currently on +/- so we don't want to handle hex input there
-
-        if (editorInfo.escolumn == 4) // transpose value
-        {
-            if (songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] < 0x80) {
-                if (hexnybble < 0xf) {
-                    songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] = hexnybble;
-                }
-            }
-            else {
-                songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] = 0x80 + hexnybble;
-            }
-
-            updateTransposeToPlayingSong(gt);
-
-            songCompressedSize[editorInfo.esnum][editorInfo.eschn] =
-                generateCompressedSongChannel(editorInfo.esnum, editorInfo.eschn, true);
-            return;
-        }
-    }
-    else if (editorInfo.escolumn >= 2) // editing loop position
-    {
-        switch (editorInfo.escolumn) {
-        case 2:
-            songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] &= 0x0ff;
-            songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] |= hexnybble << 8;
-            editorInfo.escolumn = 3;
-            break;
-        case 3:
-            songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] &= 0x0f0f;
-            songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] |= hexnybble << 4;
-            editorInfo.escolumn = 4;
-            break;
-        case 4:
-            songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] &= 0xff0;
-            songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] |= hexnybble;
-            editorInfo.escolumn = 2;
-            break;
-        }
-        songCompressedSize[editorInfo.esnum][editorInfo.eschn] =
-            generateCompressedSongChannel(editorInfo.esnum, editorInfo.eschn, true);
-        return;
-    }
-
-    if (editorInfo.escolumn <= 2) // pattern editing
-    {
-        int temp       = songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos];
-        int tempColumn = editorInfo.escolumn;
-
-        switch (editorInfo.escolumn) {
-        case 0:
-
-            songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] &= 0x0f;
-            songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] |= hexnybble << 4;
-            editorInfo.escolumn = 1;
-            break;
-        case 1:
-            songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] &= 0xf0;
-            songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] |= hexnybble;
-            editorInfo.escolumn = 0;
-            break;
-        }
-
-        if (songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] == 0xff) {
-            if (temp == 0xff) editorInfo.escolumn = tempColumn;
-            else songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] = 0;
-        }
-        else if (songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] >= REPEAT) {
-            if (songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] < TRANSUP) {
-                songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] = temp;
-                editorInfo.escolumn                                                         = tempColumn;
-            }
-            else {
-                editorInfo.escolumn                                                          = tempColumn;
-                songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos]  = 0xff;
-                songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] = 0;
-            }
-        }
-        else if (temp == 0xff) {
-            songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] = 0;
-        }
-        else {
-            int c2 = getActualChannel(editorInfo.esnum, editorInfo.eschn); // 0-12
-
-            if (editorInfo.eseditpos == gt->editorUndoInfo.editorInfo[c2].espos) {
-                if (songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] <
-                    MAX_PATT) // jpjpjp
-                    gt->editorUndoInfo.editorInfo[c2].epnum =
-                        songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos];
-            }
-        }
-    }
-
-    songCompressedSize[editorInfo.esnum][editorInfo.eschn] =
-        generateCompressedSongChannel(editorInfo.esnum, editorInfo.eschn, true);
-
-    int index = findFirstEndMarkerIndex(editorInfo.esnum, editorInfo.eschn);
-    songOrderLength[editorInfo.esnum][editorInfo.eschn] = index + 1;
-
-    // sprintf(textbuffer, "j %x, chn %x, songorderLen %x\n", editorInfo.esnum, editorInfo.eschn,
-    // (songOrderLength[editorInfo.esnum][editorInfo.eschn] - 1));
-
-    //	songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos]++;
-    return;
-}
-
-} // namespace
-
 int findFirstEndMarkerIndex(int sng, int chn) {
     for (int i = 0; i < MAX_SONGLEN_EXPANDED; i++) {
         if (songOrderPatterns[sng][chn][i] == 0xff) return i;
     }
     return MAX_SONGLEN_EXPANDED - 1;
 }
-
-
-namespace {
-
-int handleEnterInCompressedView(GTOBJECT* gt) {
-    if (editorInfo.eseditpos >= songlen[editorInfo.esnum][editorInfo.eschn]) return 0;
-
-    if (!shift_or_ctrl_pressed) {
-        int c2 = getActualChannel(editorInfo.esnum, editorInfo.eschn); // 0-12
-
-        if (songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] < MAX_PATT)
-            gt->editorUndoInfo.editorInfo[c2].epnum =
-                songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos];
-    }
-    else {
-        backupPatternDisplayInfo(gt); // V1.2.2 - Preserve pattern edit position
-        orderSelectPatternsFromSelected(gt);
-        restorePatternDisplayInfo(gt); // V1.2.2
-        return 0;
-    }
-    return 1;
-}
-
-
-int handleEnterInExpandedView(GTOBJECT* gt) {
-
-    //	sprintf(textbuffer, "snd %x, chn %x, songorderLen %x\n", editorInfo.esnum,
-    // editorInfo.eschn,(songOrderLength[editorInfo.esnum][editorInfo.eschn] - 1));
-
-    if (editorInfo.eseditpos >= songOrderLength[editorInfo.esnum][editorInfo.eschn] - 1) // 1.3.3
-        return 0;
-
-    if (!shift_or_ctrl_pressed) {
-        int c2 = getActualChannel(editorInfo.esnum, editorInfo.eschn); // 0-12
-
-        if (songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] < MAX_PATT)
-            gt->editorUndoInfo.editorInfo[c2].epnum =
-                songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos];
-    }
-    else {
-        backupPatternDisplayInfo(gt); // V1.2.2 - Preserve pattern edit position
-        orderSelectPatternsFromSelected(gt);
-        restorePatternDisplayInfo(gt); // V1.2.2
-        return 0;
-    }
-    return 1;
-}
-
-} // namespace
-
 
 void orderListCopyMarkedArea() {
     int c;
@@ -1009,45 +1005,6 @@ void orderListCopyMarkedArea_Expanded() {
     }
 }
 
-namespace {
-
-void getExpandedSelectedArea(int* x, int* y, int* w, int* h) {
-    int tx, ty, tw, th;
-
-    if (editorInfo.esmarkchn < 0 || editorInfo.esmarkchnend < 0 || editorInfo.esmarkstart < 0 ||
-        editorInfo.esmarkend < 0) {
-        *x = 0;
-        *y = 0;
-        *w = 0;
-        *h = 0;
-        return;
-    }
-
-    tx = editorInfo.esmarkchn;
-    tw = editorInfo.esmarkchnend - editorInfo.esmarkchn;
-    if (tw < 0) {
-        tx = editorInfo.esmarkchnend;
-        tw = editorInfo.esmarkchn - editorInfo.esmarkchnend;
-    }
-    tw++;
-
-    ty = editorInfo.esmarkstart;
-    th = editorInfo.esmarkend - editorInfo.esmarkstart;
-    if (th < 0) {
-        ty = editorInfo.esmarkend;
-        th = editorInfo.esmarkstart - editorInfo.esmarkend;
-    }
-    th++;
-
-    *x = tx;
-    *y = ty;
-    *w = tw;
-    *h = th;
-}
-
-} // namespace
-
-
 void orderListPasteToCursor(GTOBJECT* gt) {
     int c;
     int oldlen = songlen[editorInfo.esnum][editorInfo.eschn];
@@ -1062,7 +1019,6 @@ void orderListPasteToCursor(GTOBJECT* gt) {
         songorder[editorInfo.esnum][editorInfo.eschn][songlen[editorInfo.esnum][editorInfo.eschn] + 1] =
             trackcopyrpos; // copying whole channel song list? then copy over loop position too
 }
-
 
 void orderListPasteToCursor_External(GTOBJECT* gt, bool insert, bool transpose_only) {
     if (copyExpandedSongValidFlag == 0) return;
@@ -1134,7 +1090,6 @@ void orderListDeleteRowAtCursor_External(int sng, int chn, int row) {
 
     songCompressedSize[sng][chn] = generateCompressedSongChannel(sng, chn, true);
 }
-
 
 void orderListInsert_External(GTOBJECT* gt) {
     int x, y, w, h;
