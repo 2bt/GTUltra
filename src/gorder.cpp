@@ -64,446 +64,446 @@ void orderlistcommands(GTOBJECT* gt, const EditorInput* input) {
 
     // ImGui order panel routes navigation/edits through the action layer; legacy
     // switches remain for hex entry and for the expanded order-list view.
-    if (!editorInfo.expandOrderListView) goto order_sync_view;
+    if (editorInfo.expandOrderListView) {
 
-    switch (jrawkey) {
-    case SDL_SCANCODE_UP:
-    case SDL_SCANCODE_DOWN:
-    case SDL_SCANCODE_LEFT:
-    case SDL_SCANCODE_RIGHT: win_enable_key_repeat(); break;
-    default:
-        if (!enablekeyrepeat) win_disable_key_repeat();
-    }
-
-    switch (jkey) {
-    case 'R':
-        if (editorInfo.expandOrderListView == 0) {
-            if (editorInfo.eseditpos < songlen[editorInfo.esnum][editorInfo.eschn]) {
-                songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] = REPEAT + 0x01;
-                editorInfo.escolumn                                                 = 1;
-            }
+        switch (jrawkey) {
+        case SDL_SCANCODE_UP:
+        case SDL_SCANCODE_DOWN:
+        case SDL_SCANCODE_LEFT:
+        case SDL_SCANCODE_RIGHT: win_enable_key_repeat(); break;
+        default:
+            if (!enablekeyrepeat) win_disable_key_repeat();
         }
-        break;
 
-    case '+':
-
-        if (editorInfo.expandOrderListView == 0) {
-            if (editorInfo.eseditpos < songlen[editorInfo.esnum][editorInfo.eschn]) {
-                songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] = TRANSUP;
-                editorInfo.escolumn                                                 = 1;
-            }
-        }
-        else {
-            if (songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] < 0xff) {
-                if (editorInfo.escolumn == 3) {
-                    songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] &= 0x7f;
-                    if ((songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] & 0x7f) ==
-                        0xf)
-                        songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos]--;
-
-                    updateTransposeToPlayingSong(gt);
+        switch (jkey) {
+        case 'R':
+            if (editorInfo.expandOrderListView == 0) {
+                if (editorInfo.eseditpos < songlen[editorInfo.esnum][editorInfo.eschn]) {
+                    songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] = REPEAT + 0x01;
+                    editorInfo.escolumn                                                 = 1;
                 }
             }
-        }
-        break;
+            break;
 
-    case '-':
-        if (editorInfo.expandOrderListView == 0) {
-            if (editorInfo.eseditpos < songlen[editorInfo.esnum][editorInfo.eschn]) {
-                songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] = TRANSDOWN + 0x0F;
-                editorInfo.escolumn                                                 = 1;
-            }
-        }
-        else {
-
-            if (songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] < 0xff) {
-                if (editorInfo.escolumn == 3) {
-                    songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] |= 0x80;
-                    updateTransposeToPlayingSong(gt);
-                }
-            }
-        }
-        break;
-
-    case '>':
-    case ')':
-    case ']': nextsong(gt); break;
-
-    case '<':
-    case '(':
-    case '[': prevsong(gt); break;
-    }
-    switch (jrawkey) {
-    case SDL_SCANCODE_1:
-    case SDL_SCANCODE_2:
-    case SDL_SCANCODE_3:
-    case SDL_SCANCODE_4:
-    case SDL_SCANCODE_5:
-    case SDL_SCANCODE_6:
-        if (shift_or_ctrl_pressed) {
-            int schn = editorInfo.eschn;
-            int tchn = 0;
-
-            editorInfo.esmarkchn    = -1;
-            editorInfo.esmarkchnend = -1;
-            if (jrawkey == SDL_SCANCODE_1) tchn = 0;
-            if (jrawkey == SDL_SCANCODE_2) tchn = 1;
-            if (jrawkey == SDL_SCANCODE_3) tchn = 2;
-            if (jrawkey == SDL_SCANCODE_4) tchn = 3;
-            if (jrawkey == SDL_SCANCODE_5) tchn = 4;
-            if (jrawkey == SDL_SCANCODE_6) tchn = 5;
-            if (schn != tchn) {
-                int lentemp                     = songlen[editorInfo.esnum][schn];
-                songlen[editorInfo.esnum][schn] = songlen[editorInfo.esnum][tchn];
-                songlen[editorInfo.esnum][tchn] = lentemp;
-
-                for (c = 0; c < MAX_SONGLEN + 2; c++) {
-                    unsigned char temp                   = songorder[editorInfo.esnum][schn][c];
-                    songorder[editorInfo.esnum][schn][c] = songorder[editorInfo.esnum][tchn][c];
-                    songorder[editorInfo.esnum][tchn][c] = temp;
-                }
-
-
-                // Do the same for expanded view..
-                lentemp                                 = songOrderLength[editorInfo.esnum][schn];
-                songOrderLength[editorInfo.esnum][schn] = songOrderLength[editorInfo.esnum][tchn];
-                songOrderLength[editorInfo.esnum][tchn] = lentemp;
-
-                for (c = 0; c < MAX_SONGLEN_EXPANDED; c++) {
-                    unsigned char temp                           = songOrderPatterns[editorInfo.esnum][schn][c];
-                    songOrderPatterns[editorInfo.esnum][schn][c] = songOrderPatterns[editorInfo.esnum][tchn][c];
-                    songOrderPatterns[editorInfo.esnum][tchn][c] = temp;
-
-                    short stemp                                   = songOrderTranspose[editorInfo.esnum][schn][c];
-                    songOrderTranspose[editorInfo.esnum][schn][c] = songOrderTranspose[editorInfo.esnum][tchn][c];
-                    songOrderTranspose[editorInfo.esnum][tchn][c] = stemp;
-                }
-            }
-        }
-        break;
-
-    case SDL_SCANCODE_X:
-        if (shift_or_ctrl_pressed) {
-            if (editorInfo.esmarkchn == -1) // no table selected. copy single row under cursor
-            {
-                editorInfo.esmarkchn   = editorInfo.eschn;
-                editorInfo.esmarkstart = editorInfo.eseditpos;
-                editorInfo.esmarkend   = editorInfo.esmarkstart;
-            }
-
-            if (editorInfo.esmarkchn != -1) {
-                int d = 0;
-
-                editorInfo.eschn = editorInfo.esmarkchn;
-                if (editorInfo.esmarkstart <= editorInfo.esmarkend) {
-                    editorInfo.eseditpos = editorInfo.esmarkstart;
-                    for (c = editorInfo.esmarkstart; c <= editorInfo.esmarkend; c++)
-                        trackcopybuffer[d++] = songorder[editorInfo.esnum][editorInfo.eschn][c];
-                    trackcopyrows = d;
-                }
-                else {
-                    editorInfo.eseditpos = editorInfo.esmarkend;
-                    for (c = editorInfo.esmarkend; c <= editorInfo.esmarkstart; c++)
-                        trackcopybuffer[d++] = songorder[editorInfo.esnum][editorInfo.eschn][c];
-                    trackcopyrows = d;
-                }
-                if (trackcopyrows == songlen[editorInfo.esnum][editorInfo.eschn]) {
-                    trackcopywhole = 1;
-                    trackcopyrpos  = songorder[editorInfo.esnum][editorInfo.eschn]
-                                             [songlen[editorInfo.esnum][editorInfo.eschn] + 1];
-                }
-                else trackcopywhole = 0;
-                for (c = 0; c < trackcopyrows; c++) deleteorder(gt);
-                editorInfo.esmarkchn    = -1;
-                editorInfo.esmarkchnend = -1;
-            }
-        }
-        break;
-
-    case SDL_SCANCODE_C:
-        if (shift_or_ctrl_pressed) {
-            if (editorInfo.expandOrderListView == 0) orderListCopyMarkedArea();
-            else orderListCopyMarkedArea_Expanded();
-        }
-        break;
-
-    case SDL_SCANCODE_V:
-        if (shift_or_ctrl_pressed) {
-            if (editorInfo.expandOrderListView == 0) orderListPasteToCursor(gt);
-            else {
-                int transposeOnly = 0;
-                if (editorInfo.escolumn > 2) transposeOnly++;
-                orderListPasteToCursor_External(gt, false, transposeOnly);
-            }
-        }
-        break;
-
-    case SDL_SCANCODE_I:
-        if (shift_or_ctrl_pressed) {
-            if (editorInfo.expandOrderListView) orderListPasteToCursor_External(gt, true, false);
-        }
-        break;
-
-    case SDL_SCANCODE_L:
-        if (shift_or_ctrl_pressed) {
-            if (editorInfo.esmarkchn == -1) {
-                if (editorInfo.expandOrderListView == 0) {
-                    editorInfo.esmarkend = songlen[editorInfo.esnum][editorInfo.eschn] - 1;
-                }
-                else {
-                    editorInfo.esmarkend = songOrderLength[editorInfo.esnum][editorInfo.eschn] - 1;
-                }
-                editorInfo.esmarkchn    = editorInfo.eschn;
-                editorInfo.esmarkchnend = editorInfo.esmarkchn;
-                editorInfo.esmarkstart  = 0;
-            }
-            else {
-                editorInfo.esmarkchn    = -1;
-                editorInfo.esmarkchnend = -1;
-            }
-        }
-        break;
-
-
-    case SDL_SCANCODE_SPACE:
-        if (!shift_or_ctrl_pressed) {
-            int c2 = getActualChannel(editorInfo.esnum, editorInfo.eschn); // 0-12
+        case '+':
 
             if (editorInfo.expandOrderListView == 0) {
-                if (editorInfo.eseditpos < songlen[editorInfo.esnum][editorInfo.eschn])
-                    gt->editorUndoInfo.editorInfo[c2].espos = editorInfo.eseditpos;
+                if (editorInfo.eseditpos < songlen[editorInfo.esnum][editorInfo.eschn]) {
+                    songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] = TRANSUP;
+                    editorInfo.escolumn                                                 = 1;
+                }
             }
             else {
-                if (editorInfo.eseditpos < songOrderLength[editorInfo.esnum][editorInfo.eschn])
-                    gt->editorUndoInfo.editorInfo[c2].espos = editorInfo.eseditpos;
+                if (songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] < 0xff) {
+                    if (editorInfo.escolumn == 3) {
+                        songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] &= 0x7f;
+                        if ((songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] & 0x7f) ==
+                            0xf)
+                            songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos]--;
+
+                        updateTransposeToPlayingSong(gt);
+                    }
+                }
             }
-            if (gt->editorUndoInfo.editorInfo[c2].esend < gt->editorUndoInfo.editorInfo[c2].espos)
-                gt->editorUndoInfo.editorInfo[c2].esend = 0;
+            break;
+
+        case '-':
+            if (editorInfo.expandOrderListView == 0) {
+                if (editorInfo.eseditpos < songlen[editorInfo.esnum][editorInfo.eschn]) {
+                    songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] = TRANSDOWN + 0x0F;
+                    editorInfo.escolumn                                                 = 1;
+                }
+            }
+            else {
+
+                if (songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] < 0xff) {
+                    if (editorInfo.escolumn == 3) {
+                        songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] |= 0x80;
+                        updateTransposeToPlayingSong(gt);
+                    }
+                }
+            }
+            break;
+
+        case '>':
+        case ')':
+        case ']': nextsong(gt); break;
+
+        case '<':
+        case '(':
+        case '[': prevsong(gt); break;
         }
-        else {
-            for (c = 0; c < editorInfo.maxSIDChannels; c++) {
-                int c2      = getActualChannel(editorInfo.esnum, c); // 0-12
-                int songNum = getActualSongNumber(editorInfo.esnum, c2);
-                int c3      = c2 % 6;
+        switch (jrawkey) {
+        case SDL_SCANCODE_1:
+        case SDL_SCANCODE_2:
+        case SDL_SCANCODE_3:
+        case SDL_SCANCODE_4:
+        case SDL_SCANCODE_5:
+        case SDL_SCANCODE_6:
+            if (shift_or_ctrl_pressed) {
+                int schn = editorInfo.eschn;
+                int tchn = 0;
+
+                editorInfo.esmarkchn    = -1;
+                editorInfo.esmarkchnend = -1;
+                if (jrawkey == SDL_SCANCODE_1) tchn = 0;
+                if (jrawkey == SDL_SCANCODE_2) tchn = 1;
+                if (jrawkey == SDL_SCANCODE_3) tchn = 2;
+                if (jrawkey == SDL_SCANCODE_4) tchn = 3;
+                if (jrawkey == SDL_SCANCODE_5) tchn = 4;
+                if (jrawkey == SDL_SCANCODE_6) tchn = 5;
+                if (schn != tchn) {
+                    int lentemp                     = songlen[editorInfo.esnum][schn];
+                    songlen[editorInfo.esnum][schn] = songlen[editorInfo.esnum][tchn];
+                    songlen[editorInfo.esnum][tchn] = lentemp;
+
+                    for (c = 0; c < MAX_SONGLEN + 2; c++) {
+                        unsigned char temp                   = songorder[editorInfo.esnum][schn][c];
+                        songorder[editorInfo.esnum][schn][c] = songorder[editorInfo.esnum][tchn][c];
+                        songorder[editorInfo.esnum][tchn][c] = temp;
+                    }
+
+
+                    // Do the same for expanded view..
+                    lentemp                                 = songOrderLength[editorInfo.esnum][schn];
+                    songOrderLength[editorInfo.esnum][schn] = songOrderLength[editorInfo.esnum][tchn];
+                    songOrderLength[editorInfo.esnum][tchn] = lentemp;
+
+                    for (c = 0; c < MAX_SONGLEN_EXPANDED; c++) {
+                        unsigned char temp                           = songOrderPatterns[editorInfo.esnum][schn][c];
+                        songOrderPatterns[editorInfo.esnum][schn][c] = songOrderPatterns[editorInfo.esnum][tchn][c];
+                        songOrderPatterns[editorInfo.esnum][tchn][c] = temp;
+
+                        short stemp                                   = songOrderTranspose[editorInfo.esnum][schn][c];
+                        songOrderTranspose[editorInfo.esnum][schn][c] = songOrderTranspose[editorInfo.esnum][tchn][c];
+                        songOrderTranspose[editorInfo.esnum][tchn][c] = stemp;
+                    }
+                }
+            }
+            break;
+
+        case SDL_SCANCODE_X:
+            if (shift_or_ctrl_pressed) {
+                if (editorInfo.esmarkchn == -1) // no table selected. copy single row under cursor
+                {
+                    editorInfo.esmarkchn   = editorInfo.eschn;
+                    editorInfo.esmarkstart = editorInfo.eseditpos;
+                    editorInfo.esmarkend   = editorInfo.esmarkstart;
+                }
+
+                if (editorInfo.esmarkchn != -1) {
+                    int d = 0;
+
+                    editorInfo.eschn = editorInfo.esmarkchn;
+                    if (editorInfo.esmarkstart <= editorInfo.esmarkend) {
+                        editorInfo.eseditpos = editorInfo.esmarkstart;
+                        for (c = editorInfo.esmarkstart; c <= editorInfo.esmarkend; c++)
+                            trackcopybuffer[d++] = songorder[editorInfo.esnum][editorInfo.eschn][c];
+                        trackcopyrows = d;
+                    }
+                    else {
+                        editorInfo.eseditpos = editorInfo.esmarkend;
+                        for (c = editorInfo.esmarkend; c <= editorInfo.esmarkstart; c++)
+                            trackcopybuffer[d++] = songorder[editorInfo.esnum][editorInfo.eschn][c];
+                        trackcopyrows = d;
+                    }
+                    if (trackcopyrows == songlen[editorInfo.esnum][editorInfo.eschn]) {
+                        trackcopywhole = 1;
+                        trackcopyrpos  = songorder[editorInfo.esnum][editorInfo.eschn]
+                                                 [songlen[editorInfo.esnum][editorInfo.eschn] + 1];
+                    }
+                    else trackcopywhole = 0;
+                    for (c = 0; c < trackcopyrows; c++) deleteorder(gt);
+                    editorInfo.esmarkchn    = -1;
+                    editorInfo.esmarkchnend = -1;
+                }
+            }
+            break;
+
+        case SDL_SCANCODE_C:
+            if (shift_or_ctrl_pressed) {
+                if (editorInfo.expandOrderListView == 0) orderListCopyMarkedArea();
+                else orderListCopyMarkedArea_Expanded();
+            }
+            break;
+
+        case SDL_SCANCODE_V:
+            if (shift_or_ctrl_pressed) {
+                if (editorInfo.expandOrderListView == 0) orderListPasteToCursor(gt);
+                else {
+                    int transposeOnly = 0;
+                    if (editorInfo.escolumn > 2) transposeOnly++;
+                    orderListPasteToCursor_External(gt, false, transposeOnly);
+                }
+            }
+            break;
+
+        case SDL_SCANCODE_I:
+            if (shift_or_ctrl_pressed) {
+                if (editorInfo.expandOrderListView) orderListPasteToCursor_External(gt, true, false);
+            }
+            break;
+
+        case SDL_SCANCODE_L:
+            if (shift_or_ctrl_pressed) {
+                if (editorInfo.esmarkchn == -1) {
+                    if (editorInfo.expandOrderListView == 0) {
+                        editorInfo.esmarkend = songlen[editorInfo.esnum][editorInfo.eschn] - 1;
+                    }
+                    else {
+                        editorInfo.esmarkend = songOrderLength[editorInfo.esnum][editorInfo.eschn] - 1;
+                    }
+                    editorInfo.esmarkchn    = editorInfo.eschn;
+                    editorInfo.esmarkchnend = editorInfo.esmarkchn;
+                    editorInfo.esmarkstart  = 0;
+                }
+                else {
+                    editorInfo.esmarkchn    = -1;
+                    editorInfo.esmarkchnend = -1;
+                }
+            }
+            break;
+
+
+        case SDL_SCANCODE_SPACE:
+            if (!shift_or_ctrl_pressed) {
+                int c2 = getActualChannel(editorInfo.esnum, editorInfo.eschn); // 0-12
 
                 if (editorInfo.expandOrderListView == 0) {
-                    if (editorInfo.eseditpos < songlen[songNum][c3])
+                    if (editorInfo.eseditpos < songlen[editorInfo.esnum][editorInfo.eschn])
                         gt->editorUndoInfo.editorInfo[c2].espos = editorInfo.eseditpos;
                 }
                 else {
-                    if (editorInfo.eseditpos < songOrderLength[songNum][c3])
+                    if (editorInfo.eseditpos < songOrderLength[editorInfo.esnum][editorInfo.eschn])
                         gt->editorUndoInfo.editorInfo[c2].espos = editorInfo.eseditpos;
                 }
                 if (gt->editorUndoInfo.editorInfo[c2].esend < gt->editorUndoInfo.editorInfo[c2].espos)
                     gt->editorUndoInfo.editorInfo[c2].esend = 0;
             }
-        }
-        break;
-
-    case SDL_SCANCODE_BACKSPACE:
-        if (!shift_or_ctrl_pressed) {
-            int c2 = getActualChannel(editorInfo.esnum, editorInfo.eschn); // 0-12
-
-            if ((gt->editorUndoInfo.editorInfo[c2].esend != editorInfo.eseditpos) &&
-                (editorInfo.eseditpos > gt->editorUndoInfo.editorInfo[c2].espos)) {
-                if (editorInfo.expandOrderListView == 0) {
-                    if (editorInfo.eseditpos < songlen[editorInfo.esnum][editorInfo.eschn])
-                        gt->editorUndoInfo.editorInfo[c2].esend = editorInfo.eseditpos;
-                }
-                else {
-                    if (editorInfo.eseditpos < songOrderLength[editorInfo.esnum][editorInfo.eschn])
-                        gt->editorUndoInfo.editorInfo[c2].esend = editorInfo.eseditpos;
-                }
-            }
-            else gt->editorUndoInfo.editorInfo[c2].esend = 0;
-        }
-        else {
-            int c2 = getActualChannel(editorInfo.esnum, editorInfo.eschn); // 0-12
-
-            if ((gt->editorUndoInfo.editorInfo[c2].esend != editorInfo.eseditpos) &&
-                (editorInfo.eseditpos > gt->editorUndoInfo.editorInfo[c2].espos)) {
+            else {
                 for (c = 0; c < editorInfo.maxSIDChannels; c++) {
-                    int c3          = c % 6;
-                    int playingSong = getActualSongNumber(editorInfo.esnum, c); // JP added this.
-                    c2              = getActualChannel(editorInfo.esnum, c);    // 0-12
+                    int c2      = getActualChannel(editorInfo.esnum, c); // 0-12
+                    int songNum = getActualSongNumber(editorInfo.esnum, c2);
+                    int c3      = c2 % 6;
 
                     if (editorInfo.expandOrderListView == 0) {
-                        if (editorInfo.eseditpos < songlen[playingSong][c3])
+                        if (editorInfo.eseditpos < songlen[songNum][c3])
+                            gt->editorUndoInfo.editorInfo[c2].espos = editorInfo.eseditpos;
+                    }
+                    else {
+                        if (editorInfo.eseditpos < songOrderLength[songNum][c3])
+                            gt->editorUndoInfo.editorInfo[c2].espos = editorInfo.eseditpos;
+                    }
+                    if (gt->editorUndoInfo.editorInfo[c2].esend < gt->editorUndoInfo.editorInfo[c2].espos)
+                        gt->editorUndoInfo.editorInfo[c2].esend = 0;
+                }
+            }
+            break;
+
+        case SDL_SCANCODE_BACKSPACE:
+            if (!shift_or_ctrl_pressed) {
+                int c2 = getActualChannel(editorInfo.esnum, editorInfo.eschn); // 0-12
+
+                if ((gt->editorUndoInfo.editorInfo[c2].esend != editorInfo.eseditpos) &&
+                    (editorInfo.eseditpos > gt->editorUndoInfo.editorInfo[c2].espos)) {
+                    if (editorInfo.expandOrderListView == 0) {
+                        if (editorInfo.eseditpos < songlen[editorInfo.esnum][editorInfo.eschn])
                             gt->editorUndoInfo.editorInfo[c2].esend = editorInfo.eseditpos;
                     }
                     else {
-                        if (editorInfo.eseditpos < songOrderLength[playingSong][c3])
+                        if (editorInfo.eseditpos < songOrderLength[editorInfo.esnum][editorInfo.eschn])
                             gt->editorUndoInfo.editorInfo[c2].esend = editorInfo.eseditpos;
                     }
                 }
+                else gt->editorUndoInfo.editorInfo[c2].esend = 0;
             }
             else {
-                for (c = 0; c < editorInfo.maxSIDChannels; c++) gt->editorUndoInfo.editorInfo[c].esend = 0;
-            }
-        }
-        break;
+                int c2 = getActualChannel(editorInfo.esnum, editorInfo.eschn); // 0-12
 
-    case SDL_SCANCODE_RETURN:
+                if ((gt->editorUndoInfo.editorInfo[c2].esend != editorInfo.eseditpos) &&
+                    (editorInfo.eseditpos > gt->editorUndoInfo.editorInfo[c2].espos)) {
+                    for (c = 0; c < editorInfo.maxSIDChannels; c++) {
+                        int c3          = c % 6;
+                        int playingSong = getActualSongNumber(editorInfo.esnum, c); // JP added this.
+                        c2              = getActualChannel(editorInfo.esnum, c);    // 0-12
 
-        if (editorInfo.expandOrderListView == 0) ret = handleEnterInCompressedView(gt);
-        else ret = handleEnterInExpandedView(gt);
-
-        if (ret) {
-            editorInfo.epmarkchn = -1;
-            editorInfo.epchn     = editorInfo.eschn;
-            editorInfo.epcolumn  = 0;
-            editorInfo.eppos     = 0;
-            editorInfo.epview    = -VISIBLEPATTROWS / 2;
-            editorInfo.editmode  = EditMode::Pattern;
-            if (editorInfo.epchn == editorInfo.epmarkchn) editorInfo.epmarkchn = -1;
-        }
-        break;
-
-    case SDL_SCANCODE_DELETE:
-        if (editorInfo.expandOrderListView == 0) {
-            editorInfo.esmarkchn    = -1;
-            editorInfo.esmarkchnend = -1;
-            deleteorder(gt);
-        }
-        else orderListDelete_External();
-
-        playUntilEnd(editorInfo.esnum);
-        break;
-
-    case SDL_SCANCODE_INSERT:
-        if (editorInfo.expandOrderListView == 0) {
-            editorInfo.esmarkchn    = -1;
-            editorInfo.esmarkchnend = -1;
-            insertorder(0, gt);
-        }
-        else orderListInsert_External(gt);
-        playUntilEnd(editorInfo.esnum);
-        break;
-
-    case SDL_SCANCODE_HOME:
-        if (editorInfo.expandOrderListView == 0) {
-            if (songlen[editorInfo.esnum][editorInfo.eschn]) {
-                while ((editorInfo.eseditpos != 0) || (editorInfo.escolumn != 0)) orderleft();
-            }
-        }
-        else {
-            editorInfo.eseditpos = 0;
-        }
-        break;
-
-    case SDL_SCANCODE_END:
-        if (editorInfo.expandOrderListView == 0) {
-            while (editorInfo.eseditpos != songlen[editorInfo.esnum][editorInfo.eschn] + 1) orderright();
-        }
-        else {
-            editorInfo.eseditpos = songOrderLength[editorInfo.esnum][editorInfo.eschn]; // 1.3.4
-        }
-        break;
-
-    case SDL_SCANCODE_PAGEUP:
-        if (editorInfo.expandOrderListView == 0) {
-            for (scrrep = PGUPDNREPEAT * 2; scrrep; scrrep--) orderleft();
-        }
-        else {
-            editorInfo.eseditpos -= EXTENDEDVISIBLEORDERLIST;
-            if (editorInfo.eseditpos < 0) editorInfo.eseditpos = 0;
-        }
-        break;
-
-    case SDL_SCANCODE_PAGEDOWN:
-        if (editorInfo.expandOrderListView == 0) {
-            for (scrrep = PGUPDNREPEAT * 2; scrrep; scrrep--) orderright();
-        }
-        else {
-            editorInfo.eseditpos += EXTENDEDVISIBLEORDERLIST;
-            if (editorInfo.eseditpos > 0x7ff) editorInfo.eseditpos = 0x7ff;
-        }
-        break;
-
-    case SDL_SCANCODE_LEFT:
-        if (editorInfo.expandOrderListView == 0) {
-            if (!ctrl_pressed) orderleft();
-        }
-        else {
-            if (!ctrl_pressed) order_col_left_expanded(gt);
-        }
-
-        break;
-
-    case SDL_SCANCODE_RIGHT:
-        if (editorInfo.expandOrderListView == 0) {
-            if (!ctrl_pressed) orderright();
-        }
-        else {
-            if (!ctrl_pressed) order_col_right_expanded(gt);
-        }
-        break;
-
-    case SDL_SCANCODE_UP:
-        if (editorInfo.expandOrderListView == 0) {
-            editorInfo.eschn--;
-            if (editorInfo.eschn < 0) editorInfo.eschn = maxCh - 1;
-            if ((editorInfo.eseditpos == songlen[editorInfo.esnum][editorInfo.eschn]) ||
-                (editorInfo.eseditpos > songlen[editorInfo.esnum][editorInfo.eschn] + 1)) {
-                editorInfo.eseditpos = songlen[editorInfo.esnum][editorInfo.eschn] + 1;
-                editorInfo.escolumn  = 0;
-            }
-            setMasterLoopChannel(gt, "debug_3");
-            if (shift_or_ctrl_pressed) {
-                editorInfo.esmarkchn    = -1;
-                editorInfo.esmarkchnend = -1;
-            }
-        }
-        else {
-            if (shift_or_ctrl_pressed) {
-                if (editorInfo.esmarkchn == -1) {
-                    editorInfo.esmarkchn = editorInfo.esmarkchnend = editorInfo.eschn;
-                    editorInfo.esmarkstart = editorInfo.esmarkend = editorInfo.eseditpos;
+                        if (editorInfo.expandOrderListView == 0) {
+                            if (editorInfo.eseditpos < songlen[playingSong][c3])
+                                gt->editorUndoInfo.editorInfo[c2].esend = editorInfo.eseditpos;
+                        }
+                        else {
+                            if (editorInfo.eseditpos < songOrderLength[playingSong][c3])
+                                gt->editorUndoInfo.editorInfo[c2].esend = editorInfo.eseditpos;
+                        }
+                    }
+                }
+                else {
+                    for (c = 0; c < editorInfo.maxSIDChannels; c++) gt->editorUndoInfo.editorInfo[c].esend = 0;
                 }
             }
+            break;
 
-            if (editorInfo.eseditpos > 0) {
+        case SDL_SCANCODE_RETURN:
 
-                editorInfo.eseditpos--;
-                if (shift_or_ctrl_pressed) editorInfo.esmarkend = editorInfo.eseditpos;
+            if (editorInfo.expandOrderListView == 0) ret = handleEnterInCompressedView(gt);
+            else ret = handleEnterInExpandedView(gt);
+
+            if (ret) {
+                editorInfo.epmarkchn = -1;
+                editorInfo.epchn     = editorInfo.eschn;
+                editorInfo.epcolumn  = 0;
+                editorInfo.eppos     = 0;
+                editorInfo.epview    = -VISIBLEPATTROWS / 2;
+                editorInfo.editmode  = EditMode::Pattern;
+                if (editorInfo.epchn == editorInfo.epmarkchn) editorInfo.epmarkchn = -1;
             }
-        }
-        break;
+            break;
 
-    case SDL_SCANCODE_DOWN:
-
-        if (editorInfo.expandOrderListView == 0) {
-            editorInfo.eschn++;
-            if (editorInfo.eschn >= maxCh) editorInfo.eschn = 0;
-            if ((editorInfo.eseditpos == songlen[editorInfo.esnum][editorInfo.eschn]) ||
-                (editorInfo.eseditpos > songlen[editorInfo.esnum][editorInfo.eschn] + 1)) {
-                editorInfo.eseditpos = songlen[editorInfo.esnum][editorInfo.eschn] + 1;
-                editorInfo.escolumn  = 0;
-            }
-            setMasterLoopChannel(gt, "debug_4");
-
-            if (shift_or_ctrl_pressed) {
+        case SDL_SCANCODE_DELETE:
+            if (editorInfo.expandOrderListView == 0) {
                 editorInfo.esmarkchn    = -1;
                 editorInfo.esmarkchnend = -1;
+                deleteorder(gt);
             }
-        }
-        else {
-            if (shift_or_ctrl_pressed) {
-                if (editorInfo.esmarkchn == -1) {
-                    editorInfo.esmarkchn = editorInfo.esmarkchnend = editorInfo.eschn;
-                    editorInfo.esmarkstart = editorInfo.esmarkend = editorInfo.eseditpos;
+            else orderListDelete_External();
+
+            playUntilEnd(editorInfo.esnum);
+            break;
+
+        case SDL_SCANCODE_INSERT:
+            if (editorInfo.expandOrderListView == 0) {
+                editorInfo.esmarkchn    = -1;
+                editorInfo.esmarkchnend = -1;
+                insertorder(0, gt);
+            }
+            else orderListInsert_External(gt);
+            playUntilEnd(editorInfo.esnum);
+            break;
+
+        case SDL_SCANCODE_HOME:
+            if (editorInfo.expandOrderListView == 0) {
+                if (songlen[editorInfo.esnum][editorInfo.eschn]) {
+                    while ((editorInfo.eseditpos != 0) || (editorInfo.escolumn != 0)) orderleft();
                 }
             }
-
-            if (editorInfo.eseditpos < 0x7ff) {
-                editorInfo.eseditpos++;
-                if (shift_or_ctrl_pressed) editorInfo.esmarkend = editorInfo.eseditpos;
+            else {
+                editorInfo.eseditpos = 0;
             }
+            break;
+
+        case SDL_SCANCODE_END:
+            if (editorInfo.expandOrderListView == 0) {
+                while (editorInfo.eseditpos != songlen[editorInfo.esnum][editorInfo.eschn] + 1) orderright();
+            }
+            else {
+                editorInfo.eseditpos = songOrderLength[editorInfo.esnum][editorInfo.eschn]; // 1.3.4
+            }
+            break;
+
+        case SDL_SCANCODE_PAGEUP:
+            if (editorInfo.expandOrderListView == 0) {
+                for (scrrep = PGUPDNREPEAT * 2; scrrep; scrrep--) orderleft();
+            }
+            else {
+                editorInfo.eseditpos -= EXTENDEDVISIBLEORDERLIST;
+                if (editorInfo.eseditpos < 0) editorInfo.eseditpos = 0;
+            }
+            break;
+
+        case SDL_SCANCODE_PAGEDOWN:
+            if (editorInfo.expandOrderListView == 0) {
+                for (scrrep = PGUPDNREPEAT * 2; scrrep; scrrep--) orderright();
+            }
+            else {
+                editorInfo.eseditpos += EXTENDEDVISIBLEORDERLIST;
+                if (editorInfo.eseditpos > 0x7ff) editorInfo.eseditpos = 0x7ff;
+            }
+            break;
+
+        case SDL_SCANCODE_LEFT:
+            if (editorInfo.expandOrderListView == 0) {
+                if (!ctrl_pressed) orderleft();
+            }
+            else {
+                if (!ctrl_pressed) order_col_left_expanded(gt);
+            }
+
+            break;
+
+        case SDL_SCANCODE_RIGHT:
+            if (editorInfo.expandOrderListView == 0) {
+                if (!ctrl_pressed) orderright();
+            }
+            else {
+                if (!ctrl_pressed) order_col_right_expanded(gt);
+            }
+            break;
+
+        case SDL_SCANCODE_UP:
+            if (editorInfo.expandOrderListView == 0) {
+                editorInfo.eschn--;
+                if (editorInfo.eschn < 0) editorInfo.eschn = maxCh - 1;
+                if ((editorInfo.eseditpos == songlen[editorInfo.esnum][editorInfo.eschn]) ||
+                    (editorInfo.eseditpos > songlen[editorInfo.esnum][editorInfo.eschn] + 1)) {
+                    editorInfo.eseditpos = songlen[editorInfo.esnum][editorInfo.eschn] + 1;
+                    editorInfo.escolumn  = 0;
+                }
+                setMasterLoopChannel(gt, "debug_3");
+                if (shift_or_ctrl_pressed) {
+                    editorInfo.esmarkchn    = -1;
+                    editorInfo.esmarkchnend = -1;
+                }
+            }
+            else {
+                if (shift_or_ctrl_pressed) {
+                    if (editorInfo.esmarkchn == -1) {
+                        editorInfo.esmarkchn = editorInfo.esmarkchnend = editorInfo.eschn;
+                        editorInfo.esmarkstart = editorInfo.esmarkend = editorInfo.eseditpos;
+                    }
+                }
+
+                if (editorInfo.eseditpos > 0) {
+
+                    editorInfo.eseditpos--;
+                    if (shift_or_ctrl_pressed) editorInfo.esmarkend = editorInfo.eseditpos;
+                }
+            }
+            break;
+
+        case SDL_SCANCODE_DOWN:
+
+            if (editorInfo.expandOrderListView == 0) {
+                editorInfo.eschn++;
+                if (editorInfo.eschn >= maxCh) editorInfo.eschn = 0;
+                if ((editorInfo.eseditpos == songlen[editorInfo.esnum][editorInfo.eschn]) ||
+                    (editorInfo.eseditpos > songlen[editorInfo.esnum][editorInfo.eschn] + 1)) {
+                    editorInfo.eseditpos = songlen[editorInfo.esnum][editorInfo.eschn] + 1;
+                    editorInfo.escolumn  = 0;
+                }
+                setMasterLoopChannel(gt, "debug_4");
+
+                if (shift_or_ctrl_pressed) {
+                    editorInfo.esmarkchn    = -1;
+                    editorInfo.esmarkchnend = -1;
+                }
+            }
+            else {
+                if (shift_or_ctrl_pressed) {
+                    if (editorInfo.esmarkchn == -1) {
+                        editorInfo.esmarkchn = editorInfo.esmarkchnend = editorInfo.eschn;
+                        editorInfo.esmarkstart = editorInfo.esmarkend = editorInfo.eseditpos;
+                    }
+                }
+
+                if (editorInfo.eseditpos < 0x7ff) {
+                    editorInfo.eseditpos++;
+                    if (shift_or_ctrl_pressed) editorInfo.esmarkend = editorInfo.eseditpos;
+                }
+            }
+            break;
         }
-        break;
     }
 
-order_sync_view:
     if (editorInfo.eseditpos - editorInfo.esview < 0) {
         editorInfo.esview = editorInfo.eseditpos;
     }
