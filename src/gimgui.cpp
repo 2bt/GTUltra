@@ -300,6 +300,13 @@ constexpr float kPanelBodyPad = 6.0f;
 constexpr float kSongFormPadY = 6.0f;
 constexpr float kSongLabelGap = 10.0f;
 
+// A few px past the raw text width for the instrument name field; the panel-
+// width math and the draw share this so they can't drift apart.
+constexpr float kInstrNamePad = 4.0f;
+// Horizontal gap between the side-by-side SID table columns (the ItemSpacing.x
+// the tables draw pushes); shared with the panel-width math.
+constexpr float kTableColGap = 2.0f;
+
 // ImGui resets CursorPos.x to the window edge on newline (Dummy, Separator, …).
 void gimgui_snap_body_pad_x() { ImGui::SetCursorPosX(kPanelBodyPad); }
 
@@ -367,25 +374,30 @@ float gimgui_song_panel_height() {
 // Fixed right-side panel widths (content-driven, not % of window).
 float gimgui_instruments_grid_width() {
     const float charW = gimgui_mono_advance();
-    return gimgui_text_width(3) + gimgui_text_width(gtui::INSTR_NAME_MAX) + charW +
+    return gimgui_text_width(3) + gimgui_text_width(gtui::INSTR_NAME_MAX) + kInstrNamePad + charW +
            (float)gtui::INSTR_FIELDS * gimgui_text_width(3);
 }
 
-// One bordered table column: 8-char grid + vertical scrollbar + child chrome.
+// One bordered table column: the 8-char grid, its vertical scrollbar, and the
+// bordered child's own chrome (WindowPadding on both sides + the two borders).
 float gimgui_table_column_width() {
     const ImGuiStyle& style = ImGui::GetStyle();
-    return gimgui_text_width(8) + style.ScrollbarSize + 1;
+    return gimgui_text_width(8) + style.ScrollbarSize + 2.0f * style.WindowPadding.x +
+           2.0f * style.ChildBorderSize;
 }
 
 
 float gimgui_tables_row_width() {
     const int   n    = gtui::table_count();
     const float colW = gimgui_table_column_width();
-    // const float gap = ImGui::GetStyle().ItemSpacing.x;
-    return n * colW;
+    return n * colW + (float)(n > 0 ? n - 1 : 0) * kTableColGap;
 }
 
-float gimgui_instruments_panel_width() { return gimgui_instruments_grid_width() + kPanelBodyPad * 2.0f; }
+float gimgui_instruments_panel_width() {
+    // + ScrollbarSize: the 64-instrument list scrolls vertically, and that
+    // scrollbar sits inside the panel, narrowing the content region.
+    return gimgui_instruments_grid_width() + ImGui::GetStyle().ScrollbarSize + kPanelBodyPad * 2.0f;
+}
 
 float gimgui_tables_panel_width() { return gimgui_tables_row_width() + kPanelBodyPad * 2.0f; }
 
@@ -810,7 +822,7 @@ void gimgui_draw_tables(ImVec2 pos, ImVec2 size) {
         markHi  = tmp;
     }
 
-    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(2, 2));
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(kTableColGap, 2));
     for (int t = 0; t < gtui::table_count(); t++) {
         if (t) ImGui::SameLine();
         ImGui::PushID(t);
@@ -1297,7 +1309,7 @@ void gimgui_draw_instruments(ImVec2 pos, ImVec2 size) {
     const float charW   = gimgui_mono_advance();
     const float lineH   = ImGui::GetTextLineHeight();
     const float idxW    = gimgui_text_width(3);
-    const float nameW   = gimgui_text_width(gtui::INSTR_NAME_MAX) + 4.0f;
+    const float nameW   = gimgui_text_width(gtui::INSTR_NAME_MAX) + kInstrNamePad;
     const float nameGap = charW; // one char between name and AD (hex cols use 3 = "XX ")
     const float hexW    = gimgui_text_width(3);
     const float totalW  = gimgui_instruments_grid_width();
