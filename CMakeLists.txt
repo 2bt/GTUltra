@@ -267,6 +267,16 @@ target_include_directories(
 target_link_libraries(gtultra PRIVATE imgui)
 target_include_directories(gtultra PRIVATE "${SRC}/asm" ${SDL2_INCLUDE_DIRS})
 
+# Windows: compile the application icon into the executable via the resource
+# compiler (MSVC rc / MinGW windres). gt2stereo.rc references gt2stereo.ico
+# relatively; the RC compiler resolves it against the .rc's own directory.
+# No-op elsewhere, so the Linux/SDL build is unaffected. The in-window icon is
+# still set at runtime from the embedded goat32.png (see load_window_icon()).
+if(WIN32)
+    enable_language(RC)
+    target_sources(gtultra PRIVATE "${SRC}/gt2stereo.rc")
+endif()
+
 # Standalone relocator/exporter (includes greloc.cpp with GT2RELOC).
 # gplatform calls gimgui_*; provide empty stubs (no ImGui UI here).
 add_executable(gt2reloc "${SRC}/gt2reloc.cpp" "${SRC}/gimgui_stubs.cpp")
