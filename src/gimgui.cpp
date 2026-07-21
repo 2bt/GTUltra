@@ -13,11 +13,10 @@
 #include "embed.hpp"
 #include "gactions.hpp"
 #include "gfile.hpp"
-#include "ggfx.hpp"
 #include "ghelp.hpp"
 #include "guicolors.hpp"
 #include "guimodel.hpp" // SDL-free bridge to the legacy model
-#include "gwin.hpp"
+#include "gplatform.hpp"
 #include "imgui.h"
 #include "log.hpp"
 

@@ -157,13 +157,11 @@ add_library(
 )
 target_include_directories(gtasm PUBLIC "${SRC}/asm")
 
-# gplatform - SDL2 window / present / input / audio / endian helpers
+# gplatform - SDL2 window / renderer / input / audio, plus endian helpers
 add_library(
     gplatform
     STATIC
-    "${SRC}/gwin.cpp"
-    "${SRC}/ggfx.cpp"
-    "${SRC}/gaudio.cpp"
+    "${SRC}/gplatform.cpp"
     "${SRC}/embed.cpp"
     "${SRC}/gendian.cpp"
 )

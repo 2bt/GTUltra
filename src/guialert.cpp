@@ -4,7 +4,7 @@
 
 #include "guialert.hpp"
 
-#include "gwin.hpp"
+#include "gplatform.hpp"
 #include "log.hpp"
 
 #include <SDL.h>
