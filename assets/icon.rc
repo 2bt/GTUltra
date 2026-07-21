@@ -1,0 +1,3 @@
+// Windows application icon, compiled by the resource compiler (see
+// CMakeLists.txt, WIN32 branch). Resource id 1 = the executable's icon.
+1 ICON "icon.ico"

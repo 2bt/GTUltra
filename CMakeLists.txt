@@ -268,13 +268,12 @@ target_link_libraries(gtultra PRIVATE imgui)
 target_include_directories(gtultra PRIVATE "${SRC}/asm" ${SDL2_INCLUDE_DIRS})
 
 # Windows: compile the application icon into the executable via the resource
-# compiler (MSVC rc / MinGW windres). gt2stereo.rc references gt2stereo.ico
-# relatively; the RC compiler resolves it against the .rc's own directory.
-# No-op elsewhere, so the Linux/SDL build is unaffected. The in-window icon is
-# set at runtime from the embedded icon128.rgba (see load_window_icon()).
+# compiler (MSVC rc / MinGW windres). assets/icon.rc references icon.ico in the
+# same directory. No-op elsewhere, so the Linux/SDL build is unaffected. The
+# in-window icon is set at runtime from embedded icon128.rgba (load_window_icon).
 if(WIN32)
     enable_language(RC)
-    target_sources(gtultra PRIVATE "${SRC}/gt2stereo.rc")
+    target_sources(gtultra PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/assets/icon.rc")
 endif()
 
 # Standalone relocator/exporter (includes greloc.cpp with GT2RELOC).
