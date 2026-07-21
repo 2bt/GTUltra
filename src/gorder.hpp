@@ -6,8 +6,6 @@
 
 #include <cstdint>
 
-extern int instrumentCount[MAX_INSTR];
-
 int  calculateLoopInfo2(int songNum, int channelNum, int startSongPos, GTOBJECT* gtloop);
 int  calcStartofInterPatternLoop(int songNum, int channelNum, int startSongPos, GTOBJECT* gtloop);
 void setMasterLoopChannel(GTOBJECT* gt, const char* debugText);

@@ -8,6 +8,20 @@
 
 namespace {
 
+// gorder-local state.
+unsigned char trackcopybuffer[MAX_SONGLEN + 2];
+int           trackcopyrows = 0;
+int           trackcopywhole;
+int           trackcopyrpos;
+int           lastSong = -1;
+int           tempPatternMin  = 0;
+int           tempPatternSec  = 0;
+int           tempPatterFrame = 0;
+int           pattInstrumentCount[MAX_PATT][MAX_INSTR];
+int           instrumentCount[MAX_INSTR];
+int           firstInstrumentPattern[MAX_INSTR];
+int           patternChecked[MAX_PATT];
+
 // gorder-local helpers (definitions further down are wrapped in this same
 // anonymous namespace); forward-declared here because orderlistcommands()
 // above uses several of them before their definitions.
@@ -26,11 +40,6 @@ int order_expanded_max_channels() {
 }
 
 } // namespace
-
-unsigned char trackcopybuffer[MAX_SONGLEN + 2];
-int           trackcopyrows = 0;
-int           trackcopywhole;
-int           trackcopyrpos;
 
 void orderlistcommands(GTOBJECT* gt, const EditorInput* input) {
     const EditorInput in      = input ? *input : editor_input_snapshot();
@@ -672,7 +681,6 @@ void prevsong(GTOBJECT* gt) {
     //		setMasterLoopChannel(gt, "prevsong");
 }
 
-int  lastSong = -1;
 void songchange(GTOBJECT* gt, bool reset_editing_positions) {
     int c;
     int s = editorInfo.esnum / 2; // JP 9 or 12 channel song only
@@ -801,9 +809,6 @@ void updateviewtopos(GTOBJECT* gt) {
     }
 }
 
-int tempPatternMin  = 0;
-int tempPatternSec  = 0;
-int tempPatterFrame = 0;
 
 
 int calcStartofInterPatternLoop(int songNum, int channelNum, int startSongPos, GTOBJECT* gtloop) {
@@ -1116,10 +1121,6 @@ void orderSelectPatternsFromSelected(GTOBJECT* gt) {
 }
 
 
-int pattInstrumentCount[MAX_PATT][MAX_INSTR];
-int instrumentCount[MAX_INSTR];
-int firstInstrumentPattern[MAX_INSTR];
-int patternChecked[MAX_PATT];
 
 void countInstruments() {
     for (int p = 0; p < MAX_PATT; p++) {
