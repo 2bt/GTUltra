@@ -144,9 +144,14 @@ float    modal_opacity  = 1.0f;
 void load_window_icon() {
     const auto icon = embed::get(embed::Id::window_icon);
 
-    // goat32.png is a BMP payload (historical name).
-    SDL_RWops*   rw      = SDL_RWFromConstMem(icon.data, static_cast<int>(icon.size));
-    SDL_Surface* surface = SDL_LoadBMP_RW(rw, 1);
+    // 128x128 RGBA8888, decoded from assets/icon.ico into assets/icon128.rgba.
+    constexpr int size = 128;
+    if (icon.size < static_cast<size_t>(size) * size * 4) return;
+
+    // SDL_SetWindowIcon copies the pixels, so the wrapper can be freed
+    // afterwards and the const embed data is never written.
+    SDL_Surface* surface = SDL_CreateRGBSurfaceWithFormatFrom(
+        const_cast<uint8_t*>(icon.data), size, size, 32, size * 4, SDL_PIXELFORMAT_RGBA32);
     if (surface) {
         SDL_SetWindowIcon(win_window, surface);
         SDL_FreeSurface(surface);

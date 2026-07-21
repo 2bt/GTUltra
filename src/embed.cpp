@@ -16,7 +16,7 @@ constexpr std::array<embed::Blob, static_cast<size_t>(embed::Id::count)> k_blobs
     { k_bytes_altplayer9_s, k_size_altplayer9_s },
     { k_bytes_player12_s, k_size_player12_s },
     { k_bytes_altplayer12_s, k_size_altplayer12_s },
-    { k_bytes_goat32_png, k_size_goat32_png },
+    { k_bytes_icon128_rgba, k_size_icon128_rgba },
     { k_bytes_font_otf, k_size_font_otf },
 } };
 

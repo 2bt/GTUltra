@@ -90,7 +90,7 @@ set(EMBED_INPUTS
     "${CMAKE_CURRENT_SOURCE_DIR}/assets/altplayer9.s"
     "${CMAKE_CURRENT_SOURCE_DIR}/assets/player12.s"
     "${CMAKE_CURRENT_SOURCE_DIR}/assets/altplayer12.s"
-    "${CMAKE_CURRENT_SOURCE_DIR}/assets/goat32.png"
+    "${CMAKE_CURRENT_SOURCE_DIR}/assets/icon128.rgba"
     "${CMAKE_CURRENT_SOURCE_DIR}/assets/font.otf"
 )
 
@@ -271,7 +271,7 @@ target_include_directories(gtultra PRIVATE "${SRC}/asm" ${SDL2_INCLUDE_DIRS})
 # compiler (MSVC rc / MinGW windres). gt2stereo.rc references gt2stereo.ico
 # relatively; the RC compiler resolves it against the .rc's own directory.
 # No-op elsewhere, so the Linux/SDL build is unaffected. The in-window icon is
-# still set at runtime from the embedded goat32.png (see load_window_icon()).
+# set at runtime from the embedded icon128.rgba (see load_window_icon()).
 if(WIN32)
     enable_language(RC)
     target_sources(gtultra PRIVATE "${SRC}/gt2stereo.rc")
