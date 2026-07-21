@@ -416,7 +416,8 @@ void orderlistcommands(GTOBJECT* gt, const EditorInput* input) {
             }
             else {
                 editorInfo.eseditpos += EXTENDEDVISIBLEORDERLIST;
-                if (editorInfo.eseditpos > 0x7ff) editorInfo.eseditpos = 0x7ff;
+                if (editorInfo.eseditpos > MAX_SONGLEN_EXPANDED - 1)
+                    editorInfo.eseditpos = MAX_SONGLEN_EXPANDED - 1;
             }
             break;
 
@@ -495,7 +496,7 @@ void orderlistcommands(GTOBJECT* gt, const EditorInput* input) {
                     }
                 }
 
-                if (editorInfo.eseditpos < 0x7ff) {
+                if (editorInfo.eseditpos < MAX_SONGLEN_EXPANDED - 1) {
                     editorInfo.eseditpos++;
                     if (shift_or_ctrl_pressed) editorInfo.esmarkend = editorInfo.eseditpos;
                 }
@@ -1187,7 +1188,7 @@ void calculateTotalInstrumentsFromAllPatterns() {
 
 void countInstrumentsInPattern(int pat) {
 
-    if (pat >= 208) {
+    if (pat >= MAX_PATT) {
         printf("ERROR!  pattern %x \n", pat);
         return;
     }
@@ -1198,7 +1199,7 @@ void countInstrumentsInPattern(int pat) {
     for (int p = 0; p < pattlen[pat]; p++) {
         int instr = pattern[pat][(p * 4) + 1];
         if (instr != 0) {
-            if (instr >= 64 || pat >= 208) {
+            if (instr >= MAX_INSTR || pat >= MAX_PATT) {
                 printf("ERROR! Instrument %x in pattern %x position %x\n", instr, pat, p);
             }
             else pattInstrumentCount[pat][instr]++;
@@ -1245,11 +1246,11 @@ void orderListHandleHexInputOriginalView(GTOBJECT* gt) {
 
         case 1:
             songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] &= 0xf0;
-            if ((songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] & 0xf0) == 0xd0) {
+            if ((songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] & 0xf0) == REPEAT) {
                 hexnybble--;
                 if (hexnybble < 0) hexnybble = 0xf;
             }
-            if ((songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] & 0xf0) == 0xe0) {
+            if ((songorder[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] & 0xf0) == TRANSDOWN) {
                 hexnybble = 16 - hexnybble;
                 hexnybble &= 0xf;
             }
@@ -1378,8 +1379,8 @@ void orderListHandleHexInputExpandedView(GTOBJECT* gt) {
             if (temp == 0xff) editorInfo.escolumn = tempColumn;
             else songOrderTranspose[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] = 0;
         }
-        else if (songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] > 0xcf) {
-            if (songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] < 0xf0) {
+        else if (songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] >= REPEAT) {
+            if (songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] < TRANSUP) {
                 songOrderPatterns[editorInfo.esnum][editorInfo.eschn][editorInfo.eseditpos] = temp;
                 editorInfo.escolumn                                                         = tempColumn;
             }
