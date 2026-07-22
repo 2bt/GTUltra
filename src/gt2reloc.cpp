@@ -23,7 +23,10 @@
 #endif
 
 #include "goattrk2.hpp"
+#include "gpattern.hpp"
 #include "gplatform.hpp"
+#include "gsong.hpp"
+#include "gsound.hpp"
 
 namespace {
 

@@ -4,8 +4,13 @@
 //
 
 #include "goattrk2.hpp"
-#include "gimgui.hpp"
+#include "gdisplay.hpp"
 #include "gfollow.hpp"
+#include "gimgui.hpp"
+#include "ginput.hpp"
+#include "gpattern.hpp"
+#include "gplatform.hpp"
+#include "gsound.hpp"
 
 const char* notename[] = {
     "C-0", "C#0", "D-0", "D#0", "E-0", "F-0", "F#0", "G-0", "G#0", "A-0", "A#0", "B-0", "C-1", "C#1", "D-1", "D#1",

@@ -6,10 +6,12 @@
 #include "goattrk2.hpp"
 #include "gactions.hpp"
 #include "ginfo.hpp"
+#include "ginstr.hpp"
 #include "gmidi.hpp"
 #include "gsong.hpp"
 #include "gorder.hpp"
 #include "gplay.hpp"
+#include "gundo.hpp"
 
 #include <algorithm>
 #include <cstdarg>

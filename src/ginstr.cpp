@@ -5,6 +5,9 @@
 #include "goattrk2.hpp"
 #include "gimgui.hpp"
 #include "ginstr.hpp"
+#include "gpattern.hpp"
+#include "gsong.hpp"
+#include "gtable.hpp"
 #include "guimodel.hpp"
 
 namespace {

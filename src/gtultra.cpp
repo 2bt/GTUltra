@@ -25,7 +25,9 @@
 
 #include <stdio.h>
 #include <dirent.h>
+#include <sys/stat.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "goattrk2.hpp"
 #include "gactions.hpp"
@@ -33,6 +35,17 @@
 
 #include "gimgui.hpp"
 #include "guialert.hpp"
+#include "ginput.hpp"
+#include "ginstr.hpp"
+#include "gorder.hpp"
+#include "gpattern.hpp"
+#include "gsid.hpp"
+#include "gsong.hpp"
+#include "gsound.hpp"
+#include "gtable.hpp"
+#include "gundo.hpp"
+#include "gdisplay.hpp"
+#include "gfiledialog.hpp"
 
 bool songExportSuccessFlag = false;
 int  sidAddr1              = 0xd400;

@@ -3,8 +3,14 @@
 //
 
 #include "goattrk2.hpp"
+#include "gorder.hpp"
+#include "gpattern.hpp"
+#include "gsong.hpp"
 #include "gundo.hpp"
 #include "guimodel.hpp"
+
+#include <cstdlib>
+#include <cstring>
 
 namespace {
 

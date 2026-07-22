@@ -8,6 +8,7 @@
 #include "gimgui.hpp"
 #include "goattrk2.hpp"
 #include "gpattern.hpp"
+#include "gplatform.hpp"
 #include "greloc.hpp"
 #include "gsong.hpp"
 #include "log.hpp"

@@ -5,6 +5,9 @@
 #include "goattrk2.hpp"
 #include "gimgui.hpp"
 #include "gorder.hpp"
+#include "gpattern.hpp"
+#include "gsong.hpp"
+#include "gsound.hpp"
 
 namespace {
 

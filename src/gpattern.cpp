@@ -3,8 +3,14 @@
 //
 
 #include "gimgui.hpp"
+#include "ginstr.hpp"
 #include "goattrk2.hpp"
+#include "gorder.hpp"
 #include "gpattern.hpp"
+#include "gplatform.hpp"
+#include "gsong.hpp"
+#include "gtable.hpp"
+#include "gundo.hpp"
 #include "guimodel.hpp"
 
 

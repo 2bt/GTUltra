@@ -1,30 +1,10 @@
 #pragma once
 
-#include <unistd.h>
-#include <dirent.h>
-#include <sys/stat.h>
-
-#include "gplatform.hpp"
-
-#include "gcommon.hpp"
-#include "ginput.hpp"
-#include "gimgui.hpp"
-#include "gplay.hpp"
-#include "gsound.hpp"
-#include "gsid.hpp"
-#include "gsong.hpp"
-
-#include "gdisplay.hpp"
-#include "greloc.hpp"
-#include "gfile.hpp"
-#include "gpattern.hpp"
-#include "gorder.hpp"
-#include "ginstr.hpp"
-#include "gtable.hpp"
-#include "ginfo.hpp"
-#include "gundo.hpp"
-
 #include <cstdint>
+#include <cstdio>
+
+#include "gfile.hpp"
+#include "greloc.hpp"
 
 constexpr int REMOVE_UNDO = 0;
 

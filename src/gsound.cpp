@@ -14,7 +14,13 @@
 
 #include "goattrk2.hpp"
 #include "gendian.hpp"
+#include "gpattern.hpp"
+#include "gplatform.hpp"
+#include "gplay.hpp"
+#include "gsid.hpp"
+#include "gsound.hpp"
 
+#include <unistd.h>
 #include <vector>
 
 extern void JPSoundMixer(Sint32* dest, unsigned samples);

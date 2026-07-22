@@ -5,9 +5,14 @@
 #include "goattrk2.hpp"
 #include "embed.hpp"
 #include "gendian.hpp"
+#include "ginput.hpp"
+#include "gpattern.hpp"
+#include "gsong.hpp"
+#include "gtable.hpp"
 
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <new>
 #include <string_view>

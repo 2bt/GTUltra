@@ -1,7 +1,5 @@
 #pragma once
 
-#include <SDL.h>
-
 // Per-frame input snapshot for editor command handlers (M3).
 // docommand() captures the live input globals into an EditorInput before
 // calling the *commands() handlers, so they don't depend on ascii_key /

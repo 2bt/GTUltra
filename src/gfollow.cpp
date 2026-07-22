@@ -3,6 +3,9 @@
 //
 
 #include "gfollow.hpp"
+#include "goattrk2.hpp"
+#include "gpattern.hpp"
+#include "gsong.hpp"
 
 void updateDisplayWhenFollowingAndPlaying(GTOBJECT* gt) {
     if (editorInfo.expandOrderListView) updateDisplayWhenFollowingAndPlaying_Expanded(gt);

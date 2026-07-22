@@ -12,12 +12,14 @@
 #include "gfiledialog.hpp"
 #include "guimodel.hpp"
 #include "gpattern.hpp"
+#include "gplatform.hpp"
 #include "gsong.hpp"
 #include "gtable.hpp"
 #include "gdisplay.hpp"
 #include "gsound.hpp"
 #include "ginstr.hpp"
 #include "ghelp.hpp"
+#include "gundo.hpp"
 #include "log.hpp"
 
 #include <cstdio>

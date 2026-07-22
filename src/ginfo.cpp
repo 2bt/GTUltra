@@ -8,6 +8,9 @@
 
 #include "goattrk2.hpp"
 #include "ginfo.hpp"
+#include "gpattern.hpp"
+#include "gsong.hpp"
+#include "gtable.hpp"
 
 #include <format>
 #include <string>

@@ -15,7 +15,3 @@ void incrementtime(GTOBJECT* gt);
 void setSongLengthTime(GTOBJECT* gt);
 void setSIDTracker64KeyOnStyle();
 void do_display(GTOBJECT* gt);
-
-void updateDisplayWhenFollowingAndPlaying(GTOBJECT* gt);
-void updateDisplayWhenFollowingAndPlaying_Expanded(GTOBJECT* gt);
-void updateDisplayWhenFollowingAndPlaying_Compressed(GTOBJECT* gt);

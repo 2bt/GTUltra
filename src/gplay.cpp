@@ -3,6 +3,16 @@
 //
 
 #include "goattrk2.hpp"
+#include "gdisplay.hpp"
+#include "gorder.hpp"
+#include "gpattern.hpp"
+#include "gsid.hpp"
+#include "gsong.hpp"
+#include "gsound.hpp"
+#include "gtable.hpp"
+
+#include <cstdlib>
+#include <cstring>
 
 // #define JP_NEW_FEATURES
 

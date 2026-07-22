@@ -3,10 +3,17 @@
 //
 
 #include <cstdlib>
+#include <cstring>
 
 #include "goattrk2.hpp"
 #include "gendian.hpp"
+#include "gdisplay.hpp"
+#include "ginstr.hpp"
+#include "gorder.hpp"
+#include "gpattern.hpp"
 #include "gsong.hpp"
+#include "gtable.hpp"
+#include "gundo.hpp"
 #include "guimodel.hpp"
 
 #define DEBUG_PAD_SIZE 32

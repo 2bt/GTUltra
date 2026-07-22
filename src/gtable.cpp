@@ -5,8 +5,11 @@
 // GTABLE_C removed (pragma once headers)
 
 #include "goattrk2.hpp"
-#include "gtable.hpp"
 #include "gimgui.hpp"
+#include "gpattern.hpp"
+#include "gsong.hpp"
+#include "gtable.hpp"
+#include "gundo.hpp"
 #include "guimodel.hpp"
 
 unsigned char ltablecopybuffer[MAX_TABLELEN];
