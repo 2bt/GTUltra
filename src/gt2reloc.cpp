@@ -28,30 +28,30 @@
 namespace {
 
 void usage() {
-    SDL_Log("Usage: GTULTRA RELOC <songname> <outfile> [options]\n");
-    SDL_Log("Options:\n");
-    SDL_Log("-Axx Set ADSR parameter for hardrestart in hex. DEFAULT=0F00\n");
-    SDL_Log("-Bx  enable/disable buffered SID writes. DEFAULT=disabled\n");
-    SDL_Log("-Cx  enable/disable zeropage ghost registers. DEFAULT=disabled\n");
-    SDL_Log("-Dx  enable/disable sound effect support. DEFAULT=disabled\n");
-    SDL_Log("-Ex  enable/disable volume change support. DEFAULT=disabled\n");
-    SDL_Log("-Fxx Set custom SID clock cycles per second (0 = use PAL/NTSC default)\n");
-    SDL_Log("-Gxx Set pitch of A-4 in Hz (0 = use default frequencytable, close to 440Hz)\n");
-    SDL_Log("-Hx  enable/disable storing of author info. DEFAULT=disabled\n");
-    SDL_Log("-Ix  enable/disable optimizations. DEFAULT=enabled\n");
-    SDL_Log("-Jx  enable/disable full buffering. DEFAULT=disabled\n");
-    SDL_Log("-Lxx SID memory location in hex for 2 SID Chips (2nd, 1st..). DEFAULT=D420D400\n");
-    SDL_Log("-N   Use NTSC timing\n");
-    SDL_Log("-Oxx Set pulseoptimization/skipping (0 = off, 1 = on) DEFAULT=on\n");
-    SDL_Log("-P   Use PAL timing (DEFAULT)\n");
-    SDL_Log("-Rxx Set realtime-effect optimization/skipping (0 = off, 1 = on) DEFAULT=on\n");
-    SDL_Log("-Sxx Set speed multiplier (0 for 25Hz, 1 for 1x, 2 for 2x etc.) DEFAULT=1\n");
-    SDL_Log("-Tx  Enable/disable SidTracker64 mode (0 = off, 1 = on) DEFAULT=off\n");
-    SDL_Log("-Ux  Set SID channel count (3,6,9,12) DEFAULT=3\n");
-    SDL_Log("-Vxx Set finevibrato conversion (0 = off, 1 = on) DEFAULT=on\n");
-    SDL_Log("-Wxx player memory location highbyte in hex. DEFAULT=1000\n");
-    SDL_Log("-Zxx zeropage memory location in hex. DEFAULT=FC\n");
-    SDL_Log("-?   Show options\n");
+    printf("Usage: GTULTRA RELOC <songname> <outfile> [options]\n");
+    printf("Options:\n");
+    printf("-Axx Set ADSR parameter for hardrestart in hex. DEFAULT=0F00\n");
+    printf("-Bx  enable/disable buffered SID writes. DEFAULT=disabled\n");
+    printf("-Cx  enable/disable zeropage ghost registers. DEFAULT=disabled\n");
+    printf("-Dx  enable/disable sound effect support. DEFAULT=disabled\n");
+    printf("-Ex  enable/disable volume change support. DEFAULT=disabled\n");
+    printf("-Fxx Set custom SID clock cycles per second (0 = use PAL/NTSC default)\n");
+    printf("-Gxx Set pitch of A-4 in Hz (0 = use default frequencytable, close to 440Hz)\n");
+    printf("-Hx  enable/disable storing of author info. DEFAULT=disabled\n");
+    printf("-Ix  enable/disable optimizations. DEFAULT=enabled\n");
+    printf("-Jx  enable/disable full buffering. DEFAULT=disabled\n");
+    printf("-Lxx SID memory location in hex for 2 SID Chips (2nd, 1st..). DEFAULT=D420D400\n");
+    printf("-N   Use NTSC timing\n");
+    printf("-Oxx Set pulseoptimization/skipping (0 = off, 1 = on) DEFAULT=on\n");
+    printf("-P   Use PAL timing (DEFAULT)\n");
+    printf("-Rxx Set realtime-effect optimization/skipping (0 = off, 1 = on) DEFAULT=on\n");
+    printf("-Sxx Set speed multiplier (0 for 25Hz, 1 for 1x, 2 for 2x etc.) DEFAULT=1\n");
+    printf("-Tx  Enable/disable SidTracker64 mode (0 = off, 1 = on) DEFAULT=off\n");
+    printf("-Ux  Set SID channel count (3,6,9,12) DEFAULT=3\n");
+    printf("-Vxx Set finevibrato conversion (0 = off, 1 = on) DEFAULT=on\n");
+    printf("-Wxx player memory location highbyte in hex. DEFAULT=1000\n");
+    printf("-Zxx zeropage memory location in hex. DEFAULT=FC\n");
+    printf("-?   Show options\n");
 }
 
 } // namespace
@@ -114,11 +114,8 @@ char        configbuf[MAX_PATHNAME];
 char        loadedsongfilename[MAX_FILENAME];
 char        wavfilename[MAX_PATHNAME];
 char        songfilename[MAX_FILENAME];
-char        songfilter[MAX_FILENAME];
-char        wavfilter[MAX_FILENAME];
 char        songpath[MAX_PATHNAME];
 char        instrfilename[MAX_FILENAME];
-char        instrfilter[MAX_FILENAME];
 char        instrpath[MAX_PATHNAME];
 char        packedpath[MAX_PATHNAME];
 char        packedsongname[MAX_PATHNAME];
@@ -170,10 +167,6 @@ FILE *STDOUT, *STDERR;
 #endif
 
 
-void Log(void* userdata, int category, SDL_LogPriority priority, const char* message) {
-    SDL_Log("[Log] %s", message);
-}
-
 int main(int argc, char** argv) {
     int c;
 
@@ -188,9 +181,6 @@ int main(int argc, char** argv) {
     STDERR = fopen("CON", "w");
 
 #endif
-
-    // SDL_LogSetOutputFunction(&Log, NULL);
-
 
     programname += sizeof "$VER:";
 
@@ -254,18 +244,18 @@ int main(int argc, char** argv) {
         fileformat = PackFormat::Prg;
     }
 
-    SDL_Log("%s Packer/Relocator\n", programname);
-    SDL_Log("song file:       %s\n", loadedsongfilename);
-    SDL_Log("output file:     %s\n", packedsongname);
-    SDL_Log("output format:   ");
+    printf("%s Packer/Relocator\n", programname);
+    printf("song file:       %s\n", loadedsongfilename);
+    printf("output file:     %s\n", packedsongname);
+    printf("output format:   ");
     if (fileformat == PackFormat::Sid) {
-        SDL_Log("sid\n");
+        printf("sid\n");
     }
     else if (fileformat == PackFormat::Bin) {
-        SDL_Log("bin\n");
+        printf("bin\n");
     }
     else {
-        SDL_Log("prg\n");
+        printf("prg\n");
     }
 
     // Scan command line
@@ -570,8 +560,3 @@ void playUntilEnd2(int songNumber) {
         }
     } while (allDone == 0);
 }
-
-
-#define GT2RELOC
-
-#include "greloc.cpp"

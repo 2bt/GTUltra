@@ -51,7 +51,10 @@ function(embed_resources out_file)
         message(FATAL_ERROR "embed_resources() requires an output path")
     endif()
     if(${ARGC} LESS 2)
-        message(FATAL_ERROR "embed_resources() requires at least one input file")
+        message(
+            FATAL_ERROR
+            "embed_resources() requires at least one input file"
+        )
     endif()
 
     set(content
@@ -69,15 +72,20 @@ function(embed_resources out_file)
         file(READ "${path}" hex HEX)
         string(REGEX REPLACE "([0-9a-fA-F][0-9a-fA-F])" "0x\\1," hex "${hex}")
 
-        string(APPEND content
+        string(
+            APPEND
+            content
             "static constexpr uint8_t k_bytes_${sym}[] = { ${hex} };\n"
-            "static constexpr std::size_t k_size_${sym} = sizeof(k_bytes_${sym});\n\n")
+            "static constexpr std::size_t k_size_${sym} = sizeof(k_bytes_${sym});\n\n"
+        )
     endforeach()
 
     # Avoid touching the timestamp when contents are unchanged.
     set(tmp "${out_file}.tmp")
     file(WRITE "${tmp}" "${content}")
-    execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different "${tmp}" "${out_file}")
+    execute_process(
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different "${tmp}" "${out_file}"
+    )
     file(REMOVE "${tmp}")
 endfunction()
 
@@ -247,19 +255,19 @@ target_link_libraries(imgui PUBLIC ${SDL2_LIBRARIES})
 # ---------------------------------------------------------------------------
 
 # The main editor
-add_executable(gtultra "${SRC}/gt2stereo.cpp" "${SRC}/greloc.cpp")
-target_link_libraries(gtultra PRIVATE gtcore)
-target_sources(
+add_executable(
     gtultra
-    PRIVATE
-        "${SRC}/gimgui.cpp"
-        "${SRC}/guicolors.cpp"
-        "${SRC}/guimodel.cpp"
-        "${SRC}/gactions.cpp"
-        "${SRC}/ghelp.cpp"
-        "${SRC}/gfiledialog.cpp"
-        "${SRC}/guialert.cpp"
+    "${SRC}/gtultra.cpp"
+    "${SRC}/greloc.cpp"
+    "${SRC}/gimgui.cpp"
+    "${SRC}/guicolors.cpp"
+    "${SRC}/guimodel.cpp"
+    "${SRC}/gactions.cpp"
+    "${SRC}/ghelp.cpp"
+    "${SRC}/gfiledialog.cpp"
+    "${SRC}/guialert.cpp"
 )
+target_link_libraries(gtultra PRIVATE gtcore)
 target_include_directories(
     gtultra
     PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/extern/portable-file-dialogs"
@@ -276,9 +284,16 @@ if(WIN32)
     target_sources(gtultra PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/assets/icon.rc")
 endif()
 
-# Standalone relocator/exporter (includes greloc.cpp with GT2RELOC).
+# Standalone relocator/exporter (links greloc.cpp with GT2RELOC).
 # gplatform calls gimgui_*; provide empty stubs (no ImGui UI here).
-add_executable(gt2reloc "${SRC}/gt2reloc.cpp" "${SRC}/gimgui_stubs.cpp")
+# TODO: remove need for gimgui_stubs.cpp
+add_executable(
+    gt2reloc
+    "${SRC}/gt2reloc.cpp"
+    "${SRC}/greloc.cpp"
+    "${SRC}/gimgui_stubs.cpp"
+)
+target_compile_definitions(gt2reloc PRIVATE GT2RELOC)
 target_link_libraries(gt2reloc PRIVATE gtcore)
 
 # Small standalone conversion utilities (endian helpers only).

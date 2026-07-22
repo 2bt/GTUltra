@@ -71,7 +71,7 @@ int leftKeyTicksDelta = 0;
 int leftKeyTicks      = 0;
 
 char appFileName[MAX_PATHNAME];
-char packedsongname[MAX_FILENAME];
+char packedsongname[MAX_PATHNAME];
 
 
 int SID_StereoPanPositions[4][4] = {
@@ -138,11 +138,8 @@ char configbuf[MAX_PATHNAME];
 char loadedsongfilename[MAX_PATHNAME]; // JP was MAX_FILENAME
 char wavfilename[MAX_PATHNAME];
 char songfilename[MAX_PATHNAME]; // JP was MAX_FILENAME
-char wavfilter[MAX_FILENAME];
-char songfilter[MAX_FILENAME];
 char songpath[MAX_PATHNAME];
 char instrfilename[MAX_FILENAME];
-char instrfilter[MAX_FILENAME];
 char instrpath[MAX_PATHNAME];
 char packedpath[MAX_PATHNAME];
 char tempSngFilename[MAX_PATHNAME];
@@ -488,7 +485,6 @@ int main(int argc, char** argv) {
 
     if (!win_init_editor(bigwindow, (int)enableAntiAlias)) return 1;
 
-    // Composite the experimental ImGui layer on top of the legacy editor.
     gimgui_init();
 
     initPolyKeyboard();
@@ -873,8 +869,8 @@ void editor_frame_update(GTOBJECT* gt) {
                     {
                         gMIDINote =
                             midiNote + FIRSTNOTE; // editing pattern data and have received keyon from MIDI device
-                        ascii_key    = 0;
-                        scancode = 0;
+                        ascii_key = 0;
+                        scancode  = 0;
                         handleMIDIPolykeyboard(&gtObject, midiMessage);
                         return;
                     }
@@ -1052,7 +1048,8 @@ void docommand(void) {
         //	undoAreaSetCheckForChange(UNDO_AREA_CHANNEL_EDITOR_INFO, c2, UNDO_AREA_DIRTY_CHECK);
 
         // if gMIDINote!=-1, then use this as input instead of QWERTY note input
-        // Also, if this is the case, set ascii_key and scancode=0 so that only note input is recognised - just in case..
+        // Also, if this is the case, set ascii_key and scancode=0 so that only note input is recognised - just in
+        // case..
         if (!gtaction::dispatch_mode_navigation()) {
             const EditorInput in = editor_input_snapshot();
             gtaction::dispatch_pattern_cell_input(gMIDINote, &in);
@@ -1100,8 +1097,8 @@ int load(GTOBJECT* gt, char* dragDropFileName) {
         countInstruments();
         expandAllSongs();
     }
-    ascii_key    = 0;
-    scancode = 0;
+    ascii_key = 0;
+    scancode  = 0;
     return ok;
 }
 
@@ -1118,8 +1115,8 @@ void clear(GTOBJECT* gt) {
     if (gt_ui_confirm("Optimize everything?")) {
         optimizeeverything(true, true, &gtObject);
         countpatternlengths();
-        ascii_key    = 0;
-        scancode = 0;
+        ascii_key = 0;
+        scancode  = 0;
         return;
     }
 
@@ -1135,8 +1132,8 @@ void clear(GTOBJECT* gt) {
     }
     clearsong(cs != 0, cp != 0, ci != 0, ct != 0, cn != 0, &gtObject);
 
-    ascii_key    = 0;
-    scancode = 0;
+    ascii_key = 0;
+    scancode  = 0;
     (void)gt;
 }
 
@@ -1171,8 +1168,8 @@ void editSIDPan(GTOBJECT* gt) {
 
         if (win_quitted) {
             exitprogram = true;
-            ascii_key         = 0;
-            scancode      = 0;
+            ascii_key   = 0;
+            scancode    = 0;
             return;
         }
 
@@ -1191,9 +1188,9 @@ void editSIDPan(GTOBJECT* gt) {
         case SDL_SCANCODE_ESCAPE:
         case SDL_SCANCODE_RETURN:
         case SDL_SCANCODE_TAB:
-            eamode = 0;
-            ascii_key    = 0;
-            scancode = 0;
+            eamode    = 0;
+            ascii_key = 0;
+            scancode  = 0;
             return;
 
         case SDL_SCANCODE_BACKSPACE:
@@ -1222,8 +1219,8 @@ void editadsr(GTOBJECT* gt) {
 
         if (win_quitted) {
             exitprogram = true;
-            ascii_key         = 0;
-            scancode      = 0;
+            ascii_key   = 0;
+            scancode    = 0;
             return;
         }
 
@@ -1270,9 +1267,9 @@ void editadsr(GTOBJECT* gt) {
         case SDL_SCANCODE_ESCAPE:
         case SDL_SCANCODE_RETURN:
         case SDL_SCANCODE_TAB:
-            eamode = 0;
-            ascii_key    = 0;
-            scancode = 0;
+            eamode    = 0;
+            ascii_key = 0;
+            scancode  = 0;
             return;
 
         case SDL_SCANCODE_BACKSPACE:
@@ -2162,8 +2159,8 @@ void handleLoadPath(GTOBJECT* gt, const char* path, int merge) {
         copyCurrentToSngBuffer(gt, currentSongFile);
     }
 
-    ascii_key    = 0;
-    scancode = 0;
+    ascii_key = 0;
+    scancode  = 0;
     restartScreenDisplay();
 }
 

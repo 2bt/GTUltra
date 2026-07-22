@@ -1679,15 +1679,15 @@ void relocator(GTOBJECT* gt, bool gt2reloc_mode) {
     }
 
 #ifdef GT2RELOC
-    SDL_Log("packing results:\n");
-    SDL_Log("Playroutine:     %d bytes\n", playersize);
-    SDL_Log("Songtable:       %d bytes\n", songtblsize);
-    SDL_Log("Song-orderlists: %d bytes\n", songdatasize);
-    SDL_Log("Patterntable:    %d bytes\n", patttblsize);
-    SDL_Log("Patterns:        %d bytes\n", pattdatasize);
-    SDL_Log("Instruments:     %d bytes\n", instrsize);
-    SDL_Log("Tables:          %d bytes\n", wavetblsize + pulsetblsize + filttblsize + speedtblsize);
-    SDL_Log("Total size:      %d bytes\n", packedsize);
+    printf("packing results:\n");
+    printf("Playroutine:     %d bytes\n", playersize);
+    printf("Songtable:       %d bytes\n", songtblsize);
+    printf("Song-orderlists: %d bytes\n", songdatasize);
+    printf("Patterntable:    %d bytes\n", patttblsize);
+    printf("Patterns:        %d bytes\n", pattdatasize);
+    printf("Instruments:     %d bytes\n", instrsize);
+    printf("Tables:          %d bytes\n", wavetblsize + pulsetblsize + filttblsize + speedtblsize);
+    printf("Total size:      %d bytes\n", packedsize);
 
     songhandle = fopen(packedsongname, "wb");
     if (!songhandle) {

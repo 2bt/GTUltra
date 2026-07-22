@@ -1,17 +1,10 @@
 #pragma once
 
 #include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
 #include <dirent.h>
 #include <sys/stat.h>
-#include <math.h>
 
 #include "gplatform.hpp"
-
-#include "gmidi.hpp"
 
 #include "gcommon.hpp"
 #include "ginput.hpp"
@@ -50,7 +43,7 @@ constexpr int PGUPDNREPEAT = 8;
 
 #ifndef GOATTRK2_C
 
-extern char        packedsongname[MAX_FILENAME];
+extern char        packedsongname[MAX_PATHNAME];
 extern int         SIDTracker64ForIPadIsAmazing;
 extern bool        autoNextPattern;
 extern char        appFileName[MAX_PATHNAME];
@@ -92,11 +85,8 @@ extern char        configbuf[MAX_PATHNAME];
 extern char        loadedsongfilename[MAX_PATHNAME];
 extern char        wavfilename[MAX_PATHNAME];
 extern char        songfilename[MAX_PATHNAME];
-extern char        songfilter[MAX_FILENAME];
-extern char        wavfilter[MAX_FILENAME];
 extern char        songpath[MAX_PATHNAME];
 extern char        instrfilename[MAX_FILENAME];
-extern char        instrfilter[MAX_FILENAME];
 extern char        instrpath[MAX_PATHNAME];
 extern char        packedpath[MAX_PATHNAME];
 extern const char* programname;
