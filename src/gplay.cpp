@@ -9,7 +9,6 @@
 #include "gsid.hpp"
 #include "gsong.hpp"
 #include "gsound.hpp"
-#include "gtable.hpp"
 
 #include <cstdlib>
 #include <cstring>
@@ -120,7 +119,6 @@ void update_expanded_seq(int c, CHN* cptr, GTOBJECT* gt) {
             cptr->trans = t;
         }
     }
-
 
     /*
         // Transpose
@@ -254,9 +252,7 @@ void stopsong(GTOBJECT* gt) {
 
     gt->songinit = PlayMode::Stop;
 
-
     sound_flush();
-
 
     for (int c = 0; c < MAX_PLAY_CH; c++) {
         gt->chn[c].instr       = 0;
@@ -275,13 +271,11 @@ void playtestnote(int note, int ins, int chnnum, GTOBJECT* gt) {
 
     c2 = chnnum;
 
-
     if (note == KEYON) return;
     if ((note == REST) || (note == KEYOFF)) {
         releasenote(chnnum, gt);
         return;
     }
-
 
     if (!(instr[ins].gatetimer & 0x40)) {
         gt->chn[c2].gate = 0xfe; // Keyoff
@@ -341,7 +335,6 @@ void playroutine(GTOBJECT* gt) {
                 int c2      = getActualChannel(editorInfo.esnum, c); // 0-12
                 int songNum = getActualSongNumber(editorInfo.esnum, c2);
                 int c3      = c % 6;
-
 
                 if (editorInfo.expandOrderListView == 0) {
                     if (gt->editorUndoInfo.editorInfo[c2].espos >= songlen[songNum][c3])
@@ -443,7 +436,6 @@ void playroutine(GTOBJECT* gt) {
 
         gt->startpattpos = 0;
 
-
         return; // JP Added this. Just to make sure nothing futher causes problems 22Aug2022
     }
     else {
@@ -502,7 +494,6 @@ void playroutine(GTOBJECT* gt) {
             int sidIndex = c / 3;
 
             iptr = &instr[cptr->instr];
-
 
             // JP Check for max playing SID count here!
             // (we process 12 channels to allow for poly mode, but only want to process, say, 3 channels for
@@ -1018,7 +1009,6 @@ void playroutine(GTOBJECT* gt) {
                 }
             }
 
-
         PULSEEXEC:
             if (editorInfo.optimizepulse) {
                 if (c < editorInfo.maxSIDChannels) {
@@ -1147,7 +1137,6 @@ void playroutine(GTOBJECT* gt) {
 
     if (gt->songinit != PlayMode::Stopped) incrementtime(gt);
 
-
     if (gt->noSIDWrites == 0 && gt->loopEnabledFlag && gt->disableLoopSearch == 0 &&
         gtObject.interPatternLoopEnabledFlag && transportLoopPatternSelectArea) {
         if (gt->chn[gt->masterLoopChannel].advance) // V1.3.6
@@ -1200,7 +1189,6 @@ void playroutine(GTOBJECT* gt) {
                     gt->timesec   = gt->looptimesec;
                     gt->timeframe = gt->looptimeframe;
 
-
                     int jnum = getActualSongNumber(gt->psnum, i);
                     int c2   = getActualChannel(jnum, i);
 
@@ -1219,7 +1207,6 @@ void playroutine(GTOBJECT* gt) {
             }
         }
     }
-
 
     if (gt->noSIDWrites == 0 &&
         gt->disableLoopSearch ==
@@ -1272,7 +1259,6 @@ void playroutine(GTOBJECT* gt) {
 
         //-------------
 
-
         // Wait until playback of the loop master channel is at the very end of the pattern before recalculating
         // loop start positions This will then take into consideration any changes made to the pattern length or
         // changes to the order list during playback
@@ -1280,7 +1266,6 @@ void playroutine(GTOBJECT* gt) {
         //		if (gt->chn[gt->masterLoopChannel].songptr != gt->chn[gt->masterLoopChannel].songLoopPtr
         //			&& gt->chn[gt->masterLoopChannel].pattptr == ((pattlen[gt->chn[gt->masterLoopChannel].pattnum]
         //- 1) * 4))
-
 
         if (gt->chn[gt->masterLoopChannel].pattptr ==
             ((pattlen[gt->chn[gt->masterLoopChannel].pattnum] - 1) * 4)) {

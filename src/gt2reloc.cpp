@@ -169,7 +169,6 @@ FILE *STDOUT, *STDERR;
 #define STDERR stderr
 #endif
 
-
 int main(int argc, char** argv) {
     int c;
 
@@ -208,7 +207,6 @@ int main(int argc, char** argv) {
         exit(-1);
     }
 
-
     // Load song
     if (strlen(songfilename)) {
         loadsong(&gtObject, true);
@@ -219,13 +217,11 @@ int main(int argc, char** argv) {
         exit(-1);
     }
 
-
     c = strlen(packedsongname);
     if (strlen(packedsongname) <= 0) {
         fprintf(STDERR, "error: no output filename given.\n");
         exit(-1);
     }
-
 
     editorInfo.maxSIDChannels = 3; // set as default
 
@@ -420,7 +416,6 @@ int main(int argc, char** argv) {
     return 0;
 }
 
-
 void getparam(FILE* handle, unsigned int* value) {
     char* configptr;
 
@@ -497,26 +492,21 @@ void calculatefreqtable() {
 
 void playFromCurrentPosition(GTOBJECT* gt, int currentPos) {}
 
-
 void createFilename(char* filePath, char* newfileName, const char* filename) {}
 void converthex() {}
 
-
 void backupPatternDisplayInfo(GTOBJECT* gt) {}
 void restorePatternDisplayInfo(GTOBJECT* gt) {}
-
 
 void handleSIDChannelCountChange(GTOBJECT* gt) {}
 void validateStereoMode() {}
 
 void reInitSID() {}
 
-
 void stopScreenDisplay() {}
 void restartScreenDisplay() {}
 
 void playUntilEnd(int songNumber) {}
-
 
 void initRemapArrays() {
     for (int i = 0; i < 256; i++) {

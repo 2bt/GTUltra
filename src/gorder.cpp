@@ -3,11 +3,13 @@
 //
 
 #include "goattrk2.hpp"
-#include "gimgui.hpp"
 #include "gorder.hpp"
 #include "gpattern.hpp"
+#include "gplatform.hpp"
 #include "gsong.hpp"
 #include "gsound.hpp"
+
+#include <cstring>
 
 namespace {
 

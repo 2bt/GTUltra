@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gplay.hpp"
+struct GTOBJECT;
 
 // Visible order-list page size (expanded view scroll).
 constexpr int EXTENDEDVISIBLEORDERLIST = 13;

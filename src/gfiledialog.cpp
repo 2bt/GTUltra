@@ -9,12 +9,9 @@
 #include "goattrk2.hpp"
 #include "gpattern.hpp"
 #include "gplatform.hpp"
-#include "greloc.hpp"
 #include "gsong.hpp"
 #include "log.hpp"
 
-#include <cstring>
-#include <strings.h>
 #include <string>
 #include <utility>
 #include <vector>

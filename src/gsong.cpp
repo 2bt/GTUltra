@@ -492,7 +492,6 @@ bool savesong() {
         fwrite8(handle, 0x9b); // PAN ID
         fwrite8(handle, SIDTracker64ForIPadIsAmazing);
 
-
         fclose(handle);
         strcpy(loadedsongfilename, songfilename);
         strcpy(wavfilename, loadedsongfilename);
@@ -550,7 +549,6 @@ bool saveinstrument() {
 
 int loadedSongCount = 0;
 
-
 bool loadsong(GTOBJECT* gt, bool gt2reloc_mode) {
     int           c;
     bool          ok = false;
@@ -565,7 +563,6 @@ bool loadsong(GTOBJECT* gt, bool gt2reloc_mode) {
     if (gt2reloc_mode) {
         if (editorInfo.maxSIDChannels == 0) editorInfo.maxSIDChannels = channelstoload;
     }
-
 
     if (strlen(songfilename) > 2) {
         int chCount = 0;
@@ -589,7 +586,6 @@ bool loadsong(GTOBJECT* gt, bool gt2reloc_mode) {
         }
     }
 
-
     handle = fopen(songfilename, "rb");
 
     if (handle) {
@@ -601,7 +597,6 @@ bool loadsong(GTOBJECT* gt, bool gt2reloc_mode) {
             int loadsize;
             clearsong(true, true, true, true, true, gt);
             ok = true;
-
 
             // Read infotexts
             read_exact(handle, songname, sizeof songname);
@@ -678,7 +673,6 @@ bool loadsong(GTOBJECT* gt, bool gt2reloc_mode) {
                     reInitSID();
                     getNext++;
                 }
-
 
                 // JP: New. Load instrument pan info (if it exists)
 
@@ -1239,7 +1233,6 @@ bool loadsong(GTOBJECT* gt, bool gt2reloc_mode) {
             }
         }
 
-
         // If was a mono song, create empty orderlists for channels 4-6
         if (channelstoload <= MAX_CHN) {
             int emptypatt = MAX_PATT - 1;
@@ -1289,7 +1282,6 @@ bool loadsong(GTOBJECT* gt, bool gt2reloc_mode) {
             if (!gt2reloc_mode) songchange(gt, true);
         }
     }
-
 
     restartScreenDisplay();
 
@@ -1635,11 +1627,9 @@ void clearsong(bool      clear_songs,
 
     if (!(clear_songs || clear_patterns || clear_instruments || clear_tables || clear_names)) return;
 
-
     if (gt->songinit != PlayMode::Stopped) {
         stopsong(gt);
     }
-
 
     gt->masterfader         = 0x0f;
     editorInfo.epmarkchn    = -1;
@@ -1647,7 +1637,6 @@ void clearsong(bool      clear_songs,
     editorInfo.esmarkchn    = -1;
     editorInfo.esmarkchnend = -1;
     followplay              = 0;
-
 
     for (c = 0; c < editorInfo.maxSIDChannels; c++) {
 
@@ -1657,7 +1646,6 @@ void clearsong(bool      clear_songs,
         gt->chn[c].pattptr     = 0;
         gt->chn[c].lastpattptr = 0;
     }
-
 
     init_quick_play();
 
@@ -1720,7 +1708,6 @@ void clearsong(bool      clear_songs,
             settableview(c, 0);
         }
     }
-
 
     countpatternlengths();
     expandAllSongs(); // Must be called after countpatternlengths()
@@ -2041,7 +2028,6 @@ bool mergesong(GTOBJECT* gt) {
 
     // sprintf(textbuffer, "pattbase:%x", pattbase);
 
-
     for (c = 0; c < MAX_TABLES; c++) {
         tablebase[c] = gettablelen(c);
     }
@@ -2172,7 +2158,6 @@ bool mergesong(GTOBJECT* gt) {
         }
     }
 
-
     ok = true;
 
 ABORT:
@@ -2181,7 +2166,6 @@ ABORT:
     songchange(gt, true);
     return ok;
 }
-
 
 void setQuickPlay(int song, int channel, int patternOffset, GTOBJECT* gt, int updateCounter) {
     songQuickPlay[song][channel][patternOffset].updateCounter = updateCounter;
@@ -2199,7 +2183,6 @@ int getQuickPlayChannels(int song, int channel, int patternOffset, GTOBJECT* gt,
     }
     return 0;
 }
-
 
 void compressAllSongs() {
     for (int s = 0; s < MAX_SONGS; s++) {
@@ -2264,7 +2247,6 @@ int generateCompressedSongChannel(int s, int c, bool validate_only) {
 
     return p;
 }
-
 
 void expandAllSongs() {
     for (int s = 0; s < MAX_SONGS; s++) {
@@ -2463,7 +2445,6 @@ bool copySngBufferToCurrent(GTOBJECT* gt, int sngIndex) {
     return true;
 }
 
-
 /*
 
 INSTR instr[MAX_INSTR];
@@ -2478,7 +2459,6 @@ unsigned int songCompressedSize[MAX_SONGS][MAX_CHN];
 
 unsigned char songOrderPatternsCopyPaste[MAX_CHN][MAX_SONGLEN_EXPANDED];
 unsigned short songOrderTransposeCopyPaste[MAX_CHN][MAX_SONGLEN_EXPANDED];
-
 
     typedef struct {
     char *instrumentData;

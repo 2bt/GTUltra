@@ -3,24 +3,19 @@
 // This TU is free to pull in the full legacy headers.
 //
 #include "guimodel.hpp"
+
 #include "goattrk2.hpp"
 #include "gactions.hpp"
 #include "ginfo.hpp"
 #include "ginstr.hpp"
-#include "gmidi.hpp"
-#include "gsong.hpp"
 #include "gorder.hpp"
-#include "gplay.hpp"
+#include "gsong.hpp"
 #include "gundo.hpp"
 
-#include <algorithm>
 #include <cstdarg>
-#include <cstdio>
 #include <cstring>
-#include <string>
 
 namespace gtui {
-
 
 EditPanel edit_panel() { return static_cast<EditPanel>(editorInfo.editmode); }
 

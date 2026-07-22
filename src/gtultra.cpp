@@ -23,7 +23,6 @@
 #include <windows.h>
 #endif
 
-#include <stdio.h>
 #include <dirent.h>
 #include <sys/stat.h>
 #include <time.h>
@@ -31,21 +30,17 @@
 
 #include "goattrk2.hpp"
 #include "gactions.hpp"
-#include "gplatform.hpp"
-
+#include "gdisplay.hpp"
 #include "gimgui.hpp"
-#include "guialert.hpp"
-#include "ginput.hpp"
 #include "ginstr.hpp"
 #include "gorder.hpp"
-#include "gpattern.hpp"
+#include "gplatform.hpp"
 #include "gsid.hpp"
 #include "gsong.hpp"
 #include "gsound.hpp"
 #include "gtable.hpp"
+#include "guialert.hpp"
 #include "gundo.hpp"
-#include "gdisplay.hpp"
-#include "gfiledialog.hpp"
 
 bool songExportSuccessFlag = false;
 int  sidAddr1              = 0xd400;
@@ -79,13 +74,11 @@ int selectingInOrderList           = 0;
 int selectingInOrderListDeltaTime  = 0;
 int selectingInOrderListDeltaTicks = 0;
 
-
 int leftKeyTicksDelta = 0;
 int leftKeyTicks      = 0;
 
 char appFileName[MAX_PATHNAME];
 char packedsongname[MAX_PATHNAME];
-
 
 int SID_StereoPanPositions[4][4] = {
     { 7, 0, 0, 0 },
@@ -101,13 +94,11 @@ int sidPanInts[4] = { 0x0007, 0x00e0, 0x07e0, 0xe0e0 };
 // int SID4_StereoPanPositions[] = { 0,14,0,14 };
 char editPan = 0;
 
-
 KeyPreset  keypreset     = KeyPreset::Tracker;
 unsigned   playerversion = 0;
 PackFormat fileformat    = PackFormat::Prg;
 int        zeropageadr   = 0xfc;
 int        playeradr     = 0x1000;
-
 
 // unsigned editorInfo.adparam = 0x0f00;
 // unsigned editorInfo.ntsc = 0;
@@ -166,7 +157,6 @@ char               tuningname[64];
 
 char startPaletteName[MAX_PATHNAME];
 
-
 char debugTextbuffer[MAX_PATHNAME];
 char textbuffer[MAX_PATHNAME];
 
@@ -181,9 +171,7 @@ char jpdebug = 0;
 
 int selectedMIDIPort = 0;
 
-
 const char hexkeytbl[] = "0123456789abcdef";
-
 
 // int editorInfo.maxSIDChannels = 3;	//12;
 int gMIDINote = -1;
@@ -192,9 +180,7 @@ int loadedSongFlag = 0;
 
 int jdebug[16];
 
-
 int main(int argc, char** argv) {
-
 
     //	char palettename[MAX_PATHNAME];
 
@@ -206,7 +192,6 @@ int main(int argc, char** argv) {
 #ifdef __WIN32__
     SDL_setenv("SDL_AUDIODRIVER", "directsound", 1);
 #endif
-
 
     editorInfo.multiplier  = 1;
     editorInfo.finevibrato = 1;
@@ -514,7 +499,6 @@ int main(int argc, char** argv) {
     undoInitAllAreas(
         &gtObject); // Must be called after clearSong. Creates undo buffers, containing duplicates of each GT area.
 
-
     // Init sound
     if (!sound_init(b,
                     mr,
@@ -529,7 +513,6 @@ int main(int argc, char** argv) {
         gt_ui_warn("Sound init failed. Continuing without sound "
                    "(song timer will not start).");
     }
-
 
     // JP - Init Editor info
     editorInfo.editmode     = EditMode::Pattern;
@@ -566,7 +549,6 @@ int main(int argc, char** argv) {
     allocateSngMemory(MAX_SONG_FILES); // this is never overwritten. Use to create an empty sng
     copyCurrentToSngBuffer(&gtObject, MAX_SONG_FILES);
 
-
     //-------------------------------------------------------------
 #if 0
 	strcpy(songfilename, "ultestura.sng");
@@ -584,7 +566,6 @@ int main(int argc, char** argv) {
         playUntilEnd(editorInfo.esnum); // Get length of time of loaded or empty song
         copyCurrentToSngBuffer(&gtObject, editorInfo.currentSongFile);
     }
-
 
 #if 0
 	initsong(editorInfo.esnum, PlayMode::Beginning, &gtObject);
@@ -608,7 +589,6 @@ int main(int argc, char** argv) {
 
     //	SDL_Thread* threadID = SDL_CreateThread(doDisplay, "DisplayThread", (void*)&gtObject);
 
-
     while (!exitprogram) {
 
         if (doExportToWAV) {
@@ -619,7 +599,6 @@ int main(int argc, char** argv) {
 
         waitkeymouse(&gtObject);
         docommand();
-
 
         //	sprintf(textbuffer, "jpdebug %d", jdebug[0]);	//, specialnotenames[0], specialnotenames[1]);
     }
@@ -954,7 +933,6 @@ void converthex() {
     }
 }
 
-
 void docommand(void) {
 
     // int i = 0;
@@ -1013,7 +991,6 @@ void docommand(void) {
         break;
 
     case EditMode::Instrument:
-
 
         if (!gtaction::dispatch_mode_navigation()) {
             const EditorInput in = editor_input_snapshot();
@@ -1074,7 +1051,6 @@ void docommand(void) {
 
     case EditMode::Names: gtaction::dispatch_mode_navigation(); break;
     }
-
 
     if (undoValidateUndoAreas(ed) == 0) {
         undoFreeUndoObject((GTUNDO_OBJECT*)ed);
@@ -1150,7 +1126,6 @@ void clear(GTOBJECT* gt) {
     (void)gt;
 }
 
-
 void convertPansToInts(int sidChips) {
     int intVal = 0;
     for (int i = 0; i < sidChips; i++) {
@@ -1166,12 +1141,10 @@ void convertInsToPans(int sidChips) {
     }
 }
 
-
 void editSIDPan(GTOBJECT* gt) {
     int sidChips = editorInfo.maxSIDChannels / 3;
 
     //	int	v = SID_StereoPanPositions[sidChips - 1][i];
-
 
     eamode              = 1;
     editorInfo.eacolumn = 0;
@@ -1221,7 +1194,6 @@ void editSIDPan(GTOBJECT* gt) {
         }
     }
 }
-
 
 void editadsr(GTOBJECT* gt) {
     eamode              = 1;
@@ -1433,7 +1405,6 @@ void calculatefreqtable() {
     int    c;
     int    i;
 
-
     if (tuningcount) {
         c = 0;
         while (c < 96) {
@@ -1572,11 +1543,9 @@ void initRemapArrays() {
     }
 }
 
-
 // JUST NEED TO TEST THIS NOW..
 
 void ExportAsPCM(int songNumber, int doNormalize, GTOBJECT* gt) {
-
 
     // Stop playback & then stop SID processing
     if (gt->songinit != PlayMode::Stopped) {
@@ -1592,11 +1561,9 @@ void ExportAsPCM(int songNumber, int doNormalize, GTOBJECT* gt) {
     GenerateExportFileName();
     OpenExportFileNameForWriting();
 
-
     int sng                    = getActualSongNumber(songNumber, 0); // editorInfo.esnum
     int currentLoopEnabledFlag = gt->loopEnabledFlag;
     int currentFollowFlag      = followplay;
-
 
     initsong(sng, PlayMode::Beginning, gt);
     gt->loopEnabledFlag = 0;
@@ -1620,7 +1587,6 @@ void ExportAsPCM(int songNumber, int doNormalize, GTOBJECT* gt) {
         writeCounter++;
         writeCounter %= 100;
 
-
         playroutine(gt);
         ExportSIDToPCMFile(samplesToExport, doNormalize);
 
@@ -1643,7 +1609,6 @@ void ExportAsPCM(int songNumber, int doNormalize, GTOBJECT* gt) {
 
     convertRAWToWAV(doNormalize);
 
-
     gt->loopEnabledFlag = currentLoopEnabledFlag;
     followplay          = currentFollowFlag;
 
@@ -1654,7 +1619,6 @@ void ExportAsPCM(int songNumber, int doNormalize, GTOBJECT* gt) {
         setMasterLoopChannel(gt, "debug_9");
     }
 }
-
 
 void playUntilEnd(int songNumber) {
     patternRemapOrderIndex = 0;
@@ -1712,7 +1676,6 @@ void handlePressRewind(int doubleClick, GTOBJECT* gt) {
     }
 }
 
-
 void handleSIDChannelCountChange(GTOBJECT* gt) {
     if (gt->songinit != PlayMode::Stopped) {
         stopsong(gt);
@@ -1723,9 +1686,7 @@ void handleSIDChannelCountChange(GTOBJECT* gt) {
     //	if (gt->masterLoopChannel >= editorInfo.maxSIDChannels)
     //		gt->masterLoopChannel = 0;
 
-
     if (editorInfo.eschn >= editorInfo.maxSIDChannels) editorInfo.eschn = 0;
-
 
     if ((editorInfo.eseditpos == songlen[editorInfo.esnum][editorInfo.eschn]) ||
         (editorInfo.eseditpos > songlen[editorInfo.esnum][editorInfo.eschn] + 1)) {
@@ -1784,11 +1745,9 @@ void handleSIDChannelCountChange(GTOBJECT* gt) {
     }
 }
 
-
 int backupPatternPos[MAX_PLAY_CH];
 int oldepViewValue;
 int oldepPosValue;
-
 
 void backupPatternDisplayInfo(GTOBJECT* gt) {
     // JP - orderSelectPatternsFromSelected resets the pattern step position. We need to preserve this when
@@ -1836,7 +1795,6 @@ void nextSongPos(GTOBJECT* gt) {
 
     if (gt->songinit == PlayMode::Stopped) {
 
-
         if (gt->editorUndoInfo.editorInfo[ac].espos < len - 1) {
             //			sprintf(textbuffer, "%d ac %d c3 %d esp %d sn %d sl %d", jcc++, ac, c3,
             // gt->editorUndoInfo.editorInfo[ac].espos, songNum, songlen[songNum][c3]);
@@ -1861,7 +1819,6 @@ void nextSongPos(GTOBJECT* gt) {
         }
     }
 }
-
 
 void previousSongPos(GTOBJECT* gt, int songDffset) {
     int songNum = getActualSongNumber(editorInfo.esnum, gt->masterLoopChannel); // editorInfo.epchn);
@@ -1946,7 +1903,6 @@ void setSongToBeginning(GTOBJECT* gt) {
 
 void playFromCurrentPosition(GTOBJECT* gt, int currentPos) {
 
-
     int t1                          = followplay;
     int t2                          = gt->interPatternLoopEnabledFlag;
     int t3                          = transportLoopPattern;
@@ -2011,7 +1967,6 @@ void detunePitchTable() {
     }
 }
 
-
 void createFilename(char* filePath, char* newfileName, const char* filename) {
     int d = 0;
     for (d = strlen(filePath) - 1; d >= 0; d--) {
@@ -2023,13 +1978,11 @@ void createFilename(char* filePath, char* newfileName, const char* filename) {
     strcpy(&newfileName[d + 1], filename);
 }
 
-
 void validateStereoMode() {
     if (stereoMode == 1 && editorInfo.maxSIDChannels == 3) stereoMode++;
     if (stereoMode == 0) monomode = 1;
     else monomode = 0;
 }
-
 
 char backupFolderName[MAX_FILENAME];
 
@@ -2066,7 +2019,6 @@ int replacechar(char* str, char orig, char rep) {
     return n;
 }
 
-
 int createBackupFolder() {
 
     DIR* folder;
@@ -2093,7 +2045,6 @@ int createBackupFolder() {
     return 1;
 }
 
-
 void stopScreenDisplay() {
     displayingPanel = 1;
     return;
@@ -2104,7 +2055,6 @@ void stopScreenDisplay() {
 }
 
 void restartScreenDisplay() { displayingPanel = 0; }
-
 
 void handleLoad(GTOBJECT* gt, char* dragdropfile) {
     stopScreenDisplay();

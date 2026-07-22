@@ -5,28 +5,22 @@
 #include "gactions.hpp"
 
 #include "goattrk2.hpp"
-#include "gorder.hpp"
-#include "ginfo.hpp"
-#include "gimgui.hpp"
-#include "ginput.hpp"
+#include "gdisplay.hpp"
 #include "gfiledialog.hpp"
-#include "guimodel.hpp"
-#include "gpattern.hpp"
+#include "ghelp.hpp"
+#include "gimgui.hpp"
+#include "ginstr.hpp"
+#include "gorder.hpp"
 #include "gplatform.hpp"
 #include "gsong.hpp"
-#include "gtable.hpp"
-#include "gdisplay.hpp"
 #include "gsound.hpp"
-#include "ginstr.hpp"
-#include "ghelp.hpp"
+#include "gtable.hpp"
+#include "guimodel.hpp"
 #include "gundo.hpp"
 #include "log.hpp"
 
-#include <cstdio>
-#include <iostream>
 #include <map>
 #include <unordered_map>
-#include <vector>
 
 namespace gtaction {
 
@@ -1173,7 +1167,6 @@ bool handle_pattern_action(Action act) {
     }
 }
 
-
 bool handle_table_action(Action act) {
     GTOBJECT* gt = &gtObject;
     switch (act) {
@@ -1423,7 +1416,6 @@ bool dispatch_pattern_navigation() {
     const Action act = resolve_input_ctx_nav(Ctx::Pattern, scancode, ascii_key, shift_pressed, ctrl_pressed);
     if (act == Action::None) return false;
 
-
     switch (scancode) {
     case SDL_SCANCODE_UP:
     case SDL_SCANCODE_DOWN:
@@ -1444,7 +1436,6 @@ bool dispatch_pattern_navigation() {
 
 bool dispatch_table_navigation() {
     if (editorInfo.editmode != EditMode::Tables) return false;
-
 
     table_use_raw_hex_mode();
 
@@ -1477,7 +1468,6 @@ bool dispatch_table_navigation() {
 
 bool dispatch_instrument_navigation() {
     if (editorInfo.editmode != EditMode::Instrument) return false;
-
 
     if (gimgui_instr_name_editing()) return false;
 
@@ -1512,7 +1502,6 @@ bool dispatch_instrument_navigation() {
 bool dispatch_names_navigation() {
     if (editorInfo.editmode != EditMode::Names) return false;
 
-
     const Action act = resolve_input_ctx(Ctx::Names, scancode, ascii_key, shift_pressed, ctrl_pressed);
     if (act == Action::None) return false;
 
@@ -1526,7 +1515,6 @@ bool dispatch_names_navigation() {
     clear_input();
     return true;
 }
-
 
 const char* scancode_label(int sc) {
     // Prefer short tracker-style names over SDL's verbose ones.
@@ -1600,7 +1588,6 @@ bool clear_binding(Action action, Ctx ctx) {
 }
 
 void reset_bindings() { g_overrides.clear(); }
-
 
 std::string format_chord(Chord chord) {
     std::string s;

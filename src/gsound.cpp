@@ -16,7 +16,6 @@
 #include "gendian.hpp"
 #include "gpattern.hpp"
 #include "gplatform.hpp"
-#include "gplay.hpp"
 #include "gsid.hpp"
 #include "gsound.hpp"
 
@@ -309,7 +308,6 @@ int sound_init(unsigned b,
     if (b < MINBUF) b = MINBUF;
     if (b > MAXBUF) b = MAXBUF;
 
-
     if (firsttimeinit) {
         if (!snd_init(mr, SIXTEENBIT | STEREO, b)) return 0;
         firsttimeinit = 0;
@@ -537,9 +535,7 @@ void JPSoundMixer(Sint32* dest, unsigned samples) {
     else
         sid_fillbuffer(sid0buffer, sid1buffer, sid2buffer, sid3buffer, samples, MIXBUFFERSIZE, editorInfo.adparam);
 
-
     //	sprintf(textbuffer, "sid %d", sid_debug());
-
 
     //	int tick = SDL_GetTicks();
 
@@ -559,7 +555,6 @@ void JPSoundMixer(Sint32* dest, unsigned samples) {
         Sint16* spR2 = sid2buffer + MIXBUFFERSIZE;
         Sint16* spR3 = sid3buffer + MIXBUFFERSIZE;
 
-
         float mvf = masterVolume * 0.25f; // * 0x8000;
                                           //		int mv = (int)mvf;
 
@@ -567,7 +562,6 @@ void JPSoundMixer(Sint32* dest, unsigned samples) {
             v = *spL0 + *spL1 + *spL2 + *spL3;
 
             float f = (float)v;
-
 
             spL0++;
             spL1++;
@@ -601,7 +595,6 @@ void JPSoundMixer(Sint32* dest, unsigned samples) {
             //			*dp = v;
             dp++;
         }
-
 
         if (writehandle) {
             for (c = 0; c < samples * 2; c++) {
@@ -706,7 +699,6 @@ void ExportCloseFileHandle() {
     exportFileHandle = nullptr;
 }
 
-
 int dataPacket = 0;
 int largestExportValue;
 // Raw Data - Signed - 16 bit - Stereo
@@ -715,7 +707,6 @@ void ExportSIDToPCMFile(int samples, int doNormalize) {
     if (samples > MIXBUFFERSIZE) return;
 
     sid_fillbuffer(sid0buffer, sid1buffer, sid2buffer, sid3buffer, samples, MIXBUFFERSIZE, editorInfo.adparam);
-
 
     Sint32* dp = &exportPCMBuffer[0];
     Sint32  v;
@@ -729,7 +720,6 @@ void ExportSIDToPCMFile(int samples, int doNormalize) {
     Sint16* spR1 = sid1buffer + MIXBUFFERSIZE;
     Sint16* spR2 = sid2buffer + MIXBUFFERSIZE;
     Sint16* spR3 = sid3buffer + MIXBUFFERSIZE;
-
 
     float mvf = masterVolume * 0.25f; // * 0x8000;
 
@@ -769,14 +759,12 @@ void ExportSIDToPCMFile(int samples, int doNormalize) {
         dp++;
     }
 
-
     if (exportFileHandle) {
         for (int c = 0; c < samples * 2; c++) {
             fwrite(&exportPCMBuffer[c], sizeof(Sint16), 1, exportFileHandle);
         }
     }
 }
-
 
 #ifdef __WIN32__
 void InitHardDLL() {

@@ -5,8 +5,8 @@
 // GTABLE_C removed (pragma once headers)
 
 #include "goattrk2.hpp"
-#include "gimgui.hpp"
 #include "gpattern.hpp"
+#include "gplatform.hpp"
 #include "gsong.hpp"
 #include "gtable.hpp"
 #include "gundo.hpp"
@@ -61,7 +61,6 @@ void modify_wave_table_detailed_right(int hexnybble) {
     unsigned char v = detailedTableRValue[editorInfo.etpos];
     //	unsigned char o = v;
 
-
     if (detailedTableBaseRValue[editorInfo.etpos] == -1) return;
 
     switch (editorInfo.etcolumn - 2) {
@@ -83,7 +82,6 @@ void modify_wave_table_detailed_right(int hexnybble) {
 
     // Convert detailed R value back to original table value
 
-
     if (rtable[0][editorInfo.etpos] >= 0x60 && rtable[0][editorInfo.etpos] <= 0x7f) // negative relative notes
     {
         int v2 = -v;
@@ -92,7 +90,6 @@ void modify_wave_table_detailed_right(int hexnybble) {
         //	int v3 = v2;
 
         v2 += 0x20;
-
 
         v = v2;
     }
@@ -118,7 +115,6 @@ void modify_pulse_table_detailed_left(int hexnybble) {
         break;
     }
 
-
     if ((unsigned char)v > detailedTableMaxLValue[editorInfo.etpos]) v = detailedTableMaxLValue[editorInfo.etpos];
 
     if ((unsigned char)v < detailedTableMinLValue[editorInfo.etpos]) v = detailedTableMinLValue[editorInfo.etpos];
@@ -127,7 +123,6 @@ void modify_pulse_table_detailed_left(int hexnybble) {
 
     // Convert detailed value back to original table value
     v += detailedTableBaseLValue[editorInfo.etpos];
-
 
     int lv = ltable[PTBL][editorInfo.etpos];
     if (lv == 0xff) {
@@ -146,7 +141,6 @@ void modify_pulse_table_detailed_right(int hexnybble) {
 
     int lv = ltable[PTBL][editorInfo.etpos];
 
-
     switch (editorInfo.etcolumn - 3) {
     case 0:
         v &= 0x0f;
@@ -163,7 +157,6 @@ void modify_pulse_table_detailed_right(int hexnybble) {
     if ((unsigned char)v < detailedTableMinRValue[editorInfo.etpos]) v = detailedTableMinRValue[editorInfo.etpos];
 
     detailedTableRValue[editorInfo.etpos] = v;
-
 
     // Convert detailed R value back to original table value
 
@@ -208,7 +201,6 @@ void modify_pulse_table_detailed(int hexnybble) {
 void modify_filter_table_detailed_left(int hexnybble) {
     if (detailedTableBaseLValue[editorInfo.etpos] == -1) return;
 
-
     unsigned char v = detailedTableLValue[editorInfo.etpos];
     //	unsigned char o = v;
 
@@ -223,7 +215,6 @@ void modify_filter_table_detailed_left(int hexnybble) {
         break;
     }
 
-
     if ((unsigned char)v > detailedTableMaxLValue[editorInfo.etpos]) v = detailedTableMaxLValue[editorInfo.etpos];
 
     if ((unsigned char)v < detailedTableMinLValue[editorInfo.etpos]) v = detailedTableMinLValue[editorInfo.etpos];
@@ -232,7 +223,6 @@ void modify_filter_table_detailed_left(int hexnybble) {
 
     // Convert detailed value back to original table value
     v += detailedTableBaseLValue[editorInfo.etpos];
-
 
     int lv = ltable[FTBL][editorInfo.etpos];
     if (lv == 0 || lv == 0xff) {
@@ -259,7 +249,6 @@ void modify_filter_table_detailed_right(int hexnybble) {
 
     int lv = ltable[FTBL][editorInfo.etpos];
 
-
     switch (editorInfo.etcolumn - 2) {
     case 0:
         v &= 0x0f;
@@ -276,7 +265,6 @@ void modify_filter_table_detailed_right(int hexnybble) {
     if ((unsigned char)v < detailedTableMinRValue[editorInfo.etpos]) v = detailedTableMinRValue[editorInfo.etpos];
 
     detailedTableRValue[editorInfo.etpos] = v;
-
 
     // Convert detailed R value back to original table value
 
@@ -649,7 +637,6 @@ void insert_table(int num, int pos, int mode) {
             }
         }
     }
-
 
     // Shift tablepointers in patterns
     for (c = 0; c < MAX_PATT; c++) {

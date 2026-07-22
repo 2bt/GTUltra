@@ -6,8 +6,7 @@
 #include "goattrk2.hpp"
 #include "gdisplay.hpp"
 #include "gfollow.hpp"
-#include "gimgui.hpp"
-#include "ginput.hpp"
+
 #include "gpattern.hpp"
 #include "gplatform.hpp"
 #include "gsound.hpp"
@@ -42,7 +41,6 @@ void setSIDTracker64KeyOnStyle() {
     if (SIDTracker64ForIPadIsAmazing != 0) notename[(12 * 8) - 1] = " | ";
     else notename[(12 * 8) - 1] = "+++";
 }
-
 
 void displayupdate(GTOBJECT* gt) {
     if (cursorflashdelay >= 6) {

@@ -6,11 +6,11 @@
 // point returns the text as a std::string. See ginfo::describe().
 //
 
-#include "goattrk2.hpp"
 #include "ginfo.hpp"
+
+#include "goattrk2.hpp"
 #include "gpattern.hpp"
 #include "gsong.hpp"
-#include "gtable.hpp"
 
 #include <format>
 #include <string>

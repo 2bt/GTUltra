@@ -13,7 +13,6 @@
 #include "gundo.hpp"
 #include "guimodel.hpp"
 
-
 unsigned char notekeytbl1[] = {
     SDL_SCANCODE_Z, SDL_SCANCODE_S, SDL_SCANCODE_X, SDL_SCANCODE_D, SDL_SCANCODE_C,     SDL_SCANCODE_V, SDL_SCANCODE_G,     SDL_SCANCODE_B,
     SDL_SCANCODE_H, SDL_SCANCODE_N, SDL_SCANCODE_J, SDL_SCANCODE_M, SDL_SCANCODE_COMMA, SDL_SCANCODE_L, SDL_SCANCODE_PERIOD,
@@ -42,7 +41,6 @@ unsigned char patterncopybuffer[MAX_PATTROWS * 4 + 4];
 unsigned char cmdcopybuffer[MAX_PATTROWS * 4 + 4];
 int           patterncopyrows = 0;
 int           cmdcopyrows     = 0;
-
 
 EDITOR_INFO editorInfo;
 EDITOR_INFO editorInfoBackup;
@@ -119,9 +117,7 @@ int pattern_note_input(GTOBJECT* gt, int midiNote, const EditorInput* input) {
         }
     }
 
-
     if ((jrawkey == SDL_SCANCODE_CAPSLOCK) && (!editorInfo.epcolumn)) newnote = KEYOFF;
-
 
     if (jrawkey == SDL_SCANCODE_RETURN) {
         switch (editorInfo.epcolumn) {
@@ -334,7 +330,6 @@ int pattern_note_input(GTOBJECT* gt, int midiNote, const EditorInput* input) {
                 }
             }
 
-
             if (newnote < REST) {
                 pattern[gt->editorUndoInfo.editorInfo[c2].epnum][editorInfo.eppos * 4 + 1] = editorInfo.einum;
             }
@@ -467,14 +462,12 @@ bool pattern_cell_input(GTOBJECT* gt, int midiNote, const EditorInput* input) {
     return note_r == PATTERN_NOTE_EDITED;
 }
 
-
 void patterncommands(GTOBJECT* gt, int midiNote, const EditorInput* input) {
     (void)gt;
     (void)midiNote;
     (void)input;
     // M6: pattern editing is ImGui action-layer only.
 }
-
 
 int patterndown(GTOBJECT* gt) {
     int ret = 0;
@@ -535,7 +528,6 @@ int patternup(GTOBJECT* gt) {
     return ret;
 }
 
-
 void pattern_col_right(GTOBJECT* gt) {
     int c2 = getActualChannel(editorInfo.esnum, editorInfo.epchn);
 
@@ -552,7 +544,6 @@ void pattern_col_right(GTOBJECT* gt) {
         setMasterLoopChannel(gt, "debug_5");
     }
 }
-
 
 void pattern_chn_next(GTOBJECT* gt) {
     int       c2    = getActualChannel(editorInfo.esnum, editorInfo.epchn);
@@ -590,7 +581,6 @@ void pattern_col_left(GTOBJECT* gt) {
     }
 }
 
-
 void pattern_nav_up(GTOBJECT* gt) {
     int c2  = getActualChannel(editorInfo.esnum, editorInfo.epchn);
     int c3  = c2 % 6;
@@ -621,7 +611,6 @@ void pattern_nav_up(GTOBJECT* gt) {
         }
     }
 }
-
 
 void pattern_nav_down(GTOBJECT* gt) {
     int c2  = getActualChannel(editorInfo.esnum, editorInfo.epchn);
@@ -655,12 +644,10 @@ void pattern_nav_down(GTOBJECT* gt) {
     }
 }
 
-
 void pattern_nav_home(GTOBJECT* gt) {
     while (editorInfo.eppos != 0) patternup(gt);
     (void)gt;
 }
-
 
 void pattern_nav_end(GTOBJECT* gt) {
     int c2 = getActualChannel(editorInfo.esnum, editorInfo.epchn);
@@ -668,18 +655,15 @@ void pattern_nav_end(GTOBJECT* gt) {
     while (editorInfo.eppos != pattlen[gt->editorUndoInfo.editorInfo[c2].epnum]) patterndown(gt);
 }
 
-
 void pattern_nav_page_up(GTOBJECT* gt) {
     for (int i = 0; i < PGUPDNREPEAT; i++) patternup(gt);
     (void)gt;
 }
 
-
 void pattern_nav_page_down(GTOBJECT* gt) {
     for (int i = 0; i < PGUPDNREPEAT; i++) patterndown(gt);
     (void)gt;
 }
-
 
 void prevpattern(GTOBJECT* gt) {
     int c2 = getActualChannel(editorInfo.esnum, editorInfo.epchn);
@@ -695,7 +679,6 @@ void prevpattern(GTOBJECT* gt) {
     }
 }
 
-
 void nextpattern(GTOBJECT* gt) {
     int c2 = getActualChannel(editorInfo.esnum, editorInfo.epchn);
     if (gt->editorUndoInfo.editorInfo[c2].epnum < MAX_PATT - 1) {
@@ -710,7 +693,6 @@ void nextpattern(GTOBJECT* gt) {
         editorInfo.epmarkchn            = -1;
     }
 }
-
 
 void shrinkpattern(GTOBJECT* gt) {
     int c2 = getActualChannel(editorInfo.esnum, editorInfo.epchn);
@@ -977,7 +959,6 @@ void handleShiftSpace(GTOBJECT* gt, int playChannel, int startPatternPos, bool f
         }
     }
 
-
     int songPos = gt->editorUndoInfo.editorInfo[playChannel].espos;
 
     //	orderPlayFromPosition(gt, startPatternPos, editorInfo.eseditpos, playChannel, 1);	// editorInfo.eschn
@@ -989,7 +970,6 @@ void handleShiftSpace(GTOBJECT* gt, int playChannel, int startPatternPos, bool f
 unsigned char keyStillDown[SDL_NUM_SCANCODES] = { 0 };
 unsigned char keyNoteDown[SDL_NUM_SCANCODES]  = { 0 };
 int           polyChannelOffset               = 0;
-
 
 int  playingChannelOnKey[KEYBOARD_POLYPHONY]     = { -1 };
 int  playingChannelStartTime[KEYBOARD_POLYPHONY] = { 0 };
@@ -1019,7 +999,6 @@ int handleMIDIPolykeyboard(GTOBJECT* gt, MIDI_MESSAGE midiData) {
                 keyOn(midiNote, note, gt);
                 MIDINotesHeld++;
             }
-
 
             return 0;
         }
@@ -1054,7 +1033,6 @@ int handlePolyphonicKeyboard(GTOBJECT* gt) {
     if (shift_or_ctrl_pressed) return noKeysPressed;
 
     if (eamode == 1) return noKeysPressed; // editing ADSR
-
 
     if (editorInfo.editmode == EditMode::Pattern) {
         for (c = 0; c < SDL_NUM_SCANCODES; c++) {
@@ -1107,7 +1085,6 @@ void keyOn(int qwertyKey, int note, GTOBJECT* gt) {
     playtestnote(note, editorInfo.einum, ch, gt);
 }
 
-
 int getNoteFromChannel(int c) {
     for (int i = 0; i < KEYBOARD_POLYPHONY; i++) {
         if (playingChannelOnKey[i] == c) return playingChannelNote[i];
@@ -1131,7 +1108,6 @@ int checkAnyPolyPlaying() {
     return c;
 }
 
-
 void initPolyKeyboard() {
     for (int i = 0; i < KEYBOARD_POLYPHONY; i++) {
         playingChannelOnKey[i] = -1;
@@ -1144,7 +1120,6 @@ void clearPolyChannel(int i, GTOBJECT* gt) {
         playingChannelOnKey[i] = -1;
     }
 }
-
 
 int  cc;
 void calculateNoteOffsets() {
@@ -1177,7 +1152,6 @@ void calculateNoteOffsets() {
         }
     } while (note != -1);
 
-
     if (noteIndex) {
         c++;
         sprintf(&keyOffsetText[c + 6], "(");
@@ -1200,7 +1174,6 @@ void calculateNoteOffsets() {
                 notenameTableView[firstNote - FIRSTNOTE]);
 }
 
-
 int findNote(int lowestNote) {
     int note = 9999;
 
@@ -1220,7 +1193,6 @@ int findFreePolyChannel(int note) {
         return getActualChannel(editorInfo.esnum, editorInfo.epchn);
     }
     //		return editorInfo.epchn;
-
 
     // Found channel playing the same note? retrigger using this channel
     for (int i = 0; i < KEYBOARD_POLYPHONY; i++) {
@@ -1261,7 +1233,6 @@ int findFreePolyChannel(int note) {
     last_found_channel %= KEYBOARD_POLYPHONY;
     return oldestChannel;
 }
-
 
 int getNote(int scancode) {
     int newnote;
@@ -1306,7 +1277,6 @@ int getNote(int scancode) {
     }
     return newnote;
 }
-
 
 short getNoteFreq(int noteIndex) {
     short freqHi = freqtblhi[noteIndex];
@@ -1363,11 +1333,9 @@ void autoPitchbendToNextNote(GTOBJECT* gt) {
                 getPlayStartPosition(gte, songNum, c2, ep, i);
                 int tickCount2 = gte->chn[c2].portCounter;
 
-
                 int tickDiff = tickCount2 - tickCount1;
                 int freq1    = getNoteFreq(note1);
                 int freq2    = getNoteFreq(note2);
-
 
                 char portaInstruction = 1; // pitch bend up
                 int  freqDiff         = freq2 - freq1;
@@ -1379,7 +1347,6 @@ void autoPitchbendToNextNote(GTOBJECT* gt) {
                 //				int newShortValue2 = freqDiff;
 
                 freqDiff /= tickDiff;
-
 
                 unsigned short newShortValue = (unsigned short)freqDiff;
                 if (newShortValue == 0) return;
@@ -1404,13 +1371,11 @@ void autoPitchbendToNextNote(GTOBJECT* gt) {
     }
 }
 
-
 void getPlayStartPosition(GTOBJECT* gte, int songNum, int c2, int songPos, int patternPos) {
     // Now get number of tickets between note1 and note2
 
     int found       = 0;
     int lastPattPtr = 423423;
-
 
     initsong(songNum, PlayMode::Beginning, gte); // JP FEB
     do {
@@ -1428,7 +1393,6 @@ void getPlayStartPosition(GTOBJECT* gte, int songNum, int c2, int songPos, int p
 
     } while (1);
 }
-
 
 void clearKeyOns(GTOBJECT* gt, int c2, int i2) {
     if ((i2 / 4) > pattlen[gt->editorUndoInfo.editorInfo[c2].epnum]) return;

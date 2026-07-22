@@ -32,7 +32,6 @@ int          currentUndoPackagesCounter = 1;
 unsigned int undoBufferSize             = 0;
 int          undoCounter                = 0;
 
-
 int  initUndoBufferFlag = 0;
 int  maxUndoSize        = MAX_UNDO;
 void initUndoBuffer() { undoList = malloc((sizeof(char*)) * maxUndoSize); }
@@ -64,7 +63,6 @@ void undoInitAllAreas(GTOBJECT* gt) {
     // UNDO_AREA_CHANNEL_EDITOR_INFO, 0);
     undoInitUndoArea((char*)&gt->editorUndoInfo, sizeof(EDITOR_UNDO_INFO), UNDO_AREA_CHANNEL_EDITOR_INFO, 0);
 
-
     // 211
     undoInitUndoArea((char*)&pattlen, MAX_PATT * sizeof(int), UNDO_AREA_PATTERN_LEN, 0);
     // 212
@@ -94,7 +92,6 @@ void undoInitAllAreas(GTOBJECT* gt) {
                              i + (s * MAX_CHN));
         }
     }
-
 
     // 468
     for (int i = 0; i < MAX_INSTR; i++) {
@@ -212,7 +209,6 @@ void updateUndoBuffer(int undoAreaType) {
     }
 }
 
-
 void undoAreaSetCheckForChange(int areaType, int areaIndex, int onOff) {
     if (REMOVE_UNDO) return;
 
@@ -227,7 +223,6 @@ void undoAreaSetCheckForChange(int areaType, int areaIndex, int onOff) {
         }
     }
 }
-
 
 /*
 mem = address of memory to check for changes / store changes in undo buffer
@@ -269,7 +264,6 @@ void undoInvalidateUndoAreas() {
     }
 }
 
-
 int undoPackageCounter = 0;
 int jcounter           = 0;
 
@@ -300,7 +294,6 @@ int undoValidateUndoAreas(GTUNDO_OBJECT* editorSettings) {
     if (REMOVE_UNDO) return 0;
 
     if (debugEnabled) debugCheck();
-
 
     int areaDirty = 0;
     for (int i = 0; i < UNDO_AREA_SIZE; i++) {
@@ -384,7 +377,6 @@ int undoValidateUndoAreas(GTUNDO_OBJECT* editorSettings) {
     return 0;
 }
 
-
 int getUndoPacket(int* currentOffset, char* cmp1, char* cmp2, int* startOffset, int* endOffset, int areaSize) {
     if (REMOVE_UNDO) return 0;
 
@@ -420,7 +412,6 @@ int getUndoPacket(int* currentOffset, char* cmp1, char* cmp2, int* startOffset, 
     return foundPacket; // end of buffer to search. Could have had data changed at the end where
                         // waitForPacketCounter was <4
 }
-
 
 // offset = offset into dest to write data
 int undoAddUndoObjectToList(GTUNDO_OBJECT* gu, GTUNDO_AREA* gArea, char* mem, int size, int offset) {
@@ -474,7 +465,6 @@ GTUNDO_OBJECT* undoCreateEditorInfo() {
     return ed;
 }
 
-
 void undoFinalizeUndoPackage(GTUNDO_OBJECT* editorSettings) {
     if (REMOVE_UNDO) return;
 
@@ -500,7 +490,6 @@ GTUNDO_OBJECT* undoEditorInfoBackup;
 
 void undoCreateEditorInfoBackup() { undoEditorInfoBackup = undoCreateEditorInfo(); }
 
-
 int  dcount = 0;
 void undoAddEditorSettingsToList() {
     if (memcmp(&editorInfo, undoEditorInfoBackup->data, sizeof(EDITOR_INFO))) {
@@ -524,7 +513,6 @@ void undoAddEditorSettingsToList() {
     }
 }
 
-
 int undoPerform(GTOBJECT* gt) {
     if (REMOVE_UNDO) return 0;
 
@@ -536,9 +524,7 @@ int undoPerform(GTOBJECT* gt) {
 
     gu = (GTUNDO_OBJECT*)undoList[currentUndoPosition - 1];
 
-
     undoCounter = 0;
-
 
     int sngFileIndex = editorInfo.currentSongFile;
 
@@ -564,7 +550,6 @@ int undoPerform(GTOBJECT* gt) {
 
     } while (counter > 0);
 
-
     // sprintf(debugTextbuffer, "undo pos %d (%d undos)", currentUndoPosition, undoCounter);
 
     // These need to be in their own routine, called on init, load and here.
@@ -583,7 +568,6 @@ int undoPerform(GTOBJECT* gt) {
         undoInvalidateUndoAreas();
     }
 
-
     refreshVariables();
 
     undo_display();
@@ -599,7 +583,6 @@ void refreshVariables() {
 
     playUntilEnd(editorInfo.esnum);
 }
-
 
 void undoFreeUndoObject(GTUNDO_OBJECT* gu) {
     if (REMOVE_UNDO) return;

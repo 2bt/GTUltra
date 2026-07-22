@@ -3,9 +3,9 @@
 //
 
 #include "goattrk2.hpp"
-#include "gimgui.hpp"
 #include "ginstr.hpp"
 #include "gpattern.hpp"
+#include "gplatform.hpp"
 #include "gsong.hpp"
 #include "gtable.hpp"
 #include "guimodel.hpp"
@@ -180,7 +180,6 @@ void instrumentcommands(GTOBJECT* gt, const EditorInput* input) {
         if (!(instr[editorInfo.einum].gatetimer & 0x3f)) instr[editorInfo.einum].gatetimer |= 1;
     }
 }
-
 
 void clearinstr(int num) {
     memset(&instr[num], 0, sizeof(INSTR));

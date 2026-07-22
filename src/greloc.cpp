@@ -5,16 +5,11 @@
 #include "goattrk2.hpp"
 #include "embed.hpp"
 #include "gendian.hpp"
-#include "ginput.hpp"
 #include "gpattern.hpp"
 #include "gsong.hpp"
 #include "gtable.hpp"
 
-#include <cstdint>
-#include <cstdio>
 #include <cstdlib>
-#include <cstring>
-#include <new>
 #include <string_view>
 #include <vector>
 
@@ -23,7 +18,7 @@
 #endif
 
 extern "C" {
-#include "membuf.h"
+
 #include "parse.h"
 }
 
@@ -596,7 +591,6 @@ void relocator(GTOBJECT* gt, bool gt2reloc_mode) {
     std::vector<uint8_t> pattwork;
     std::vector<uint8_t> instrwork;
 
-
     channels          = editorInfo.maxSIDChannels;
     fixedparams       = 1;
     simplepulse       = 1;
@@ -637,13 +631,11 @@ void relocator(GTOBJECT* gt, bool gt2reloc_mode) {
     // Set default SID chip addresses. SidAddr2 is read from cfg file. By default, put SIDs 3+4 0x20 and 0x40 after
     // this.
 
-
     initRemapArrays();
     patternRemapOrderIndex = 0;
     for (int i = 0; i < MAX_SONGS; i++) {
         playUntilEnd2(i); // run through all songs to create pattern map in order of playback
     }
-
 
     if (!gt2reloc_mode) {
         if (gt->songinit != PlayMode::Stopped) {
@@ -699,7 +691,6 @@ void relocator(GTOBJECT* gt, bool gt2reloc_mode) {
     nocalculatedspeed = 1;
     nonormalspeed     = 1;
     nozerospeed       = 1;
-
 
     // Process song-orderlists
     countpatternlengths();
@@ -764,12 +755,10 @@ void relocator(GTOBJECT* gt, bool gt2reloc_mode) {
         if ((!chnused[1]) && (!chnused[2])) channels = 1;
     }
 
-
     if (!songs) {
         reloc_alert("NO SONGS, NO DATA TO SAVE!");
         goto PRCLEANUP;
     }
-
 
     // Build the pattern-mapping
     // Instrument 1 is always used
@@ -779,7 +768,6 @@ void relocator(GTOBJECT* gt, bool gt2reloc_mode) {
             pattmap[c] = patternOrderArray[c]; // patterns;
             // printf("pattern %x = new pattern %x\n", c, pattmap[c]);
             patterns++;
-
 
             // See which instruments/tablecommands are used
             for (d = 0; d < pattlen[c]; d++) {
@@ -969,7 +957,6 @@ void relocator(GTOBJECT* gt, bool gt2reloc_mode) {
     // Find duplicate ranges in tables
     for (c = 0; c < MAX_TABLES; c++) find_table_duplicates(c);
 
-
     // Disable optimizations if necessary
     if (playerversion & player_feature::no_optimization) {
         fixedparams = 0;
@@ -1014,7 +1001,6 @@ void relocator(GTOBJECT* gt, bool gt2reloc_mode) {
     if ((playerversion & player_feature::sound_effects) || (playerversion & player_feature::zp_ghost_regs))
         playerversion |= player_feature::buffered;
 
-
     if (editorInfo.maxSIDChannels == 3) {
         // Sound effect or ghostreg players always use full 3 channels
         if ((playerversion & player_feature::sound_effects) || (playerversion & player_feature::full_buffered) ||
@@ -1027,7 +1013,6 @@ void relocator(GTOBJECT* gt, bool gt2reloc_mode) {
     if (editorInfo.maxSIDChannels >= 9)
         songtblsize = ((songs + 1) / 2) * editorInfo.maxSIDChannels; // 9 or 12 channels. Half the number of songs
     else songtblsize = songs * editorInfo.maxSIDChannels;            // 3 or 6 channels
-
 
         //----------------
 #ifdef DISPLAY_FREE_MEM
@@ -1042,7 +1027,6 @@ void relocator(GTOBJECT* gt, bool gt2reloc_mode) {
         reloc_alert(textbuffer);
         goto PRCLEANUP;
     }
-
 
     // Generate songorderlists & songtable
     // songdatasize = 0;
@@ -1105,7 +1089,6 @@ void relocator(GTOBJECT* gt, bool gt2reloc_mode) {
         }
     }
 
-
     // Calculate total size of patterns
     for (c = 0; c < MAX_PATT; c++) {
         int d = patternOrderList[c];
@@ -1154,7 +1137,6 @@ void relocator(GTOBJECT* gt, bool gt2reloc_mode) {
 
     // Then process instruments
     instrsize = instruments * 9;
-
 
     //----------------
 #ifdef DISPLAY_FREE_MEM
@@ -1293,7 +1275,6 @@ void relocator(GTOBJECT* gt, bool gt2reloc_mode) {
     if (nopulse) pulsetblsize = 0;
     if (nofilter) filttblsize = 0;
 
-
     // Validate frequencytable parameters
     if (lastnote < firstnote) lastnote = firstnote;
     if (firstnote < 0) firstnote = 0;
@@ -1319,7 +1300,6 @@ void relocator(GTOBJECT* gt, bool gt2reloc_mode) {
         if (editorInfo.maxSIDChannels > 3) insert_define("SID2BASE", sidAddr2);
         if (editorInfo.maxSIDChannels > 6) insert_define("SID3BASE", sidAddr3);
         if (editorInfo.maxSIDChannels > 9) insert_define("SID4BASE", sidAddr4);
-
 
         // Insert conditionals
 
@@ -1425,7 +1405,6 @@ void relocator(GTOBJECT* gt, bool gt2reloc_mode) {
         }
         //------
 
-
         // Insert frequencytable
         insert_label("mt_freqtbllo");
         insert_bytes(&freqtbllo[firstnote], lastnote - firstnote + 1);
@@ -1440,7 +1419,6 @@ void relocator(GTOBJECT* gt, bool gt2reloc_mode) {
 
         //	sprintf(textbuffer,";JP: songs %d songsize %d\n", songs, songSize);
         //	insert_label(textbuffer);
-
 
         for (c = 0; c < songSize; c++) // * 6 JP
         {
@@ -1593,7 +1571,6 @@ void relocator(GTOBJECT* gt, bool gt2reloc_mode) {
         SKIPTABLE:;
         }
 
-
         int songIndex = 0;
         // Insert orderlists
         for (c = 0; c < songs; c++) {
@@ -1629,7 +1606,6 @@ void relocator(GTOBJECT* gt, bool gt2reloc_mode) {
         // fclose(handle);
 
         // Assemble; on error fail in a rude way (the parser does so too)
-
 
         if (assemble(&src, &dest)) {
             exit(1);
@@ -1859,7 +1835,6 @@ void relocator(GTOBJECT* gt, bool gt2reloc_mode) {
 PRCLEANUP:
 
 PREXPORTCOMPLETE:
-
 
     membuf_free(&src);
     membuf_free(&dest);
